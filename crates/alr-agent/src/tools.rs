@@ -50,7 +50,8 @@ impl SupportTool for GetCustomerTool {
 
         for c in guard.values() {
             if c.tenant_id == context.tenant_id
-                && ((cid.is_some() && cid == Some(&c.id)) || (email.is_some() && email == Some(&c.email)))
+                && ((cid.is_some() && cid == Some(&c.id))
+                    || (email.is_some() && email == Some(&c.email)))
             {
                 return Ok(ToolOutput::success(json!(c)));
             }
@@ -92,7 +93,8 @@ impl SupportTool for GetOrderTool {
 
         for o in guard.values() {
             if o.tenant_id == context.tenant_id
-                && ((oid.is_some() && oid == Some(&o.id)) || (cid.is_some() && cid == Some(&o.customer_id)))
+                && ((oid.is_some() && oid == Some(&o.id))
+                    || (cid.is_some() && cid == Some(&o.customer_id)))
             {
                 return Ok(ToolOutput::success(json!(o)));
             }
@@ -135,7 +137,9 @@ impl SupportTool for GetPaymentTool {
 
         for p in guard.values() {
             if p.tenant_id == context.tenant_id
-                && ((pid.is_some() && pid == Some(&p.id)) || (oid.is_some() && oid == Some(&p.order_id)) || (cid.is_some() && cid == Some(&p.customer_id)))
+                && ((pid.is_some() && pid == Some(&p.id))
+                    || (oid.is_some() && oid == Some(&p.order_id))
+                    || (cid.is_some() && cid == Some(&p.customer_id)))
             {
                 return Ok(ToolOutput::success(json!(p)));
             }
@@ -361,14 +365,18 @@ impl SupportTool for AddTicketNoteTool {
     async fn execute(&self, input: ToolInput, context: ToolContext) -> Result<ToolOutput> {
         let note = input.parameters["note"].as_str().unwrap_or_default();
         if context.is_simulation {
-            return Ok(ToolOutput::success(json!({ "simulated": true, "note": note })));
+            return Ok(ToolOutput::success(
+                json!({ "simulated": true, "note": note }),
+            ));
         }
 
         if let Some(ref tid) = context.ticket_id {
             let mut guard = self.db.tickets.write();
             if let Some(ticket) = guard.get_mut(tid) {
                 ticket.internal_notes.push(note.to_string());
-                return Ok(ToolOutput::success(json!({ "ticket_id": tid, "note_added": note })));
+                return Ok(ToolOutput::success(
+                    json!({ "ticket_id": tid, "note_added": note }),
+                ));
             }
         }
         Ok(ToolOutput::success(json!({ "note": note })))
@@ -396,9 +404,13 @@ impl SupportTool for EscalateTicketTool {
     }
 
     async fn execute(&self, input: ToolInput, context: ToolContext) -> Result<ToolOutput> {
-        let reason = input.parameters["reason"].as_str().unwrap_or("Manual escalation");
+        let reason = input.parameters["reason"]
+            .as_str()
+            .unwrap_or("Manual escalation");
         if context.is_simulation {
-            return Ok(ToolOutput::success(json!({ "simulated": true, "escalated": true, "reason": reason })));
+            return Ok(ToolOutput::success(
+                json!({ "simulated": true, "escalated": true, "reason": reason }),
+            ));
         }
 
         if let Some(ref tid) = context.ticket_id {
@@ -413,6 +425,8 @@ impl SupportTool for EscalateTicketTool {
                 })));
             }
         }
-        Ok(ToolOutput::success(json!({ "escalated": true, "reason": reason })))
+        Ok(ToolOutput::success(
+            json!({ "escalated": true, "reason": reason }),
+        ))
     }
 }

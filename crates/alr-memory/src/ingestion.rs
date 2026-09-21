@@ -84,9 +84,15 @@ impl IngestionPipeline {
                 format!("{} (Part {})", doc.title, i + 1)
             };
 
-            let mem = SemanticMemory::new(doc.tenant_id, doc.memory_type.clone(), chunk_title, chunk, doc.source)
-                .with_vector(vector)
-                .with_metadata("chunk_index", serde_json::json!(i));
+            let mem = SemanticMemory::new(
+                doc.tenant_id,
+                doc.memory_type.clone(),
+                chunk_title,
+                chunk,
+                doc.source,
+            )
+            .with_vector(vector)
+            .with_metadata("chunk_index", serde_json::json!(i));
 
             ids.push(mem.id.clone());
             memories.push(mem);

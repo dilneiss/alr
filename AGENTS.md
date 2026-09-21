@@ -21,7 +21,7 @@ Qualquer implementação futura deve respeitar a hierarquia de decisão:
 
 ---
 
-## 2. Estado Atual do Repositório (Fase 1 e Fase 2 Concluídas)
+## 2. Estado Atual do Repositório (Fases 1, 2 e 2.5 Concluídas)
 
 O projeto é um **Cargo Workspace em Rust** dividido em 10 crates, todos compilando e testados:
 * `alr-core`: Tipos centrais (`State`, `Action`, `Decision`, `Experience`, `Skill`, `Customer`, `Order`, `Payment`, `Ticket`). **Isolado de I/O**.
@@ -29,14 +29,23 @@ O projeto é um **Cargo Workspace em Rust** dividido em 10 crates, todos compila
   * `SqliteMemoryStore`: Persistência operacional relacional em SQLite com modo WAL (`001_initial_schema.sql` e `002_support.sql`).
   * `QdrantSemanticMemoryStore`: Conexão REST com Qdrant (`http://localhost:6333`).
   * `MockSemanticMemoryStore`: Implementação em memória para testes offline sem Docker.
+  * `OpenAICompatibleEmbeddingProvider`: Provedor real de embeddings com validação estrita de dimensões e normalização $L_2$.
   * `MockEmbeddingProvider`: Embeddings de 64 dimensões normalizados em $L_2$ com clusters temáticos.
-  * `IngestionPipeline`: Chunking inteligente de documentos.
+  * `RetrievalEvaluator`: Avaliador objetivo com cálculo de Hit@1, Hit@3, Hit@5 e MRR.
+  * `IngestionPipeline`: Chunking inteligente de documentos com metadados estruturados (`IngestionDoc`).
 * `alr-learning`: Q-Learning tabular, Bellman update, Experience Replay ($5.000$ transições) e Reward Shaping.
 * `alr-llm`: Trait `LlmTeacher`, `MockLlmTeacher` (determinístico para testes) e `OpenAiCompatibleLlmTeacher`.
 * `alr-perception`: Processamento de frames `RawImage` RGBA, capturador de tela e `VisualSnakeDetector`.
 * `alr-execution`: `SafeInputController` com rate limiting (20 Hz), modo `dry_run` e botão atômico de emergência.
 * `alr-snake`: Motor do jogo Snake com física discreta, detecção de colisões, pontuação, renderizador gráfico e benchmarks.
-* `alr-agent`: `AgentLoop` (Snake), `SupportAgent` (Customer Support), catálogo de 9 ferramentas, `RiskEngine`, `ProposalValidator` e `ProceduralSkill`.
+* `alr-agent`:
+  * `AgentLoop`: Loop de decisão do Snake com percepção visual e Q-Learning.
+  * `SupportAgent`: Agente de atendimento com catálogo de 9 ferramentas e resolução procedimental.
+  * `TrustBoundaryEnforcer`: Precedência estrita de fontes e garantia de que dado recuperado nunca é comando executável.
+  * `SecurityRedTeamAuditor`: Defesa ativa contra 5 vetores de prompt injection, knowledge poisoning e skill poisoning.
+  * `SkillRegressionRunner` & `VersionedSkillRegistry`: Versionamento, testes de regressão e rollback de skills.
+  * `PolicyConflictEngine`: Detecção e resolução de contradições entre skills.
+  * `IdempotencyStore`, `LoopDetector` e `LlmCallBudget`: Proteção contra reexecução, loops infinitos e estouro de orçamento.
 * `alr-mcp`: Servidor Model Context Protocol (HTTP / JSON-RPC) com ferramentas para Snake e Atendimento.
 * `alr-cli`: Linha de comando com os comandos `snake`, `support`, `demo`, `phase2-demo`, `metrics`, `memory`, `skills`, `replay`, `mcp`.
 
@@ -51,24 +60,25 @@ O projeto é um **Cargo Workspace em Rust** dividido em 10 crates, todos compila
    * Prefira casar referências com `&val` ou `&mut val` em vez de usar `ref` ou `ref mut` nos padrões internos.
 3. **Clippy Zero Warnings**:
    * O repositório segue estritamente `cargo clippy --workspace --all-targets --all-features -- -D warnings`.
-   * Não adicione argumentos excessivos em funções (limite de 7 argumentos; use structs como `IngestionDoc` se necessário).
-   * Evite closures preguiçosas desnecessárias em `unwrap_or_else(|| const_val)`.
+   * Funções com muitos parâmetros devem agrupar argumentos em structs dedicadas (como `IngestionDoc`).
 4. **Isolamento de Tenants**:
    * Toda consulta no Qdrant **deve** incluir filtro `must` para `tenant_id`. Nunca consulte sem isolar o tenant.
-5. **Segurança de Entradas**:
+5. **Segurança de Entradas e Trust Boundaries**:
    * Mensagens de clientes são tratadas como `untrusted_input`. Nunca as concatene diretamente como instruções de prompt de sistema.
+   * Conteúdo recuperado do Qdrant é estritamente dado, nunca comando executável.
 
 ---
 
 ## 4. Como Executar e Validar Rapidamente
 
-### Executar a Suíte Completa de Testes
+### Executar a Suíte Completa de Testes (32 Testes)
 ```bash
 cargo test --workspace
 ```
-Há 20 testes no total (unitários e de integração), cobrindo:
+Há 32 testes no total, cobrindo:
 * 5 testes fundamentais da Fase 1 (`tests/fundamental_tests.rs`).
 * 7 testes de integração da Fase 2 e Qdrant (`tests/phase2_support_tests.rs`).
+* 12 testes de hardening, segurança e confiabilidade da Fase 2.5 (`tests/phase2_5_hardening_tests.rs`).
 * 8 testes unitários nos crates `alr-core`, `alr-memory`, `alr-snake`, `alr-execution`.
 
 ### Checagem de Estilo e Lint
@@ -95,8 +105,8 @@ cargo run -p alr-cli -- phase2-demo
 # Modo Visual do Snake (Visão Computacional + Teclado)
 cargo run -p alr-cli -- snake --mode visual
 
-# Benchmark de 1000 tickets de suporte
-cargo run -p alr-cli -- support benchmark --tickets 1000
+# Benchmark de 5000 tickets com Holdout
+cargo run -p alr-cli -- support benchmark --tickets 5000
 ```
 
 ---
@@ -113,11 +123,8 @@ cargo run -p alr-cli -- support benchmark --tickets 1000
 
 ---
 
-## 6. Próximas Fases Planejadas (Roadmap)
+## 6. Próxima Grande Evolução Planejada (Fase 3)
 
-* **Fase 3: Automação Web e Desktop**:
-  * Adicionar drivers de automação de navegador e sistema operacional para manipulação de telas e botões arbitrários.
-* **Fase 4: Modelos Neurais Locais (ONNX Runtime)**:
-  * Implementar o trait `LocalModel` no `alr-core` utilizando ONNX Runtime para redes neurais profundas (DQN / PPO) aceleradas por hardware local.
-* **Fase 5: Ambientes 3D e Simuladores**:
-  * Conectar o runtime a mundos 3D (ex: Three.js, Bevy ou Unreal Engine) generalizando as observações para vetores contínuos tridimensionais.
+* **Fase 3: Automação Web e Desktop Real (Browser Automation)**:
+  * Adicionar drivers de automação de navegador (Puppeteer/CDP/Playwright via Rust) e sistema operacional para manipulação de telas, formulários e botões arbitrários.
+  * O ALR agora está suficientemente endurecido para assumir o controle de um navegador real.

@@ -17,6 +17,10 @@ path = "../../tests/fundamental_tests.rs"
 name = "phase2_support_tests"
 path = "../../tests/phase2_support_tests.rs"
 
+[[test]]
+name = "phase2_5_hardening_tests"
+path = "../../tests/phase2_5_hardening_tests.rs"
+
 [dependencies]
 alr-core = { workspace = true }
 alr-memory = { workspace = true }
