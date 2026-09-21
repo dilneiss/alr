@@ -1,3 +1,4 @@
+pub mod browser_agent;
 pub mod conflict;
 pub mod learning;
 pub mod r#loop;
@@ -14,6 +15,7 @@ pub mod support_tool;
 pub mod tools;
 pub mod trust;
 
+pub use browser_agent::{BrowserAgent, BrowserSkill, BrowserSkillStep};
 pub use conflict::{
     ConfidenceBucket, ConfidenceCalibrator, ConflictResolutionStrategy, PolicyConflict,
     PolicyConflictEngine,

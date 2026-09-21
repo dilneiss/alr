@@ -21,6 +21,10 @@ path = "../../tests/phase2_support_tests.rs"
 name = "phase2_5_hardening_tests"
 path = "../../tests/phase2_5_hardening_tests.rs"
 
+[[test]]
+name = "phase3_browser_tests"
+path = "../../tests/phase3_browser_tests.rs"
+
 [dependencies]
 alr-core = { workspace = true }
 alr-memory = { workspace = true }
@@ -30,6 +34,7 @@ alr-perception = { workspace = true }
 alr-execution = { workspace = true }
 alr-snake = { workspace = true }
 alr-agent = { workspace = true }
+alr-browser = { workspace = true }
 alr-mcp = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

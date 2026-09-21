@@ -1,4 +1,5 @@
-use alr_agent::{AgentLoop, EpisodeOrchestrator, SupportAgent, SupportDatabase};
+use alr_agent::{AgentLoop, BrowserAgent, EpisodeOrchestrator, SupportAgent, SupportDatabase};
+use alr_browser::{BrowserDriver, ChromiumCdpDriver};
 use alr_core::{Action, KnowledgeProposal, KnowledgeStatus, Ticket};
 use alr_llm::MockLlmTeacher;
 use alr_memory::SqliteMemoryStore;
@@ -155,6 +156,39 @@ impl McpServer {
                         "name": "alr.support.metrics",
                         "description": "Get Customer Support autonomy and resolution metrics",
                         "inputSchema": { "type": "object", "properties": {} }
+                    },
+                    // Phase 3 Browser MCP Tools
+                    {
+                        "name": "alr.browser.launch",
+                        "description": "Launch a new browser session",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "headless": { "type": "boolean" }
+                            }
+                        }
+                    },
+                    {
+                        "name": "alr.browser.navigate",
+                        "description": "Navigate active browser session to URL",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "url": { "type": "string" }
+                            },
+                            "required": ["url"]
+                        }
+                    },
+                    {
+                        "name": "alr.browser.run_skill",
+                        "description": "Execute learned browser automation task",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "task_name": { "type": "string" }
+                            },
+                            "required": ["task_name"]
+                        }
                     }
                 ]
             })),
@@ -341,6 +375,29 @@ impl McpServer {
                     "escalated": escalated,
                     "resolution_rate": if total > 0 { (resolved as f32 / total as f32) * 100.0 } else { 0.0 }
                 }))
+            }
+            // Browser MCP Tools
+            "alr.browser.launch" => {
+                let driver = ChromiumCdpDriver::default();
+                let headless = args["headless"].as_bool().unwrap_or(true);
+                let session = driver.launch(headless).await?;
+                Ok(json!({ "status": "launched", "session": session }))
+            }
+            "alr.browser.navigate" => {
+                let url = args["url"].as_str().context("Missing url")?;
+                let driver = ChromiumCdpDriver::default();
+                let mut session = driver.launch(true).await?;
+                driver.navigate(&mut session, url).await?;
+                Ok(json!({ "status": "navigated", "url": session.current_url }))
+            }
+            "alr.browser.run_skill" => {
+                let task = args["task_name"].as_str().unwrap_or("reply_ticket");
+                let driver = ChromiumCdpDriver::default();
+                let mut session = driver.launch(true).await?;
+                let mock_llm = Arc::new(MockLlmTeacher::new());
+                let mut browser_agent = BrowserAgent::new(mock_llm, 0.85, 0.60);
+                let (ok, src, calls) = browser_agent.run_task(task, &driver, &mut session).await?;
+                Ok(json!({ "success": ok, "source": src, "llm_calls": calls }))
             }
             other => Err(anyhow::anyhow!("Unknown tool: {}", other)),
         }

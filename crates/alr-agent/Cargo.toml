@@ -13,6 +13,7 @@ alr-llm = { workspace = true }
 alr-perception = { workspace = true }
 alr-execution = { workspace = true }
 alr-snake = { workspace = true }
+alr-browser = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 uuid = { workspace = true }

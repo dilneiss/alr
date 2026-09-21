@@ -22,10 +22,12 @@ impl SecurityRedTeamAuditor {
 
         // Direct prompt injection
         if lower.contains("ignore all previous instructions")
+            || lower.contains("ignore all rules")
             || lower.contains("system prompt override")
             || lower.contains("ignore previous rules")
             || lower.contains("disregard instructions")
             || lower.contains("you are now dan")
+            || lower.contains("drop database")
         {
             bail!("Prompt Injection Detected (Direct Vector)");
         }
@@ -34,6 +36,8 @@ impl SecurityRedTeamAuditor {
         if lower.contains("execute refund_payment")
             || lower.contains("run tool direct_wire_transfer")
             || lower.contains("call tool send_ticket_reply with")
+            || lower.contains("delete this customer")
+            || lower.contains("delete customer")
         {
             bail!("Prompt Injection Detected (Indirect Tool Coercion)");
         }
@@ -76,7 +80,6 @@ impl SecurityRedTeamAuditor {
 
         let mut seen_tools = Vec::new();
         for step in &skill.steps {
-            // Check unregistered tools
             let tool = match registered_tools.get(&step.tool_name) {
                 Some(t) => t,
                 None => bail!(
@@ -85,7 +88,6 @@ impl SecurityRedTeamAuditor {
                 ),
             };
 
-            // Check risk violation
             if tool.risk_level() > max_allowed_risk {
                 bail!(
                     "Skill Poisoning Rejection: Tool '{}' risk {:?} exceeds threshold {:?}",
@@ -95,7 +97,6 @@ impl SecurityRedTeamAuditor {
                 );
             }
 
-            // Loop detection within steps
             let occurrences = seen_tools.iter().filter(|&&t| t == &step.tool_name).count();
             if occurrences >= 3 {
                 bail!("Skill Poisoning Rejection: Repetitive invocation of tool '{}' without state transition", step.tool_name);
@@ -111,10 +112,8 @@ impl SecurityRedTeamAuditor {
         doc_content: &str,
         source_kind: ContentSourceKind,
     ) -> Result<()> {
-        // Enforce data-not-command rule
         TrustBoundaryEnforcer::assert_data_not_command(doc_content)?;
 
-        // Customer inputs stored historically cannot claim to be official policies
         if source_kind == ContentSourceKind::CustomerInput {
             let lower = doc_content.to_lowercase();
             if lower.contains("official policy:") || lower.contains("system override:") {

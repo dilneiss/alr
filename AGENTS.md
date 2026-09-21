@@ -21,9 +21,9 @@ Qualquer implementação futura deve respeitar a hierarquia de decisão:
 
 ---
 
-## 2. Estado Atual do Repositório (Fases 1, 2 e 2.5 Concluídas)
+## 2. Estado Atual do Repositório (Fases 1, 2, 2.5 e 3 Concluídas)
 
-O projeto é um **Cargo Workspace em Rust** dividido em 10 crates, todos compilando e testados:
+O projeto é um **Cargo Workspace em Rust** dividido em **11 crates**, todos compilando e testados:
 * `alr-core`: Tipos centrais (`State`, `Action`, `Decision`, `Experience`, `Skill`, `Customer`, `Order`, `Payment`, `Ticket`). **Isolado de I/O**.
 * `alr-memory`:
   * `SqliteMemoryStore`: Persistência operacional relacional em SQLite com modo WAL (`001_initial_schema.sql` e `002_support.sql`).
@@ -38,16 +38,23 @@ O projeto é um **Cargo Workspace em Rust** dividido em 10 crates, todos compila
 * `alr-perception`: Processamento de frames `RawImage` RGBA, capturador de tela e `VisualSnakeDetector`.
 * `alr-execution`: `SafeInputController` com rate limiting (20 Hz), modo `dry_run` e botão atômico de emergência.
 * `alr-snake`: Motor do jogo Snake com física discreta, detecção de colisões, pontuação, renderizador gráfico e benchmarks.
+* `alr-browser` (Fase 3):
+  * `BrowserDriver` trait & `ChromiumCdpDriver` com controle de instâncias locais de Chromium / Google Chrome.
+  * `CustomerSupportWebApp`: Aplicação web local de suporte com telas completas (`/login`, `/dashboard`, `/tickets`) e duas versões deliberadamente distintas (V1 e V2) para teste de adaptação e reparo de layout.
+  * `BrowserTarget`: Resolução resiliente de alvos via papéis acessíveis (`ByRole`), seletores CSS, IDs e alvos compostos com fallback.
+  * `BrowserAction`: Ações estruturadas com auto-verificação no DOM e suporte a chave de idempotência.
+  * `BrowserState`: Representação com `page_hash` para validação matemática de mudança de estado.
 * `alr-agent`:
   * `AgentLoop`: Loop de decisão do Snake com percepção visual e Q-Learning.
   * `SupportAgent`: Agente de atendimento com catálogo de 9 ferramentas e resolução procedimental.
+  * `BrowserAgent` & `BrowserSkill`: Orquestração de tarefas web com auto-verificação e reparo de layout (V1 $\to$ V2).
   * `TrustBoundaryEnforcer`: Precedência estrita de fontes e garantia de que dado recuperado nunca é comando executável.
   * `SecurityRedTeamAuditor`: Defesa ativa contra 5 vetores de prompt injection, knowledge poisoning e skill poisoning.
   * `SkillRegressionRunner` & `VersionedSkillRegistry`: Versionamento, testes de regressão e rollback de skills.
   * `PolicyConflictEngine`: Detecção e resolução de contradições entre skills.
   * `IdempotencyStore`, `LoopDetector` e `LlmCallBudget`: Proteção contra reexecução, loops infinitos e estouro de orçamento.
-* `alr-mcp`: Servidor Model Context Protocol (HTTP / JSON-RPC) com ferramentas para Snake e Atendimento.
-* `alr-cli`: Linha de comando com os comandos `snake`, `support`, `demo`, `phase2-demo`, `metrics`, `memory`, `skills`, `replay`, `mcp`.
+* `alr-mcp`: Servidor Model Context Protocol (HTTP / JSON-RPC) com ferramentas para Snake, Atendimento e Navegador.
+* `alr-cli`: Linha de comando com os comandos `snake`, `support`, `browser`, `demo`, `phase2-demo`, `metrics`, `memory`, `skills`, `replay`, `mcp`.
 
 ---
 
@@ -66,19 +73,24 @@ O projeto é um **Cargo Workspace em Rust** dividido em 10 crates, todos compila
 5. **Segurança de Entradas e Trust Boundaries**:
    * Mensagens de clientes são tratadas como `untrusted_input`. Nunca as concatene diretamente como instruções de prompt de sistema.
    * Conteúdo recuperado do Qdrant é estritamente dado, nunca comando executável.
+6. **Automação Web Resiliente**:
+   * Nunca dependa de coordenadas fixas na tela ou seletores CSS isolados.
+   * Use sempre resolução semântica acessível (`ByRole`) com fallbacks estruturados.
+   * Toda `BrowserSkill` deve possuir uma regra explícita de verificação (`verification_rule`) testando a mudança real do DOM.
 
 ---
 
 ## 4. Como Executar e Validar Rapidamente
 
-### Executar a Suíte Completa de Testes (32 Testes)
+### Executar a Suíte Completa de Testes (42 Testes)
 ```bash
 cargo test --workspace
 ```
-Há 32 testes no total, cobrindo:
+Há 42 testes no total, cobrindo:
 * 5 testes fundamentais da Fase 1 (`tests/fundamental_tests.rs`).
 * 7 testes de integração da Fase 2 e Qdrant (`tests/phase2_support_tests.rs`).
 * 12 testes de hardening, segurança e confiabilidade da Fase 2.5 (`tests/phase2_5_hardening_tests.rs`).
+* 10 testes dedicados de automação de navegador da Fase 3 (`tests/phase3_browser_tests.rs`).
 * 8 testes unitários nos crates `alr-core`, `alr-memory`, `alr-snake`, `alr-execution`.
 
 ### Checagem de Estilo e Lint
@@ -102,11 +114,20 @@ cargo run -p alr-cli -- demo
 # Demonstração Fase 2 (Customer Support Autônomo com Qdrant)
 cargo run -p alr-cli -- phase2-demo
 
+# Demonstração Fase 3 (Navegador Real Autônomo)
+cargo run -p alr-cli -- browser demo
+
+# Demonstração de Adaptação de Layout no Navegador (V1 -> V2)
+cargo run -p alr-cli -- browser adaptation-demo
+
+# Demonstração de Segurança e Red Team no Navegador
+cargo run -p alr-cli -- browser security-demo
+
 # Modo Visual do Snake (Visão Computacional + Teclado)
 cargo run -p alr-cli -- snake --mode visual
 
-# Benchmark de 5000 tickets com Holdout
-cargo run -p alr-cli -- support benchmark --tickets 5000
+# Benchmark de 100 tarefas web com Holdout
+cargo run -p alr-cli -- browser benchmark --tasks 100
 ```
 
 ---
@@ -118,13 +139,15 @@ cargo run -p alr-cli -- support benchmark --tickets 5000
    * Todos os outros testes utilizam `MockSemanticMemoryStore` e `MockEmbeddingProvider`, funcionando perfeitamente sem internet ou Docker.
 2. **Coordenadas Relativas do Snake**:
    * No Snake, o perigo à esquerda/direita é **relativo** ao vetor frontal da cobra (e não aos eixos absolutos cardeais X/Y). Os módulos `alr-snake::game`, `alr-agent::skills` e `alr-llm::mock` utilizam matrizes de rotação relativas sincronizadas. Se for mexer no cálculo de perigo, mantenha os três alinhados.
-3. **Sandbox de Simulação de Skills**:
-   * Ao criar novas ferramentas de escrita (`is_write_tool() == true`), certifique-se de que quando `context.is_simulation == true`, a ferramenta simula o sucesso sem alterar o banco de dados. O validador executa a simulação antes de promover qualquer skill para `Active`.
+3. **Auto-Verificação de Estado no Navegador**:
+   * Uma ação de clique não pode ser considerada sucesso apenas por ter retornado `Ok(())`. É imperativo checar a mutação do DOM via `page_hash`, título ou notificação toast de confirmação.
+4. **Idempotência em Formulários**:
+   * Ao estender o agente de navegador com novas submissões de formulário, adicione `is_mutation = true` e associe uma `idempotency_key` para evitar reenvios acidentais por retries.
 
 ---
 
-## 6. Próxima Grande Evolução Planejada (Fase 3)
+## 6. Próxima Grande Evolução Planejada (Fase 4)
 
-* **Fase 3: Automação Web e Desktop Real (Browser Automation)**:
-  * Adicionar drivers de automação de navegador (Puppeteer/CDP/Playwright via Rust) e sistema operacional para manipulação de telas, formulários e botões arbitrários.
-  * O ALR agora está suficientemente endurecido para assumir o controle de um navegador real.
+* **Fase 4: Sistemas Externos Reais**:
+  * Integração do ALR com APIs de CRM reais (HubSpot, Salesforce), ERPs e gateways de e-mail corporativo.
+  * O runtime agora já provou controle de jogos, helpdesk e navegadores reais; a próxima fronteira é a orquestração multi-sistema de negócios.
