@@ -1,0 +1,13 @@
+/target
+**/*.rs.bk
+Cargo.lock
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+.env
+.env.local
+node_modules/
+dist/
+screenshots/
+replay_records/

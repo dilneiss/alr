@@ -1,0 +1,60 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/alr-core",
+    "crates/alr-memory",
+    "crates/alr-learning",
+    "crates/alr-llm",
+    "crates/alr-perception",
+    "crates/alr-execution",
+    "crates/alr-snake",
+    "crates/alr-agent",
+    "crates/alr-mcp",
+    "crates/alr-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Autonomous Learning Runtime Team"]
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+# Serialization & Data
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.10", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+# Async & Networking
+tokio = { version = "1.40", features = ["full"] }
+async-trait = "0.1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+axum = "0.7"
+
+# Database
+rusqlite = { version = "0.32", features = ["bundled", "chrono", "uuid"] }
+
+# CLI & Output
+clap = { version = "4.5", features = ["derive", "env"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+colored = "2.1"
+
+# Error Handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Numerical & Random
+rand = "0.8"
+
+# Internal Workspace Crates
+alr-core = { path = "crates/alr-core" }
+alr-memory = { path = "crates/alr-memory" }
+alr-learning = { path = "crates/alr-learning" }
+alr-llm = { path = "crates/alr-llm" }
+alr-perception = { path = "crates/alr-perception" }
+alr-execution = { path = "crates/alr-execution" }
+alr-snake = { path = "crates/alr-snake" }
+alr-agent = { path = "crates/alr-agent" }
+alr-mcp = { path = "crates/alr-mcp" }

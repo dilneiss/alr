@@ -1,0 +1,43 @@
+[package]
+name = "alr-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "alr"
+path = "src/main.rs"
+
+[[test]]
+name = "fundamental_tests"
+path = "../../tests/fundamental_tests.rs"
+
+[[test]]
+name = "phase2_support_tests"
+path = "../../tests/phase2_support_tests.rs"
+
+[dependencies]
+alr-core = { workspace = true }
+alr-memory = { workspace = true }
+alr-learning = { workspace = true }
+alr-llm = { workspace = true }
+alr-perception = { workspace = true }
+alr-execution = { workspace = true }
+alr-snake = { workspace = true }
+alr-agent = { workspace = true }
+alr-mcp = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+clap = { workspace = true }
+colored = { workspace = true }
+tokio = { workspace = true }
+rand = { workspace = true }
+axum = { workspace = true }
+async-trait = { workspace = true }
