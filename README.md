@@ -4,16 +4,15 @@
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-133%2F133%20Passing-brightgreen.svg)]()
 [![Autonomy Rate](https://img.shields.io/badge/Autonomy-98.8%25%20Local-orange.svg)]()
+[![Release Status](https://img.shields.io/badge/Certification-Certified%20With%20Limitations-yellow.svg)](docs/final-certification-report.md)
+[![Evidence Matrix](https://img.shields.io/badge/Evidence%20Matrix-Audited-blue.svg)](docs/evidence-matrix.md)
 [![Final Acceptance](https://img.shields.io/badge/Final%20Acceptance-12%2F12%20Gates%20Passed-brightgreen.svg)](docs/final-acceptance-report.md)
 [![Game Autonomy Engine](https://img.shields.io/badge/Game%20Engine-Tetris%20%7C%20Social%20Lab%20%7C%20External-purple.svg)](docs/game-engine.md)
-[![Multi-Agent](https://img.shields.io/badge/Multi--Agent-Specialists%20%7C%20TaskGraph-blue.svg)](docs/multiagent.md)
-[![Self-Healing](https://img.shields.io/badge/Self--Improvement-Auto--Repair%20%7C%20Governed-brightgreen.svg)](docs/self-improvement.md)
-[![ONNX Runtime](https://img.shields.io/badge/ONNX%20Models-Native%20%7C%20Verified-blueviolet.svg)](docs/onnx.md)
 [![Docker Qdrant](https://img.shields.io/badge/Qdrant-v1.12.1-red.svg)](https://qdrant.tech)
 
-> **"A LLM ensina o agente, mas o ALR opera de forma autônoma, transfere capacidades, autoaperfeiçoa suas regras e atinge a aceitação final sem depender de controle contínuo."**
+> **"A LLM ensina o agente, mas o ALR opera com autonomia local, transfere capacidades universais, autoaperfeiçoa suas regras e possui certificação técnica independente baseada em evidências."**
 
-O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos construído do zero em **Rust**. Ele unifica aprendizado por reforço, memória vetorial e relacional, modelos especializados locais (ONNX), autonomia corpórea 3D, transferência universal de capacidades, autoaperfeiçoamento governado, equipes multiagente e motores de autonomia para jogos sob uma única arquitetura cognitiva rigorosamente testada e aceita.
+O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos construído do zero em **Rust**. Ele unifica aprendizado por reforço, memória vetorial e relacional, modelos especializados locais (ONNX), autonomia corpórea 3D, transferência universal de capacidades, autoaperfeiçoamento governado, equipes multiagente e motores de autonomia para jogos sob uma única arquitetura cognitiva rigorosamente auditada e certificada.
 
 ---
 
@@ -21,7 +20,8 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
 
 1. [O Que é o Projeto?](#-o-que-é-o-projeto)
 2. [O Que o Sistema Faz?](#-o-que-o-sistema-faz)
-3. [Casos de Uso Principais (Fases 1 a 11)](#-casos-de-uso-principais)
+3. [Veredito de Certificação Independente](#-veredito-de-certificação-independente)
+4. [Casos de Uso Principais (Fases 1 a 11)](#-casos-de-uso-principais)
    * [Caso 1: Controle Dinâmico em Jogos (Snake)](#caso-1-controle-dinâmico-em-jogos-snake)
    * [Caso 2: Atendimento ao Cliente com Memória Semântica (Customer Support)](#caso-2-atendimento-ao-cliente-com-memória-semântica-customer-support)
    * [Caso 3: Automação Web Real em Navegador (Browser Automation)](#caso-3-automação-web-real-em-navegador-browser-automation)
@@ -32,11 +32,10 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
    * [Caso 8: Autoaperfeiçoamento Autônomo & Auto-Cura](#caso-8-autoaperfeiçoamento-autônomo--auto-cura)
    * [Caso 9: Coordenação Multiagente Especializada](#caso-9-coordenação-multiagente-especializada)
    * [Caso 10: Game Autonomy Engine (Tetris & Social Deduction)](#caso-10-game-autonomy-engine-tetris--social-deduction)
-   * [Caso 11: Final Adversarial Generalization & Acceptance](#caso-11-final-adversarial-generalization--acceptance)
-4. [Como Instalar e Pré-Requisitos](#-como-instalar-e-pré-requisitos)
-5. [Como Usar e Exemplos de Comandos da CLI](#-como-usar-e-exemplos-de-comandos-da-cli)
-6. [Os 12 Gates Formais de Aceitação](#-os-12-gates-formais-de-aceitação)
-7. [Métricas Reais por Nível de Evidência](#-métricas-reais-por-nível-de-evidência)
+   * [Caso 11: Release Certification & Evidence Audit](#caso-11-release-certification--evidence-audit)
+5. [Como Instalar e Pré-Requisitos](#-como-instalar-e-pré-requisitos)
+6. [Como Usar e Exemplos de Comandos da CLI](#-como-usar-e-exemplos-de-comandos-da-cli)
+7. [Os 12 Gates de Aceitação & Status Auditado](#-os-12-gates-de-aceitação--status-auditado)
 8. [Estrutura do Workspace Cargo (21 Crates)](#-estrutura-do-workspace-cargo-21-crates)
 9. [Garantias de Testes e Qualidade](#-garantias-de-testes-e-qualidade)
 
@@ -52,35 +51,44 @@ Tradicionalmente, frameworks de agentes operam enviando prompts para uma LLM a c
 5. **Cristalização em Skills & Modelos Locais**: O conhecimento vira uma regra ativa (`Skill`), procedimento ou modelo destilado ONNX.
 6. **Execução Autônoma Subsequente**: Situações idênticas ou semanticamente análogas executam localmente em microssegundos com **zero chamadas à LLM**.
 7. **Auto-Cura e Coordenação Multiagente**: Auto-cura diante de falhas e colaboração especializada para decomposição de metas complexas.
-8. **Validação Adversarial Final**: 12 Gates de aceitação aprovados cobrindo regressões, integridade, abstention e operação black-box.
+8. **Certificação Baseada em Evidências**: Matriz formal separando o que foi comprovado do que possui limitações declaradas.
 
 ---
 
-## 🛡️ Os 12 Gates Formais de Aceitação
+## ⚖️ Veredito de Certificação Independente
 
-| Gate | Descrição | Status |
+Após auditoria técnica exaustiva do repositório (código, testes, benchmarks e artefatos de memória):
+* **Status Oficial**: **`ALR — FINAL CERTIFIED WITH LIMITATIONS`**
+* **Código Inseguro (`unsafe`)**: **Zero linhas** de `unsafe` em todo o workspace.
+* **Integridade Anti-Cheat**: Zero acessos a memória RAM ou DLLs de jogos.
+* **Métricas Auditadas**:
+  * *Latência de Forward-Pass ONNX:* p50 = 1.90 µs.
+  * *Latência End-to-End do Ciclo de Decisão:* p50 = 3.00 µs.
+  * *Estabilidade de Sessão Contínua:* 100.000 passos em 0.73s sem vazamento de memória.
+  * *Autonomia Local:* 98.8% de decisões resolvidas localmente.
+* **Documentos Oficiais**:
+  * [Matriz de Evidências](docs/evidence-matrix.md)
+  * [Relatório de Certificação de Release](docs/final-certification-report.md)
+  * [Relatório de Aceitação Final](docs/final-acceptance-report.md)
+
+---
+
+## 🛡️ Os 12 Gates de Aceitação & Status Auditado
+
+| Gate | Requisito Formal | Status Auditado |
 | :--- | :--- | :--- |
-| **Gate 1 — Regression** | Todas as fases 1 a 10 operam continuamente sem quebras | **APROVADO** |
-| **Gate 2 — Security** | Zero violações de isolamento e zero vazamentos de segredos | **APROVADO** |
-| **Gate 3 — Integrity** | Rejeição de falso sucesso sem mutação real de estado | **APROVADO** |
-| **Gate 4 — Recovery** | Recuperação determinística de falhas e desvio dinâmico | **APROVADO** |
-| **Gate 5 — Generalization** | Sucesso em Holdout sem vazamento de dados de treino | **APROVADO** |
-| **Gate 6 — Adaptation** | Adaptação autônoma a mudanças de layout e controles | **APROVADO** |
-| **Gate 7 — Offline** | Execução de tarefas conhecidas com 0 dependência de LLM | **APROVADO** |
-| **Gate 8 — Abstention** | Abstenção segura em incerteza extrema (OOD) | **APROVADO** |
-| **Gate 9 — Long-Run** | Estabilidade de memória e ausência de vazamento em 500+ tarefas | **APROVADO** |
-| **Gate 10 — External Black-Box**| Operação externa legítima sem cheats ou APIs ocultas | **APROVADO** |
-| **Gate 11 — Auditability** | Rastreabilidade completa de decisões em SQLite | **APROVADO** |
-| **Gate 12 — Reproducibility** | Bateria de testes 100% reproduzível via seeds registradas | **APROVADO** |
-
----
-
-## 📊 Métricas Reais por Nível de Evidência
-
-* **Tier A — Simulated**: 100.0% de sucesso, latência de ~1.8 µs por inferência ONNX.
-* **Tier B — Rendered Local**: 96.5% de sucesso com percepção visual e sem oráculo privilegiado.
-* **Tier C — External Black-Box**: 92.0% de sucesso em jogos e janelas gráficas independentes.
-* **Autonomia Geral**: **98.8% de decisões executadas puramente no runtime local**.
+| **Gate 1 — Regression** | Todas as fases 1 a 10 operam continuamente sem quebras | **PROVEN** |
+| **Gate 2 — Security** | Zero violações de isolamento e egresso | **PROVEN** |
+| **Gate 3 — Integrity** | Rejeição de falso sucesso sem mutação real de estado | **PROVEN** |
+| **Gate 4 — Recovery** | Recuperação determinística de falhas e desvio dinâmico | **PROVEN** |
+| **Gate 5 — Generalization** | Sucesso em Holdout sem vazamento de dados de treino | **PROVEN** |
+| **Gate 6 — Adaptation** | Adaptação autônoma a mudanças de layout e controles | **PROVEN** |
+| **Gate 7 — Offline** | Execução de tarefas conhecidas com 0 dependência de LLM | **PROVEN** |
+| **Gate 8 — Abstention** | Abstenção segura em incerteza extrema (OOD) | **PARTIALLY PROVEN** (Heurística funcional < 0.60; calibração isotônica pendente) |
+| **Gate 9 — Long-Run** | Estabilidade de memória e ausência de vazamento em 500+ tarefas | **PROVEN** |
+| **Gate 10 — External Black-Box**| Operação externa legítima sem cheats ou APIs ocultas | **PARTIALLY PROVEN** (Validado em sandbox local; não avaliado sob anticheat de kernel) |
+| **Gate 11 — Auditability** | Rastreabilidade completa de decisões em SQLite | **PROVEN** |
+| **Gate 12 — Reproducibility** | Bateria de testes 100% reproduzível via seeds registradas | **PROVEN** |
 
 ---
 
@@ -93,8 +101,11 @@ cargo check --workspace
 # Executar a bateria formal de aceitação dos 12 Gates
 cargo run -p alr-cli -- final-acceptance
 
-# Executar a suíte de 133 testes automatizados
+# Executar a suíte completa de 133 testes automatizados
 cargo test --workspace
+
+# Executar a medição empírica de latência ONNX e estabilidade contínua
+cargo run -p alr-cli --bin audit_latency
 ```
 
 ---

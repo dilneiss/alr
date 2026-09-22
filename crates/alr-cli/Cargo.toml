@@ -9,6 +9,10 @@ license.workspace = true
 name = "alr"
 path = "src/main.rs"
 
+[[bin]]
+name = "audit_latency"
+path = "../../scripts/audit_latency_memory.rs"
+
 [[test]]
 name = "fundamental_tests"
 path = "../../tests/fundamental_tests.rs"
