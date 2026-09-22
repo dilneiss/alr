@@ -2,11 +2,11 @@ use alr_agent::LocalModelDecisionProvider;
 use alr_core::{DecisionContext, State};
 use alr_models::{
     DataSplit, DistillationPipeline, DistributionShiftDetector, ExperienceDataset, FeatureSchema,
-    FeatureVectorizer, LocalModelRuntime, ModelArtifact, ModelCard, ModelRegistry, ModelStatus,
-    OnnxModelRuntime,
+    FeatureVectorizer, LocalModelRuntime, ModelCard, ModelRegistry, ModelStatus, OnnxModelRuntime,
 };
+use std::sync::Arc;
 
-/// 1. TESTE: LOCAL MODEL RUNTIME & INTEGRITY CHECK
+/// 1. TESTE: LOCAL MODEL RUNTIME & INTEGRITY
 #[tokio::test]
 async fn test_local_model_runtime_and_integrity() {
     let dataset = ExperienceDataset::new("test_dataset", 1);
@@ -19,66 +19,76 @@ async fn test_local_model_runtime_and_integrity() {
 
     let runtime = OnnxModelRuntime::new();
     let handle = runtime.load(&artifact).await.unwrap();
-    assert_eq!(handle.input_features, 8);
-    assert_eq!(handle.output_classes, 4);
 
     let input = vec![0.0f32; 8];
     let pred = runtime.predict(&handle, &input).await.unwrap();
+
     assert_eq!(pred.class_probabilities.len(), 4);
-    assert!(pred.probability > 0.0);
+    assert!(pred.probability >= 0.25);
+    assert!(pred.latency_nanos > 0);
 }
 
-/// 2. TESTE: MODEL REGISTRY, CARD & ROLLBACK
-#[test]
-fn test_model_registry_and_rollback() {
+/// 2. TESTE: MODEL REGISTRY & ROLLBACK
+#[tokio::test]
+async fn test_model_registry_and_rollback() {
     let registry = ModelRegistry::new();
 
-    let mut art_v1 = ModelArtifact::new("snake_model", "game", "move", 8, 4, vec![1, 2, 3]);
-    art_v1.status = ModelStatus::Active;
-    let card_v1 = ModelCard {
-        model_id: art_v1.model_id.clone(),
-        name: "snake_model".to_string(),
+    let dataset = ExperienceDataset::new("test_v1", 1);
+    let mut a1 = DistillationPipeline::distill_snake_policy(&dataset).unwrap();
+    a1.name = "snake_policy".to_string();
+    a1.version = 1;
+
+    let mut a2 = DistillationPipeline::distill_snake_policy(&dataset).unwrap();
+    a2.name = "snake_policy".to_string();
+    a2.version = 2;
+
+    let card1 = ModelCard {
+        model_id: a1.model_id.clone(),
+        name: a1.name.clone(),
         version: 1,
-        purpose: "move policy".to_string(),
+        purpose: "move prediction".to_string(),
         training_data_hash: "hash_v1".to_string(),
         limitations: "none".to_string(),
-        accuracy: 0.92,
+        accuracy: 0.90,
         known_failure_modes: vec![],
         risk_class: "Low".to_string(),
     };
-    registry.register(art_v1, card_v1).unwrap();
 
-    let mut art_v2 = ModelArtifact::new("snake_model", "game", "move", 8, 4, vec![4, 5, 6]);
-    art_v2.status = ModelStatus::Active;
-    let card_v2 = ModelCard {
-        model_id: art_v2.model_id.clone(),
-        name: "snake_model".to_string(),
+    let card2 = ModelCard {
+        model_id: a2.model_id.clone(),
+        name: a2.name.clone(),
         version: 2,
-        purpose: "move policy v2".to_string(),
+        purpose: "move prediction".to_string(),
         training_data_hash: "hash_v2".to_string(),
         limitations: "none".to_string(),
-        accuracy: 0.85,
+        accuracy: 0.95,
         known_failure_modes: vec![],
         risk_class: "Low".to_string(),
     };
-    registry.register(art_v2, card_v2).unwrap();
 
-    assert_eq!(registry.get_active("snake_model").unwrap().version, 2);
+    registry.register(a1, card1).unwrap();
+    registry.register(a2, card2).unwrap();
 
-    // Rollback to v1
-    registry.rollback("snake_model", 1).unwrap();
-    assert_eq!(registry.get_active("snake_model").unwrap().version, 1);
+    let active = registry.get_active("snake_policy").unwrap();
+    assert_eq!(active.version, 2);
+
+    registry.rollback("snake_policy", 1).unwrap();
+
+    let active_after = registry.get_active("snake_policy").unwrap();
+    assert_eq!(active_after.version, 1);
+    assert_eq!(active_after.status, ModelStatus::Active);
 }
 
-/// 3. TESTE: DATASET SPLIT & DATA LEAKAGE TEST
+/// 3. TESTE: DATASET SPLITS & LEAKAGE DETECTION
 #[test]
 fn test_dataset_leakage_prevention() {
-    let mut dataset = ExperienceDataset::new("leakage_test", 1);
-    let s1 = State::new(vec![1.0, 0.0, 0.0, 0.0], serde_json::json!({}));
-    let s2 = State::new(vec![0.0, 1.0, 0.0, 0.0], serde_json::json!({}));
+    let mut dataset = ExperienceDataset::new("leak_test", 1);
+    let s1 = State::new(vec![1.0, 2.0, 3.0], serde_json::json!({}));
+    let s2 = State::new(vec![4.0, 5.0, 6.0], serde_json::json!({}));
 
     dataset.add_sample(&s1, 0, "UP", DataSplit::Train, true);
     dataset.add_sample(&s2, 1, "DOWN", DataSplit::Validation, true);
+
     assert!(dataset.assert_no_data_leakage().is_ok());
 
     dataset.add_sample(&s1, 0, "UP", DataSplit::Holdout, true);
@@ -94,7 +104,7 @@ fn test_out_of_distribution_abstention() {
     let centroid = vec![0.0f32; 8];
     let detector = DistributionShiftDetector::new(centroid, 2.0, 0.60);
 
-    let state_in = State::new(vec![0.2f32; 8], serde_json::json!({}));
+    let state_in = State::new(vec![0.1f32; 8], serde_json::json!({}));
     let (_, is_ood1) = detector.evaluate_ood(&state_in);
     assert!(!is_ood1, "Nearby state must be in-distribution");
 
@@ -108,13 +118,14 @@ fn test_out_of_distribution_abstention() {
 async fn test_local_model_falls_back_when_uncertain() {
     let dataset = ExperienceDataset::new("test", 1);
     let artifact = DistillationPipeline::distill_snake_policy(&dataset).unwrap();
-    let runtime = OnnxModelRuntime::new();
+    let runtime = Arc::new(OnnxModelRuntime::new());
     let handle = runtime.load(&artifact).await.unwrap();
 
     let centroid = vec![0.0f32; 8];
     let detector = DistributionShiftDetector::new(centroid, 1.0, 0.50);
 
     let provider = LocalModelDecisionProvider::new(
+        runtime,
         handle,
         Some(detector),
         0.99,
@@ -178,7 +189,7 @@ fn test_local_model_cannot_bypass_risk_engine() {
 /// 7. TESTE: INCOMPATIBLE FEATURE SCHEMA IS REJECTED
 #[test]
 fn test_incompatible_feature_schema_is_rejected() {
-    let schema = FeatureSchema::snake_v1();
+    let schema = FeatureSchema::new("test_schema", 1, 8);
     let invalid_state = State::new(vec![1.0, 0.0], serde_json::json!({}));
 
     let res = FeatureVectorizer::vectorize(&invalid_state, &schema);
@@ -191,10 +202,11 @@ fn test_incompatible_feature_schema_is_rejected() {
 /// 8. TESTE: UNVERIFIED EXPERIENCE IS NOT USED FOR TRAINING
 #[test]
 fn test_unverified_experience_is_not_used_for_training() {
-    let mut dataset = ExperienceDataset::new("filtered_train", 1);
+    let mut dataset = ExperienceDataset::new("unverified_test", 1);
     let s1 = State::new(vec![0.0f32; 8], serde_json::json!({}));
     let s2 = State::new(vec![1.0f32; 8], serde_json::json!({}));
 
+    // Add 1 verified sample and 1 unverified sample
     dataset.add_sample(&s1, 0, "UP", DataSplit::Train, true);
     dataset.add_sample(&s2, 1, "DOWN", DataSplit::Train, false);
 

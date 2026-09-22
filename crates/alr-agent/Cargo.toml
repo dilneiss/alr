@@ -10,19 +10,19 @@ alr-core = { workspace = true }
 alr-memory = { workspace = true }
 alr-learning = { workspace = true }
 alr-llm = { workspace = true }
-alr-perception = { workspace = true }
-alr-execution = { workspace = true }
 alr-snake = { workspace = true }
 alr-browser = { workspace = true }
-alr-models = { path = "../alr-models" }
+alr-models = { workspace = true }
+alr-world = { workspace = true }
+alr-spatial = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 uuid = { workspace = true }
 chrono = { workspace = true }
 thiserror = { workspace = true }
 anyhow = { workspace = true }
-async-trait = { workspace = true }
 tracing = { workspace = true }
 tokio = { workspace = true }
-rand = { workspace = true }
-parking_lot = "0.12"
+nrand = { workspace = true }
+parking_lot = { workspace = true }
+async-trait = { workspace = true }

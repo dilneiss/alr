@@ -11,6 +11,15 @@ pub struct FeatureSchema {
 }
 
 impl FeatureSchema {
+    pub fn new(name: &str, version: u32, feature_count: usize) -> Self {
+        Self {
+            name: name.to_string(),
+            version,
+            feature_names: (0..feature_count).map(|i| format!("feat_{}", i)).collect(),
+            normalization_range: (0.0, 1.0),
+        }
+    }
+
     pub fn snake_v1() -> Self {
         Self {
             name: "snake_features".to_string(),
@@ -45,18 +54,17 @@ impl FeatureVectorizer {
     pub fn vectorize(state: &State, schema: &FeatureSchema) -> Result<Vec<f32>> {
         if state.features.len() != schema.feature_names.len() {
             bail!(
-                "Incompatible Feature Schema: State has {} features, schema '{}' (v{}) requires {}",
-                state.features.len(),
-                schema.name,
-                schema.version,
-                schema.feature_names.len()
+                "Feature Schema Mismatch: Expected {} features, got {}",
+                schema.feature_names.len(),
+                state.features.len()
             );
         }
 
-        let mut clamped = Vec::with_capacity(state.features.len());
-        for &f in &state.features {
-            clamped.push(f.clamp(schema.normalization_range.0, schema.normalization_range.1));
-        }
+        let clamped = state
+            .features
+            .iter()
+            .map(|&v| v.clamp(schema.normalization_range.0, schema.normalization_range.1))
+            .collect();
 
         Ok(clamped)
     }

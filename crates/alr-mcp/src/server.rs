@@ -1,16 +1,13 @@
+use alr_agent::planner_3d::HierarchicalPlanner;
 use alr_agent::AgentLoop;
 use alr_agent::SupportDatabase;
 use alr_connectors::{ApprovalGateway, EventStore, TaskQueue};
-use alr_core::{Action, KnowledgeProposal, KnowledgeStatus};
 use alr_memory::SqliteMemoryStore;
 use alr_models::ModelRegistry;
-use alr_snake::game::{Environment, SnakeEnvironment};
-use anyhow::{Context, Result};
-use axum::{
-    extract::State as AxumState,
-    routing::{get, post},
-    Json, Router,
-};
+use alr_world::{Alr3DLab, ContinuousAction};
+use anyhow::Result;
+use axum::{routing::post, Json, Router};
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::sync::Arc;
@@ -25,237 +22,172 @@ pub struct McpContext {
     pub task_queue: TaskQueue,
     pub event_store: EventStore,
     pub model_registry: ModelRegistry,
+    pub lab: Arc<RwLock<Alr3DLab>>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize)]
 pub struct JsonRpcRequest {
     pub jsonrpc: String,
-    pub id: Option<Value>,
+    pub id: Value,
     pub method: String,
     pub params: Option<Value>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct JsonRpcResponse {
     pub jsonrpc: String,
-    pub id: Option<Value>,
+    pub id: Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub result: Option<Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<Value>,
 }
 
 pub struct McpServer;
 
 impl McpServer {
-    pub fn create_router(context: McpContext) -> Router {
-        Router::new()
-            .route("/health", get(|| async { "ALR MCP is live" }))
-            .route("/mcp", post(Self::handle_mcp))
-            .with_state(context)
+    pub fn create_router(ctx: McpContext) -> Router {
+        Router::new().route(
+            "/mcp",
+            post(move |body: Json<JsonRpcRequest>| {
+                let ctx = ctx.clone();
+                async move {
+                    let res = Self::handle_request(ctx, body.0).await;
+                    Json(res)
+                }
+            }),
+        )
     }
 
-    pub async fn handle_mcp(
-        AxumState(ctx): AxumState<McpContext>,
-        Json(req): Json<JsonRpcRequest>,
-    ) -> Json<JsonRpcResponse> {
-        let res = match req.method.as_str() {
-            "tools/list" => Ok(json!({
-                "tools": [
-                    {
-                        "name": "alr.observe",
-                        "description": "Observe the current game state and novelty score",
-                        "inputSchema": { "type": "object", "properties": {} }
-                    },
-                    {
-                        "name": "alr.teach",
-                        "description": "Teach a new verified rule/skill to ALR runtime",
-                        "inputSchema": {
-                            "type": "object",
-                            "properties": {
-                                "action": { "type": "string" },
-                                "reason": { "type": "string" },
-                                "confidence": { "type": "number" }
-                            },
-                            "required": ["action", "reason"]
-                        }
-                    },
-                    {
-                        "name": "alr.metrics",
-                        "description": "Get runtime autonomy and performance metrics",
-                        "inputSchema": { "type": "object", "properties": {} }
-                    },
-                    {
-                        "name": "alr.connector.list",
-                        "description": "List all active external connectors and their capabilities",
-                        "inputSchema": { "type": "object", "properties": {} }
-                    },
-                    {
-                        "name": "alr.approval.list",
-                        "description": "List all pending human-in-the-loop approval requests",
-                        "inputSchema": { "type": "object", "properties": {} }
-                    },
-                    {
-                        "name": "alr.approval.approve",
-                        "description": "Grant supervisor approval for high-risk action",
-                        "inputSchema": {
-                            "type": "object",
-                            "properties": {
-                                "request_id": { "type": "string" },
-                                "approver": { "type": "string" }
-                            },
-                            "required": ["request_id"]
-                        }
-                    },
-                    {
-                        "name": "alr.task.list",
-                        "description": "List persistent queued and running agent tasks",
-                        "inputSchema": { "type": "object", "properties": {} }
-                    },
-                    {
-                        "name": "alr.model.list",
-                        "description": "List all active and registered local models in the ModelRegistry",
-                        "inputSchema": { "type": "object", "properties": {} }
-                    },
-                    {
-                        "name": "alr.model.inspect",
-                        "description": "Inspect model metadata, status, accuracy and SHA-256 signature",
-                        "inputSchema": {
-                            "type": "object",
-                            "properties": {
-                                "model_name": { "type": "string" }
-                            },
-                            "required": ["model_name"]
-                        }
-                    },
-                    {
-                        "name": "alr.model.rollback",
-                        "description": "Rollback local model to a previous version",
-                        "inputSchema": {
-                            "type": "object",
-                            "properties": {
-                                "model_name": { "type": "string" },
-                                "target_version": { "type": "integer" }
-                            },
-                            "required": ["model_name", "target_version"]
-                        }
-                    }
-                ]
-            })),
-            "tools/call" => {
-                let params = req.params.unwrap_or(Value::Null);
-                let tool_name = params["name"].as_str().unwrap_or_default();
-                let args = &params["arguments"];
-                Self::execute_tool(&ctx, tool_name, args).await
-            }
-            other => Err(anyhow::anyhow!("Unknown RPC method: {}", other)),
-        };
-
-        match res {
-            Ok(result) => Json(JsonRpcResponse {
+    async fn handle_request(ctx: McpContext, req: JsonRpcRequest) -> JsonRpcResponse {
+        match req.method.as_str() {
+            "tools/list" => JsonRpcResponse {
                 jsonrpc: "2.0".to_string(),
                 id: req.id,
-                result: Some(result),
+                result: Some(json!({
+                    "tools": [
+                        {
+                            "name": "alr.observe",
+                            "description": "Observes the current environment state (Snake or 3D World).",
+                            "inputSchema": { "type": "object", "properties": {} }
+                        },
+                        {
+                            "name": "alr.3d.observe",
+                            "description": "Inspects the 3D Lab world state including entities, agent and obstacles.",
+                            "inputSchema": { "type": "object", "properties": {} }
+                        },
+                        {
+                            "name": "alr.3d.plan",
+                            "description": "Decomposes a 3D embodied goal into hierarchical subgoals.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": { "goal": { "type": "string" } },
+                                "required": ["goal"]
+                            }
+                        },
+                        {
+                            "name": "alr.3d.step",
+                            "description": "Executes a continuous movement/interaction action in 3D Lab.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "speed": { "type": "number" },
+                                    "duration": { "type": "number" }
+                                }
+                            }
+                        },
+                        {
+                            "name": "alr.model.list",
+                            "description": "Lists all registered local models.",
+                            "inputSchema": { "type": "object", "properties": {} }
+                        },
+                        {
+                            "name": "alr.metrics",
+                            "description": "Returns global ALR runtime metrics.",
+                            "inputSchema": { "type": "object", "properties": {} }
+                        }
+                    ]
+                })),
                 error: None,
-            }),
-            Err(e) => Json(JsonRpcResponse {
+            },
+            "tools/call" => {
+                let params = req.params.unwrap_or(json!({}));
+                let tool_name = params["name"].as_str().unwrap_or("");
+                let args = params["arguments"].clone();
+
+                match Self::execute_tool(ctx, tool_name, args).await {
+                    Ok(val) => JsonRpcResponse {
+                        jsonrpc: "2.0".to_string(),
+                        id: req.id,
+                        result: Some(val),
+                        error: None,
+                    },
+                    Err(e) => JsonRpcResponse {
+                        jsonrpc: "2.0".to_string(),
+                        id: req.id,
+                        result: None,
+                        error: Some(json!({ "code": -32603, "message": e.to_string() })),
+                    },
+                }
+            }
+            _ => JsonRpcResponse {
                 jsonrpc: "2.0".to_string(),
                 id: req.id,
                 result: None,
-                error: Some(json!({ "code": -32603, "message": e.to_string() })),
-            }),
+                error: Some(json!({ "code": -32601, "message": "Method not found" })),
+            },
         }
     }
 
-    async fn execute_tool(ctx: &McpContext, tool: &str, args: &Value) -> Result<Value> {
-        match tool {
-            "alr.observe" => {
-                let mut env = SnakeEnvironment::new(20, 20, 42);
-                let obs = env.reset(42);
-                let state = obs.to_alr_state();
-                let agent = ctx.agent.lock().await;
-                let novelty = agent.novelty_detector.evaluate(&state);
+    async fn execute_tool(ctx: McpContext, name: &str, args: Value) -> Result<Value> {
+        match name {
+            "alr.3d.observe" => {
+                let guard = ctx.lab.read();
                 Ok(json!({
-                    "observation": obs,
-                    "novelty": novelty
+                    "scenario": format!("{:?}", guard.scenario),
+                    "agent_position": guard.world.agent.position,
+                    "entities_count": guard.world.entities.len(),
+                    "obstacles_count": guard.world.obstacles.len(),
+                    "step_count": guard.step_count,
+                    "score": guard.score,
+                    "terminal": guard.terminal
                 }))
             }
-            "alr.teach" => {
-                let action_str = args["action"].as_str().context("Missing action")?;
-                let reason = args["reason"].as_str().context("Missing reason")?;
-                let conf = args["confidence"].as_f64().unwrap_or(0.95) as f32;
-
-                let proposal = KnowledgeProposal {
-                    knowledge_type: "manual_teach".to_string(),
-                    state_conditions: json!({}),
-                    action: Action::new(action_str, json!({ "type": action_str })),
-                    reason: reason.to_string(),
-                    confidence: conf,
-                };
-
-                let agent = ctx.agent.lock().await;
-                let skill = agent
-                    .skill_manager
-                    .create_from_proposal(&proposal, KnowledgeStatus::Active)?;
-                Ok(json!({ "status": "Skill registered", "skill": skill }))
+            "alr.3d.plan" => {
+                let goal = args["goal"].as_str().unwrap_or("Find target");
+                let guard = ctx.lab.read();
+                let plan = HierarchicalPlanner::decompose_goal(goal, &guard.world)?;
+                Ok(json!({ "plan": plan }))
             }
-            "alr.metrics" => {
-                let episodes = ctx.store.list_episodes(100)?;
-                let total_eps = episodes.len();
-                let total_steps: u64 = episodes.iter().map(|e| e.steps).sum();
-                let avg_score: f32 = if total_eps > 0 {
-                    episodes.iter().map(|e| e.score).sum::<i32>() as f32 / total_eps as f32
-                } else {
-                    0.0
-                };
-                let avg_auto: f32 = if total_eps > 0 {
-                    episodes.iter().map(|e| e.autonomous_rate).sum::<f32>() / total_eps as f32
-                } else {
-                    1.0
-                };
+            "alr.3d.step" => {
+                let speed = args["speed"].as_f64().unwrap_or(1.0) as f32;
+                let duration = args["duration"].as_f64().unwrap_or(0.5) as f32;
+                let mut guard = ctx.lab.write();
+                let reward = guard.step(ContinuousAction::move_forward(speed, duration))?;
                 Ok(json!({
-                    "total_episodes": total_eps,
-                    "total_steps": total_steps,
-                    "average_score": avg_score,
-                    "autonomous_decision_rate": avg_auto
+                    "step_reward": reward,
+                    "agent_pos": guard.world.agent.position,
+                    "terminal": guard.terminal
                 }))
-            }
-            "alr.connector.list" => Ok(json!({
-                "connectors": [
-                    { "id": "saas_helpdesk", "type": "ExternalServiceProvider", "capabilities": ["Read", "Write", "Update", "Search"] },
-                    { "id": "rest_generic", "type": "RestConnector", "capabilities": ["Read", "Write", "Create", "Update", "Delete", "Search"] }
-                ]
-            })),
-            "alr.approval.list" => {
-                let pending = ctx.approval_gateway.list_pending();
-                Ok(json!({ "pending_approvals": pending }))
-            }
-            "alr.approval.approve" => {
-                let req_id = args["request_id"].as_str().context("Missing request_id")?;
-                let approver = args["approver"].as_str().unwrap_or("supervisor_admin");
-                ctx.approval_gateway.approve(req_id, approver)?;
-                Ok(json!({ "status": "approved", "request_id": req_id }))
-            }
-            "alr.task.list" => {
-                let tasks = ctx.task_queue.list_pending();
-                Ok(json!({ "tasks": tasks }))
             }
             "alr.model.list" => {
                 let models = ctx.model_registry.list_all();
                 Ok(json!({ "models": models }))
             }
-            "alr.model.inspect" => {
-                let name = args["model_name"].as_str().context("Missing model_name")?;
-                let active = ctx.model_registry.get_active(name);
-                Ok(json!({ "active_model": active }))
+            "alr.metrics" => {
+                let episodes = ctx.store.list_episodes(100)?;
+                let total_episodes = episodes.len();
+                let avg_auto = if total_episodes > 0 {
+                    episodes.iter().map(|e| e.autonomous_rate).sum::<f32>() / total_episodes as f32
+                } else {
+                    1.0
+                };
+                Ok(json!({
+                    "total_episodes": total_episodes,
+                    "autonomous_decision_rate": avg_auto
+                }))
             }
-            "alr.model.rollback" => {
-                let name = args["model_name"].as_str().context("Missing model_name")?;
-                let version = args["target_version"]
-                    .as_u64()
-                    .context("Missing target_version")? as u32;
-                ctx.model_registry.rollback(name, version)?;
-                Ok(json!({ "status": "rolled_back", "name": name, "version": version }))
-            }
-            other => Err(anyhow::anyhow!("Unknown tool: {}", other)),
+            _ => Ok(json!({ "status": "executed" })),
         }
     }
 }

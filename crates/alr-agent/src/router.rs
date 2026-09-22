@@ -1,7 +1,8 @@
 use alr_core::{Action, Decision, DecisionContext, DecisionSource, State};
-use alr_models::{DistributionShiftDetector, LocalModelRuntime, ModelHandle, OnnxModelRuntime};
+use alr_models::{DistributionShiftDetector, LocalModelRuntime, ModelHandle};
 use anyhow::{bail, Result};
 use async_trait::async_trait;
+use std::sync::Arc;
 
 #[async_trait]
 pub trait DecisionProvider: Send + Sync {
@@ -11,7 +12,7 @@ pub trait DecisionProvider: Send + Sync {
 }
 
 pub struct LocalModelDecisionProvider {
-    runtime: OnnxModelRuntime,
+    runtime: Arc<dyn LocalModelRuntime>,
     handle: ModelHandle,
     shift_detector: Option<DistributionShiftDetector>,
     confidence_threshold: f32,
@@ -20,13 +21,14 @@ pub struct LocalModelDecisionProvider {
 
 impl LocalModelDecisionProvider {
     pub fn new(
+        runtime: Arc<dyn LocalModelRuntime>,
         handle: ModelHandle,
         shift_detector: Option<DistributionShiftDetector>,
         confidence_threshold: f32,
         class_to_action: Vec<String>,
     ) -> Self {
         Self {
-            runtime: OnnxModelRuntime::new(),
+            runtime,
             handle,
             shift_detector,
             confidence_threshold,
@@ -61,16 +63,17 @@ impl DecisionProvider for LocalModelDecisionProvider {
         // 2. Local ONNX inference
         let pred = self.runtime.predict(&self.handle, &state.features).await?;
 
-        // 3. Confidence threshold check
+        // 3. Confidence Threshold Check & Abstention
         if pred.probability < self.confidence_threshold {
             tracing::info!(
-                "Local Model abstains: Prediction probability {:.3} is below threshold {:.3}",
+                "Local Model abstains: Confidence {:.2} is below threshold {:.2}",
                 pred.probability,
                 self.confidence_threshold
             );
             return Ok(None);
         }
 
+        // 4. Map predicted class to action
         let action_id = self
             .class_to_action
             .get(pred.predicted_class)
@@ -86,17 +89,19 @@ impl DecisionProvider for LocalModelDecisionProvider {
             DecisionSource::NeuralPolicy,
         )
         .with_explanation(format!(
-            "Local Model '{}' inference (latency: {} ns)",
-            self.handle.name, pred.latency_nanos
+            "Local Model '{}' v{} executed with {:.1}% probability in {} ns",
+            self.handle.name,
+            self.handle.version,
+            pred.probability * 100.0,
+            pred.latency_nanos
         ));
 
         Ok(Some(decision))
     }
 }
 
-/// Strict 7-Level Decision Router
 pub struct DecisionRouter {
-    pub providers: Vec<Box<dyn DecisionProvider>>,
+    providers: Vec<Box<dyn DecisionProvider>>,
 }
 
 impl Default for DecisionRouter {

@@ -1,5 +1,5 @@
 [package]
-name = "alr-perception"
+name = "alr-world"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -7,11 +7,10 @@ license.workspace = true
 
 [dependencies]
 alr-core = { workspace = true }
-alr-world = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-image = { workspace = true }
-parking_lot = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
 thiserror = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }

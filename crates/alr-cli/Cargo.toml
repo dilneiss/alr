@@ -33,6 +33,10 @@ path = "../../tests/phase4_connectors_tests.rs"
 name = "phase5_local_models_tests"
 path = "../../tests/phase5_local_models_tests.rs"
 
+[[test]]
+name = "phase6_3d_embodied_tests"
+path = "../../tests/phase6_3d_embodied_tests.rs"
+
 [dependencies]
 alr-core = { workspace = true }
 alr-memory = { workspace = true }
@@ -43,21 +47,24 @@ alr-execution = { workspace = true }
 alr-snake = { workspace = true }
 alr-agent = { workspace = true }
 alr-browser = { workspace = true }
-alr-connectors = { path = "../alr-connectors" }
-alr-models = { path = "../alr-models" }
+alr-connectors = { workspace = true }
+alr-models = { workspace = true }
+alr-world = { workspace = true }
+alr-spatial = { workspace = true }
 alr-mcp = { workspace = true }
-serde = { workspace = true }
-serde_json = { workspace = true }
-uuid = { workspace = true }
-chrono = { workspace = true }
-thiserror = { workspace = true }
-anyhow = { workspace = true }
-tracing = { workspace = true }
-tracing-subscriber = { workspace = true }
 clap = { workspace = true }
 colored = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+uuid = { workspace = true }
 tokio = { workspace = true }
-rand = { workspace = true }
+nrand = { workspace = true }
+parking_lot = { workspace = true }
 axum = { workspace = true }
 async-trait = { workspace = true }
 hmac = "0.12"

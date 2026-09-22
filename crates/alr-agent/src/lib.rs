@@ -3,6 +3,7 @@ pub mod conflict;
 pub mod learning;
 pub mod r#loop;
 pub mod orchestration;
+pub mod planner_3d;
 pub mod procedural;
 pub mod reliability;
 pub mod risk;
@@ -17,24 +18,23 @@ pub mod tools;
 pub mod trust;
 
 pub use browser_agent::{BrowserAgent, BrowserSkill, BrowserSkillStep};
-pub use conflict::{
-    ConfidenceBucket, ConfidenceCalibrator, ConflictResolutionStrategy, PolicyConflict,
-    PolicyConflictEngine,
-};
-pub use learning::PolicyTrainer;
+pub use conflict::{ConflictResolutionStrategy, PolicyConflictEngine};
 pub use orchestration::EpisodeOrchestrator;
+pub use planner_3d::{
+    HierarchicalPlanner, HighLevelPlan, Recovery3DStrategy, SubGoal, SubGoalKind,
+};
 pub use procedural::{ProceduralSkill, ProceduralStep};
 pub use r#loop::AgentLoop;
-pub use reliability::{IdempotencyStore, LlmCallBudget, LoopDetector, RetryConfig};
+pub use reliability::{IdempotencyStore, LlmCallBudget, LoopDetector};
 pub use risk::{RiskAssessment, RiskEngine};
 pub use router::{DecisionProvider, DecisionRouter, LocalModelDecisionProvider};
-pub use security::{InjectionVector, SecurityRedTeamAuditor};
+pub use security::SecurityRedTeamAuditor;
 pub use skill_lifecycle::{
-    KnowledgeValidity, SkillHealthStatus, SkillRegressionRunner, SkillTestCase, SkillTestResult,
+    KnowledgeValidity, SkillHealthStatus, SkillRegressionRunner, SkillTestCase,
     VersionedSkillRegistry,
 };
 pub use skills::{ProposalValidator, SkillManager};
-pub use support_agent::{SupportAgent, SupportResolution};
+pub use support_agent::SupportAgent;
 pub use support_state::{StateExtractor, SupportIntent};
 pub use support_tool::{RiskLevel, SupportTool, ToolContext, ToolInput, ToolOutput};
 pub use tools::*;
