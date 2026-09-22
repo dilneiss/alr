@@ -80,7 +80,9 @@ impl TetrisBoard {
 
         // Find landing row
         let mut land_row = 0;
-        while land_row + 1 < self.height && (col..col + width_span).all(|c| !self.grid[land_row + 1][c]) {
+        while land_row + 1 < self.height
+            && (col..col + width_span).all(|c| !self.grid[land_row + 1][c])
+        {
             land_row += 1;
         }
 
@@ -242,7 +244,10 @@ impl SocialDeductionLab {
                 p.alive = false;
                 self.match_ended = true;
                 self.winner = Some(SocialRole::Crewmate);
-                return Some(format!("Player '{}' was ejected. Impostors eliminated!", target_id));
+                return Some(format!(
+                    "Player '{}' was ejected. Impostors eliminated!",
+                    target_id
+                ));
             }
         }
         Some("Vote skipped or inconclusive".to_string())
@@ -274,18 +279,15 @@ impl TemporalGameMemory {
     }
 
     pub fn record_sighting(&mut self, player_id: &str, pos: (i32, i32)) {
-        self.player_sightings.push((player_id.to_string(), pos, Utc::now()));
+        self.player_sightings
+            .push((player_id.to_string(), pos, Utc::now()));
     }
 }
 
 pub struct SuspicionModel;
 
 impl SuspicionModel {
-    pub fn calculate_suspicion(
-        player_id: &str,
-        seen_near_event: bool,
-        task_faked: bool,
-    ) -> f32 {
+    pub fn calculate_suspicion(player_id: &str, seen_near_event: bool, task_faked: bool) -> f32 {
         let mut score: f32 = 0.10;
         if seen_near_event {
             score += 0.45;

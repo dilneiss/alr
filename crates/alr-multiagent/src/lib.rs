@@ -352,11 +352,7 @@ impl MetaPlanner {
         let mut graph = TaskGraph::new(goal);
 
         if goal.contains("suporte") || goal.contains("ticket") {
-            graph.add_node(
-                "node_1",
-                "Identify Customer & Order",
-                AgentRole::Researcher,
-            );
+            graph.add_node("node_1", "Identify Customer & Order", AgentRole::Researcher);
             graph.add_node(
                 "node_2",
                 "Retrieve Policy & Decision",

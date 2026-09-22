@@ -124,7 +124,10 @@ fn test_reward_hacking_rejected() {
         1.00,
     );
     assert!(res.is_err());
-    assert!(res.unwrap_err().to_string().contains("Reward Hacking Detected"));
+    assert!(res
+        .unwrap_err()
+        .to_string()
+        .contains("Reward Hacking Detected"));
 }
 
 /// 7. TESTE: ATOMIC ROLLBACK

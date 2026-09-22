@@ -53,6 +53,10 @@ path = "../../tests/phase9_multiagent_tests.rs"
 name = "phase10_game_tests"
 path = "../../tests/phase10_game_tests.rs"
 
+[[test]]
+name = "phase11_acceptance_tests"
+path = "../../tests/phase11_acceptance_tests.rs"
+
 [dependencies]
 alr-core = { workspace = true }
 alr-memory = { workspace = true }
@@ -72,6 +76,7 @@ alr-transfer = { workspace = true }
 alr-improvement = { workspace = true }
 alr-multiagent = { workspace = true }
 alr-games = { workspace = true }
+alr-validation = { workspace = true }
 alr-mcp = { workspace = true }
 clap = { workspace = true }
 colored = { workspace = true }

@@ -19,6 +19,7 @@ members = [
     "crates/alr-improvement",
     "crates/alr-multiagent",
     "crates/alr-games",
+    "crates/alr-validation",
     "crates/alr-mcp",
     "crates/alr-cli",
 ]
@@ -48,6 +49,7 @@ alr-transfer = { path = "crates/alr-transfer" }
 alr-improvement = { path = "crates/alr-improvement" }
 alr-multiagent = { path = "crates/alr-multiagent" }
 alr-games = { path = "crates/alr-games" }
+alr-validation = { path = "crates/alr-validation" }
 alr-mcp = { path = "crates/alr-mcp" }
 tokio = { version = "1.37", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }

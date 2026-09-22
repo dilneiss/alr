@@ -114,10 +114,7 @@ impl FailureMemory {
 pub struct RootCauseAnalyzer;
 
 impl RootCauseAnalyzer {
-    pub fn diagnose(
-        classification: &FailureClassification,
-        actual_outcome: &str,
-    ) -> String {
+    pub fn diagnose(classification: &FailureClassification, actual_outcome: &str) -> String {
         match classification {
             FailureClassification::SkillFailure => {
                 if actual_outcome.contains("selector") || actual_outcome.contains("drift") {
@@ -161,10 +158,20 @@ impl HypothesisEngine {
         };
 
         Hypothesis {
-            id: format!("hyp_{}", uuid::Uuid::new_v4().to_string().chars().take(8).collect::<String>()),
+            id: format!(
+                "hyp_{}",
+                uuid::Uuid::new_v4()
+                    .to_string()
+                    .chars()
+                    .take(8)
+                    .collect::<String>()
+            ),
             failure_id: failure.id.clone(),
             description: format!("Mitigate '{}' via parameter adaptation", failure.root_cause),
-            affected_skill: failure.skill_id.clone().unwrap_or_else(|| "general_policy".to_string()),
+            affected_skill: failure
+                .skill_id
+                .clone()
+                .unwrap_or_else(|| "general_policy".to_string()),
             proposed_change: proposed.to_string(),
             expected_improvement: "Eliminate task regression and restore success > 95%".to_string(),
             confidence: 0.90,
@@ -225,7 +232,14 @@ impl SelfImprovementEngine {
 
         // 1. Record & Diagnose Failure
         let failure = FailureCase {
-            id: format!("fail_{}", uuid::Uuid::new_v4().to_string().chars().take(8).collect::<String>()),
+            id: format!(
+                "fail_{}",
+                uuid::Uuid::new_v4()
+                    .to_string()
+                    .chars()
+                    .take(8)
+                    .collect::<String>()
+            ),
             environment_id: "production".to_string(),
             task_id: "auto_task".to_string(),
             state: State::new(vec![0.0; 4], serde_json::json!({})),
@@ -235,7 +249,10 @@ impl SelfImprovementEngine {
             skill_id: Some(skill_name.to_string()),
             model_id: None,
             classification: FailureClassification::SkillFailure,
-            root_cause: RootCauseAnalyzer::diagnose(&FailureClassification::SkillFailure, failure_msg),
+            root_cause: RootCauseAnalyzer::diagnose(
+                &FailureClassification::SkillFailure,
+                failure_msg,
+            ),
             confidence: 0.88,
             novelty: 0.12,
             timestamp: Utc::now(),
@@ -246,7 +263,14 @@ impl SelfImprovementEngine {
         let hypothesis = HypothesisEngine::generate_hypothesis(&failure);
 
         // 3. Create Candidate Variant
-        let candidate_id = format!("cand_{}", uuid::Uuid::new_v4().to_string().chars().take(8).collect::<String>());
+        let candidate_id = format!(
+            "cand_{}",
+            uuid::Uuid::new_v4()
+                .to_string()
+                .chars()
+                .take(8)
+                .collect::<String>()
+        );
         let candidate = CandidateVariant {
             id: candidate_id.clone(),
             target_skill: skill_name.to_string(),
@@ -259,7 +283,11 @@ impl SelfImprovementEngine {
 
         // 4. Invariant & Regression Checks
         if candidate_success <= baseline_success {
-            bail!("Regression detected: Candidate success ({:.1}%) does not beat baseline ({:.1}%)", candidate_success * 100.0, baseline_success * 100.0);
+            bail!(
+                "Regression detected: Candidate success ({:.1}%) does not beat baseline ({:.1}%)",
+                candidate_success * 100.0,
+                baseline_success * 100.0
+            );
         }
 
         // 5. Anti-Reward Hacking Defense
@@ -269,7 +297,14 @@ impl SelfImprovementEngine {
 
         // 6. Record Experiment
         let exp = Experiment {
-            id: format!("exp_{}", uuid::Uuid::new_v4().to_string().chars().take(8).collect::<String>()),
+            id: format!(
+                "exp_{}",
+                uuid::Uuid::new_v4()
+                    .to_string()
+                    .chars()
+                    .take(8)
+                    .collect::<String>()
+            ),
             hypothesis_id: hypothesis.id,
             candidate_id: candidate_id.clone(),
             baseline_variant: "v1".to_string(),
@@ -287,7 +322,10 @@ impl SelfImprovementEngine {
         self.candidates.write().insert(candidate_id, candidate);
         self.active_skills.write().insert(skill_name.to_string(), 2);
 
-        Ok(format!("Skill '{}' upgraded to v2 via validated experiment", skill_name))
+        Ok(format!(
+            "Skill '{}' upgraded to v2 via validated experiment",
+            skill_name
+        ))
     }
 
     pub fn rollback_skill(&self, skill_name: &str) -> Result<u32> {
