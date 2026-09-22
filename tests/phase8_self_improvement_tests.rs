@@ -173,3 +173,37 @@ fn test_system_can_improve_without_llm() {
     let res = engine.self_heal_cycle("snake_avoid", "danger_front collision", 0.70, 0.96);
     assert!(res.is_ok());
 }
+
+/// 10. TESTE: LOOP EVASION ENGINE DETECTS 2-STEP OSCILLATION
+#[test]
+fn test_loop_evasion_detects_oscillation() {
+    let mut evasion = alr_agent::LoopEvasionEngine::new(25);
+    assert!(evasion.inspect_and_evade("hash_1", "UP").is_none());
+    assert!(evasion.inspect_and_evade("hash_2", "DOWN").is_none());
+    assert!(evasion.inspect_and_evade("hash_1", "UP").is_none());
+
+    // Fourth step repeats the UP <-> DOWN oscillation pattern
+    let escape = evasion.inspect_and_evade("hash_2", "DOWN");
+    assert!(escape.is_some());
+    assert_eq!(
+        escape.unwrap(),
+        "RIGHT",
+        "Must force orthogonal rightward escape when oscillating vertically"
+    );
+}
+
+/// 11. TESTE: LOOP EVASION ENGINE ESCAPES SPATIAL STAGNATION
+#[test]
+fn test_loop_evasion_escapes_stagnation() {
+    let mut evasion = alr_agent::LoopEvasionEngine::new(5);
+    for _ in 0..4 {
+        evasion.inspect_and_evade("same_coord", "RIGHT");
+    }
+    let escape = evasion.inspect_and_evade("same_coord", "RIGHT");
+    assert!(escape.is_some());
+    assert_eq!(
+        escape.unwrap(),
+        "UP",
+        "Must trigger escape when stagnant at same state"
+    );
+}

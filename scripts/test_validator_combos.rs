@@ -1,5 +1,5 @@
 use alr_agent::skills::ProposalValidator;
-use alr_core::{Action, ActionType, KnowledgeRequest, State};
+use alr_core::{KnowledgeRequest, State};
 use alr_llm::{LlmTeacher, MockLlmTeacher};
 
 #[tokio::main]
@@ -32,7 +32,10 @@ async fn main() {
                                     {
                                         rejected += 1;
                                         if rejected <= 5 {
-                                            println!("Rejection: dir={}, df={}, dl={}, dr={}, action={:?}, err={}", dir, df, dl, dr, prop.action.id, e);
+                                            println!(
+                                                "Rejection: dir={}, df={}, dl={}, dr={}, action={:?}, err={}",
+                                                dir, df, dl, dr, prop.action.id, e
+                                            );
                                         }
                                     }
                                 }

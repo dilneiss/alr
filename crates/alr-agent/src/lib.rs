@@ -25,7 +25,7 @@ pub use planner_3d::{
 };
 pub use procedural::{ProceduralSkill, ProceduralStep};
 pub use r#loop::AgentLoop;
-pub use reliability::{IdempotencyStore, LlmCallBudget, LoopDetector};
+pub use reliability::{IdempotencyStore, LlmCallBudget, LoopDetector, LoopEvasionEngine};
 pub use risk::{RiskAssessment, RiskEngine};
 pub use router::{DecisionProvider, DecisionRouter, LocalModelDecisionProvider};
 pub use security::SecurityRedTeamAuditor;

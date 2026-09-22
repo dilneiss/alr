@@ -30,6 +30,10 @@ const puppeteer = require('puppeteer');
 
     let currentDir = "ArrowRight";
     let step = 0;
+    let recentPositions = [];
+    let recentActions = [];
+    let evasionTicksRemaining = 0;
+    let forcedEvasionKey = null;
 
     const gameLoop = setInterval(async () => {
         try {
@@ -71,6 +75,9 @@ const puppeteer = require('puppeteer');
 
             if (!state || state.isGameOver) {
                 console.log("Fim de Jogo detectado! Reiniciando nova partida...");
+                recentPositions = [];
+                recentActions = [];
+                evasionTicksRemaining = 0;
                 await page.evaluate(() => {
                     const btns = Array.from(document.querySelectorAll('button'));
                     const startBtn = btns.find(b => b.innerText.includes('Iniciar Jogo'));
@@ -81,6 +88,25 @@ const puppeteer = require('puppeteer');
 
             const { head, food } = state;
 
+            // Rastrear histórico para detector de loop e oscilação
+            recentPositions.push({ x: head.x, y: head.y });
+            if (recentPositions.length > 10) recentPositions.shift();
+
+            // Detectar oscilação 2-passos (A -> B -> A -> B)
+            let isOscillating = false;
+            const aLen = recentActions.length;
+            if (aLen >= 4) {
+                if (recentActions[aLen - 1] === recentActions[aLen - 3] &&
+                    recentActions[aLen - 2] === recentActions[aLen - 4] &&
+                    recentActions[aLen - 1] !== recentActions[aLen - 2]) {
+                    isOscillating = true;
+                }
+            }
+
+            // Detectar estagnação espacial (visitou a mesma coordenada 3 vezes recentemente)
+            const visitCount = recentPositions.filter(p => Math.abs(p.x - head.x) < 15 && Math.abs(p.y - head.y) < 15).length;
+            const isStagnant = visitCount >= 3;
+
             // Políticas de evasão de borda e perseguição de comida
             let safeMoves = [];
             if (currentDir !== "ArrowRight" && head.x > 60) safeMoves.push("ArrowLeft");
@@ -89,24 +115,46 @@ const puppeteer = require('puppeteer');
             if (currentDir !== "ArrowUp" && head.y < 440) safeMoves.push("ArrowDown");
 
             let bestKey = safeMoves[0] || "ArrowRight";
-            let bestDist = Infinity;
 
-            for (const move of safeMoves) {
-                let nextX = head.x;
-                let nextY = head.y;
-                if (move === "ArrowLeft") nextX -= 20;
-                if (move === "ArrowRight") nextX += 20;
-                if (move === "ArrowUp") nextY -= 20;
-                if (move === "ArrowDown") nextY += 20;
+            // Se evasão ativa, força manobra ortogonal
+            if (evasionTicksRemaining > 0) {
+                evasionTicksRemaining--;
+                bestKey = forcedEvasionKey;
+            } else if (isOscillating || isStagnant) {
+                // Forçar manobra perpendicular ao eixo de oscilação
+                const lastMove = recentActions[recentActions.length - 1];
+                let escapeMove = "ArrowRight";
+                if (lastMove === "ArrowUp" || lastMove === "ArrowDown") {
+                    escapeMove = head.x < 250 ? "ArrowRight" : "ArrowLeft";
+                } else {
+                    escapeMove = head.y < 250 ? "ArrowDown" : "ArrowUp";
+                }
+                forcedEvasionKey = escapeMove;
+                evasionTicksRemaining = 3;
+                bestKey = escapeMove;
+                console.log(`[LOOP DETECTOR] Oscilação detectada! Forçando evasão ortogonal: ${escapeMove} por 3 ticks.`);
+            } else {
+                let bestDist = Infinity;
+                for (const move of safeMoves) {
+                    let nextX = head.x;
+                    let nextY = head.y;
+                    if (move === "ArrowLeft") nextX -= 20;
+                    if (move === "ArrowRight") nextX += 20;
+                    if (move === "ArrowUp") nextY -= 20;
+                    if (move === "ArrowDown") nextY += 20;
 
-                const d = Math.hypot(food.x - nextX, food.y - nextY);
-                if (d < bestDist) {
-                    bestDist = d;
-                    bestKey = move;
+                    const d = Math.hypot(food.x - nextX, food.y - nextY);
+                    if (d < bestDist) {
+                        bestDist = d;
+                        bestKey = move;
+                    }
                 }
             }
 
             currentDir = bestKey;
+            recentActions.push(bestKey);
+            if (recentActions.length > 20) recentActions.shift();
+
             await page.keyboard.press(bestKey);
             step++;
 
