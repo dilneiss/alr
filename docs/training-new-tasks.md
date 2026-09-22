@@ -4,6 +4,21 @@ Este manual documenta o pipeline padrão do **Autonomous Learning Runtime (ALR)*
 
 ---
 
+## ⚡ Treinamento Direto por Skill (Para Agentes de IA / LLMs)
+
+O ALR possui uma **Skill dedicada** instalada no ecossistema de agentes:
+```text
+skill://alr-task-trainer
+```
+
+Qualquer LLM, subagente ou engenheiro de IA pode acionar esta skill para aprender a criar e treinar novas tarefas imediatamente. A skill carrega as regras invioláveis de anti-reward hacking, o template completo do `EnvironmentAdapter` e os comandos CLI exatos de treino e validação.
+
+### Como acionar a Skill:
+Basta solicitar ao agente:
+> *"Use a skill `alr-task-trainer` para criar e treinar uma nova tarefa de [jogo / browser / 3D / API]."*
+
+---
+
 ## 1. O Ciclo de Vida do Aprendizado de uma Tarefa
 
 No ALR, uma tarefa não é programada de forma fixa. Ela passa pelo seguinte fluxo:
@@ -26,7 +41,10 @@ No ALR, uma tarefa não é programada de forma fixa. Ela passa pelo seguinte flu
 Em qualquer crate ou módulo novo, implemente o trait:
 
 ```rust
-use alr_environment::{EnvironmentAdapter, AbstractState, AbstractAction, EnvironmentDescription, EnvironmentSignature};
+use alr_environment::{
+    AbstractAction, AbstractState, ActionSpace, EnvironmentAdapter, EnvironmentConstraint,
+    EnvironmentDescription, EnvironmentSignature, GroundingLayer, ObservationSpace,
+};
 use async_trait::async_trait;
 use anyhow::Result;
 
@@ -38,19 +56,34 @@ pub struct MinhaNovaTarefa {
 #[async_trait]
 impl EnvironmentAdapter for MinhaNovaTarefa {
     fn description(&self) -> EnvironmentDescription {
-        // Declaração de capacidades e restrições
-        unimplemented!()
+        EnvironmentDescription {
+            environment_id: "minha_tarefa_v1".to_string(),
+            name: "Minha Nova Tarefa".to_string(),
+            capabilities: vec!["navigate".to_string(), "interact".to_string()],
+            action_space: ActionSpace::Discrete(vec!["Approach".into(), "Avoid".into(), "Interact".into()]),
+            observation_space: ObservationSpace::StructuredOracle,
+            constraints: vec![EnvironmentConstraint {
+                name: "max_action_rate".into(),
+                max_action_rate: 20.0,
+                forbids_reversal: false,
+                safety_perimeter: 1.0,
+            }],
+        }
     }
 
     fn signature(&self) -> EnvironmentSignature {
-        // Assinatura para comparação de similaridade
-        unimplemented!()
+        EnvironmentSignature {
+            environment_id: "minha_tarefa_v1".to_string(),
+            action_space_kind: "Discrete".to_string(),
+            observation_space_kind: "Structured".to_string(),
+            physics_fidelity: 0.90,
+            capability_tags: vec!["navigate".to_string(), "interact".to_string()],
+        }
     }
 
-    async fn reset(&mut self, seed: u64) -> Result<AbstractState> {
+    async fn reset(&mut self, _seed: u64) -> Result<AbstractState> {
         self.estado_atual = 0;
         self.concluida = false;
-        // Retorna o estado inicial abstrato
         Ok(AbstractState::default())
     }
 
@@ -59,12 +92,19 @@ impl EnvironmentAdapter for MinhaNovaTarefa {
     }
 
     async fn act(&mut self, action: AbstractAction) -> Result<f32> {
-        // Executa a ação e retorna a recompensa
-        let mut reward = -0.1; // Custo de tempo por passo
-        if action == AbstractAction::Approach {
-            reward += 10.0;
-            self.concluida = true;
+        self.estado_atual += 1;
+        let mut reward = -0.1; // Custo de tempo por passo para evitar loops
+
+        match action {
+            AbstractAction::Approach => reward += 1.0,
+            AbstractAction::Interact(_) => {
+                reward += 50.0;
+                self.concluida = true;
+            }
+            AbstractAction::Avoid => reward += 0.5,
+            _ => reward -= 1.0,
         }
+
         Ok(reward)
     }
 
