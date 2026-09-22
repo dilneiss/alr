@@ -16,6 +16,7 @@ members = [
     "crates/alr-spatial",
     "crates/alr-environment",
     "crates/alr-transfer",
+    "crates/alr-improvement",
     "crates/alr-mcp",
     "crates/alr-cli",
 ]
@@ -42,6 +43,7 @@ alr-world = { path = "crates/alr-world" }
 alr-spatial = { path = "crates/alr-spatial" }
 alr-environment = { path = "crates/alr-environment" }
 alr-transfer = { path = "crates/alr-transfer" }
+alr-improvement = { path = "crates/alr-improvement" }
 alr-mcp = { path = "crates/alr-mcp" }
 tokio = { version = "1.37", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }

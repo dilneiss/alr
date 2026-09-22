@@ -41,6 +41,10 @@ path = "../../tests/phase6_3d_embodied_tests.rs"
 name = "phase7_transfer_tests"
 path = "../../tests/phase7_transfer_tests.rs"
 
+[[test]]
+name = "phase8_self_improvement_tests"
+path = "../../tests/phase8_self_improvement_tests.rs"
+
 [dependencies]
 alr-core = { workspace = true }
 alr-memory = { workspace = true }
@@ -57,6 +61,7 @@ alr-world = { workspace = true }
 alr-spatial = { workspace = true }
 alr-environment = { workspace = true }
 alr-transfer = { workspace = true }
+alr-improvement = { workspace = true }
 alr-mcp = { workspace = true }
 clap = { workspace = true }
 colored = { workspace = true }
