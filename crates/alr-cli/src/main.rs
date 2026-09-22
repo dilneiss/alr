@@ -2745,8 +2745,23 @@ async fn run_visual_mode(
         // Live visual sleep so user can watch the game play in real time
         tokio::time::sleep(tokio::time::Duration::from_millis(120)).await;
 
-        let _step_res = env.step(decision.action.clone());
+        let step_res = env.step(decision.action.clone());
+        let exp = alr_core::Experience {
+            state: alr_state.clone(),
+            action: decision.action.clone(),
+            reward: step_res.reward,
+            next_state: Some(step_res.observation.to_alr_state()),
+            terminal: step_res.terminal,
+        };
+        let _ = agent.record_transition(exp, "visual_ep_1", step as u64, &decision);
         step += 1;
+    }
+
+    // Save updated Q-table policy immediately to SQLite so the collision penalty is remembered!
+    if let Ok(q_json) = serde_json::to_string(&agent.q_table) {
+        let _ = agent
+            .memory_store
+            .save_policy_state("snake_q_table", &q_json);
     }
 
     println!(
