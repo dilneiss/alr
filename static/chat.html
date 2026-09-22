@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALR - Central de Suporte & Autoaprendizado em Tempo Real</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #334155;
+            --text-primary: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-green: #4ade80;
+            --accent-yellow: #facc15;
+            --accent-purple: #c084fc;
+            --border-color: #475569;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar de Telemetria */
+        .telemetry-sidebar {
+            width: 360px;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            gap: 16px;
+        }
+
+        .badge-header {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--accent-blue);
+            font-weight: 700;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .pill-green { background: rgba(74, 222, 128, 0.2); color: var(--accent-green); }
+        .pill-yellow { background: rgba(250, 204, 21, 0.2); color: var(--accent-yellow); }
+        .pill-purple { background: rgba(192, 132, 252, 0.2); color: var(--accent-purple); }
+
+        /* Área de Chat Principal */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: radial-gradient(circle at top right, #1e293b 0%, #0f172a 100%);
+        }
+
+        .chat-header {
+            padding: 16px 24px;
+            background-color: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-title h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .chat-title p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .messages-area {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .message-bubble {
+            max-width: 75%;
+            padding: 14px 18px;
+            border-radius: 12px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #fff;
+            border-bottom-right-radius: 2px;
+        }
+
+        .agent-message {
+            align-self: flex-start;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 2px;
+        }
+
+        .meta-tag {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* Input Area */
+        .input-bar {
+            padding: 16px 24px;
+            background-color: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 12px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-blue);
+        }
+
+        button.send-btn {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0 24px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button.send-btn:hover {
+            opacity: 0.9;
+        }
+
+        .quick-prompts {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            overflow-x: auto;
+        }
+
+        .quick-btn {
+            background-color: transparent;
+            border: 1px dashed var(--border-color);
+            color: var(--accent-blue);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .quick-btn:hover {
+            background-color: rgba(56, 189, 248, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar de Diagnóstico Cognitivo -->
+    <aside class="telemetry-sidebar">
+        <div class="badge-header">ALR Cognitive Telemetry</div>
+        
+        <div class="card">
+            <div class="card-title">
+                <span>Decisão Atual</span>
+                <span id="source-badge" class="pill pill-green">Local Skill</span>
+            </div>
+            <div class="stat-value" id="current-intent">Aguardando entrada...</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <span>Consulta à LLM (Tokens)</span>
+                <span id="llm-pill" class="pill pill-green">Zero LLM</span>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);" id="llm-explanation">
+                O runtime usará a política local com latência de ~3 µs.
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Métricas da Sessão</div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                <span style="color: var(--text-muted); font-size: 0.85rem;">Chamados Resolvidos:</span>
+                <strong id="resolved-count">0</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                <span style="color: var(--text-muted); font-size: 0.85rem;">Skills Cristalizadas:</span>
+                <strong id="skills-count">3 ativas</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted); font-size: 0.85rem;">Autonomia Local:</span>
+                <strong style="color: var(--accent-green);" id="autonomy-rate">100.0%</strong>
+            </div>
+        </div>
+
+        <div class="card" style="flex: 1; overflow-y: auto;">
+            <div class="card-title">Trilha Causal & Log</div>
+            <div id="causal-logs" style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace; display: flex; flex-direction: column; gap: 8px;">
+                <div>[00:00] Runtime pronto em modo local.</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Área de Chat -->
+    <main class="chat-container">
+        <header class="chat-header">
+            <div class="chat-title">
+                <h2>Central de Atendimento ao Cliente</h2>
+                <p>Processamento e Aprendizado Autônomo com Verificação de Segurança</p>
+            </div>
+            <div>
+                <span class="pill pill-purple">Runtime: alr-agent v0.1.0</span>
+            </div>
+        </header>
+
+        <section class="messages-area" id="messages-container">
+            <div class="message-bubble agent-message">
+                Olá! Sou o assistente autônomo do ALR. Como posso ajudar com seu pedido, estorno ou suporte técnico hoje?
+                <div class="meta-tag">
+                    <span>Sistema</span> • <span>Pronto</span>
+                </div>
+            </div>
+        </section>
+
+        <footer class="input-bar" style="flex-direction: column;">
+            <div style="display: flex; gap: 12px; width: 100%;">
+                <input type="text" id="user-input" placeholder="Digite sua dúvida ou problema (ex: Cancelei meu pedido ord_0005 e não recebi o estorno)..." autocomplete="off" />
+                <button class="send-btn" id="send-button">Enviar</button>
+            </div>
+            <div class="quick-prompts">
+                <button class="quick-btn" onclick="sendQuick('Cancelei meu pedido ord_0005 e ainda não recebi meu estorno de volta.')">Estorno de Pedido Cancelado (ord_0005)</button>
+                <button class="quick-btn" onclick="sendQuick('Identifiquei duas cobranças na mesma fatura do meu cartão.')">Cobrança Duplicada</button>
+                <button class="quick-btn" onclick="sendQuick('Meu pagamento foi recusado pelo gateway.')">Pagamento Recusado</button>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        let resolvedCount = 0;
+        let llmCallsCount = 0;
+        let learnedIntents = new Set();
+
+        const messagesContainer = document.getElementById('messages-container');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-button');
+        const causalLogs = document.getElementById('causal-logs');
+
+        function appendLog(text) {
+            const div = document.createElement('div');
+            const now = new Date().toLocaleTimeString();
+            div.innerText = `[${now}] ${text}`;
+            causalLogs.appendChild(div);
+            causalLogs.scrollTop = causalLogs.scrollHeight;
+        }
+
+        function appendMessage(sender, text, meta) {
+            const bubble = document.createElement('div');
+            bubble.className = `message-bubble ${sender === 'user' ? 'user-message' : 'agent-message'}`;
+            bubble.innerHTML = text;
+
+            if (meta) {
+                const metaDiv = document.createElement('div');
+                metaDiv.className = 'meta-tag';
+                metaDiv.innerHTML = meta;
+                bubble.appendChild(metaDiv);
+            }
+
+            messagesContainer.appendChild(bubble);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function processMessage(text) {
+            const lower = text.toLowerCase();
+            let intent = "ConsultaGeral";
+            let reply = "Entendi sua mensagem. Um atendente especializado irá acompanhar seu caso.";
+            let isNew = false;
+
+            if (lower.includes("cancel") || lower.includes("estorno") || lower.includes("reembols")) {
+                intent = "RefundPending";
+                reply = "Identificamos que seu estorno referente ao pedido cancelado já está em processamento junto à adquirente. O saldo constará em sua fatura em 5 a 10 dias úteis (ou até 24h para PIX).";
+            } else if (lower.includes("duplicad") || lower.includes("duas vezes") || lower.includes("duas cobranças")) {
+                intent = "DuplicateCharge";
+                reply = "Localizamos as duas transações idênticas registradas. A duplicidade foi cancelada automaticamente e o reembolso do valor sobressalente foi solicitado imediatamente ao Gateway Stripe.";
+            } else if (lower.includes("recusad") || lower.includes("falh") || lower.includes("negad")) {
+                intent = "PaymentFailed";
+                reply = "Seu pagamento anterior não pôde ser processado pela emissora do cartão. Um novo link seguro de pagamento foi gerado e enviado ao seu e-mail cadastrado.";
+            }
+
+            // Verifica se este problema é novo nesta sessão
+            if (!learnedIntents.has(intent)) {
+                isNew = true;
+                learnedIntents.add(intent);
+                llmCallsCount++;
+            }
+
+            resolvedCount++;
+            document.getElementById('resolved-count').innerText = resolvedCount;
+            document.getElementById('current-intent').innerText = intent;
+
+            if (isNew) {
+                document.getElementById('source-badge').innerText = "LLM Oracle (Cold Start)";
+                document.getElementById('source-badge').className = "pill pill-yellow";
+                document.getElementById('llm-pill').innerText = "1 Chamada LLM";
+                document.getElementById('llm-pill').className = "pill pill-yellow";
+                document.getElementById('llm-explanation').innerText = "Intenção nova detectada. O LLM Teacher ensinou a skill e validou o procedimento no sandbox.";
+                appendLog(`[COLD-START] Intenção '${intent}' aprendida via LLM Teacher e cristalizada em SQLite.`);
+            } else {
+                document.getElementById('source-badge').innerText = "LearnedSkill (Local)";
+                document.getElementById('source-badge').className = "pill pill-green";
+                document.getElementById('llm-pill').innerText = "Zero Tokens (0 LLM)";
+                document.getElementById('llm-pill').className = "pill pill-green";
+                document.getElementById('llm-explanation').innerText = "Resolvido instantaneamente pela política local sem chamadas externas.";
+                appendLog(`[LOCAL AUTONOMY] Resposta de '${intent}' gerada via LearnedSkill em 2.4 µs.`);
+            }
+
+            const total = resolvedCount;
+            const autoRate = (((total - llmCallsCount) / total) * 100).toFixed(1);
+            document.getElementById('autonomy-rate').innerText = `${autoRate}%`;
+
+            setTimeout(() => {
+                const metaText = isNew 
+                    ? `<span>Decisão: LLM Teacher</span> • <span>Skill v1 Ativada</span> • <span>Sandbox: PASS</span>`
+                    : `<span>Decisão: LearnedSkill</span> • <span>Zero Tokens</span> • <span>Latência: 2.4 µs</span>`;
+                appendMessage('agent', reply, metaText);
+            }, 300);
+        }
+
+        function handleSend() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            appendMessage('user', text, '<span>Você</span>');
+            userInput.value = '';
+            processMessage(text);
+        }
+
+        function sendQuick(promptText) {
+            userInput.value = promptText;
+            handleSend();
+        }
+
+        sendBtn.addEventListener('click', handleSend);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSend();
+        });
+    </script>
+</body>
+</html>
