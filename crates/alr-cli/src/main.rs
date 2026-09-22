@@ -2716,52 +2716,26 @@ async fn run_visual_mode(agent: &mut AgentLoop, width: i32, height: i32, seed: u
         let visual_state = detector.detect(&captured)?;
         let alr_state = visual_state.to_alr_state();
 
-        println!(
-            "{}",
-            format!(
-                "[PERCEPTION] Step {:>2} | Head=({}, {}) | Food=({}, {}) | Dir={:?}",
-                step,
-                visual_state.head.x,
-                visual_state.head.y,
-                visual_state.food.x,
-                visual_state.food.y,
-                visual_state.direction
-            )
-            .bright_black()
-        );
-
         let decision = agent.decide(&alr_state, &context).await?;
-        println!(
-            "{}",
-            format!(
-                "[DECISION] Action={:<5} | Confidence={:.2} | Source={:?}",
-                decision.action.id, decision.confidence, decision.source
-            )
-            .cyan()
-        );
 
         if let Some(act_type) = decision.action.action_type() {
             safe_controller.press(InputAction::Direction(act_type))?;
         }
+        let _ = rx.try_recv();
 
-        if let Ok(key) = rx.try_recv() {
-            println!(
-                "{}",
-                format!("[KEYBOARD] Input injected: {:?}", key).yellow()
-            );
-        }
-
-        let step_res = env.step(decision.action.clone());
-        println!(
-            "{}",
-            format!(
-                "[RESULT] Reward={:>5.1} | Score={} | Autonomous Rate=100.0%",
-                step_res.reward, step_res.observation.score
-            )
-            .green()
+        // Render live board directly in terminal
+        alr_snake::render_terminal_board(
+            &env,
+            step,
+            &decision.action.id,
+            decision.confidence,
+            &format!("{:?}", decision.source),
         );
-        println!();
 
+        // Live visual sleep so user can watch the game play in real time
+        tokio::time::sleep(tokio::time::Duration::from_millis(120)).await;
+
+        let _step_res = env.step(decision.action.clone());
         step += 1;
     }
 
