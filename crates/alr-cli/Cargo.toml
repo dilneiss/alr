@@ -14,6 +14,10 @@ path = "src/main.rs"
 name = "audit_latency"
 path = "../../scripts/audit_latency_memory.rs"
 
+[[bin]]
+name = "test_combos"
+path = "../../scripts/test_validator_combos.rs"
+
 [[test]]
 name = "fundamental_tests"
 path = "../../tests/fundamental_tests.rs"

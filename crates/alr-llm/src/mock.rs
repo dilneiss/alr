@@ -108,11 +108,44 @@ impl LlmTeacher for MockLlmTeacher {
             }
         }
 
+        // When surrounded on all 3 sides (dead-end trap), pick an action that does not reverse
         let action_type = chosen.unwrap_or(match current_dir {
-            0 => ActionType::Up,
-            1 => ActionType::Down,
-            2 => ActionType::Left,
-            _ => ActionType::Right,
+            0 => {
+                if !danger_left {
+                    ActionType::Left
+                } else if !danger_right {
+                    ActionType::Right
+                } else {
+                    ActionType::Up
+                }
+            }
+            1 => {
+                if !danger_left {
+                    ActionType::Right
+                } else if !danger_right {
+                    ActionType::Left
+                } else {
+                    ActionType::Down
+                }
+            }
+            2 => {
+                if !danger_left {
+                    ActionType::Down
+                } else if !danger_right {
+                    ActionType::Up
+                } else {
+                    ActionType::Left
+                }
+            }
+            _ => {
+                if !danger_left {
+                    ActionType::Up
+                } else if !danger_right {
+                    ActionType::Down
+                } else {
+                    ActionType::Right
+                }
+            }
         });
 
         Ok(KnowledgeProposal {
