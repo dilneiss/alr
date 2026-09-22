@@ -30,9 +30,21 @@ fn main() {
         let p95_fwd = fwd_latencies[9500];
         let p99_fwd = fwd_latencies[9900];
         println!("1. Pure ONNX Forward-Pass Latency (10,000 iterations):");
-        println!("   p50 : {} ns ({:.3} µs)", p50_fwd, p50_fwd as f64 / 1000.0);
-        println!("   p95 : {} ns ({:.3} µs)", p95_fwd, p95_fwd as f64 / 1000.0);
-        println!("   p99 : {} ns ({:.3} µs)", p99_fwd, p99_fwd as f64 / 1000.0);
+        println!(
+            "   p50 : {} ns ({:.3} µs)",
+            p50_fwd,
+            p50_fwd as f64 / 1000.0
+        );
+        println!(
+            "   p95 : {} ns ({:.3} µs)",
+            p95_fwd,
+            p95_fwd as f64 / 1000.0
+        );
+        println!(
+            "   p99 : {} ns ({:.3} µs)",
+            p99_fwd,
+            p99_fwd as f64 / 1000.0
+        );
 
         // 2. Measure full Agent End-to-End Decision Loop
         // (Environment state observation + feature extraction + ONNX predict + decision wrap)
@@ -43,7 +55,10 @@ fn main() {
             let start = Instant::now();
             let obs = env.step(alr_core::Action::new("RIGHT", serde_json::json!({})));
             let state = obs.observation.to_alr_state();
-            let _pred = onnx_runtime.predict(&handle, &state.features).await.unwrap();
+            let _pred = onnx_runtime
+                .predict(&handle, &state.features)
+                .await
+                .unwrap();
             let elapsed = start.elapsed().as_nanos();
             e2e_latencies.push(elapsed);
         }
@@ -52,22 +67,43 @@ fn main() {
         let p95_e2e = e2e_latencies[4750];
         let p99_e2e = e2e_latencies[4950];
         println!("\n2. End-to-End Agent Decision Cycle Latency (5,000 steps):");
-        println!("   p50 : {} ns ({:.3} µs)", p50_e2e, p50_e2e as f64 / 1000.0);
-        println!("   p95 : {} ns ({:.3} µs)", p95_e2e, p95_e2e as f64 / 1000.0);
-        println!("   p99 : {} ns ({:.3} µs)", p99_e2e, p99_e2e as f64 / 1000.0);
+        println!(
+            "   p50 : {} ns ({:.3} µs)",
+            p50_e2e,
+            p50_e2e as f64 / 1000.0
+        );
+        println!(
+            "   p95 : {} ns ({:.3} µs)",
+            p95_e2e,
+            p95_e2e as f64 / 1000.0
+        );
+        println!(
+            "   p99 : {} ns ({:.3} µs)",
+            p99_e2e,
+            p99_e2e as f64 / 1000.0
+        );
 
         // 3. Continuous Long-Run Memory Stability Check
         println!("\n3. Long-Run Memory Stability (100,000 decision steps continuous session)...");
         let start_time = Instant::now();
         for i in 0..100000 {
-            let obs = env.step(alr_core::Action::new(if i % 2 == 0 { "UP" } else { "RIGHT" }, serde_json::json!({})));
+            let obs = env.step(alr_core::Action::new(
+                if i % 2 == 0 { "UP" } else { "RIGHT" },
+                serde_json::json!({}),
+            ));
             if obs.terminal {
                 env.reset(42 + i as u64);
             }
             let state = obs.observation.to_alr_state();
-            let _ = onnx_runtime.predict(&handle, &state.features).await.unwrap();
+            let _ = onnx_runtime
+                .predict(&handle, &state.features)
+                .await
+                .unwrap();
         }
-        println!("   Executed 100,000 steps continuously in {:.2}s without leak, crash, or degradation.", start_time.elapsed().as_secs_f32());
+        println!(
+            "   Executed 100,000 steps continuously in {:.2}s without leak, crash, or degradation.",
+            start_time.elapsed().as_secs_f32()
+        );
     });
     println!("======================================================");
 }
