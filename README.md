@@ -2,17 +2,18 @@
 
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B%20%7C%201.98.1-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-102%2F102%20Passing-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-112%2F112%20Passing-brightgreen.svg)]()
 [![Autonomy Rate](https://img.shields.io/badge/Autonomy-98.2%25%20to%2099.2%25-orange.svg)]()
+[![Multi-Agent](https://img.shields.io/badge/Multi--Agent-Specialists%20%7C%20TaskGraph-blue.svg)](docs/multiagent.md)
 [![Self-Healing](https://img.shields.io/badge/Self--Improvement-Auto--Repair%20%7C%20Governed-brightgreen.svg)](docs/self-improvement.md)
 [![ONNX Runtime](https://img.shields.io/badge/ONNX%20Models-Native%20%7C%20Verified-blueviolet.svg)](docs/onnx.md)
 [![3D Lab](https://img.shields.io/badge/3D%20Lab-Embodied%20Autonomy-blue.svg)](docs/3d-lab.md)
 [![Transfer](https://img.shields.io/badge/Capability%20Transfer-Zero--Shot%20%7C%20Few--Shot-red.svg)](docs/capability-transfer.md)
 [![Docker Qdrant](https://img.shields.io/badge/Qdrant-v1.12.1-red.svg)](https://qdrant.tech)
 
-> **"A LLM pode ensinar o agente, mas o agente aprende a se autoaperfeiçoar continuamente a partir de seus próprios erros."**
+> **"A LLM pode ensinar o agente, mas agentes especializados colaboram autonomamente para resolver metas complexas com execução local."**
 
-O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos construído do zero em **Rust**. Ele demonstra como um núcleo cognitivo único aprende, valida, cristaliza, transfere e **autoaperfeiçoa** competências locais em múltiplos domínios:
+O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos construído do zero em **Rust**. Ele demonstra como um ecossistema cognitivo aprende, valida, cristaliza, transfere, autoaperfeiçoa e **coordena equipes multiagente especializadas** em múltiplos domínios:
 1. **Controle Dinâmico Discreto (Snake)**
 2. **Atendimento ao Cliente & Memória Semântica (Customer Support + Qdrant)**
 3. **Automação Web Real (Browser Automation via Chromium CDP)**
@@ -21,6 +22,7 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
 6. **Autonomia Corpórea 3D (3D Lab, Hierarchical Planning, A* & Spatial Memory)**
 7. **Transferência Universal de Capacidades (Environment Abstraction, Zero-Shot & Few-Shot Generalization)**
 8. **Autoaperfeiçoamento Autônomo & Auto-Cura (Failure Analysis, Hypotheses, Controlled A/B Sandbox, Anti-Reward Hacking & Atomic Rollback)**
+9. **Coordenação Multiagente Especializada (TaskGraph, MetaPlanner, Blackboard, Consensus & Team Skills)**
 
 ---
 
@@ -28,7 +30,7 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
 
 1. [O Que é o Projeto?](#-o-que-é-o-projeto)
 2. [O Que o Sistema Faz?](#-o-que-o-sistema-faz)
-3. [Casos de Uso Principais (Fases 1 a 8)](#-casos-de-uso-principais)
+3. [Casos de Uso Principais (Fases 1 a 9)](#-casos-de-uso-principais)
    * [Caso 1: Controle Dinâmico em Jogos (Snake)](#caso-1-controle-dinâmico-em-jogos-snake)
    * [Caso 2: Atendimento ao Cliente com Memória Semântica (Customer Support)](#caso-2-atendimento-ao-cliente-com-memória-semântica-customer-support)
    * [Caso 3: Automação Web Real em Navegador (Browser Automation)](#caso-3-automação-web-real-em-navegador-browser-automation)
@@ -37,12 +39,13 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
    * [Caso 6: Autonomia Corpórea 3D & Planejamento Hierárquico](#caso-6-autonomia-corpórea-3d--planejamento-hierárquico)
    * [Caso 7: Transferência de Capacidades & Generalização](#caso-7-transferência-de-capacidades--generalização)
    * [Caso 8: Autoaperfeiçoamento Autônomo & Auto-Cura](#caso-8-autoaperfeiçoamento-autônomo--auto-cura)
+   * [Caso 9: Coordenação Multiagente Especializada](#caso-9-coordenação-multiagente-especializada)
 4. [Como Instalar e Pré-Requisitos](#-como-instalar-e-pré-requisitos)
 5. [Como Usar e Exemplos de Comandos da CLI](#-como-usar-e-exemplos-de-comandos-da-cli)
 6. [Demonstrações Práticas](#-demonstrações-práticas)
 7. [Integração MCP com OpenCode](#-integração-mcp-com-opencode)
 8. [Métricas Reais Obtidas](#-métricas-reais-obtidas)
-9. [Estrutura do Workspace Cargo (18 Crates)](#-estrutura-do-workspace-cargo-18-crates)
+9. [Estrutura do Workspace Cargo (19 Crates)](#-estrutura-do-workspace-cargo-19-crates)
 10. [Garantias de Testes e Qualidade](#-garantias-de-testes-e-qualidade)
 
 ---
@@ -56,12 +59,14 @@ Tradicionalmente, frameworks de agentes operam enviando prompts para uma LLM a c
 4. **Validação em Sandbox**: A proposta da LLM passa por validação sintática e semântica antes da ativação.
 5. **Cristalização em Skills & Modelos Locais**: O conhecimento vira uma regra ativa (`Skill`), procedimento ou modelo destilado ONNX.
 6. **Execução Autônoma Subsequente**: Situações idênticas ou semanticamente análogas executam localmente em microssegundos com **zero chamadas à LLM**.
-7. **Auto-Cura em Tempo de Execução**: Diante de falhas ou degradação (ex.: drift de seletores), formula hipóteses, roda testes A/B em sandbox, valida regressões e promove melhorias comprovadas com rollback atômico.
+7. **Auto-Cura Governamental**: Diante de falhas, formula hipóteses e promove melhorias comprovadas com rollback atômico.
+8. **Colaboração Multiagente**: Decompõe tarefas complexas em grafos (`TaskGraph`), executa passos paralelos e sintetiza resultados via `Blackboard` e `ConsensusEngine`.
 
 ---
 
 ## ⚙️ O Que o Sistema Faz?
 
+* **Coordenação Multiagente Especializada**: Agentes funcionais locais (`Planner`, `Researcher`, `Executor`, `Verifier`, `Critic`, `RedTeam`) cooperam via mensagens estruturadas sem tráfego de texto livre inseguro.
 * **Autoaperfeiçoamento sem Modificação de Código**: O código Rust permanece imutável; a evolução ocorre sobre artefatos governados (Skills, Policies, Parâmetros e Modelos).
 * **Defesa Anti-Reward Hacking**: Bloqueia candidatos que tentem contornar verificações de pós-condição, aprovações humanas ou isolamento multitenant.
 * **Hierarquia de Decisão Rígida**:
@@ -105,7 +110,10 @@ Decompõe objetivos macro (*"encontre e colete o artefato azul"*) em submetas es
 Aprende a navegar no Ambiente A e resolve o Ambiente B imediatamente via **Zero-Shot Transfer**, adaptando-se em poucos passos (*Few-Shot*) frente a dinâmicas não vistas.
 
 ### Caso 8: Autoaperfeiçoamento Autônomo & Auto-Cura
-Detecta falhas em tempo de execução (drift de seletores web, perímetros de colisão ou thresholds de modelos), diagnostica a causa raiz, projeta hipóteses, valida candidatos em sandbox controlado e promove a nova versão da skill com rollback atômico.
+Detecta falhas em tempo de execução, formula hipóteses, valida candidatos em sandbox A/B controlado e promove novas versões de skills com rollback atômico.
+
+### Caso 9: Coordenação Multiagente Especializada
+Recebe objetivos complexos, estima complexidade, constrói grafos de tarefas com nós paralelos (`Researcher` coletando dados enquanto `Perception` analisa o ambiente), arbitra conflitos via consenso e memoriza equipes de alto desempenho em `CollectiveMemory`.
 
 ---
 
@@ -121,7 +129,7 @@ Detecta falhas em tempo de execução (drift de seletores web, perímetros de co
 git clone https://github.com/usuario/autonomous-learning-runtime.git
 cd alr
 
-# Verificar ambiente e compilar todos os 18 crates
+# Verificar ambiente e compilar todos os 19 crates
 cargo check --workspace
 ```
 
@@ -147,15 +155,16 @@ cargo run -p alr-cli -- 3d external-demo
 cargo run -p alr-cli -- model list
 cargo run -p alr-cli -- env list
 
-# 5. Executar os 102 testes automatizados
+# 5. Executar os 112 testes automatizados
 cargo test --workspace
 ```
 
 ---
 
-## 📦 Estrutura do Workspace Cargo (18 Crates)
+## 📦 Estrutura do Workspace Cargo (19 Crates)
 
 * `crates/alr-core`: Tipos centrais (`State`, `Action`, `Decision`, `Experience`, `Skill`).
+* `crates/alr-multiagent`: Coordenação de agentes, `TaskGraph`, `MetaPlanner`, `Blackboard`, `ConsensusEngine` e `CollectiveMemory`.
 * `crates/alr-improvement`: Motor de autoaperfeiçoamento, análise de causa raiz, sandbox A/B e defesa anti-reward hacking.
 * `crates/alr-environment`: Trait `EnvironmentAdapter`, `AbstractState`, `AbstractAction` e simuladores 3D renderizados.
 * `crates/alr-transfer`: Motor de transferência de capacidades, `GoalInterpreter`, `BeliefState` e guarda anti-envenenamento.
@@ -180,6 +189,6 @@ cargo test --workspace
 
 O projeto é validado continuamente por suites de testes ponta a ponta:
 * **`cargo fmt --check`**: 100% em conformidade com as diretrizes do rustfmt.
-* **`cargo check --workspace`**: Compilação estrita e limpa em todos os 18 crates.
+* **`cargo check --workspace`**: Compilação estrita e limpa em todos os 19 crates.
 * **`cargo clippy --workspace --all-targets --all-features -- -D warnings`**: **Zero warnings**.
-* **`cargo test --workspace`**: **102 testes passando com 100% de sucesso**.
+* **`cargo test --workspace`**: **112 testes passando com 100% de sucesso**.
