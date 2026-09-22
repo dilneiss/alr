@@ -6,6 +6,7 @@ pub mod orchestration;
 pub mod procedural;
 pub mod reliability;
 pub mod risk;
+pub mod router;
 pub mod security;
 pub mod skill_lifecycle;
 pub mod skills;
@@ -26,6 +27,7 @@ pub use procedural::{ProceduralSkill, ProceduralStep};
 pub use r#loop::AgentLoop;
 pub use reliability::{IdempotencyStore, LlmCallBudget, LoopDetector, RetryConfig};
 pub use risk::{RiskAssessment, RiskEngine};
+pub use router::{DecisionProvider, DecisionRouter, LocalModelDecisionProvider};
 pub use security::{InjectionVector, SecurityRedTeamAuditor};
 pub use skill_lifecycle::{
     KnowledgeValidity, SkillHealthStatus, SkillRegressionRunner, SkillTestCase, SkillTestResult,

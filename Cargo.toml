@@ -11,6 +11,7 @@ members = [
     "crates/alr-agent",
     "crates/alr-browser",
     "crates/alr-connectors",
+    "crates/alr-models",
     "crates/alr-mcp",
     "crates/alr-cli",
 ]
@@ -61,4 +62,5 @@ alr-snake = { path = "crates/alr-snake" }
 alr-agent = { path = "crates/alr-agent" }
 alr-browser = { path = "crates/alr-browser" }
 alr-connectors = { path = "crates/alr-connectors" }
+alr-models = { path = "crates/alr-models" }
 alr-mcp = { path = "crates/alr-mcp" }

@@ -3,6 +3,7 @@ use alr_agent::SupportDatabase;
 use alr_connectors::{ApprovalGateway, EventStore, TaskQueue};
 use alr_core::{Action, KnowledgeProposal, KnowledgeStatus};
 use alr_memory::SqliteMemoryStore;
+use alr_models::ModelRegistry;
 use alr_snake::game::{Environment, SnakeEnvironment};
 use anyhow::{Context, Result};
 use axum::{
@@ -23,6 +24,7 @@ pub struct McpContext {
     pub approval_gateway: ApprovalGateway,
     pub task_queue: TaskQueue,
     pub event_store: EventStore,
+    pub model_registry: ModelRegistry,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -81,7 +83,6 @@ impl McpServer {
                         "description": "Get runtime autonomy and performance metrics",
                         "inputSchema": { "type": "object", "properties": {} }
                     },
-                    // Phase 4 Connector & Governance Tools
                     {
                         "name": "alr.connector.list",
                         "description": "List all active external connectors and their capabilities",
@@ -108,6 +109,34 @@ impl McpServer {
                         "name": "alr.task.list",
                         "description": "List persistent queued and running agent tasks",
                         "inputSchema": { "type": "object", "properties": {} }
+                    },
+                    {
+                        "name": "alr.model.list",
+                        "description": "List all active and registered local models in the ModelRegistry",
+                        "inputSchema": { "type": "object", "properties": {} }
+                    },
+                    {
+                        "name": "alr.model.inspect",
+                        "description": "Inspect model metadata, status, accuracy and SHA-256 signature",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "model_name": { "type": "string" }
+                            },
+                            "required": ["model_name"]
+                        }
+                    },
+                    {
+                        "name": "alr.model.rollback",
+                        "description": "Rollback local model to a previous version",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "model_name": { "type": "string" },
+                                "target_version": { "type": "integer" }
+                            },
+                            "required": ["model_name", "target_version"]
+                        }
                     }
                 ]
             })),
@@ -208,6 +237,23 @@ impl McpServer {
             "alr.task.list" => {
                 let tasks = ctx.task_queue.list_pending();
                 Ok(json!({ "tasks": tasks }))
+            }
+            "alr.model.list" => {
+                let models = ctx.model_registry.list_all();
+                Ok(json!({ "models": models }))
+            }
+            "alr.model.inspect" => {
+                let name = args["model_name"].as_str().context("Missing model_name")?;
+                let active = ctx.model_registry.get_active(name);
+                Ok(json!({ "active_model": active }))
+            }
+            "alr.model.rollback" => {
+                let name = args["model_name"].as_str().context("Missing model_name")?;
+                let version = args["target_version"]
+                    .as_u64()
+                    .context("Missing target_version")? as u32;
+                ctx.model_registry.rollback(name, version)?;
+                Ok(json!({ "status": "rolled_back", "name": name, "version": version }))
             }
             other => Err(anyhow::anyhow!("Unknown tool: {}", other)),
         }

@@ -29,6 +29,10 @@ path = "../../tests/phase3_browser_tests.rs"
 name = "phase4_connectors_tests"
 path = "../../tests/phase4_connectors_tests.rs"
 
+[[test]]
+name = "phase5_local_models_tests"
+path = "../../tests/phase5_local_models_tests.rs"
+
 [dependencies]
 alr-core = { workspace = true }
 alr-memory = { workspace = true }
@@ -40,6 +44,7 @@ alr-snake = { workspace = true }
 alr-agent = { workspace = true }
 alr-browser = { workspace = true }
 alr-connectors = { path = "../alr-connectors" }
+alr-models = { path = "../alr-models" }
 alr-mcp = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

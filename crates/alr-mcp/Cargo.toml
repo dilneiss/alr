@@ -14,6 +14,7 @@ alr-agent = { workspace = true }
 alr-snake = { workspace = true }
 alr-browser = { workspace = true }
 alr-connectors = { path = "../alr-connectors" }
+alr-models = { path = "../alr-models" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 uuid = { workspace = true }
