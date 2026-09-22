@@ -1,5 +1,5 @@
 [package]
-name = "alr-mcp"
+name = "alr-transfer"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -7,23 +7,15 @@ license.workspace = true
 
 [dependencies]
 alr-core = { workspace = true }
-alr-memory = { workspace = true }
-alr-learning = { workspace = true }
-alr-llm = { workspace = true }
-alr-agent = { workspace = true }
-alr-snake = { workspace = true }
-alr-connectors = { workspace = true }
-alr-models = { workspace = true }
 alr-world = { workspace = true }
 alr-spatial = { workspace = true }
 alr-environment = { workspace = true }
-alr-transfer = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+uuid = { workspace = true }
 chrono = { workspace = true }
 thiserror = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
-tokio = { workspace = true }
-axum = { workspace = true }
+async-trait = { workspace = true }
 parking_lot = { workspace = true }
