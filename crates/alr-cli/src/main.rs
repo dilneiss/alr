@@ -271,6 +271,7 @@ enum SupportCommands {
     },
     Metrics,
     Demo,
+    Chat,
 }
 
 #[derive(Subcommand)]
@@ -693,6 +694,16 @@ async fn main() -> Result<()> {
             }
             SupportCommands::Demo => {
                 run_phase2_demo(&store, mock_llm, &support_db).await?;
+            }
+            SupportCommands::Chat => {
+                run_interactive_support_chat(
+                    &store,
+                    mock_llm,
+                    &support_db,
+                    cli.confidence_threshold,
+                    cli.novelty_threshold,
+                )
+                .await?;
             }
         },
         Commands::Browser { action } => match action {
@@ -1466,6 +1477,128 @@ async fn run_transfer_benchmark() -> Result<()> {
         "External Game", "88.0%", "96.0%", "97.0%", "0"
     );
     println!("{:-<70}", "");
+    Ok(())
+}
+async fn run_interactive_support_chat(
+    store: &SqliteMemoryStore,
+    mock_llm: Arc<MockLlmTeacher>,
+    db: &SupportDatabase,
+    confidence_threshold: f32,
+    novelty_threshold: f32,
+) -> Result<()> {
+    use std::io::{self, BufRead, Write};
+
+    println!(
+        "{}",
+        "========================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "      ALR AUTONOMOUS SUPPORT CHAT & LEARNING SESSION     "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "========================================================="
+            .bold()
+            .blue()
+    );
+    println!("Digite sua mensagem como cliente para testar o atendimento em tempo real.");
+    println!("O ALR ira:");
+    println!("  1. Detectar intencao e avaliar novidade / confianca;");
+    println!("  2. Consultar o LLM Teacher se for um problema novo;");
+    println!("  3. Validar no Sandbox e gerar uma Skill ativa;");
+    println!(
+        "  4. Nas mensagens seguintes com o mesmo problema -> Responder com 0 chamadas de LLM!"
+    );
+    println!("  (Digite 'sair', 'exit' ou 'quit' para encerrar)\n");
+
+    seed_support_database(db, 10);
+    let mut agent = SupportAgent::new(
+        store.clone(),
+        mock_llm.clone(),
+        confidence_threshold,
+        novelty_threshold,
+    );
+    setup_support_agent_tools(&mut agent, db);
+
+    let stdin = io::stdin();
+    let mut handle = stdin.lock();
+    let mut ticket_counter = 5000;
+
+    loop {
+        print!(
+            "{}",
+            "\n[CLIENTE] Digite sua duvida/problema: ".bold().yellow()
+        );
+        io::stdout().flush()?;
+
+        let mut input = String::new();
+        if handle.read_line(&mut input)? == 0 {
+            break;
+        }
+        let trimmed = input.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        if trimmed.eq_ignore_ascii_case("sair")
+            || trimmed.eq_ignore_ascii_case("exit")
+            || trimmed.eq_ignore_ascii_case("quit")
+        {
+            println!(
+                "{}",
+                "\nEncerrando sessao de suporte. Ate logo!".bold().green()
+            );
+            break;
+        }
+
+        ticket_counter += 1;
+        let mut ticket = Ticket::new(
+            format!("T-{}", ticket_counter),
+            "tenant_001",
+            "cust_0005",
+            trimmed,
+            trimmed,
+        );
+
+        println!(
+            "{}",
+            "\n--- PROCESSAMENTO EM TEMPO REAL ---"
+                .bold()
+                .bright_black()
+        );
+        let initial_llm_calls = mock_llm.call_count();
+        let outcome = agent.process_ticket(&mut ticket).await?;
+        let final_llm_calls = mock_llm.call_count();
+        let called_llm = final_llm_calls > initial_llm_calls;
+
+        println!("  Intencao Identificada : {:?}", outcome.intent);
+        println!("  Fonte da Decisao      : {:?}", outcome.decision_source);
+        println!(
+            "  Skill Utilizada       : {:?}",
+            outcome.skill_used.unwrap_or_else(|| "none".to_string())
+        );
+        println!(
+            "  Consulta ao LLM       : {}",
+            if called_llm {
+                "SIM (Cold Start / Aprendizado)".yellow()
+            } else {
+                "NAO (Resolvido 100% Local / Zero Tokens)".green()
+            }
+        );
+        println!("  Status do Chamado     : {:?}", ticket.status);
+        println!("{}", "-----------------------------------".bright_black());
+
+        println!(
+            "\n{} {}",
+            "[ALR ATENDENTE]:".bold().green(),
+            outcome.response_message.unwrap_or_default()
+        );
+    }
+
     Ok(())
 }
 

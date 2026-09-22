@@ -332,30 +332,33 @@ cargo build --workspace
 # 1. Bateria Formal de Aceitação dos 12 Gates
 cargo run -p alr-cli -- final-acceptance
 
-# 2. Benchmark Empírico de Latência e Estabilidade de Memória
+# 2. Janela de Conversa de Suporte ao Vivo (Processamento e Aprendizado em Tempo Real)
+cargo run -p alr-cli -- support chat
+
+# 3. Benchmark Empírico de Latência e Estabilidade de Memória
 cargo run -p alr-cli --bin audit_latency
 
-# 3. Jogo da Cobrinha com Visualização em Tempo Real no Terminal (joga até o fim)
+# 4. Jogo da Cobrinha com Visualização em Tempo Real no Terminal (joga até o fim)
 cargo run -p alr-cli -- snake --mode visual
 
-# 4. Jogo da Cobrinha Rodando no Google Chrome Real via Visão Computacional
+# 5. Jogo da Cobrinha Rodando no Google Chrome Real via Visão Computacional
 node scripts/play_in_browser.js
 
-# 5. Treinar Qualquer Nova Tarefa via Assistente CLI
+# 6. Treinar Qualquer Nova Tarefa via Assistente CLI
 cargo run -p alr-cli -- task train --type game --episodes 1000
 
-# 6. Demonstração de Transferência de Capacidades (Fase 7 Master Demo)
+# 7. Demonstração de Transferência de Capacidades (Fase 7 Master Demo)
 cargo run -p alr-cli -- phase7-demo
 
-# 7. Demonstração 3D Corpórea e Externa
+# 8. Demonstração 3D Corpórea e Externa
 cargo run -p alr-cli -- 3d demo
 cargo run -p alr-cli -- 3d external-demo
 
-# 8. Listar e Inspecionar Modelos Locais ONNX e Ambientes
+# 9. Listar e Inspecionar Modelos Locais ONNX e Ambientes
 cargo run -p alr-cli -- model list
 cargo run -p alr-cli -- env list
 
-# 9. Executar a Suíte Completa de Testes Automatizados (135 Testes)
+# 10. Executar a Suíte Completa de Testes Automatizados (135 Testes)
 cargo test --workspace
 ```
 
