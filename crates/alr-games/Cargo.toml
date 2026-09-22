@@ -1,0 +1,24 @@
+[package]
+name = "alr-games"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+alr-core = { workspace = true }
+alr-world = { workspace = true }
+alr-spatial = { workspace = true }
+alr-environment = { workspace = true }
+alr-transfer = { workspace = true }
+alr-models = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+async-trait = { workspace = true }
+parking_lot = { workspace = true }
+tokio = { workspace = true }
