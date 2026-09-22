@@ -82,6 +82,9 @@ enum Commands {
 
         #[arg(long, default_value_t = 20)]
         height: i32,
+
+        #[arg(long)]
+        max_steps: Option<usize>,
     },
     Support {
         #[command(subcommand)]
@@ -368,6 +371,7 @@ async fn main() -> Result<()> {
             seed,
             width,
             height,
+            max_steps,
         } => {
             println!("{}", "=== ALR SNAKE RUNNER ===".bold().cyan());
             let mut agent = AgentLoop::new(
@@ -433,7 +437,7 @@ async fn main() -> Result<()> {
                 );
                 print_benchmark_report(&report);
             } else if mode == "visual" {
-                run_visual_mode(&mut agent, width, height, seed).await?;
+                run_visual_mode(&mut agent, width, height, seed, max_steps).await?;
             } else {
                 println!(
                     "{}",
@@ -2672,7 +2676,13 @@ async fn run_demo(_store: &SqliteMemoryStore, mock_llm: Arc<MockLlmTeacher>) -> 
     Ok(())
 }
 
-async fn run_visual_mode(agent: &mut AgentLoop, width: i32, height: i32, seed: u64) -> Result<()> {
+async fn run_visual_mode(
+    agent: &mut AgentLoop,
+    width: i32,
+    height: i32,
+    seed: u64,
+    max_steps: Option<usize>,
+) -> Result<()> {
     println!(
         "{}",
         "=== RUNNING VISUAL DESKTOP PERCEPTION MODE ==="
@@ -2702,7 +2712,7 @@ async fn run_visual_mode(agent: &mut AgentLoop, width: i32, height: i32, seed: u
     };
 
     let mut step = 0;
-    while !env.is_terminal() && step < 50 {
+    while !env.is_terminal() && max_steps.is_none_or(|m| step < m) {
         let frame = renderer.render_frame(&env);
         capturer.set_frame(frame);
 
