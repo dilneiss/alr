@@ -1,5 +1,5 @@
 [package]
-name = "alr-mcp"
+name = "alr-connectors"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -7,19 +7,19 @@ license.workspace = true
 
 [dependencies]
 alr-core = { workspace = true }
-alr-memory = { workspace = true }
-alr-learning = { workspace = true }
-alr-llm = { workspace = true }
-alr-agent = { workspace = true }
-alr-snake = { workspace = true }
-alr-browser = { workspace = true }
-alr-connectors = { path = "../alr-connectors" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 uuid = { workspace = true }
 chrono = { workspace = true }
 thiserror = { workspace = true }
 anyhow = { workspace = true }
+async-trait = { workspace = true }
 tracing = { workspace = true }
 tokio = { workspace = true }
+reqwest = { workspace = true }
 axum = { workspace = true }
+parking_lot = "0.12"
+hmac = "0.12"
+sha2 = "0.10"
+hex = "0.4"
+regex = "1.11"

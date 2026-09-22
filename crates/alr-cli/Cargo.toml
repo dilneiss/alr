@@ -25,6 +25,10 @@ path = "../../tests/phase2_5_hardening_tests.rs"
 name = "phase3_browser_tests"
 path = "../../tests/phase3_browser_tests.rs"
 
+[[test]]
+name = "phase4_connectors_tests"
+path = "../../tests/phase4_connectors_tests.rs"
+
 [dependencies]
 alr-core = { workspace = true }
 alr-memory = { workspace = true }
@@ -35,6 +39,7 @@ alr-execution = { workspace = true }
 alr-snake = { workspace = true }
 alr-agent = { workspace = true }
 alr-browser = { workspace = true }
+alr-connectors = { path = "../alr-connectors" }
 alr-mcp = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -50,3 +55,6 @@ tokio = { workspace = true }
 rand = { workspace = true }
 axum = { workspace = true }
 async-trait = { workspace = true }
+hmac = "0.12"
+sha2 = "0.10"
+hex = "0.4"
