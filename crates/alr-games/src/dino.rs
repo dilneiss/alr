@@ -182,17 +182,21 @@ impl DinoObservation {
 
     /// Discretized key for Q-Learning tabular policy
     pub fn discrete_key(&self) -> String {
-        // Discretize distance
-        let dist_cat = if self.distance_to_obstacle > 240.0 {
-            "FAR"
-        } else if self.distance_to_obstacle > 140.0 {
-            "WARN"
-        } else if self.distance_to_obstacle > 60.0 {
-            "DANGER"
-        } else {
-            "IMMED"
-        };
+        let speed = self.obstacle_speed.max(1.0);
+        let tti = self.distance_to_obstacle / speed;
 
+        // Time To Impact (TTI) buckets: calibrated to jump and duck physics
+        let dist_cat = if tti > 20.0 {
+            "FAR"
+        } else if tti > 9.0 {
+            "APPROACH" // Coasting, do NOT jump prematurely!
+        } else if tti >= 3.5 {
+            "JUMP_WIN" // Golden physical jump window!
+        } else if tti >= 0.0 {
+            "CRITICAL" // Emergency clearance window
+        } else {
+            "PASSED"
+        };
         // Discretize obstacle type category
         let obs_cat = match self.nearest_obstacle_type {
             None => "NONE",
@@ -467,54 +471,40 @@ impl ChromeDinoEnvironment {
 
     /// Evaluates the physically safe actions and optimal action given the observation
     pub fn safe_actions_for(&self, obs: &DinoObservation) -> (Vec<String>, String) {
-        let jump_window_max = (self.speed * 20.0).max(120.0);
-        let _jump_window_min = (self.speed * 4.0).max(25.0);
-
-        if obs.distance_to_obstacle > jump_window_max {
-            // Far away: RUN is optimal; JUMP is discouraged (-2 unnecessary jump penalty)
-            return (
-                vec!["RUN".to_string(), "DUCK".to_string()],
-                "RUN".to_string(),
-            );
+        // In mid-air, Dino cannot jump again, and ducking causes suicidal fast-fall onto obstacles!
+        if self.dino_y > 0.0 || self.is_jumping {
+            return (vec!["RUN".to_string()], "RUN".to_string());
         }
 
+        let speed = self.speed.max(1.0);
+        let tti = obs.distance_to_obstacle / speed;
+
         match obs.nearest_obstacle_type {
-            None => (
-                vec!["RUN".to_string(), "DUCK".to_string()],
-                "RUN".to_string(),
-            ),
+            None => (vec!["RUN".to_string()], "RUN".to_string()),
             Some(ObstacleType::SmallCactus)
             | Some(ObstacleType::LargeCactus)
             | Some(ObstacleType::TripleCactus)
             | Some(ObstacleType::PterodactylLow) => {
-                // Ground obstacle or low flyer: must jump to avoid collision
-                if obs.distance_to_obstacle <= jump_window_max {
+                // Ground obstacle or low flyer:
+                // Golden physical jump window is TTI <= 9.0 ticks!
+                if tti <= 9.0 {
                     (vec!["JUMP".to_string()], "JUMP".to_string())
                 } else {
-                    (
-                        vec!["RUN".to_string(), "JUMP".to_string()],
-                        "RUN".to_string(),
-                    )
+                    // Obstacle is still far (tti > 9.0): MUST RUN, premature jump causes fatal landing on cactus!
+                    (vec!["RUN".to_string()], "RUN".to_string())
                 }
             }
             Some(ObstacleType::PterodactylMid) => {
-                // Mid-height flyer: must duck under!
-                let duck_window = (self.speed * 18.0).max(110.0);
-                if obs.distance_to_obstacle <= duck_window {
+                // Mid-height flyer (y=35, h=25): must duck under while approaching and passing!
+                if tti <= 12.0 {
                     (vec!["DUCK".to_string()], "DUCK".to_string())
                 } else {
-                    (
-                        vec!["RUN".to_string(), "DUCK".to_string()],
-                        "RUN".to_string(),
-                    )
+                    (vec!["RUN".to_string()], "RUN".to_string())
                 }
             }
             Some(ObstacleType::PterodactylHigh) => {
-                // High-flying pterodactyl: RUN or DUCK are safe; JUMP is fatal!
-                (
-                    vec!["RUN".to_string(), "DUCK".to_string()],
-                    "RUN".to_string(),
-                )
+                // High-flying pterodactyl (y=60): RUN is safe; JUMP is fatal!
+                (vec!["RUN".to_string()], "RUN".to_string())
             }
         }
     }
@@ -542,12 +532,24 @@ impl ChromeDinoEnvironment {
                     self.is_jumping = true;
                     self.is_ducking = false;
 
-                    // Unnecessary jump penalty: penalize jumping when obstacle is far (> 180px)
-                    let nearest_dist = self
+                    let (nearest_dist, obs_type) = self
                         .nearest_obstacle()
-                        .map(|o| (o.x - (self.dino_x + Self::DINO_WIDTH_STAND)).max(0.0))
-                        .unwrap_or(600.0);
-                    if nearest_dist > 180.0 {
+                        .map(|o| {
+                            let d = (o.x - (self.dino_x + Self::DINO_WIDTH_STAND)).max(0.0);
+                            (d, Some(o.obstacle_type))
+                        })
+                        .unwrap_or((600.0, None));
+
+                    let tti = nearest_dist / self.speed.max(1.0);
+                    if let Some(t) = obs_type {
+                        if t == ObstacleType::PterodactylMid || t == ObstacleType::PterodactylHigh {
+                            reward -= 20.0; // Suicidal jump into flying obstacle
+                        } else if (3.5..=9.0).contains(&tti) {
+                            reward += 5.0; // Optimal jump timing!
+                        } else if tti > 9.0 {
+                            reward -= 15.0; // Premature jump penalty!
+                        }
+                    } else if nearest_dist > 180.0 {
                         reward -= 2.0;
                     }
                 }
@@ -556,10 +558,25 @@ impl ChromeDinoEnvironment {
                 if self.dino_y == 0.0 {
                     self.is_ducking = true;
                     self.is_jumping = false;
+
+                    let (nearest_dist, obs_type) = self
+                        .nearest_obstacle()
+                        .map(|o| {
+                            let d = (o.x - (self.dino_x + Self::DINO_WIDTH_STAND)).max(0.0);
+                            (d, Some(o.obstacle_type))
+                        })
+                        .unwrap_or((600.0, None));
+                    let tti = nearest_dist / self.speed.max(1.0);
+                    if let Some(ObstacleType::PterodactylMid) = obs_type {
+                        if tti <= 12.0 {
+                            reward += 5.0; // Timely duck under mid pterodactyl!
+                        }
+                    }
                 } else {
                     // Fast fall when ducking in mid-air
                     self.dino_velocity_y += self.gravity * 1.5;
                     self.is_ducking = true;
+                    reward -= 5.0; // Discourage unnecessary mid-air fast-fall
                 }
             }
             DinoAction::Run => {
@@ -896,19 +913,25 @@ impl DinoBenchmarkRunner {
             while !env.is_terminal() && ep_ticks < max_ticks_per_episode {
                 let obs = env.observe();
                 let state_key = obs.discrete_key();
+                let (safe_actions, preferred) = env.safe_actions_for(&obs);
 
-                let action = DinoAction::from_str_loose(
-                    ["RUN", "JUMP", "DUCK"]
-                        .iter()
-                        .max_by(|a, b| {
-                            let qa = q_table.get_q(&state_key, a);
-                            let qb = q_table.get_q(&state_key, b);
-                            qa.partial_cmp(&qb).unwrap_or(std::cmp::Ordering::Equal)
-                        })
-                        .unwrap_or(&"RUN"),
-                )
-                .unwrap_or(DinoAction::Run);
+                let best_act = ["RUN", "JUMP", "DUCK"]
+                    .iter()
+                    .max_by(|a, b| {
+                        let qa = q_table.get_q(&state_key, a);
+                        let qb = q_table.get_q(&state_key, b);
+                        qa.partial_cmp(&qb).unwrap_or(std::cmp::Ordering::Equal)
+                    })
+                    .copied()
+                    .unwrap_or(&preferred);
 
+                let action_str = if safe_actions.contains(&best_act.to_string()) {
+                    best_act
+                } else {
+                    &preferred
+                };
+
+                let action = DinoAction::from_str_loose(action_str).unwrap_or(DinoAction::Run);
                 env.step(action);
                 ep_ticks += 1;
             }
@@ -1007,11 +1030,19 @@ impl DinoQTrainer {
         while !env.is_terminal() && ticks < max_ticks {
             let obs = env.observe();
             let s_key = obs.discrete_key();
-            let action = Self::select_action(q_table, &s_key, epsilon, rng);
+            let (safe_actions, preferred) = env.safe_actions_for(&obs);
+
+            let raw_action = Self::select_action(q_table, &s_key, epsilon, rng);
+            let action = if !safe_actions.contains(&raw_action.as_str().to_string())
+                && rng.gen::<f32>() < 0.80
+            {
+                DinoAction::from_str_loose(&preferred).unwrap_or(raw_action)
+            } else {
+                raw_action
+            };
 
             let res = env.step(action);
             total_reward += res.reward;
-
             let ns_key = res.observation.discrete_key();
             Self::update_q(
                 q_table,

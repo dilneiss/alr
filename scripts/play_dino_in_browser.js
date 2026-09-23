@@ -164,22 +164,19 @@ const path = require('path');
                 return;
             }
 
-            // 3. System 1 Decision & Safety Shield
-            const speed = perception.speed || 6.0;
-            const jumpWindowMax = Math.max(speed * 20.0, 120.0);
-            const jumpWindowMin = Math.max(speed * 4.0, 25.0);
-            const duckWindow = Math.max(speed * 18.0, 110.0);
+            // 3. System 1 Decision & Safety Shield (Physical Invariants)
+            const speed = Math.max(perception.speed || 6.0, 1.0);
+            const dist = perception.distance;
+            const tti = dist / speed;
+            const obsType = perception.obstacleType;
 
             let actionToExecute = "RUN";
             let shieldIntervened = false;
 
             if (perception.hasObstacle) {
-                const dist = perception.distance;
-                const obsType = perception.obstacleType;
-
                 if (obsType === 'PterodactylMid') {
-                    // Mid Pterodactyl: Duck under!
-                    if (dist <= duckWindow) {
+                    // Mid Pterodactyl: Duck when approaching and passing (tti <= 12.0)
+                    if (tti <= 12.0) {
                         actionToExecute = "DUCK";
                     }
                 } else if (obsType === 'PterodactylHigh') {
@@ -187,11 +184,12 @@ const path = require('path');
                     actionToExecute = "RUN";
                     shieldIntervened = true; // Shield suppressed accidental jump
                 } else {
-                    // Ground Cacti or Low Pterodactyl: Jump!
-                    if (dist <= jumpWindowMax && dist >= jumpWindowMin) {
+                    // Ground Cacti or Low Pterodactyl: Jump only when within the golden window (tti <= 9.0)
+                    if (tti <= 9.0) {
                         actionToExecute = "JUMP";
-                    } else if (dist < jumpWindowMin) {
-                        actionToExecute = "JUMP"; // Emergency late jump
+                    } else {
+                        actionToExecute = "RUN"; // Coast safely, premature jump causes fatal landing!
+                        shieldIntervened = true;
                     }
                 }
             }
