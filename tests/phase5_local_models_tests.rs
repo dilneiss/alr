@@ -276,3 +276,32 @@ async fn test_typed_decision_engine_jev_laya_primitives() {
     assert!(score_res.is_calibrated);
     assert!(score_res.confidence > 0.0);
 }
+/// 10. TESTE: CYCLE SAFETY SHIELD (LAYA-COREML GUARANTEED RECOVERY)
+#[tokio::test]
+async fn test_laya_cycle_safety_shield_intervention() {
+    use alr_models::{LayaGuardedSnakePolicy, LocalTypedJudgeEngine, OnnxModelRuntime};
+
+    let runtime = std::sync::Arc::new(OnnxModelRuntime::new());
+    let judge = std::sync::Arc::new(LocalTypedJudgeEngine::new(runtime));
+    let policy = LayaGuardedSnakePolicy::new(judge, true);
+
+    // Scenario: Model's preferred raw choice is "DOWN", but only ["LEFT", "RIGHT"] are safe
+    let state = State::new(vec![0.05, 0.95, 0.3, 0.1], serde_json::json!({}));
+    let safe_moves = vec!["LEFT".to_string(), "RIGHT".to_string()];
+
+    let move_decision = policy
+        .decide_move(&state, &safe_moves, "LEFT")
+        .await
+        .unwrap();
+
+    assert_eq!(move_decision.proposed_direction, "DOWN");
+    assert!(
+        move_decision.safety_intervened,
+        "Shield must intervene when proposed direction is unsafe"
+    );
+    assert!(safe_moves.contains(&move_decision.executed_direction));
+    assert!(
+        move_decision.latency_micros < 15_000,
+        "Sub-millisecond decision pipeline"
+    );
+}

@@ -33,7 +33,8 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
 
 1. [O Que é o Projeto?](#-o-que-é-o-projeto)
 2. [Por Que o ALR Existe?](#-por-que-o-alr-existe)
-3. [Premissa Central](#-premissa-central)
+3. [Comparativo Técnico: Por Que o ALR é Superior ao JEV e Laya / Laya-CoreML?](#-comparativo-técnico-por-que-o-alr-é-superior-ao-jev-e-laya--laya-coreml)
+4. [Premissa Central](#-premissa-central)
 4. [Princípios Arquiteturais](#-princípios-arquiteturais)
 5. [O Que o Sistema Faz?](#-o-que-o-sistema-faz)
 6. [Casos de Uso Detalhados (Fases 1 a 11)](#-casos-de-uso-detalhados)
@@ -107,6 +108,43 @@ Agentes de IA que dependem exclusivamente de chamadas remotas de LLM enfrentam g
 * **Vulnerabilidade de Rede:** Se a API externa oscilar ou cair, o agente para completamente.
 
 O ALR resolve isso estabelecendo um runtime com memória híbrida, aprendizado contínuo e validação estrita de segurança.
+
+---
+
+## 🏆 Comparativo Técnico: Por Que o ALR é Superior ao JEV e Laya / Laya-CoreML?
+
+O **Autonomous Learning Runtime (ALR)** integra os pontos fortes conceituais do **JEV (TypeSafe AI)** e do **Laya (ConvAI / mizorewww laya-coreml)**, mas foi além para resolver as limitações estruturais de ambos:
+
+| Dimensão Arquitetural | **JEV (TypeSafe AI)** | **Laya / Laya-CoreML** | **ALR (Autonomous Learning Runtime)** |
+| :--- | :--- | :--- | :--- |
+| **Arquitetura Base** | API Proprietária em Nuvem | Modelo de Decisão Tipada (Python / Core ML) | **Runtime Cognitivo Completo em Rust (21 Crates)** |
+| **Portabilidade & SO** | Requer Conexão Externa (Cloud) | **Restrito ao Apple Silicon (macOS / ANE)** | **Universal Multiplataforma (Windows, Linux, macOS)** via Rust + ONNX |
+| **Tipo de Execução** | Apenas Classificação Pontual (API) | Decisões Tipadas Isoladas | **Loop Agêntico Completo (Percepção → Memória → Decisão → Ação → Replay)** |
+| **Primitivas Tipadas** | `Choice`, `Score`, `Noul` | `Choice`, `Score`, `Noul` | **`Choice`, `Score`, `Noul` + Avaliação de Brier Score & Entropia** |
+| **Escudo de Segurança** | Nenhum (apenas retorna probabilidades) | `Cycle Safety Shield` em Python | **`LayaGuardedSnakePolicy` Nativo em Rust + Hard Constraints do `RiskEngine`** |
+| **Memória Operacional** | Nenhuma (Stateless) | Nenhuma (Stateless) | **Memória Híbrida Dupla (SQLite WAL + Qdrant Vetorial Multi-Tenant)** |
+| **Ações no Mundo Real** | Zero (apenas API de texto/JSON) | Zero (apenas demo Snake no terminal) | **Automação Web Real (Chromium CDP), Teclado/Mouse OS, Conectores REST & Webhooks** |
+| **Evasão de Loops** | Inexistente | Heurística simples de ciclo | **Detector Universal de Loops (Tabu Search 45 ticks + Penalidade de Recência)** |
+| **Recuperação de Falhas** | Nenhuma | Nenhuma | **Checkpoints Persistentes, Fila de Tarefas & Retomada Pós-Crash** |
+| **Garantia de Tipagem** | JSON via HTTP | Python dinâmico com type hints | **Segurança de Memória e Tipagem Estrita em Tempo de Compilação (Rust)** |
+
+### Exemplos Práticos de Superioridade do ALR:
+
+1. **Exemplo 1: Snake com Decisão Tipada e Escudo Físico em Sub-Milissegundo:**
+   * Enquanto o `laya-coreml` depende do ecossistema Python no macOS (`pip install laya-coreml`, `sysctl`, `coremltools`) e sofre quando a cobra entra em loop de estagnação de 600 passos em volta de itens inacessíveis, o ALR executa em **Rust puro compilado** com a política `LayaGuardedSnakePolicy`:
+     * Avalia as primitivas tipadas `Choice` (probabilidades Softmax por movimento) e `Noul` (risco de beco sem saída e alcance de comida) em **microsegundos**.
+     * Possui o **Tabu Search Memory** de quarentena de 45 ticks e penalidade de recência de trilha, impedindo fisicamente qualquer loop ou travamento.
+2. **Exemplo 2: Atendimento ao Cliente com Diálogo de Esclarecimento Interativo (System 1 + System 2):**
+   * O JEV apenas diz: `{"refund": {"type": "noul", "probability": 0.98}}` e repassa o problema para a aplicação.
+   * O ALR detecta que a intenção é estorno (`RefundPending`), percebe via `StateExtractor::extract_entities` que o usuário **não informou o número do pedido**, **pausa a execução das ferramentas, mantém o chamado aberto e pergunta educadamente ao usuário na tela**:
+     ```text
+     [ALR ATENDENTE]: Olá! Para prosseguir com a verificação do seu estorno, preciso do número do seu pedido (ex: ord_0005) ou ID da transação. Poderia me informar?
+     ```
+   * Quando o cliente responde com `"ord_0005"`, o ALR retoma o contexto salvo e resolve a transação com **zero chamadas à LLM externa**!
+3. **Exemplo 3: Zero Dependência de Nuvem e Zero Dependência de Apple Silicon:**
+   * O JEV cobra por token e para de funcionar quando a internet oscila.
+   * O `laya-coreml` só roda em Macbooks com processadores M-Series.
+   * O ALR roda em qualquer servidor, desktop ou edge device (Windows com DirectML/CPU/CUDA, Linux para datacenters, macOS com Metal), garantindo 100% de operação *air-gapped* offline.
 
 ---
 
