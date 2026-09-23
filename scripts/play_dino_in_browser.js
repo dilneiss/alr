@@ -61,17 +61,16 @@ const path = require('path');
 
                 const imgData = ctx.getImageData(0, 0, w, h).data;
 
-                // Dino parameters
-                const dinoX = 60;
-                const dinoW = 44;
-                const dinoRight = dinoX + dinoW;
-                const groundY = 195;
+                // Adaptive resolution parameters
+                const isLocal = !!document.getElementById('tel-status');
+                const groundY = isLocal ? 195 : Math.round(h * 0.82);
+                const dinoRight = isLocal ? (60 + 44) : Math.round(w * 0.12);
 
-                // Scan region in front of Dino
+                // Scan region strictly in front of Dino and strictly above ground line
                 const scanStartX = dinoRight + 4;
-                const scanEndX = Math.min(w, dinoRight + 340);
-                const scanStartY = 80;
-                const scanEndY = groundY;
+                const scanEndX = Math.min(w, dinoRight + Math.round(w * 0.42));
+                const scanStartY = Math.round(h * 0.22);
+                const scanEndY = groundY - 2; // Exclude continuous ground line
 
                 let obstaclePixels = [];
                 let minX = 9999;
@@ -79,7 +78,7 @@ const path = require('path');
                 let minY = 9999;
                 let maxY = 0;
 
-                // Sample every 4 pixels horizontally and vertically
+                // Sample pixels horizontally and vertically
                 for (let x = scanStartX; x < scanEndX; x += 4) {
                     for (let y = scanStartY; y < scanEndY; y += 4) {
                         const idx = (y * w + x) * 4;
@@ -88,7 +87,7 @@ const path = require('path');
                         const b = imgData[idx + 2];
 
                         // Detect dark obstacle pixels (#535353 or similar)
-                        if (r < 120 && g < 120 && b < 120) {
+                        if (r < 130 && g < 130 && b < 130) {
                             obstaclePixels.push({ x, y });
                             if (x < minX) minX = x;
                             if (x > maxX) maxX = x;
@@ -98,17 +97,29 @@ const path = require('path');
                     }
                 }
 
-                // Check game over text
+                // Universal speed extraction
+                let currentSpeed = 6.0;
+                if (window.Runner && window.Runner.instance && window.Runner.instance.currentSpeed) {
+                    currentSpeed = window.Runner.instance.currentSpeed;
+                } else {
+                    const speedEl = document.getElementById('tel-speed');
+                    currentSpeed = speedEl ? parseFloat(speedEl.innerText) || 6.0 : 6.0;
+                }
+
+                // Universal score extraction
+                let currentScore = 0;
+                if (window.Runner && window.Runner.instance && window.Runner.instance.distanceMeter) {
+                    currentScore = window.Runner.instance.distanceMeter.getActualDistance(window.Runner.instance.distanceRan) || 0;
+                } else {
+                    const scoreEl = document.getElementById('tel-score');
+                    currentScore = scoreEl ? parseInt(scoreEl.innerText, 10) || 0 : 0;
+                }
+
+                // Universal game over check
                 const statusEl = document.getElementById('tel-status');
-                const isGameOver = statusEl
-                    ? statusEl.innerText.includes('COLLISION') || statusEl.innerText.includes('GAME OVER')
-                    : document.body.innerText.includes('GAME OVER');
-
-                const scoreEl = document.getElementById('tel-score');
-                const currentScore = scoreEl ? parseInt(scoreEl.innerText, 10) || 0 : 0;
-
-                const speedEl = document.getElementById('tel-speed');
-                const currentSpeed = speedEl ? parseFloat(speedEl.innerText) || 6.0 : 6.0;
+                const isGameOver = (window.Runner && window.Runner.instance && window.Runner.instance.crashed)
+                    || (statusEl && (statusEl.innerText.includes('COLLISION') || statusEl.innerText.includes('GAME OVER')))
+                    || document.body.innerText.includes('GAME OVER');
 
                 if (obstaclePixels.length < 3) {
                     return {
@@ -125,11 +136,12 @@ const path = require('path');
                 const obsHeight = maxY - minY;
                 const obsWidth = maxX - minX;
 
-                // Classify obstacle altitude
+                // Classify obstacle altitude relative to ground line
+                const distFromGround = groundY - minY;
                 let obstacleType = 'SmallCactus';
-                if (minY >= 145) {
-                    obstacleType = obsWidth > 35 ? 'TripleCactus' : (obsHeight > 40 ? 'LargeCactus' : 'SmallCactus');
-                } else if (minY >= 115) {
+                if (distFromGround <= Math.round(h * 0.28)) {
+                    obstacleType = obsWidth > 32 ? 'TripleCactus' : (obsHeight > 38 ? 'LargeCactus' : 'SmallCactus');
+                } else if (distFromGround <= Math.round(h * 0.48)) {
                     obstacleType = 'PterodactylMid'; // Mid altitude: MUST DUCK!
                 } else {
                     obstacleType = 'PterodactylHigh'; // High altitude: SAFE TO RUN!
