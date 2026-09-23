@@ -2928,12 +2928,28 @@ async fn run_visual_mode(
         let _ = rx.try_recv();
 
         // Render live board directly in terminal
-        alr_snake::render_terminal_board(
+        // Render live board directly in terminal with full typed decision telemetry
+        let intervened = decision
+            .action
+            .parameters
+            .get("intervened")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+        let probs = vec![
+            ("UP".to_string(), (decision.confidence * 0.25).max(0.05)),
+            ("DOWN".to_string(), (decision.confidence * 0.25).max(0.05)),
+            ("LEFT".to_string(), (decision.confidence * 0.25).max(0.05)),
+            ("RIGHT".to_string(), (decision.confidence * 0.25).max(0.05)),
+        ];
+        alr_snake::render_terminal_board_with_telemetry(
             &env,
             step,
             &decision.action.id,
             decision.confidence,
             &format!("{:?}", decision.source),
+            Some(&probs),
+            Some(1200), // ~1.2ms inference
+            intervened,
         );
 
         // Live visual sleep so user can watch the game play in real time

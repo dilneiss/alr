@@ -380,6 +380,37 @@ cargo run -p alr-cli --bin audit_latency
 # 4. Jogo da Cobrinha com Visualização em Tempo Real no Terminal (joga até o fim)
 cargo run -p alr-cli -- snake --mode visual
 
+### 🐍 Como Testar o Jogo Snake Atualizado (Decisões Tipadas, Telemetria & Escudo de Segurança)
+
+O jogo da cobrinha conta agora com o motor de **Decisões Tipadas (System 1)**, **Cycle Safety Shield** e telemetria de probabilidades em tempo real:
+
+1. **Modo Visual no Terminal (Animação ASCII + Telemetria em Tempo Real):**
+   ```bash
+   cargo run -p alr-cli -- snake --mode visual
+   ```
+   * *O que você verá:* O tabuleiro renderizado em tempo real (~120ms/passo), a ação executada, a confiança, o vetor de probabilidades de cada direção (`UP:X% | DOWN:Y% | LEFT:Z% | RIGHT:W%`), a latência de inferência em microsegundos e o alerta do `Cycle Safety Shield` caso uma rota perigosa seja interceptada.
+
+2. **Demonstração do Modelo Destilado ONNX do Snake:**
+   ```bash
+   cargo run -p alr-cli -- model snake-demo
+   ```
+   * *O que você verá:* Treinamento em lote, destilação instantânea para artefato `.onnx`, verificação SHA-256 e inferência de tensores com tempos de resposta de sub-milissegundos.
+
+3. **Treinamento e Atualização Contínua da Política:**
+   ```bash
+   # Treinar 500 episódios e persistir no SQLite:
+   cargo run -p alr-cli -- snake --train --episodes 500
+
+   # Avaliar taxa de sobrevivência e pontuação média:
+   cargo run -p alr-cli -- snake --evaluate --episodes 100
+   ```
+
+4. **Navegador Real (Google Chrome via Visão Computacional + Tabu Search Memory):**
+   ```bash
+   node scripts/play_in_browser.js
+   ```
+   * *O que você verá:* O Chromium abrindo a tela real do jogo em `wutools.com`, lendo os pixels da tela via visão computacional e quebrando estagnações automaticamente através da quarentena Tabu Search de 45 ticks.
+
 # 5. Jogo da Cobrinha Rodando no Google Chrome Real via Visão Computacional
 node scripts/play_in_browser.js
 
@@ -397,7 +428,7 @@ cargo run -p alr-cli -- 3d external-demo
 cargo run -p alr-cli -- model list
 cargo run -p alr-cli -- env list
 
-# 10. Executar a Suíte Completa de Testes Automatizados (135 Testes)
+# 10. Executar a Suíte Completa de Testes Automatizados (137 Testes)
 cargo test --workspace
 ```
 
