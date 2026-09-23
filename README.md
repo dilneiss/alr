@@ -507,7 +507,22 @@ O workspace é estritamente desacoplado em 21 crates:
 * **Docker & Docker Compose (Opcional):** Para subir o contêiner do Qdrant localmente.
 * **Google Chrome / Chromium:** Para automação web real via CDP.
 
-### 2. Clonar e Compilar
+
+### 2. Requisitos de Hardware (Mínimos vs. Recomendados / Máximos)
+
+O ALR foi construído em **Rust puro** com foco em eficiência extrema de recursos, permitindo execução tanto em computadores modestos e edge devices quanto em estações de trabalho de altíssimo desempenho com paralelismo massivo:
+
+| Componente | **Requisito Mínimo** (Ambiente Leve / Edge / CI) | **Requisito Recomendado / Máximo** (Workstation / Produção Total) |
+| :--- | :--- | :--- |
+| **Processador (CPU)** | 2 Cores x86_64 ou ARM64 (ex: Intel Core i3 / Celeron, AMD Ryzen 3, Apple M1) | 8 a 16+ Cores modernos (ex: Intel Core i7 13ª/14ª Gen, AMD Ryzen 7/9, Apple M2/M3/M4 Max) |
+| **Memória RAM** | **512 MB a 1 GB RAM livre** (para o binário do ALR rodando inferência ONNX e SQLite) | **8 GB a 16 GB+ RAM** (necessário para rodar paralelamente Docker com Qdrant e múltiplas instâncias de Chromium CDP) |
+| **Aceleração Gráfica (GPU / NPU)** | Não obrigatório (100% dos modelos locais ONNX e algoritmos A*/Q-Learning rodam velozes em CPU) | GPU dedicada NVIDIA (DirectML / CUDA) ou Apple Silicon com Neural Engine (ANE / Metal) |
+| **Armazenamento (Disco)** | **1.5 GB de espaço livre** (código-fonte compilado em debug/release, SQLite WAL e artefatos ONNX) | **10 GB+ SSD NVMe** (para buffers extensos de replay de experiências, bases vetoriais no Qdrant e logs de auditoria) |
+| **Sistema Operacional** | Windows 10/11 (64-bit), Linux (Ubuntu 20.04+, Debian, Fedora, Arch) ou macOS 12+ | Windows 11 Pro, Linux Kernel 6.x+ ou macOS Sequoia 15+ |
+| **Conexão com a Internet** | **Zero / Offline** (o ALR roda 100% *air-gapped* com Mock LLM, SQLite e ONNX local) | Conexão banda larga estável apenas caso deseje consultar LLMs em nuvem (OpenAI, OpenRouter, Anthropic) |
+| **Permissões de Execução** | Usuário padrão (não requer privilégios de Administrador/Root) | Acesso para gerenciar serviços Docker (`docker compose`) e instâncias locais de Chromium |
+
+### 3. Clonar e Compilar
 ```bash
 git clone https://github.com/seu-usuario/autonomous-learning-runtime.git
 cd alr
