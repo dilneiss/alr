@@ -1,3 +1,9 @@
+pub mod dino;
+pub use dino::{
+    ChromeDinoEnvironment, DinoAction, DinoBenchmarkReport, DinoBenchmarkRunner, DinoObservation,
+    DinoObstacle, DinoQTrainer, DinoStepResult, ObstacleType,
+};
+
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};

@@ -15,7 +15,9 @@ pub use dataset::{DataSplit, ExperienceDataset, TrainingSample};
 pub use distillation::DistillationPipeline;
 pub use evaluation::{ModelEvaluation, ModelEvaluator};
 pub use feature::{FeatureSchema, FeatureVectorizer};
-pub use guarded_policy::{GuardedMoveDecision, LayaGuardedSnakePolicy};
+pub use guarded_policy::{
+    GuardedDinoDecision, GuardedMoveDecision, LayaGuardedDinoPolicy, LayaGuardedSnakePolicy,
+};
 pub use ood::DistributionShiftDetector;
 pub use registry::{ModelCard, ModelRegistry};
 pub use runtime::{

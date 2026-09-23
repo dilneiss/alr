@@ -15,6 +15,9 @@ use alr_core::{
 };
 use alr_environment::{AbstractAction, EnvironmentAdapter, Real3DRenderedLab};
 use alr_execution::{ChannelInputController, InputAction, InputController, SafeInputController};
+use alr_games::{
+    ChromeDinoEnvironment, DinoAction, DinoBenchmarkReport, DinoBenchmarkRunner, DinoQTrainer,
+};
 use alr_learning::QTable;
 use alr_llm::{LlmTeacher, MockLlmTeacher};
 use alr_mcp::{McpContext, McpServer};
@@ -26,6 +29,7 @@ use alr_models::{
     DataSplit, DistillationPipeline, DistributionShiftDetector, ExperienceDataset,
     LocalModelRuntime, ModelCard, ModelRegistry, OnnxModelRuntime,
 };
+use alr_models::{LayaGuardedDinoPolicy, LocalTypedJudgeEngine};
 use alr_perception::{
     CameraState, CaptureRegion, ScreenCapturer, SimulatedScreenCapturer, Visual3DPerception,
     VisualDetection, VisualSnakeDetector,
@@ -82,6 +86,25 @@ enum Commands {
 
         #[arg(long, default_value_t = 20)]
         height: i32,
+
+        #[arg(long)]
+        max_steps: Option<usize>,
+    },
+    Dino {
+        #[arg(long, default_value = "visual")]
+        mode: String,
+
+        #[arg(long)]
+        train: bool,
+
+        #[arg(long)]
+        evaluate: bool,
+
+        #[arg(long, default_value_t = 100)]
+        episodes: usize,
+
+        #[arg(long, default_value_t = 42)]
+        seed: u64,
 
         #[arg(long)]
         max_steps: Option<usize>,
@@ -247,6 +270,10 @@ enum TrainCommands {
     Support {
         #[arg(long, default_value_t = 100)]
         tickets: usize,
+    },
+    Dino {
+        #[arg(long, default_value_t = 100)]
+        episodes: usize,
     },
 }
 
@@ -460,6 +487,16 @@ async fn main() -> Result<()> {
                 );
                 print_benchmark_report(&report);
             }
+        }
+        Commands::Dino {
+            mode,
+            train,
+            evaluate,
+            episodes,
+            seed,
+            max_steps,
+        } => {
+            handle_dino_command(&store, episodes, seed, train, evaluate, &mode, max_steps).await?;
         }
         Commands::ThreeD { action } => match action {
             ThreeDCommands::Demo => {
@@ -973,6 +1010,9 @@ async fn main() -> Result<()> {
                     "{}",
                     format!("Intent model registered successfully (ID: {}).", id).green()
                 );
+            }
+            TrainCommands::Dino { episodes } => {
+                handle_dino_command(&store, episodes, 42, true, false, "train", None).await?;
             }
         },
         Commands::Phase2Demo => {
@@ -2983,5 +3023,293 @@ async fn run_visual_mode(
         .bold()
         .green()
     );
+    Ok(())
+}
+
+fn print_dino_benchmark_report(report: &DinoBenchmarkReport) {
+    println!(
+        "\n{}",
+        "=== CHROME DINO BENCHMARK REPORT ===".bold().green()
+    );
+    println!("Policy Name:               {}", report.name.cyan());
+    println!("Episodes Evaluated:        {}", report.episodes);
+    println!("Average Score (Obstacles): {:.2}", report.average_score);
+    println!("Median Score:              {:.1}", report.median_score);
+    println!("Best Score:                {}", report.best_score);
+    println!(
+        "Average Survival Ticks:    {:.1}",
+        report.average_survival_ticks
+    );
+    println!(
+        "Obstacles Cleared/Ep:      {:.2}",
+        report.obstacles_cleared_per_episode
+    );
+    println!(
+        "Survival Rate (Score>=5):  {:.1}%",
+        report.survival_rate * 100.0
+    );
+    println!(
+        "{}\n",
+        "====================================".bold().green()
+    );
+}
+
+async fn handle_dino_command(
+    store: &SqliteMemoryStore,
+    episodes: usize,
+    seed: u64,
+    train: bool,
+    evaluate: bool,
+    mode: &str,
+    max_steps: Option<usize>,
+) -> Result<()> {
+    println!("{}", "=== ALR CHROME DINO RUNNER ===".bold().cyan());
+
+    let mut q_table = QTable::new(0.2, 0.9, 0.1);
+
+    // Restore existing Q-Table policy from SQLite if available
+    if let Ok(Some(saved_q)) = store.load_policy_state("dino_q_table") {
+        if let Ok(table) = serde_json::from_str::<QTable>(&saved_q) {
+            q_table = table;
+            println!(
+                "{}",
+                "Restored existing Dino Q-Table policy from SQLite database".green()
+            );
+        }
+    }
+
+    if train {
+        println!(
+            "{}",
+            format!(
+                "Training Dino policy for {} episodes (seed={})...",
+                episodes, seed
+            )
+            .yellow()
+        );
+        let mut rng = nrand::thread_rng();
+        let max_ticks = max_steps.unwrap_or(2000);
+
+        for ep in 0..episodes {
+            let ep_seed = seed + ep as u64;
+            let mut env = ChromeDinoEnvironment::new(ep_seed);
+            let epsilon = (0.30 - (0.25 * (ep as f32 / episodes.max(1) as f32))).max(0.05);
+
+            let (score, ticks, reward) =
+                DinoQTrainer::train_episode(&mut env, &mut q_table, epsilon, max_ticks, &mut rng);
+
+            if (ep + 1) % (episodes / 5).max(1) == 0 || ep + 1 == episodes {
+                println!(
+                    "Episode {:>4}/{} | Score: {:>3} | Ticks: {:>4} | Total Reward: {:>7.1} | Epsilon: {:.2}",
+                    ep + 1,
+                    episodes,
+                    score,
+                    ticks,
+                    reward,
+                    epsilon
+                );
+            }
+        }
+
+        if let Ok(q_json) = serde_json::to_string(&q_table) {
+            store.save_policy_state("dino_q_table", &q_json)?;
+            println!("{}", "Persisted updated Dino Q-Table to SQLite.".green());
+        }
+    } else if evaluate {
+        println!(
+            "{}",
+            format!("Evaluating Dino policy across {} episodes...", episodes).cyan()
+        );
+        let max_ticks = max_steps.unwrap_or(2000);
+        let report = DinoBenchmarkRunner::run_policy(
+            &q_table,
+            "ALR Evaluated Dino Policy",
+            episodes,
+            seed,
+            max_ticks,
+        );
+        print_dino_benchmark_report(&report);
+    } else if mode == "visual" {
+        run_dino_visual_mode(store, &mut q_table, seed, max_steps).await?;
+    } else {
+        println!(
+            "{}",
+            "Running standard benchmark baseline vs agent policy...".cyan()
+        );
+        let max_ticks = max_steps.unwrap_or(2000);
+        let report = DinoBenchmarkRunner::run_policy(
+            &q_table,
+            "ALR Active Dino Policy",
+            episodes,
+            seed,
+            max_ticks,
+        );
+        print_dino_benchmark_report(&report);
+    }
+
+    Ok(())
+}
+
+async fn run_dino_visual_mode(
+    store: &SqliteMemoryStore,
+    q_table: &mut QTable,
+    seed: u64,
+    max_steps: Option<usize>,
+) -> Result<()> {
+    println!(
+        "{}",
+        "=== RUNNING CHROME DINO VISUAL SIMULATION (SYSTEM 1 TYPED DECISIONS) ==="
+            .bold()
+            .cyan()
+    );
+    println!("Mode: Physics Engine -> Observation -> System 1 Typed Judge (Choice/Noul) -> Cycle Safety Shield -> Dynamic Speed");
+
+    let mut env = ChromeDinoEnvironment::new(seed);
+    env.reset(seed);
+
+    let runtime = Arc::new(OnnxModelRuntime::new());
+    let judge = Arc::new(LocalTypedJudgeEngine::new(runtime));
+    let policy = LayaGuardedDinoPolicy::new(judge, true);
+
+    let mut step = 0;
+    let max_ticks = max_steps.unwrap_or(1500);
+
+    while !env.is_terminal() && step < max_ticks {
+        let obs = env.observe();
+        let alr_state = obs.to_alr_state();
+
+        // 1. Calculate physical safety invariants
+        let (safe_actions, preferred) = env.safe_actions_for(&obs);
+
+        // 2. Query Q-table or preference for suggested action
+        let s_key = obs.discrete_key();
+        let q_suggested = ["RUN", "JUMP", "DUCK"]
+            .iter()
+            .max_by(|a, b| {
+                let qa = q_table.get_q(&s_key, a);
+                let qb = q_table.get_q(&s_key, b);
+                qa.partial_cmp(&qb).unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .copied()
+            .unwrap_or(&preferred);
+
+        // 3. System 1 Typed Decision with Cycle Safety Shield
+        let guarded_decision = policy
+            .decide_action(&alr_state, &safe_actions, q_suggested)
+            .await?;
+
+        let dino_act = DinoAction::from_str_loose(&guarded_decision.executed_action)
+            .unwrap_or(DinoAction::Run);
+
+        // 4. Render ASCII frame
+        let ascii_frame = env.render_ascii();
+
+        // Clear terminal screen using ANSI escape codes for live animation
+        print!("\x1B[2J\x1B[1;1H");
+        println!(
+            "{}",
+            "=== ALR CHROME DINO (T-REX RUNNER) ===".bold().yellow()
+        );
+        print!("{}", ascii_frame);
+
+        // Telemetry readout
+        let obs_type_str = obs
+            .nearest_obstacle_type
+            .map(|t| format!("{:?}", t))
+            .unwrap_or_else(|| "None".to_string());
+
+        let shield_badge = if guarded_decision.safety_intervened {
+            "INTERVENED [SHIELD OVERRIDE]".bold().red()
+        } else {
+            "CLEAR [POLICY OPTIMAL]".green()
+        };
+
+        println!(
+            "Tick: {:<4} | Score: {:<3} | Speed: {:.1}px/t | Obstacle: {:<15} | Dist: {:<5.1}px",
+            step,
+            env.score,
+            env.speed,
+            obs_type_str.cyan(),
+            obs.distance_to_obstacle
+        );
+        println!(
+            "Dino Y: {:<4.1}px | Proposed: {:<4} | Executed: {:<4} | Shield: {}",
+            env.dino_y,
+            guarded_decision.proposed_action.yellow(),
+            guarded_decision.executed_action.bold().green(),
+            shield_badge
+        );
+
+        let p_run = guarded_decision
+            .probabilities
+            .get("RUN")
+            .copied()
+            .unwrap_or(0.0);
+        let p_jump = guarded_decision
+            .probabilities
+            .get("JUMP")
+            .copied()
+            .unwrap_or(0.0);
+        let p_duck = guarded_decision
+            .probabilities
+            .get("DUCK")
+            .copied()
+            .unwrap_or(0.0);
+
+        println!(
+            "Probabilities: RUN={:.2} | JUMP={:.2} | DUCK={:.2} | Hazard Risk: {:.2} | Latency: {}µs",
+            p_run, p_jump, p_duck, guarded_decision.collision_imminent, guarded_decision.latency_micros
+        );
+        println!(
+            "{}",
+            "-----------------------------------------------------------------".dimmed()
+        );
+
+        // 5. Advance environment
+        let step_res = env.step(dino_act);
+
+        // Online Q-update from observation
+        let ns_key = step_res.observation.discrete_key();
+        DinoQTrainer::update_q(
+            q_table,
+            &s_key,
+            dino_act.as_str(),
+            step_res.reward,
+            &ns_key,
+            step_res.terminal,
+        );
+
+        step += 1;
+        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+    }
+
+    if env.is_terminal() {
+        println!(
+            "\n{}",
+            format!(
+                "GAME OVER! Collision at tick {} with final score: {}",
+                step, env.score
+            )
+            .bold()
+            .red()
+        );
+    } else {
+        println!(
+            "\n{}",
+            format!(
+                "SURVIVED! Maximum steps reached ({}) with final score: {}",
+                step, env.score
+            )
+            .bold()
+            .green()
+        );
+    }
+
+    // Persist Q-table updates
+    if let Ok(q_json) = serde_json::to_string(&q_table) {
+        let _ = store.save_policy_state("dino_q_table", &q_json);
+        println!("{}", "Dino Q-Table policy persisted to SQLite.".green());
+    }
+
     Ok(())
 }

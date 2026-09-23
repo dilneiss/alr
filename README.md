@@ -2,7 +2,7 @@
 
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B%20%7C%201.98.1-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-137%2F137%20Passing-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-148%2F148%20Passing-brightgreen.svg)]()
 [![Autonomy Rate](https://img.shields.io/badge/Local%20Autonomy-98.8%25-orange.svg)]()
 [![Loop Evasion](https://img.shields.io/badge/Loop%20Evasion-Active-brightgreen.svg)](docs/training-new-tasks.md)
 [![Release Status](https://img.shields.io/badge/Release%20Certification-Certified%20With%20Limitations-yellow.svg)](docs/final-certification-report.md)
@@ -26,6 +26,7 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
 9. **Coordenação Multiagente Especializada (TaskGraph, MetaPlanner, Blackboard, Consensus & Team Skills)**
 10. **Game Autonomy Engine (Tetris, Social Deduction Lab, Temporal Memory, Suspicion Model & External Game Adapters)**
 11. **Validação Adversarial & Certificação Final (12 Gates de Aceitação Formais)**
+12. **Treinamento e Execução Autônoma do Chrome Dino Runner (Offline & Visão Computacional no Navegador)**
 
 ---
 
@@ -38,7 +39,7 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
 5. [Premissa Central](#-premissa-central)
 4. [Princípios Arquiteturais](#-princípios-arquiteturais)
 5. [O Que o Sistema Faz?](#-o-que-o-sistema-faz)
-6. [Casos de Uso Detalhados (Fases 1 a 11)](#-casos-de-uso-detalhados)
+6. [Casos de Uso Detalhados (Fases 1 a 12)](#-casos-de-uso-detalhados)
    * [Caso 1: Controle Dinâmico em Jogos (Snake)](#caso-1-controle-dinâmico-em-jogos-snake)
    * [Caso 2: Atendimento com Memória Semântica (Customer Support)](#caso-2-atendimento-com-memória-semântica-customer-support)
    * [Caso 3: Automação Web Real no Navegador (Chromium CDP)](#caso-3-automação-web-real-no-navegador-chromium-cdp)
@@ -50,6 +51,7 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
    * [Caso 9: Coordenação Multiagente Especializada](#caso-9-coordenação-multiagente-especializada)
    * [Caso 10: Game Autonomy Engine (Tetris, Social Lab & External)](#caso-10-game-autonomy-engine-tetris-social-lab--external)
    * [Caso 11: Validação Adversarial & Certificação Final](#caso-11-validação-adversarial--certificação-final)
+   * [Caso 12: Chrome Dino Runner (Simulador Rust & Visão Computacional no Navegador)](#caso-12-chrome-dino-runner-simulador-rust--visão-computacional-no-navegador)
 7. [Detector Universal de Loops & Evasão](#-detector-universal-de-loops--evasão)
 8. [Treinamento de Novas Tarefas (Guia & CLI)](#-treinamento-de-novas-tarefas-guia--cli)
 9. [Hierarquia Rígida de Decisão de 8 Níveis](#-hierarquia-rígida-de-decisão-de-8-níveis)
@@ -376,6 +378,8 @@ Executa modelos de decisão de Sistema 1 em sub-milissegundos com probabilidades
 3. Carrega grafos `.onnx` reais e valida a assinatura SHA-256 dos pesos binários.
 4. Monitora Out-Of-Distribution (OOD) via `DistributionShiftDetector`.
 5. Se o estado estiver fora da distribuição, abstém-se imediatamente e convoca o planejador ou a LLM Oracle.
+
+### Caso 6: Autonomia Corpórea 3D & Planejamento Hierárquico
 Decompõe objetivos macro (*"encontre e colete o artefato azul"*) em submetas espaciais no **ALR 3D Lab**:
 1. Constrói o `WorldState` via câmera 3D sem acesso ao oráculo interno.
 2. Traça rotas livres de colisão via $A^*$ e desvia de obstáculos dinâmicos em movimento.
@@ -405,6 +409,16 @@ Recebe objetivos complexos e os decompõe em um grafo acíclico dirigido (`TaskG
 
 ### Caso 11: Validação Adversarial & Certificação Final
 Submetido a 12 Gates Formais de Aceitação cobrindo ausência de regressões, defesas anti-cheat, resiliência offline e operação black-box, atingindo a classificação oficial de **`CERTIFIED WITH LIMITATIONS`**.
+
+### Caso 12: Chrome Dino Runner (Simulador Rust & Visão Computacional no Navegador)
+Ambiente completo e auditável para o clássico jogo offline do Google Chrome (`chrome://dino`):
+1. **Simulador Físico Determinístico em Rust:** Implementa a física real de gravidade discreta ($g = -0.8$), salto com arco parabólico ($v_y = 12.0$), velocidade horizontal progressiva ($6.0 \to 13.0$ px/tick), agachamento em terra (redução de altura de $48 \to 26$ px) e queda acelerada em pleno ar.
+2. **Diversidade de Obstáculos:** Cactos terrestres (pequenos, grandes e clusters) e Pterodáctilos em 3 altitudes calibradas:
+   * *Baixa (y=15):* Exige salto para evitar impacto.
+   * *Média (y=35):* Exige agachamento (`Duck`) para que a cabeça passe sob as asas (o salto ou corrida em pé causam colisão fatal).
+   * *Alta (y=60):* Permite corrida segura por baixo, enquanto o salto causa colisão aérea fatal.
+3. **Decisão Tipada System 1 & Cycle Safety Shield:** Avalia a janela de perigo com `TypedQuestion::Choice` (Softmax calibrado entre `RUN`, `JUMP`, `DUCK`) e `TypedQuestion::Noul` (risco de perigo iminente), com intervenção determinística do shield em microssegundos ($\approx 35$ µs) para bloquear pulos suicidas ou quedas prematuras.
+4. **Automação Web Real via Visão Computacional (Puppeteer):** O script `scripts/play_dino_in_browser.js` conecta-se a uma sessão real do Google Chrome em modo visível, faz varredura de pixels no `<canvas>` via `getImageData` (sem ler variáveis de memória ou cheats de engine), calcula a distância e velocidade dos obstáculos em 30 Hz e aciona teclas nativas (`Space` e `ArrowDown`) com reinício automático após colisão.
 
 ---
 
@@ -596,7 +610,22 @@ cargo run -p alr-cli -- 3d external-demo
 cargo run -p alr-cli -- model list
 cargo run -p alr-cli -- env list
 
-# 10. Executar a Suíte Completa de Testes Automatizados (137 Testes)
+# 10. Chrome Dino Runner em Tempo Real no Terminal (com Decisões Tipadas & Safety Shield)
+cargo run -p alr-cli -- dino --mode visual
+
+# 11. Treinar a Política Q-Learning do Chrome Dino (Persistência no SQLite)
+cargo run -p alr-cli -- dino --train --episodes 100
+
+# 12. Avaliar a Política do Chrome Dino em Benchmark Multi-Episódio
+cargo run -p alr-cli -- dino --evaluate --episodes 50
+
+# 13. Executar o Chrome Dino no Google Chrome Real via Visão Computacional (Puppeteer Offline)
+node scripts/play_dino_in_browser.js
+
+# 14. Executar o Chrome Dino no Google Chrome contra o site online oficial
+node scripts/play_dino_in_browser.js --online
+
+# 15. Executar a Suíte Completa de Testes Automatizados (148 Testes)
 cargo test --workspace
 ```
 
@@ -611,6 +640,7 @@ cargo test --workspace
 * **`cargo run -p alr-cli -- 3d demo`:** Planejamento $A^*$, desvio de obstáculos e coleta de artefatos no 3D Lab.
 * **`cargo run -p alr-cli -- transfer zero-shot-demo`:** Transferência de habilidades para ambiente nunca visto.
 * **`cargo run -p alr-cli -- final-acceptance`:** Execução automatizada e avaliação dos 12 Gates de Aceitação.
+* **`cargo run -p alr-cli -- dino --mode visual`:** Chrome Dino em tempo real no terminal com física parabólica, telemetria System 1 e Cycle Safety Shield.
 
 ---
 
@@ -653,7 +683,7 @@ Os resultados do ALR são particionados em três níveis formais:
 
 | Gate | Requisito Formal | Status Auditado |
 | :--- | :--- | :--- |
-| **Gate 1 — Regression** | Fases 1 a 10 operam continuamente sem quebras | **PROVEN** (135/135 testes aprovados) |
+| **Gate 1 — Regression** | Fases 1 a 12 operam continuamente sem quebras | **PROVEN** (148/148 testes aprovados) |
 | **Gate 2 — Security** | Zero violações de isolamento e zero vazamentos | **PROVEN** (Invariantes ativas) |
 | **Gate 3 — Integrity** | Rejeição de falso sucesso sem mutação real de estado | **PROVEN** (`FalseSuccessValidator`) |
 | **Gate 4 — Recovery** | Recuperação determinística de agente preso | **PROVEN** (`StuckDetector` e replanejador) |
@@ -676,7 +706,7 @@ Os resultados do ALR são particionados em três níveis formais:
 =============================================================
  Status: FINAL CERTIFIED WITH LIMITATIONS
  Workspace: 21 Crates (Cargo Workspace)
- Test Suite: 135 Tests (100% Passing, 0 Regressions)
+ Test Suite: 148 Tests (100% Passing, 0 Regressions)
  Código Inseguro: 0 Linhas de "unsafe" em Todo o Workspace
  Autonomia Local Global: 98.8%
 =============================================================

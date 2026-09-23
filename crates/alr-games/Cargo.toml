@@ -12,6 +12,7 @@ alr-spatial = { workspace = true }
 alr-environment = { workspace = true }
 alr-transfer = { workspace = true }
 alr-models = { workspace = true }
+alr-learning = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 uuid = { workspace = true }
@@ -21,4 +22,5 @@ anyhow = { workspace = true }
 tracing = { workspace = true }
 async-trait = { workspace = true }
 parking_lot = { workspace = true }
+rand = { workspace = true }
 tokio = { workspace = true }
