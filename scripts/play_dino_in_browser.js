@@ -61,16 +61,17 @@ const path = require('path');
                 const h = canvas.height;
 
                 const imgData = ctx.getImageData(0, 0, w, h).data;
-
-                // Adaptive resolution parameters
+                const r = window.Runner ? (window.Runner.instance_ || window.Runner.instance) : null;
                 const isLocal = !!document.getElementById('tel-status');
-                const groundY = isLocal ? 195 : Math.round(h * 0.82);
-                const dinoRight = isLocal ? (60 + 44) : Math.round(w * 0.12);
+                const groundY = isLocal ? 195 : 122;
+                const dinoRight = isLocal
+                    ? (60 + (typeof dino !== 'undefined' && dino.isDucking ? 58 : 44))
+                    : (r && r.tRex ? (r.tRex.xPos + (r.tRex.ducking ? 59 : 44)) : 74);
 
-                // Scan region strictly in front of Dino and strictly above ground line
-                const scanStartX = dinoRight + 4;
-                const scanEndX = Math.min(w, dinoRight + Math.round(w * 0.42));
-                const scanStartY = Math.round(h * 0.22);
+                // Scan region: strictly ahead of Dino snout (avoids self-detecting the T-Rex head)
+                const scanStartX = isLocal ? (60 + 58 + 4) : Math.max(dinoRight + 8, 96);
+                const scanEndX = Math.min(w, scanStartX + 280);
+                const scanStartY = isLocal ? 35 : 25;
                 const scanEndY = groundY - 2; // Exclude continuous ground line
 
                 let obstaclePixels = [];
@@ -83,12 +84,13 @@ const path = require('path');
                 for (let x = scanStartX; x < scanEndX; x += 4) {
                     for (let y = scanStartY; y < scanEndY; y += 4) {
                         const idx = (y * w + x) * 4;
-                        const r = imgData[idx];
-                        const g = imgData[idx + 1];
-                        const b = imgData[idx + 2];
+                        const r_ = imgData[idx];
+                        const g_ = imgData[idx + 1];
+                        const b_ = imgData[idx + 2];
+                        const a_ = imgData[idx + 3];
 
                         // Detect dark obstacle pixels (#535353 or similar)
-                        if (r < 130 && g < 130 && b < 130) {
+                        if (a_ > 200 && r_ < 130 && g_ < 130 && b_ < 130) {
                             obstaclePixels.push({ x, y });
                             if (x < minX) minX = x;
                             if (x > maxX) maxX = x;
@@ -100,8 +102,8 @@ const path = require('path');
 
                 // Universal speed extraction
                 let currentSpeed = 6.0;
-                if (window.Runner && window.Runner.instance && window.Runner.instance.currentSpeed) {
-                    currentSpeed = window.Runner.instance.currentSpeed;
+                if (r && r.currentSpeed) {
+                    currentSpeed = r.currentSpeed;
                 } else {
                     const speedEl = document.getElementById('tel-speed');
                     currentSpeed = speedEl ? parseFloat(speedEl.innerText) || 6.0 : 6.0;
@@ -109,8 +111,8 @@ const path = require('path');
 
                 // Universal score extraction
                 let currentScore = 0;
-                if (window.Runner && window.Runner.instance && window.Runner.instance.distanceMeter) {
-                    currentScore = window.Runner.instance.distanceMeter.getActualDistance(window.Runner.instance.distanceRan) || 0;
+                if (r && r.distanceMeter) {
+                    currentScore = r.distanceMeter.getActualDistance(r.distanceRan) || 0;
                 } else {
                     const scoreEl = document.getElementById('tel-score');
                     currentScore = scoreEl ? parseInt(scoreEl.innerText, 10) || 0 : 0;
@@ -118,14 +120,14 @@ const path = require('path');
 
                 // Universal game over check
                 const statusEl = document.getElementById('tel-status');
-                const isGameOver = (window.Runner && window.Runner.instance && window.Runner.instance.crashed)
+                const isGameOver = (r && r.crashed)
                     || (statusEl && (statusEl.innerText.includes('COLLISION') || statusEl.innerText.includes('GAME OVER')))
                     || document.body.innerText.includes('GAME OVER');
 
                 // Detect if dino is currently airborne
                 const isJumping = isLocal
                     ? (typeof dino !== 'undefined' ? dino.isJumping : false)
-                    : (typeof Runner !== 'undefined' && Runner.instance && Runner.instance.tRex ? Runner.instance.tRex.jumping : false);
+                    : (r && r.tRex ? r.tRex.jumping : false);
 
                 if (obstaclePixels.length < 3) {
                     return {
@@ -138,6 +140,7 @@ const path = require('path');
                         isJumping
                     };
                 }
+
                 const dist = Math.max(0, minX - dinoRight);
                 const obsHeight = maxY - minY;
                 const obsWidth = maxX - minX;
@@ -145,9 +148,11 @@ const path = require('path');
                 // Classify obstacle altitude relative to ground line
                 const distFromGround = groundY - minY;
                 let obstacleType = 'SmallCactus';
-                if (distFromGround <= Math.round(h * 0.28)) {
-                    obstacleType = obsWidth > 32 ? 'TripleCactus' : (obsHeight > 38 ? 'LargeCactus' : 'SmallCactus');
-                } else if (distFromGround <= Math.round(h * 0.48)) {
+                if (distFromGround <= 36) {
+                    obstacleType = obsWidth > 30 ? 'TripleCactus' : 'SmallCactus';
+                } else if (distFromGround <= 58) {
+                    obstacleType = 'LargeCactus';
+                } else if (distFromGround <= 80) {
                     obstacleType = 'PterodactylMid'; // Mid altitude: MUST DUCK!
                 } else {
                     obstacleType = 'PterodactylHigh'; // High altitude: SAFE TO RUN!
