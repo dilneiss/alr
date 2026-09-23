@@ -1522,7 +1522,8 @@ async fn run_interactive_support_chat(
         mock_llm.clone(),
         confidence_threshold,
         novelty_threshold,
-    );
+    )
+    .with_interactive_clarification(true);
     setup_support_agent_tools(&mut agent, db);
 
     let stdin = io::stdin();
@@ -1581,6 +1582,14 @@ async fn run_interactive_support_chat(
             "  Skill Utilizada       : {:?}",
             outcome.skill_used.unwrap_or_else(|| "none".to_string())
         );
+        if let Some(ref missing) = outcome.missing_data_field {
+            println!(
+                "  Dado Faltante Exigido : {}",
+                format!("{:?} (Solicitando ao usuario)", missing)
+                    .yellow()
+                    .bold()
+            );
+        }
         println!(
             "  Consulta ao LLM       : {}",
             if called_llm {
@@ -1591,7 +1600,6 @@ async fn run_interactive_support_chat(
         );
         println!("  Status do Chamado     : {:?}", ticket.status);
         println!("{}", "-----------------------------------".bright_black());
-
         println!(
             "\n{} {}",
             "[ALR ATENDENTE]:".bold().green(),

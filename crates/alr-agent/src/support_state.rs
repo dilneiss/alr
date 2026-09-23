@@ -47,9 +47,49 @@ impl SupportIntent {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExtractedEntities {
+    pub order_id: Option<String>,
+    pub email: Option<String>,
+    pub cpf_or_id: Option<String>,
+    pub transaction_id: Option<String>,
+}
+
 pub struct StateExtractor;
 
 impl StateExtractor {
+    pub fn extract_entities(text: &str) -> ExtractedEntities {
+        let mut order_id = None;
+        let mut email = None;
+        let mut cpf_or_id = None;
+        let mut transaction_id = None;
+
+        for word in text.split_whitespace() {
+            let clean = word.trim_matches(|c: char| {
+                !c.is_alphanumeric() && c != '@' && c != '.' && c != '-' && c != '_'
+            });
+            if clean.contains('@') && clean.contains('.') {
+                email = Some(clean.to_string());
+            } else if clean.starts_with("ord_")
+                || clean.starts_with("ORD-")
+                || clean.starts_with("#")
+            {
+                order_id = Some(clean.to_string());
+            } else if clean.starts_with("tx_") || clean.starts_with("pay_") {
+                transaction_id = Some(clean.to_string());
+            } else if clean.len() == 11 && clean.chars().all(|c| c.is_ascii_digit()) {
+                cpf_or_id = Some(clean.to_string());
+            }
+        }
+
+        ExtractedEntities {
+            order_id,
+            email,
+            cpf_or_id,
+            transaction_id,
+        }
+    }
+
     pub fn extract_intent(subject: &str, message: &str) -> SupportIntent {
         let text = format!("{} {}", subject, message).to_lowercase();
 
@@ -121,8 +161,8 @@ impl StateExtractor {
 
     pub fn build_support_state(ticket: &Ticket) -> State {
         let intent = Self::extract_intent(&ticket.subject, &ticket.message);
+        let entities = Self::extract_entities(&format!("{} {}", ticket.subject, ticket.message));
 
-        // Vector representation of intent (one-hot encoded across 10 classes)
         let mut features = vec![0.0f32; 10];
         let idx = match intent {
             SupportIntent::RefundPending => 0,
@@ -145,6 +185,7 @@ impl StateExtractor {
             "intent": intent.as_str(),
             "subject": ticket.subject,
             "priority": format!("{:?}", ticket.priority),
+            "entities": entities,
         });
 
         State::new(features, metadata)

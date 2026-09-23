@@ -310,3 +310,54 @@ async fn test_real_qdrant_e2e_integration() {
     assert_eq!(results[0].memory.tenant_id, tenant);
     assert!(results[0].memory.title.contains("FAQ"));
 }
+/// 8. TESTE: INTERACTIVE MISSING DATA DIALOGUE & AUTONOMOUS RESUME
+#[tokio::test]
+async fn test_interactive_missing_data_dialogue_and_resume() {
+    let sqlite = SqliteMemoryStore::open_in_memory().unwrap();
+    let mock_llm = Arc::new(MockLlmTeacher::new());
+    let mut agent = SupportAgent::new(sqlite, mock_llm.clone(), 0.85, 0.60)
+        .with_interactive_clarification(true);
+    let db = SupportDatabase::new();
+
+    agent.register_tool(Box::new(GetOrderTool { db: db.clone() }));
+    agent.register_tool(Box::new(GetPaymentTool { db: db.clone() }));
+    agent.register_tool(Box::new(GetRefundPolicyTool));
+    agent.register_tool(Box::new(SendTicketReplyTool { db }));
+
+    // Message 1: User asks for refund without providing the order_id or transaction
+    let mut ticket1 = Ticket::new(
+        "T-CHAT-01",
+        "tenant_001",
+        "cust_0005",
+        "Quero o reembolso da minha compra",
+        "Cancelei ontem e nao recebi o estorno.",
+    );
+
+    let res1 = agent.process_ticket(&mut ticket1).await.unwrap();
+    assert!(
+        !res1.resolved,
+        "Ticket must not be resolved without missing order ID"
+    );
+    assert_eq!(res1.missing_data_field, Some("order_id".to_string()));
+    assert!(res1
+        .response_message
+        .unwrap()
+        .contains("preciso do número do seu pedido"));
+
+    // Message 2: User provides the requested order ID in the chat
+    let mut ticket2 = Ticket::new(
+        "T-CHAT-02",
+        "tenant_001",
+        "cust_0005",
+        "O numero do meu pedido é ord_0005",
+        "ord_0005",
+    );
+
+    let res2 = agent.process_ticket(&mut ticket2).await.unwrap();
+    assert!(
+        res2.resolved,
+        "Once data is provided, ticket must be resolved autonomously!"
+    );
+    assert_eq!(res2.intent, SupportIntent::RefundPending);
+    assert!(res2.response_message.unwrap().contains("ord_0005"));
+}

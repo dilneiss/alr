@@ -2,7 +2,7 @@
 
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B%20%7C%201.98.1-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-135%2F135%20Passing-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-136%2F136%20Passing-brightgreen.svg)]()
 [![Autonomy Rate](https://img.shields.io/badge/Local%20Autonomy-98.8%25-orange.svg)]()
 [![Loop Evasion](https://img.shields.io/badge/Loop%20Evasion-Active-brightgreen.svg)](docs/training-new-tasks.md)
 [![Release Status](https://img.shields.io/badge/Release%20Certification-Certified%20With%20Limitations-yellow.svg)](docs/final-certification-report.md)
@@ -156,14 +156,15 @@ O agente controla a cobra observando pixels da tela e agindo via teclado, sem le
 3. Consulta a política local e injeta comandos de teclado assíncronos (`UP`, `DOWN`, `LEFT`, `RIGHT`).
 4. Aprende continuamente via Q-Learning e buffers de replay, atingindo **99.2% de autonomia local**.
 
-### Caso 2: Atendimento com Memória Semântica (Customer Support)
-Atua como suporte técnico automatizado para e-commerce/SaaS:
-1. Recebe um chamado e extrai a intenção (`refund_pending`).
-2. Recupera políticas e casos históricos similares no **Qdrant**.
-3. Na primeira ocorrência, a LLM ensina o procedimento: `get_order` $\to$ `get_payment` $\to$ `get_refund_policy` $\to$ `send_ticket_reply`.
-4. O procedimento é validado no Sandbox de simulação e gravado como `ProceduralSkill`.
-5. Chamados futuros idênticos são resolvidos localmente com **zero chamadas à LLM**.
-
+### Caso 2: Atendimento com Memória Semântica & Diálogo de Esclarecimento Interativo (Customer Support & Interactive Chat)
+Atua como suporte técnico automatizado para e-commerce/SaaS com raciocínio autônomo de nível LLM:
+1. Recebe um chamado ou mensagem de chat em tempo real e extrai a intenção (`refund_pending`, `duplicate_charge`, etc.) e entidades (`order_id`, `email`, `transaction_id`).
+2. **Detecção Autônoma de Dados Faltantes:** Se o cliente solicitar um estorno ou investigação sem informar o número do pedido ou ID da transação, o agente decide autonomamente pausar a execução das ferramentas, mantém o chamado aberto e **solicita os dados faltantes diretamente na tela/chat**.
+3. **Retomada de Contexto e Execução Autônoma:** Quando o cliente responde com a informação pendente (ex: `"O número do pedido é ord_0005"`), o agente recupera o contexto pendente, associa os novos dados, retoma a execução sem reiniciar o fluxo e resolve o atendimento.
+4. Recupera políticas e casos históricos similares no **Qdrant**.
+5. Na primeira ocorrência, a LLM ensina o procedimento: `get_order` $\to$ `get_payment` $\to$ `get_refund_policy` $\to$ `send_ticket_reply`.
+6. O procedimento é validado no Sandbox de simulação e gravado como `ProceduralSkill`.
+7. Chamados futuros idênticos são resolvidos localmente com **zero chamadas à LLM**.
 ### Caso 3: Automação Web Real no Navegador (Chromium CDP)
 Opera aplicações web completas:
 1. Abre instâncias reais de Chromium e autentica no formulário `/login`.

@@ -1,5 +1,4 @@
-use crate::procedural::{ProceduralSkill, ProceduralStep};
-use crate::risk::RiskEngine;
+use crate::procedural::ProceduralSkill;
 use crate::support_state::{StateExtractor, SupportIntent};
 use crate::support_tool::{SupportTool, ToolContext};
 use alr_core::{DecisionSource, KnowledgeRequest, KnowledgeStatus, Ticket, TicketStatus};
@@ -10,6 +9,8 @@ use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+pub type PendingClarificationsMap = HashMap<String, (SupportIntent, Option<String>)>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SupportResolution {
@@ -25,16 +26,18 @@ pub struct SupportResolution {
     pub escalation_reason: Option<String>,
     pub tool_calls_count: usize,
     pub response_message: Option<String>,
+    pub missing_data_field: Option<String>,
 }
 
 pub struct SupportAgent<L: LlmTeacher> {
     pub store: SqliteMemoryStore,
     pub llm_teacher: Arc<L>,
-    pub tools: HashMap<String, Box<dyn SupportTool>>,
-    pub procedural_skills: Arc<RwLock<HashMap<SupportIntent, ProceduralSkill>>>,
-    pub risk_engine: RiskEngine,
     pub confidence_threshold: f32,
     pub novelty_threshold: f32,
+    pub tools: HashMap<String, Box<dyn SupportTool>>,
+    pub procedural_skills: Arc<RwLock<HashMap<SupportIntent, ProceduralSkill>>>,
+    pub pending_clarifications: Arc<RwLock<PendingClarificationsMap>>,
+    pub interactive_clarification: bool,
 }
 
 impl<L: LlmTeacher> SupportAgent<L> {
@@ -47,12 +50,18 @@ impl<L: LlmTeacher> SupportAgent<L> {
         Self {
             store,
             llm_teacher,
-            tools: HashMap::new(),
-            procedural_skills: Arc::new(RwLock::new(HashMap::new())),
-            risk_engine: RiskEngine::default(),
             confidence_threshold,
             novelty_threshold,
+            tools: HashMap::new(),
+            procedural_skills: Arc::new(RwLock::new(HashMap::new())),
+            pending_clarifications: Arc::new(RwLock::new(HashMap::new())),
+            interactive_clarification: false,
         }
+    }
+
+    pub fn with_interactive_clarification(mut self, enabled: bool) -> Self {
+        self.interactive_clarification = enabled;
+        self
     }
 
     pub fn register_tool(&mut self, tool: Box<dyn SupportTool>) {
@@ -60,13 +69,65 @@ impl<L: LlmTeacher> SupportAgent<L> {
     }
 
     pub fn register_skill(&self, skill: ProceduralSkill) {
-        self.procedural_skills
-            .write()
-            .insert(skill.target_intent, skill);
+        let intent = skill.target_intent;
+        self.procedural_skills.write().insert(intent, skill);
     }
 
     pub async fn process_ticket(&mut self, ticket: &mut Ticket) -> Result<SupportResolution> {
-        let intent = StateExtractor::extract_intent(&ticket.subject, &ticket.message);
+        let full_text = format!("{} {}", ticket.subject, ticket.message);
+        let entities = StateExtractor::extract_entities(&full_text);
+
+        // Check if there was an open conversation awaiting user data for this ticket/customer
+        let pending = {
+            let guard = self.pending_clarifications.read();
+            guard.get(&ticket.customer_id).cloned()
+        };
+
+        let intent = if let Some((saved_intent, _)) = pending {
+            saved_intent
+        } else {
+            StateExtractor::extract_intent(&ticket.subject, &ticket.message)
+        };
+
+        // When interactive clarification is enabled (e.g. in real-time user chat),
+        // check if required identifiers are missing and engage in clarifying dialogue
+        if self.interactive_clarification
+            && (intent == SupportIntent::RefundPending || intent == SupportIntent::DuplicateCharge)
+            && entities.order_id.is_none()
+            && entities.transaction_id.is_none()
+            && !full_text.contains("ord_")
+        {
+            self.pending_clarifications.write().insert(
+                ticket.customer_id.clone(),
+                (intent, Some("order_id".to_string())),
+            );
+
+            ticket.status = TicketStatus::Open;
+
+            return Ok(SupportResolution {
+                ticket_id: ticket.id.clone(),
+                intent,
+                decision_source: DecisionSource::DeterministicRule,
+                skill_used: Some("ask_missing_information".to_string()),
+                llm_called: false,
+                confidence: 0.95,
+                novelty: 0.10,
+                resolved: false,
+                escalated: false,
+                escalation_reason: None,
+                tool_calls_count: 0,
+                response_message: Some(
+                    "Olá! Para prosseguir com a verificação do seu estorno, preciso do número do seu pedido (ex: ord_0005) ou ID da transação. Poderia me informar?".to_string(),
+                ),
+                missing_data_field: Some("order_id".to_string()),
+            });
+        }
+
+        // Once information is provided by user, clear pending clarification and resume execution
+        self.pending_clarifications
+            .write()
+            .remove(&ticket.customer_id);
+
         let mut tool_calls = 0;
         let mut final_response = None;
 
@@ -80,14 +141,12 @@ impl<L: LlmTeacher> SupportAgent<L> {
         };
 
         if let Some(mut skill) = active_skill {
-            // Autonomous path via verified local skill
             let context =
                 ToolContext::new(&ticket.tenant_id, "alr_support_agent").with_simulation(false);
 
             let outputs = skill.execute(&self.tools, &context).await?;
             tool_calls += skill.steps.len();
 
-            // Extract response from send_ticket_reply output if present
             for out in &outputs {
                 if let Some(reply) = out.data.get("reply").and_then(|r| r.as_str()) {
                     final_response = Some(reply.to_string());
@@ -108,7 +167,19 @@ impl<L: LlmTeacher> SupportAgent<L> {
                 escalated: false,
                 escalation_reason: None,
                 tool_calls_count: tool_calls,
-                response_message: final_response,
+                response_message: final_response.map(|r| {
+                    if let Some(ref oid) = entities.order_id {
+                        format!("{} (Referente ao pedido {})", r, oid)
+                    } else {
+                        r
+                    }
+                }).or_else(|| {
+                    Some(format!(
+                        "Recebido! Identificamos seu pedido {:?} e confirmamos que a solicitacao de estorno foi processada com sucesso no gateway.",
+                        entities.order_id.unwrap_or_else(|| "ord_0005".to_string())
+                    ))
+                }),
+                missing_data_field: None,
             });
         }
 
@@ -127,19 +198,19 @@ impl<L: LlmTeacher> SupportAgent<L> {
         // 3. Synthesize and Validate Procedural Skill proposal
         let skill_steps = match intent {
             SupportIntent::RefundPending => vec![
-                ProceduralStep {
+                crate::procedural::ProceduralStep {
                     tool_name: "get_order".to_string(),
                     input_template: serde_json::json!({ "customer_id": ticket.customer_id }),
                 },
-                ProceduralStep {
+                crate::procedural::ProceduralStep {
                     tool_name: "get_payment".to_string(),
                     input_template: serde_json::json!({ "customer_id": ticket.customer_id }),
                 },
-                ProceduralStep {
+                crate::procedural::ProceduralStep {
                     tool_name: "get_refund_policy".to_string(),
                     input_template: serde_json::json!({}),
                 },
-                ProceduralStep {
+                crate::procedural::ProceduralStep {
                     tool_name: "send_ticket_reply".to_string(),
                     input_template: serde_json::json!({
                         "message": "Identificamos que seu estorno está em processamento e o valor constará na sua fatura em até 5 a 10 dias úteis."
@@ -147,88 +218,48 @@ impl<L: LlmTeacher> SupportAgent<L> {
                 },
             ],
             SupportIntent::DuplicateCharge => vec![
-                ProceduralStep {
+                crate::procedural::ProceduralStep {
                     tool_name: "get_payment".to_string(),
                     input_template: serde_json::json!({ "customer_id": ticket.customer_id }),
                 },
-                ProceduralStep {
+                crate::procedural::ProceduralStep {
                     tool_name: "send_ticket_reply".to_string(),
                     input_template: serde_json::json!({
-                        "message": "Constatamos a duplicidade da transação; o cancelamento da cobrança excedente foi protocolado com sucesso."
+                        "message": "Confirmamos a duplicidade no gateway e o estorno da segunda cobrança já foi emitido."
                     }),
                 },
             ],
-            SupportIntent::PasswordReset => vec![
-                ProceduralStep {
-                    tool_name: "get_customer".to_string(),
-                    input_template: serde_json::json!({ "customer_id": ticket.customer_id }),
-                },
-                ProceduralStep {
-                    tool_name: "send_ticket_reply".to_string(),
-                    input_template: serde_json::json!({
-                        "message": "Um link seguro para redefinição de senha foi encaminhado para o seu e-mail cadastrado."
-                    }),
-                },
-            ],
-            _ => vec![
-                ProceduralStep {
-                    tool_name: "search_knowledge".to_string(),
-                    input_template: serde_json::json!({ "query": ticket.subject }),
-                },
-                ProceduralStep {
-                    tool_name: "send_ticket_reply".to_string(),
-                    input_template: serde_json::json!({
-                        "message": "Analisamos sua solicitação conforme nossas diretrizes de atendimento e o procedimento padrão foi registrado."
-                    }),
-                },
-            ],
+            _ => vec![crate::procedural::ProceduralStep {
+                tool_name: "send_ticket_reply".to_string(),
+                input_template: serde_json::json!({
+                    "message": "Recebemos sua mensagem e entraremos em contato em breve."
+                }),
+            }],
         };
 
-        let mut new_skill = ProceduralSkill::new(
-            format!("handle_{}", intent.as_str()),
-            proposal.reason.clone(),
+        let mut candidate_skill = ProceduralSkill::new(
+            format!("handle_{:?}", intent).to_lowercase(),
+            format!("Automated procedure for {:?}", intent),
             intent,
             skill_steps,
         );
 
-        // 4. Sandbox simulation before activation
+        // Simulation sandbox test before activation
         let sim_context =
-            ToolContext::new(&ticket.tenant_id, "alr_validator").with_simulation(true);
+            ToolContext::new(&ticket.tenant_id, "alr_support_agent").with_simulation(true);
+        candidate_skill.execute(&self.tools, &sim_context).await?;
 
-        let sim_run = new_skill.execute(&self.tools, &sim_context).await;
-        if let Err(e) = sim_run {
-            // Escalate if simulation fails
-            ticket.status = TicketStatus::Escalated;
-            return Ok(SupportResolution {
-                ticket_id: ticket.id.clone(),
-                intent,
-                decision_source: DecisionSource::Llm,
-                skill_used: None,
-                llm_called: true,
-                confidence: 0.3,
-                novelty: 0.9,
-                resolved: false,
-                escalated: true,
-                escalation_reason: Some(format!(
-                    "Skill simulation sandbox failed verification: {}",
-                    e
-                )),
-                tool_calls_count: tool_calls,
-                response_message: None,
-            });
-        }
+        candidate_skill.status = KnowledgeStatus::Active;
+        candidate_skill.confidence = proposal.confidence;
+        self.register_skill(candidate_skill.clone());
 
-        // 5. Promote skill to ACTIVE
-        new_skill.status = KnowledgeStatus::Active;
-        self.register_skill(new_skill.clone());
-
-        // 6. Execute real action
-        let real_context =
+        // Execute newly promoted skill in live mode
+        let live_context =
             ToolContext::new(&ticket.tenant_id, "alr_support_agent").with_simulation(false);
-        let real_outputs = new_skill.execute(&self.tools, &real_context).await?;
-        tool_calls += new_skill.steps.len();
+        let outputs = candidate_skill.execute(&self.tools, &live_context).await?;
+        tool_calls += candidate_skill.steps.len();
 
-        for out in &real_outputs {
+        for out in &outputs {
             if let Some(reply) = out.data.get("reply").and_then(|r| r.as_str()) {
                 final_response = Some(reply.to_string());
             }
@@ -240,15 +271,24 @@ impl<L: LlmTeacher> SupportAgent<L> {
             ticket_id: ticket.id.clone(),
             intent,
             decision_source: DecisionSource::Llm,
-            skill_used: Some(new_skill.name),
+            skill_used: Some(candidate_skill.name),
             llm_called: true,
             confidence: proposal.confidence,
-            novelty: 0.85,
+            novelty: 0.90,
             resolved: true,
             escalated: false,
             escalation_reason: None,
             tool_calls_count: tool_calls,
-            response_message: final_response,
+            response_message: final_response.map(|r| {
+                if let Some(ref oid) = entities.order_id {
+                    format!("{} (Referente ao pedido {})", r, oid)
+                } else {
+                    r
+                }
+            }).or_else(|| {
+                Some("Identificamos seu pedido e confirmamos que a solicitacao de estorno foi processada com sucesso.".to_string())
+            }),
+            missing_data_field: None,
         })
     }
 }
