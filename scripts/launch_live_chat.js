@@ -7,11 +7,14 @@ const PORT = 3456;
 
 // 1. Iniciar servidor local estático simples para servir o Chat
 const server = http.createServer((req, res) => {
-    const filePath = path.join(__dirname, '..', 'static', 'chat.html');
-    fs.readFile(filePath, (err, data) => {
+    const waPath = path.join(__dirname, '..', 'static', 'whatsapp_support.html');
+    const fallbackPath = path.join(__dirname, '..', 'static', 'chat.html');
+    const targetFile = fs.existsSync(waPath) ? waPath : fallbackPath;
+
+    fs.readFile(targetFile, (err, data) => {
         if (err) {
             res.writeHead(500);
-            return res.end("Erro ao carregar chat.html");
+            return res.end("Erro ao carregar interface do WhatsApp");
         }
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(data);
