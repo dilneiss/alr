@@ -34,7 +34,8 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
 1. [O Que é o Projeto?](#-o-que-é-o-projeto)
 2. [Por Que o ALR Existe?](#-por-que-o-alr-existe)
 3. [Comparativo Técnico: Por Que o ALR é Superior ao JEV e Laya / Laya-CoreML?](#-comparativo-técnico-por-que-o-alr-é-superior-ao-jev-e-laya--laya-coreml)
-4. [Premissa Central](#-premissa-central)
+4. [Mapas Mentais da Arquitetura & Fluxos Operacionais](#-mapas-mentais-da-arquitetura--fluxos-operacionais)
+5. [Premissa Central](#-premissa-central)
 4. [Princípios Arquiteturais](#-princípios-arquiteturais)
 5. [O Que o Sistema Faz?](#-o-que-o-sistema-faz)
 6. [Casos de Uso Detalhados (Fases 1 a 11)](#-casos-de-uso-detalhados)
@@ -145,6 +146,111 @@ O **Autonomous Learning Runtime (ALR)** integra os pontos fortes conceituais do 
    * O JEV cobra por token e para de funcionar quando a internet oscila.
    * O `laya-coreml` só roda em Macbooks com processadores M-Series.
    * O ALR roda em qualquer servidor, desktop ou edge device (Windows com DirectML/CPU/CUDA, Linux para datacenters, macOS com Metal), garantindo 100% de operação *air-gapped* offline.
+
+---
+
+
+---
+
+## 🗺️ Mapas Mentais da Arquitetura & Fluxos Operacionais
+
+### 1. Mapa Mental de Funcionalidades do ALR (Visão Sistêmica Global)
+
+```mermaid
+mindmap
+  root((ALR Runtime))
+    Percepção e Entrada
+      Visão Computacional RawImage
+      Chromium CDP Web Browser
+      Câmera Espacial 3D Lab
+      Eventos Webhook HMAC
+      Sensores de Grade Snake e Tetris
+    Memória Híbrida
+      SQLite WAL
+        Transições s a r s'
+        Auditoria de Decisões
+        Checkpoints de Tarefas
+        Q-Tables Tabulares
+      Qdrant Vetorial
+        Isolamento Multi-Tenant
+        Documentos e Políticas
+        Casos Históricos Resolvidos
+      Memória Temporal e Espacial
+        A* Grid e Obstáculos Móveis
+        Suspeita Probabilística
+        Tabu Search 45 Ticks
+    Decisão e Raciocínio
+      System 1 Decisões Tipadas
+        Choice Softmax Ponderado
+        Noul Booleano Calibrado
+        Score Ordinal e Brier Loss
+      System 2 Planejamento e LLM
+        Orquestrador TaskGraph
+        LLM Teacher Cold Start
+        ApprovalGateway Risco Humano
+        Diálogo de Esclarecimento
+    Segurança e Governança
+      TrustBoundaryEnforcer
+      RedTeamAuditor Prompt Injection
+      RiskEngine e Teto Inviolável
+      Laya Cycle Safety Shield
+      Detector de Desvio OOD
+    Autoaperfeiçoamento
+      RootCauseAnalyzer
+      HypothesisEngine
+      Sandbox de Teste A/B
+      Anti-Reward Hacking
+      Rollback Atômico de Skills
+    Execução e Ação
+      Teclado e Mouse Seguro
+      Automação DOM por Papéis
+      Conectores REST com Idempotency
+      Multiagente Blackboard
+```
+
+### 2. Mapa Mental: Como Treinar uma Nova Tarefa & Autoaperfeiçoamento
+
+```mermaid
+flowchart TD
+    Start([Novo Objetivo / Ambiente]) --> EnvDef[1. Definição do Ambiente<br/>Implementar EnvironmentAdapter & ActionSpace]
+    
+    subgraph S1 [Etapa 1: Cold Start & Bootstrapping]
+        EnvDef --> Obs[Observação do Estado<br/>Vetor Normalizado de Features]
+        Obs --> NoveltyCheck{Estado Conhecido<br/>Confidence >= 0.85?}
+        NoveltyCheck -- Não / Incerteza --> LLMTeacher[Consultar LLM Teacher Oracle<br/>Proposta Inicial de Procedimento]
+        LLMTeacher --> SynthSkill[Sintetizar Candidato de Skill<br/>ProceduralSteps ou Regras]
+    end
+
+    subgraph S2 [Etapa 2: Validação & Treinamento Seguro]
+        SynthSkill --> Sandbox[Sandbox de Simulação<br/>is_simulation = true]
+        Sandbox --> SandTest{Passou sem Violação<br/>de Segurança?}
+        SandTest -- Falha --> LLMTeacher
+        SandTest -- Sucesso --> TrainLoop[Execução de Episódios<br/>Q-Learning / Coleta de Experiências]
+        TrainLoop --> Distill[Destilação de Modelo Local<br/>Geração de Grafo ONNX Validado SHA-256]
+    end
+
+    subgraph S3 [Etapa 3: Autonomia & Decisões Tipadas System 1]
+        Distill --> LocalPolicy[Política Local Ativa<br/>Decisões Tipadas Choice / Noul / Score]
+        NoveltyCheck -- Sim / Conhecido --> LocalPolicy
+        LocalPolicy --> SafetyShield{Cycle Safety Shield &<br/>RiskEngine Aprovam?}
+        SafetyShield -- Risco / Colisão --> Intervene[Escudo Intervém Deterministicamente<br/>Desvio Seguro Imediato]
+        SafetyShield -- Seguro --> ExecAction[Executar Ação no Mundo Real<br/>Browser / Teclado / API]
+    end
+
+    subgraph S4 [Etapa 4: Avaliação & Autoaperfeiçoamento Contínuo]
+        ExecAction --> VerifPost[Verificação Obrigatória de Pós-Condição<br/>Mudança Real de Estado?]
+        Intervene --> VerifPost
+        VerifPost -- Sucesso --> SaveExp[Gravar Experiência no SQLite<br/>Aumentar Autonomia Local]
+        VerifPost -- Falha / Drift --> RootCause[RootCauseAnalyzer<br/>Classificar Tipo de Falha]
+        RootCause --> HypoGen[HypothesisEngine<br/>Gerar Hipótese de Correção]
+        HypoGen --> ABSandbox[Experimento A/B em Sandbox]
+        ABSandbox --> ABEval{Candidato Supera Baseline<br/>sem Reward Hacking?}
+        ABEval -- Sim --> Promote[Promover Nova Versão de Skill<br/>Rollback Atômico Disponível]
+        ABEval -- Não --> Rollback[Rejeitar e Reverter para Política Estável]
+    end
+
+    SaveExp --> EndLoop([Autonomia Atingida: 99%+ Local / Zero Tokens])
+```
 
 ---
 
