@@ -252,6 +252,53 @@ flowchart TD
     SaveExp --> EndLoop([Autonomia Atingida: 99%+ Local / Zero Tokens])
 ```
 
+
+### 3. Mapa Mental: Como Configurar Tudo, Acesso a LLM & Procedimento Passo a Passo
+
+```mermaid
+flowchart TD
+    subgraph P1 [1. Pré-Requisitos e Ambiente Local]
+        RustInstall[Rust 1.80+ / 1.98.1<br/>cargo, rustc, clippy]
+        DockerReq[Docker Compose<br/>Para Qdrant Vetorial]
+        EnvCopy[Copiar Arquivo de Configuração<br/>cp .env.example .env]
+    end
+
+    subgraph P2 [2. Configuração de Variáveis de Ambiente .env]
+        EnvCopy --> DBConf[DATABASE_URL = sqlite://alr_state.db<br/>Persistência Operacional e Auditoria]
+        EnvCopy --> QdrantConf[QDRANT_URL = http://localhost:6333<br/>Memória Semântica Vetorial]
+        EnvCopy --> LLMChoice{Qual Provedor de LLM Usar?}
+        
+        LLMChoice -- Modo Offline / Testes -- > MockLLM[MockLlmTeacher<br/>LLM_API_KEY vazia ou mock<br/>Zero Custo / 100% Determinístico]
+        LLMChoice -- OpenAI Oficial --> OpenAIConf[LLM_BASE_URL = https://api.openai.com/v1<br/>LLM_API_KEY = sk-...<br/>LLM_MODEL = gpt-4o-mini / gpt-4o]
+        LLMChoice -- Local / Self-Hosted --> LocalConf[LLM_BASE_URL = http://localhost:11434/v1<br/>Ollama / vLLM / LM Studio / Laya<br/>LLM_MODEL = laya-multilingual / mistral]
+        LLMChoice -- Gateways / OpenRouter --> GatewayConf[LLM_BASE_URL = https://openrouter.ai/api/v1<br/>LLM_API_KEY = sk-or-...<br/>LLM_MODEL = deepseek / claude / openai]
+    end
+
+    subgraph P3 [3. Orquestração e Inicialização dos Serviços]
+        DockerReq --> StartQdrant[Iniciar Qdrant<br/>docker compose up -d]
+        StartQdrant --> CheckQdrant[Testar Conexão<br/>curl http://localhost:6333/readyz]
+        RustInstall --> BuildALR[Compilar Workspace<br/>cargo build --workspace]
+    end
+
+    subgraph P4 [4. Como Proceder na Execução Diária]
+        BuildALR --> ExecModes{Qual Modo Executar?}
+        ExecModes -- Jogo Snake com Decisões Tipadas --> RunSnake[Terminal ASCII: cargo run -p alr-cli -- snake --mode visual<br/>Navegador Real: node scripts/play_in_browser.js]
+        ExecModes -- Atendimento Interativo em Tempo Real --> RunSupport[Chat Interativo: cargo run -p alr-cli -- support chat<br/>Diálogo com Recuperação de Dados Faltantes]
+        ExecModes -- Treinamento de Novas Tarefas --> RunTrain[Assistente de Tarefas: cargo run -p alr-cli -- task train --type game<br/>Destilação Local ONNX: cargo run -p alr-cli -- model snake-demo]
+        ExecModes -- Bateria de Verificação e 12 Gates --> RunTest[Suíte de Testes: cargo test --workspace 137 testes<br/>Gates de Aceitação: cargo run -p alr-cli -- final-acceptance]
+    end
+
+    subgraph P5 [5. Ciclo de Decisão do Acesso a LLM em Produção]
+        RunSupport & RunSnake & RunTrain --> DecisionEngine[Hierarquia Rígida de Decisão]
+        DecisionEngine --> CheckKnowledge{Já existe Regra ou<br/>Skill Local Validada?}
+        CheckKnowledge -- Sim --> LocalExec[Execução 100% Local em µs<br/>Zero Tokens / Zero Custo LLM]
+        CheckKnowledge -- Não / Incerteza Alta --> CallLLM[Aciona OpenAiCompatibleLlmTeacher<br/>Chama LLM_BASE_URL configurada]
+        CallLLM --> ValidateLlm[Validação Semântica & Sandbox<br/>Nunca executa texto livre como comando]
+        ValidateLlm --> PromoteLocal[Cristaliza em Skill Local / Grafo ONNX<br/>Próximas decisões: 0 chamadas à LLM]
+    end
+```
+
+
 ---
 
 ## 🔬 Premissa Central
