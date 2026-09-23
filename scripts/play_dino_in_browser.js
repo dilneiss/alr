@@ -42,6 +42,7 @@ const path = require('path');
 
     let tick = 0;
     let isCurrentlyDucking = false;
+    let jumpCooldown = false;
     let lastAction = "RUN";
     let consecutiveCollisions = 0;
 
@@ -121,6 +122,11 @@ const path = require('path');
                     || (statusEl && (statusEl.innerText.includes('COLLISION') || statusEl.innerText.includes('GAME OVER')))
                     || document.body.innerText.includes('GAME OVER');
 
+                // Detect if dino is currently airborne
+                const isJumping = isLocal
+                    ? (typeof dino !== 'undefined' ? dino.isJumping : false)
+                    : (typeof Runner !== 'undefined' && Runner.instance && Runner.instance.tRex ? Runner.instance.tRex.jumping : false);
+
                 if (obstaclePixels.length < 3) {
                     return {
                         hasObstacle: false,
@@ -128,10 +134,10 @@ const path = require('path');
                         obstacleType: 'None',
                         isGameOver,
                         score: currentScore,
-                        speed: currentSpeed
+                        speed: currentSpeed,
+                        isJumping
                     };
                 }
-
                 const dist = Math.max(0, minX - dinoRight);
                 const obsHeight = maxY - minY;
                 const obsWidth = maxX - minX;
@@ -157,7 +163,8 @@ const path = require('path');
                     obstacleType,
                     isGameOver,
                     score: currentScore,
-                    speed: currentSpeed
+                    speed: currentSpeed,
+                    isJumping
                 };
             });
 
@@ -185,7 +192,7 @@ const path = require('path');
             let actionToExecute = "RUN";
             let shieldIntervened = false;
 
-            if (perception.hasObstacle) {
+            if (perception.hasObstacle && !perception.isJumping) {
                 if (obsType === 'PterodactylMid') {
                     // Mid Pterodactyl: Duck when approaching and passing (tti <= 12.0)
                     if (tti <= 12.0) {
@@ -196,8 +203,8 @@ const path = require('path');
                     actionToExecute = "RUN";
                     shieldIntervened = true; // Shield suppressed accidental jump
                 } else {
-                    // Ground Cacti or Low Pterodactyl: Jump only when within the golden window (tti <= 9.0)
-                    if (tti <= 9.0) {
+                    // Ground Cacti or Low Pterodactyl: Jump only when within the golden window (tti <= 8.5)
+                    if (tti <= 8.5) {
                         actionToExecute = "JUMP";
                     } else {
                         actionToExecute = "RUN"; // Coast safely, premature jump causes fatal landing!
@@ -207,17 +214,18 @@ const path = require('path');
             }
 
             // 4. Actuation
-            if (actionToExecute === "JUMP") {
+            if (actionToExecute === "JUMP" && !perception.isJumping && !jumpCooldown) {
+                jumpCooldown = true;
                 if (isCurrentlyDucking) {
                     await page.keyboard.up('ArrowDown');
                     isCurrentlyDucking = false;
                 }
-                await page.keyboard.down('Space');
-                setTimeout(async () => {
-                    try { await page.keyboard.up('Space'); } catch (_) {}
-                }, 80);
+                await page.keyboard.press('Space');
                 lastAction = "JUMP";
-            } else if (actionToExecute === "DUCK") {
+                setTimeout(() => {
+                    jumpCooldown = false;
+                }, 320);
+            } else if (actionToExecute === "DUCK" && !perception.isJumping) {
                 if (!isCurrentlyDucking) {
                     await page.keyboard.down('ArrowDown');
                     isCurrentlyDucking = true;
@@ -231,7 +239,6 @@ const path = require('path');
                 }
                 lastAction = "RUN";
             }
-
             // 5. Telemetry output
             if (tick % 4 === 0 || actionToExecute !== "RUN") {
                 const badge = actionToExecute === "JUMP"
