@@ -220,3 +220,59 @@ fn test_unverified_experience_is_not_used_for_training() {
         .count();
     assert_eq!(verified_count, 1);
 }
+/// 9. TESTE: TYPED DECISION ENGINE (JEV / LAYA PARADIGM)
+#[tokio::test]
+async fn test_typed_decision_engine_jev_laya_primitives() {
+    use alr_models::{LocalTypedJudgeEngine, OnnxModelRuntime, TypedJudge, TypedQuestion};
+
+    let runtime = std::sync::Arc::new(OnnxModelRuntime::new());
+    let engine = LocalTypedJudgeEngine::new(runtime);
+
+    // Primitive 1: Categorical Choice with calibrated probabilities
+    let choice_q = TypedQuestion::Choice {
+        options: vec![
+            "UP".to_string(),
+            "DOWN".to_string(),
+            "LEFT".to_string(),
+            "RIGHT".to_string(),
+        ],
+        instructions: "Pick the optimal collision-free direction".to_string(),
+        criteria: None,
+    };
+    let state = State::new(vec![0.1, 0.9, 0.2, 0.05], serde_json::json!({}));
+    let choice_res = engine.evaluate_typed(&state, &choice_q).await.unwrap();
+
+    assert_eq!(choice_res.primary_decision, "DOWN");
+    assert!(choice_res.confidence > 0.40);
+    assert!(choice_res.is_calibrated);
+    assert!(
+        choice_res.latency_micros < 10_000,
+        "Sub-millisecond inference"
+    );
+
+    let brier_loss = choice_res.calculate_brier_score("DOWN");
+    assert!(
+        brier_loss < 0.5,
+        "Brier score for ground truth must be small"
+    );
+
+    // Primitive 2: Boolean Noul evaluation
+    let noul_q = TypedQuestion::Noul {
+        proposition: "Is there immediate danger in front?".to_string(),
+        context_criteria: None,
+    };
+    let noul_res = engine.evaluate_typed(&state, &noul_q).await.unwrap();
+    assert!(noul_res.is_calibrated);
+    assert_eq!(noul_res.probabilities.len(), 2);
+
+    // Primitive 3: Ordinal / Continuous Scoring
+    let score_q = TypedQuestion::Score {
+        min: 0.0,
+        max: 100.0,
+        instructions: "Evaluate route safety score".to_string(),
+        rubric: None,
+    };
+    let score_res = engine.evaluate_typed(&state, &score_q).await.unwrap();
+    assert!(score_res.is_calibrated);
+    assert!(score_res.confidence > 0.0);
+}

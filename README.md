@@ -2,7 +2,7 @@
 
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B%20%7C%201.98.1-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-136%2F136%20Passing-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-137%2F137%20Passing-brightgreen.svg)]()
 [![Autonomy Rate](https://img.shields.io/badge/Local%20Autonomy-98.8%25-orange.svg)]()
 [![Loop Evasion](https://img.shields.io/badge/Loop%20Evasion-Active-brightgreen.svg)](docs/training-new-tasks.md)
 [![Release Status](https://img.shields.io/badge/Release%20Certification-Certified%20With%20Limitations-yellow.svg)](docs/final-certification-report.md)
@@ -178,13 +178,13 @@ Opera aplicações web completas:
 3. Aplica verificação de pós-condição (lê o estado subsequente no sistema externo antes de dar a tarefa como concluída).
 4. Suspende a execução e convoca supervisão humana via `ApprovalGateway` em operações de alto risco financeiro.
 
-### Caso 5: Modelos Especializados Locais & Inferência ONNX
-Executa modelos locais em sub-milissegundos:
-1. Carrega grafos `.onnx` reais e valida a assinatura SHA-256 dos pesos binários.
-2. Monitora Out-Of-Distribution (OOD) via `DistributionShiftDetector`.
-3. Se o estado estiver fora da distribuição, abstém-se imediatamente e convoca o planejador ou a LLM Oracle.
-
-### Caso 6: Autonomia Corpórea 3D & Planejamento Hierárquico
+### Caso 5: Modelos Especializados Locais, Inferência ONNX & Decisões Tipadas (JEV / Laya Paradigm)
+Executa modelos de decisão de Sistema 1 em sub-milissegundos com probabilidades calibradas:
+1. **Primitivas de Decisão Tipada (`TypedJudge`):** Suporta `Choice` (seleção categórica ponderada com distribuição de probabilidades softmax), `Score` (avaliação ordinal/contínua normalizada) e `Noul` (avaliação booleana calibrada de proposições) sem gerar um único token de texto.
+2. **Calibração Rigorosa & Brier Loss:** Avalia o erro de calibração via `calculate_brier_score` e entropia informacional das distribuições.
+3. Carrega grafos `.onnx` reais e valida a assinatura SHA-256 dos pesos binários.
+4. Monitora Out-Of-Distribution (OOD) via `DistributionShiftDetector`.
+5. Se o estado estiver fora da distribuição, abstém-se imediatamente e convoca o planejador ou a LLM Oracle.
 Decompõe objetivos macro (*"encontre e colete o artefato azul"*) em submetas espaciais no **ALR 3D Lab**:
 1. Constrói o `WorldState` via câmera 3D sem acesso ao oráculo interno.
 2. Traça rotas livres de colisão via $A^*$ e desvia de obstáculos dinâmicos em movimento.

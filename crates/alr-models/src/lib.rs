@@ -6,6 +6,8 @@ pub mod feature;
 pub mod ood;
 pub mod registry;
 pub mod runtime;
+pub mod typed_decision;
+pub mod typed_judge;
 
 pub use artifact::{ModelArtifact, ModelStatus};
 pub use dataset::{DataSplit, ExperienceDataset, TrainingSample};
@@ -17,3 +19,5 @@ pub use registry::{ModelCard, ModelRegistry};
 pub use runtime::{
     LocalModelRuntime, ModelDecision, ModelHandle, ModelPrediction, OnnxModelRuntime,
 };
+pub use typed_decision::{TypedDecisionOutcome, TypedQuestion};
+pub use typed_judge::{LocalTypedJudgeEngine, TypedJudge};
