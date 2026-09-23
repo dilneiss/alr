@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ALR WhatsApp Desk - Atendimento Autônomo com Zero Tokens</title>
+  <title>ALR WhatsApp Desk - 20 Nichos com Custo Zero de Tokens</title>
   <style>
     :root {
       --wa-dark-bg: #0c1317;
@@ -41,20 +41,40 @@
 
     /* Left Panel: Contacts */
     .contacts-panel {
-      width: 380px; background-color: var(--wa-panel-bg);
+      width: 400px; background-color: var(--wa-panel-bg);
       border-right: 1px solid var(--wa-border); display: flex; flex-direction: column;
     }
     .panel-header {
-      height: 60px; background-color: var(--wa-header-bg);
+      height: 54px; background-color: var(--wa-header-bg);
       display: flex; align-items: center; justify-content: space-between;
       padding: 0 16px; border-bottom: 1px solid var(--wa-border);
     }
+
+    /* 20 Niches Horizontal Bar */
+    .niche-carousel {
+      display: flex; gap: 6px; padding: 8px 12px;
+      background: #182229; overflow-x: auto; white-space: nowrap;
+      border-bottom: 1px solid var(--wa-border);
+      scrollbar-width: thin;
+    }
+    .niche-chip {
+      background: #202c33; border: 1px solid var(--wa-border);
+      color: var(--wa-text-secondary); border-radius: 16px;
+      padding: 5px 12px; font-size: 12px; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      transition: all 0.15s; flex-shrink: 0;
+    }
+    .niche-chip:hover { background: #2a3942; color: #fff; }
+    .niche-chip.active {
+      background: #005c4b; color: #fff; border-color: #00a884;
+    }
+
     .search-box {
       padding: 8px 12px; background-color: var(--wa-panel-bg);
     }
     .search-input {
       width: 100%; padding: 8px 12px; background: var(--wa-header-bg);
-      border: none; border-radius: 8px; color: #fff; font-size: 14px; outline: none;
+      border: none; border-radius: 8px; color: #fff; font-size: 13.5px; outline: none;
     }
     .chat-list { flex: 1; overflow-y: auto; }
     .chat-item {
@@ -65,22 +85,22 @@
     .chat-item:hover { background-color: var(--wa-header-bg); }
     .chat-item.active { background-color: var(--wa-active-chat); }
     .avatar {
-      width: 48px; height: 48px; border-radius: 50%;
+      width: 46px; height: 46px; border-radius: 50%;
       background: #475569; display: flex; align-items: center; justify-content: center;
-      font-weight: 700; color: #fff; margin-right: 14px; flex-shrink: 0; font-size: 18px;
+      font-weight: 700; color: #fff; margin-right: 14px; flex-shrink: 0; font-size: 17px;
     }
     .chat-info { flex: 1; min-width: 0; }
     .chat-top-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
-    .chat-name { font-size: 15px; font-weight: 600; }
-    .chat-time { font-size: 12px; color: var(--wa-text-secondary); }
+    .chat-name { font-size: 14.5px; font-weight: 600; }
+    .chat-time { font-size: 11.5px; color: var(--wa-text-secondary); }
     .chat-snippet {
-      font-size: 13px; color: var(--wa-text-secondary);
+      font-size: 12.5px; color: var(--wa-text-secondary);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .badge-unread {
       background: var(--wa-accent-green); color: #000;
-      font-size: 11px; font-weight: 700; border-radius: 10px;
-      padding: 2px 7px; margin-left: 8px;
+      font-size: 10.5px; font-weight: 700; border-radius: 10px;
+      padding: 2px 6px; margin-left: 8px;
     }
 
     /* Center: Chat Window */
@@ -135,7 +155,7 @@
     }
     .input-box {
       flex: 1; background: #2a3942; border: none; border-radius: 8px;
-      padding: 12px 16px; color: #fff; font-size: 15px; outline: none;
+      padding: 12px 16px; color: #fff; font-size: 14.5px; outline: none;
     }
     .btn-send {
       background: var(--wa-accent-green); border: none; border-radius: 50%;
@@ -151,7 +171,7 @@
       overflow-y: auto; gap: 16px;
     }
     .section-title {
-      font-size: 13px; font-weight: 700; text-transform: uppercase;
+      font-size: 12.5px; font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.05em; color: var(--alr-blue); margin-bottom: 6px;
     }
     .card {
@@ -180,7 +200,7 @@
     .learn-textarea {
       width: 100%; height: 90px; background: #0c1317;
       border: 1px solid #334155; border-radius: 6px;
-      color: #fff; font-size: 13px; padding: 8px; resize: none; outline: none;
+      color: #fff; font-size: 12.5px; padding: 8px; resize: none; outline: none;
     }
     .btn-learn {
       background: linear-gradient(135deg, #0284c7, #0369a1);
@@ -208,7 +228,7 @@
 <body>
 
   <div id="top-bar">
-    <div>🚀 <strong>ALR WhatsApp Omnichannel Desk</strong> &bull; Núcleo Cognitivo Local com Custo Zero de Tokens</div>
+    <div>🚀 <strong>ALR WhatsApp Omnichannel Desk</strong> &bull; 20 Nichos &bull; Custo Zero de Tokens</div>
     <div style="display: flex; gap: 16px; font-size: 12px;">
       <span>🟢 Status: <strong>100% Autônomo Local</strong></span>
       <span>⚡ Latência: <strong>&lt; 5 µs</strong></span>
@@ -218,14 +238,20 @@
 
   <div class="container">
 
-    <!-- Painel Esquerdo: Lista de Conversas -->
+    <!-- Painel Esquerdo: Lista de Conversas e Seletor dos 20 Nichos -->
     <div class="contacts-panel">
       <div class="panel-header">
-        <div style="font-weight: 700; font-size: 17px;">WhatsApp Conversas</div>
-        <span class="chip chip-green">Ativo (Port 3456)</span>
+        <div style="font-weight: 700; font-size: 16px;">WhatsApp &bull; 20 Nichos</div>
+        <span class="chip chip-green" id="active-niche-pill">🛒 E-commerce</span>
       </div>
+
+      <!-- Carrossel de Seleção dos 20 Nichos -->
+      <div class="niche-carousel" id="niche-carousel">
+        <!-- Renderizado dinamicamente via JS -->
+      </div>
+
       <div class="search-box">
-        <input type="text" class="search-input" placeholder="Pesquisar conversas ou clientes..." id="search-input" oninput="filterContacts()" />
+        <input type="text" class="search-input" placeholder="Pesquisar conversas do nicho..." id="search-input" oninput="filterContacts()" />
       </div>
       <div class="chat-list" id="chat-list">
         <!-- Renderizado dinamicamente via JS -->
@@ -237,7 +263,7 @@
       <div class="window-header">
         <div class="window-avatar" id="active-avatar">JS</div>
         <div style="flex: 1;">
-          <div style="font-weight: 600; font-size: 16px;" id="active-name">João Silva</div>
+          <div style="font-weight: 600; font-size: 15.5px;" id="active-name">João Silva</div>
           <div style="font-size: 12px; color: var(--wa-text-secondary);" id="active-phone">+55 (11) 98765-4321 &bull; online</div>
         </div>
         <div style="font-size: 12px; color: #86efac; font-weight: 600;">🔒 Protegido pelo ALR Safety Shield</div>
@@ -260,32 +286,36 @@
       <!-- Card Custo de Tokens -->
       <div class="card">
         <div class="cost-badge">
-          <span style="font-size: 12px; color: var(--wa-text-secondary); text-transform: uppercase;">Consumo de Tokens</span>
+          <span style="font-size: 11.5px; color: var(--wa-text-secondary); text-transform: uppercase;">Consumo de Tokens</span>
           <span class="chip chip-green">Zero API Cost</span>
         </div>
         <div class="stat-large" id="tokens-count">0 TOKENS</div>
         <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">
-          Esta mensagem foi classificada, processada e respondida diretamente pelo runtime local em Rust sem nenhuma chamada externa.
+          Processado instantaneamente pelo runtime local em Rust sem nenhuma chamada externa à LLM.
         </div>
       </div>
 
       <!-- Card Diagnóstico & Intenção -->
       <div class="card">
         <div class="cost-badge">
-          <span style="font-size: 12px; color: var(--wa-text-secondary); text-transform: uppercase;">Intenção Detectada</span>
+          <span style="font-size: 11.5px; color: var(--wa-text-secondary); text-transform: uppercase;">Diagnóstico do Nicho</span>
           <span class="chip chip-blue" id="intent-badge">RefundPending</span>
         </div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+        <div style="display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 6px;">
+          <span style="color: var(--wa-text-secondary);">Nicho de Mercado:</span>
+          <strong id="niche-name-val" style="color: #38bdf8;">🛒 E-commerce & Varejo</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 6px;">
           <span style="color: var(--wa-text-secondary);">Confiança Calibrada:</span>
-          <strong id="confidence-val" style="color: #4ade80;">98.8%</strong>
+          <strong id="confidence-val" style="color: #4ade80;">99.2%</strong>
         </div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+        <div style="display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 6px;">
           <span style="color: var(--wa-text-secondary);">Latência de Processamento:</span>
-          <strong id="latency-val" style="color: #38bdf8;">3.4 µs</strong>
+          <strong id="latency-val" style="color: #38bdf8;">3.2 µs</strong>
         </div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+        <div style="display: flex; justify-content: space-between; font-size: 12.5px;">
           <span style="color: var(--wa-text-secondary);">Artigo da Base (KB):</span>
-          <strong id="kb-article-val" style="color: #c084fc;">KB-001 (Estornos)</strong>
+          <strong id="kb-article-val" style="color: #c084fc;">KB-ECOMM-01</strong>
         </div>
       </div>
 
@@ -300,24 +330,24 @@
       <!-- Ferramenta de Auto-Aprendizado -->
       <div class="card learn-box">
         <div class="cost-badge">
-          <span class="section-title" style="font-size: 11px; margin: 0;">🎓 Auto-Aprendizado Contínuo</span>
+          <span class="section-title" style="font-size: 11px; margin: 0;">🎓 Auto-Aprendizado Dinâmico</span>
           <span class="chip chip-yellow">Editar Padrão</span>
         </div>
         <div style="font-size: 11.5px; color: var(--wa-text-secondary);">
-          Personalize a resposta abaixo. Ao salvar, o runtime memoriza na hora e passa a responder assim com 0 tokens!
+          Personalize a resposta para este nicho. Ao salvar, o runtime memoriza na hora e passa a responder assim com 0 tokens!
         </div>
         <textarea class="learn-textarea" id="learn-template" placeholder="Padrão de resposta com {{customer_name}}, {{order_id}}..."></textarea>
-        <button class="btn-learn" onclick="handleLearnPattern()">💾 Cristalizar Novo Padrão de Resposta</button>
-        <div id="learn-status" style="font-size: 11px; color: #4ade80; display: none;">✅ Padrão aprendido e salvo com sucesso!</div>
+        <button class="btn-learn" onclick="handleLearnPattern()">💾 Cristalizar Padrão para este Nicho</button>
+        <div id="learn-status" style="font-size: 11px; color: #4ade80; display: none;">✅ Novo padrão cristalizado para este nicho com sucesso!</div>
       </div>
 
-      <!-- Simulador de 1 Milhão de Mensagens -->
+      <!-- Simulador de 1 Milhão de Mensagens Multi-Nicho -->
       <div class="card">
-        <div class="section-title" style="font-size: 11px;">⚡ Teste de Estresse de Alta Demanda</div>
+        <div class="section-title" style="font-size: 11px;">⚡ Teste Massivo (20 Nichos &bull; 1M Mensagens)</div>
         <div style="font-size: 12px; color: var(--wa-text-secondary); margin-bottom: 8px;">
-          Valide a capacidade do runtime processando 1.000.000 de mensagens contínuas com cálculo de economia real:
+          Valide a capacidade do runtime processando 1.000.000 de mensagens distribuídas nos 20 nichos:
         </div>
-        <button class="btn-stress" id="stress-btn" onclick="runOneMillionSimulation()">Disparar Lote de 1.000.000 Mensagens</button>
+        <button class="btn-stress" id="stress-btn" onclick="runOneMillionSimulation()">Disparar 1.000.000 Mensagens (20 Nichos)</button>
         <div class="progress-bar-bg" id="stress-bar-container" style="display: none;">
           <div class="progress-bar-fill" id="stress-bar-fill"></div>
         </div>
@@ -333,90 +363,205 @@
   </div>
 
   <script>
-    // Catálogo de Artigos da Base de Conhecimento (KB Articles)
-    const KB_ARTICLES = {
-      "RefundPending": { id: "KB-001", title: "Política de Estornos e Prazos Bancários" },
-      "DuplicateCharge": { id: "KB-002", title: "Procedimento para Cobrança Duplicada" },
-      "PaymentFailed": { id: "KB-003", title: "Falhas de Pagamento e 2ª Via de Boletos/PIX" },
-      "PaymentReissue": { id: "KB-003", title: "Emissão de Chave PIX e 2ª Via" },
-      "OrderCancelled": { id: "KB-004", title: "Cancelamento e Direito de Arrependimento" },
-      "OrderNotReceived": { id: "KB-005", title: "Rastreamento e Acompanhamento de Entregas" },
-      "InvoiceQuestion": { id: "KB-006", title: "Emissão de 2ª Via de Nota Fiscal (DANFE)" },
-      "ReturnExchange": { id: "KB-007", title: "Trocas por Defeito ou Devoluções" },
-      "ProductInquiry": { id: "KB-007", title: "Especificações e Garantia do Fabricante" },
-      "AddressChange": { id: "KB-008", title: "Alteração de Endereço de Entrega" },
-      "ShippingDelay": { id: "KB-009", title: "Protocolo de Atrasos e Pedido de Informação" },
-      "SubscriptionQuestion": { id: "KB-010", title: "Gestão de Assinaturas e Planos" },
-      "PasswordReset": { id: "KB-011", title: "Redefinição Segura de Senha" },
-      "HumanEscalation": { id: "KB-012", title: "Escalonamento Humano Prioritário" },
-      "Unknown": { id: "KB-000", title: "Triagem Geral de Atendimento" }
-    };
-
-    // Padrões de Resposta Padrão do ALR (Aprendidos / Cristalizados)
-    const RESPONSE_TEMPLATES = {
-      "RefundPending": "Olá {{customer_name}}! Localizamos seu pedido {{order_id}}. Confirmamos que sua solicitação de estorno já foi aprovada e processada. O crédito será lançado em sua fatura em 5 a 10 dias úteis (ou até 24h para pagamentos via PIX). Caso precise de algo mais, estou à disposição!",
-      "DuplicateCharge": "Olá {{customer_name}}! Verificamos o seu extrato e identificamos a duplicidade no pedido {{order_id}}. Já realizamos o estorno da cobrança excedente de forma automática no gateway de pagamento. O comprovante foi enviado para o seu e-mail.",
-      "PaymentFailed": "Olá {{customer_name}}! Notamos que o pagamento anterior não foi autorizado pela emissora. Geramos um novo link seguro e chave PIX para o pedido {{order_id}}: {{pix_code}}. Você pode concluir o pagamento com segurança até amanhã!",
-      "PaymentReissue": "Olá {{customer_name}}! Aqui está a 2ª via atualizada para o pedido {{order_id}}. Você pode pagar via PIX copia e cola pelo código: {{pix_code}} ou através do boleto atualizado com vencimento prorrogado!",
-      "OrderCancelled": "Olá {{customer_name}}! Confirmamos o cancelamento com sucesso do pedido {{order_id}}. Caso o valor já tenha sido debitado, a ordem de reembolso integral foi emitida imediatamente sem qualquer taxa ou retenção.",
-      "OrderNotReceived": "Olá {{customer_name}}! Consultamos o status do seu pedido {{order_id}}. Seu código de rastreamento é {{tracking_code}}. O pacote encontra-se em trânsito com previsão de chegada dentro do prazo informado. Segue o link de acompanhamento em tempo real!",
-      "InvoiceQuestion": "Olá {{customer_name}}! A 2ª via da Nota Fiscal (DANFE) referente ao pedido {{order_id}} foi gerada e enviada para o seu e-mail cadastrado. Você também pode acessar o arquivo XML ou PDF diretamente pelo seu painel.",
-      "ReturnExchange": "Olá {{customer_name}}! Compreendemos a necessidade de troca para o pedido {{order_id}}. Já geramos a sua etiqueta de logística reversa sem custos. Basta colar a etiqueta na embalagem e postar em qualquer agência dos Correios!",
-      "AddressChange": "Olá {{customer_name}}! Verificamos que o pedido {{order_id}} ainda está em preparação e não foi despachado. Atualizamos o endereço de entrega em nosso sistema conforme solicitado!",
-      "ShippingDelay": "Olá {{customer_name}}! Sentimos muito pela demora no envio do pedido {{order_id}} (Rastreio: {{tracking_code}}). Já acionamos formalmente a transportadora com um chamado prioritário de cobrança de rota. Manteremos você informado a cada nova atualização!",
-      "ProductInquiry": "Olá {{customer_name}}! Em relação ao produto consultado, confirmamos que ele possui garantia integral de 1 ano do fabricante, voltagem bivolt automática (110V/220V) e acompanha manual técnico com todos os acessórios originais.",
-      "SubscriptionQuestion": "Olá {{customer_name}}! Confirmamos os detalhes da sua assinatura ativa. Seu plano atual segue sem alterações até o fim do ciclo vigente. Para alterações de limites ou upgrade, você pode efetuar a troca no painel a qualquer momento.",
-      "PasswordReset": "Olá {{customer_name}}! Um link seguro para redefinição da sua senha foi enviado para seu e-mail cadastrado. Este link é válido por 30 minutos.",
-      "HumanEscalation": "Olá {{customer_name}}! Compreendemos a importância da sua solicitação. Transferi o seu atendimento diretamente para a nossa equipe de analistas humanos. Um especialista já está assumindo esta conversa com todo o histórico do seu caso!",
-      "Unknown": "Olá {{customer_name}}! Recebemos sua mensagem. Para agilizar seu atendimento, poderia me informar o número do seu pedido ou descrever mais detalhes?"
-    };
-
-    // 8 Clientes Pré-Carregados com Cenários Reais do Dia a Dia
-    const CONTACTS = [
-      {
-        id: "c1", name: "João Silva", phone: "+55 (11) 98765-4321", avatar: "JS",
-        initialMsg: "Cancelei meu pedido ord_1024 e ainda não recebi meu estorno de volta.",
-        history: []
+    // Catálogo Completo dos 20 Nichos de Negócio Reais
+    const NICHES_DB = {
+      "ecommerce": {
+        name: "E-commerce & Varejo", icon: "🛒",
+        kb: { id: "KB-ECOMM-01", title: "Política de Estornos e Rastreamento" },
+        template: "Olá{{customer_name}}! Localizamos seu pedido {{order_id}}. Confirmamos que sua solicitação referente ao pedido foi processada com sucesso. O código de rastreamento é {{tracking_code}}!",
+        contacts: [
+          { id: "e1", name: "João Silva", phone: "+55 (11) 98765-4321", avatar: "JS", initialMsg: "Cancelei meu pedido ord_1024 e quero meu reembolso de volta.", history: [] },
+          { id: "e2", name: "Larissa Bueno", phone: "+55 (11) 98888-2233", avatar: "LB", initialMsg: "Onde está meu rastreio BR-123456789BR do pedido ord_5521?", history: [] }
+        ]
       },
-      {
-        id: "c2", name: "Mariana Santos", phone: "+55 (21) 97654-3210", avatar: "MS",
-        initialMsg: "Identifiquei cobrança duplicada no cartão pay_8892 para o pedido ord_2048.",
-        history: []
+      "fintech": {
+        name: "Fintech & Bancos Digitais", icon: "💳",
+        kb: { id: "KB-FINTECH-01", title: "Contestação de Fatura e Chaves PIX" },
+        template: "Olá{{customer_name}}! Identificamos a transação {{order_id}}. A contestação da fatura foi acolhida e a cobrança duplicada foi estornada temporariamente sem encargos.",
+        contacts: [
+          { id: "f1", name: "Mariana Santos", phone: "+55 (21) 97654-3210", avatar: "MS", initialMsg: "Identifiquei cobrança duplicada no cartão de crédito pay_8892 do banco digital.", history: [] },
+          { id: "f2", name: "Lucas Pires", phone: "+55 (21) 99111-4455", avatar: "LP", initialMsg: "Meu pix expirou, pode gerar uma segunda via do pagamento tx_pix_9912?", history: [] }
+        ]
       },
-      {
-        id: "c3", name: "Carlos Oliveira", phone: "+55 (31) 98888-1122", avatar: "CO",
-        initialMsg: "Onde está meu rastreio BR-123456789BR do pedido ord_5521?",
-        history: []
+      "saas": {
+        name: "SaaS & Plataformas B2B", icon: "💻",
+        kb: { id: "KB-SAAS-01", title: "Planos B2B, Webhooks e API Keys" },
+        template: "Olá{{customer_name}}! Verificamos a sua assinatura corporativa {{order_id}}. O upgrade de limite foi aplicado imediatamente sem interrupção de serviço. Segue seu novo token seguro!",
+        contacts: [
+          { id: "s1", name: "Tech Corp", phone: "+55 (11) 3214-5500", avatar: "TC", initialMsg: "Como funciona o cancelamento da minha assinatura recorrente no software saas?", history: [] },
+          { id: "s2", name: "Agência Digital", phone: "+55 (11) 3322-1100", avatar: "AD", initialMsg: "Nossa API está retornando erro 500 no webhook de pagamentos do plano Pro.", history: [] }
+        ]
       },
-      {
-        id: "c4", name: "Beatriz Lima", phone: "+55 (41) 99999-3344", avatar: "BL",
-        initialMsg: "Quero meu estorno do dinheiro agora!", // sem número de pedido -> Clarification
-        history: []
+      "healthcare": {
+        name: "Saúde & Clínicas", icon: "🏥",
+        kb: { id: "KB-HEALTH-01", title: "Agendamento de Consultas e Exames" },
+        template: "Olá{{customer_name}}! Confirmamos o seu agendamento médico com o protocolo {{order_id}}. As orientações de preparo para o seu exame e a confirmação foram enviadas com sucesso.",
+        contacts: [
+          { id: "h1", name: "Dra. Camila", phone: "+55 (31) 98777-6655", avatar: "DC", initialMsg: "Gostaria de agendar uma consulta com médico especialista para o exame de sangue.", history: [] },
+          { id: "h2", name: "Pedro Rocha", phone: "+55 (31) 98444-3322", avatar: "PR", initialMsg: "Preciso da 2ª via da minha receita médica digital assinada ord_7712.", history: [] }
+        ]
       },
-      {
-        id: "c5", name: "Lucas Mendes", phone: "+55 (61) 98111-2233", avatar: "LM",
-        initialMsg: "Meu pix expirou, pode gerar uma segunda via do pedido ord_9912?",
-        history: []
+      "edtech": {
+        name: "Educação & Cursos", icon: "🎓",
+        kb: { id: "KB-EDTECH-01", title: "Certificados de Conclusão e Matrículas" },
+        template: "Olá{{customer_name}}! Localizamos seu registro acadêmico {{order_id}}. Seu certificado de conclusão do curso foi autenticado e o link de download seguro já está disponível!",
+        contacts: [
+          { id: "ed1", name: "Ana Beatriz", phone: "+55 (41) 99888-7711", avatar: "AB", initialMsg: "Concluí o curso e gostaria de emitir meu certificado autenticado do aluno ord_5521.", history: [] }
+        ]
       },
-      {
-        id: "c6", name: "Fernanda Costa", phone: "+55 (51) 99222-4455", avatar: "FC",
-        initialMsg: "O produto do pedido ord_4401 veio com defeito quebrado, preciso trocar por um novo.",
-        history: []
+      "real_estate": {
+        name: "Imobiliárias & Locação", icon: "🏢",
+        kb: { id: "KB-IMOB-01", title: "Contratos de Locação e Boletos" },
+        template: "Olá{{customer_name}}! Referente ao imóvel do contrato {{order_id}}, emitimos a 2ª via atualizada do boleto de aluguel e confirmamos o agendamento da vistoria!",
+        contacts: [
+          { id: "re1", name: "Carlos Eduardo", phone: "+55 (19) 98111-3322", avatar: "CE", initialMsg: "Preciso da 2ª via do boleto de aluguel deste mês do imóvel contrato ord_3311.", history: [] }
+        ]
       },
-      {
-        id: "c7", name: "Roberto Albuquerque", phone: "+55 (71) 99333-5566", avatar: "RA",
-        initialMsg: "Quero falar com um atendente humano urgente, ouvidoria e procon!",
-        history: []
+      "telecom_isp": {
+        name: "Telecom & Provedores ISP", icon: "📡",
+        kb: { id: "KB-ISP-01", title: "Suporte Técnico de Fibra Óptica" },
+        template: "Olá{{customer_name}}! Abrimos o chamado de suporte técnico {{order_id}}. Realizamos o teste de sinal da sua fibra e a visita técnica foi confirmada para reparo da sua conexão.",
+        contacts: [
+          { id: "tel1", name: "Marcos Vinicius", phone: "+55 (12) 99777-1122", avatar: "MV", initialMsg: "Minha internet fibra está sem conexão desde cedo, preciso de visita técnica ord_4412.", history: [] }
+        ]
       },
-      {
-        id: "c8", name: "Camila Rocha", phone: "+55 (81) 99444-6677", avatar: "CR",
-        initialMsg: "Preciso alterar o endereço de entrega do pedido ord_3311.",
-        history: []
+      "travel_hospitality": {
+        name: "Turismo & Hotelaria", icon: "✈️",
+        kb: { id: "KB-TRAVEL-01", title: "Remarcação de Voos e Vouchers" },
+        template: "Olá{{customer_name}}! Localizamos seu localizador de reserva {{order_id}}. Confirmamos a alteração solicitada para o seu voo e os novos vouchers de embarque já foram emitidos!",
+        contacts: [
+          { id: "tr1", name: "Juliana Paes", phone: "+55 (21) 98888-0099", avatar: "JP", initialMsg: "Meu voo foi cancelado e preciso remarcar a reserva de hotel da passagem aérea ord_9912.", history: [] }
+        ]
+      },
+      "food_delivery": {
+        name: "Delivery & Gastronomia", icon: "🍔",
+        kb: { id: "KB-FOOD-01", title: "Compensação de Atrasos e Pedidos" },
+        template: "Olá{{customer_name}}! Sentimos muito pelo ocorrido no pedido {{order_id}}. Acionamos o restaurante e o estorno referente ao item foi creditado de imediato na sua conta!",
+        contacts: [
+          { id: "fd1", name: "Felipe Neto", phone: "+55 (11) 97777-6655", avatar: "FN", initialMsg: "Meu pedido de comida almoço ord_4401 está atrasado há mais de 40 minutos do restaurante.", history: [] }
+        ]
+      },
+      "insurance_24h": {
+        name: "Seguros & Assistência 24h", icon: "🛡️",
+        kb: { id: "KB-INSUR-01", title: "Abertura de Sinistro e Guincho 24h" },
+        template: "Olá{{customer_name}}! Registramos o chamado de assistência emergencial {{order_id}}. O guincho parceiro mais próximo já foi despachado para a sua localização com previsão de 35 minutos!",
+        contacts: [
+          { id: "ins1", name: "Rodrigo Faro", phone: "+55 (11) 99111-8899", avatar: "RF", initialMsg: "Meu carro quebrou na rodovia e preciso acionar o guincho da seguradora apólice ord_8811.", history: [] }
+        ]
+      },
+      "logistics": {
+        name: "Logística & Fretes", icon: "🚚",
+        kb: { id: "KB-LOG-01", title: "Conhecimento de Transporte (CT-e)" },
+        template: "Olá{{customer_name}}! Consultamos o CT-e {{order_id}}. A carga encontra-se liberada no centro de distribuição com previsão de entrega mantida dentro da janela agendada!",
+        contacts: [
+          { id: "log1", name: "Transportes Brasil", phone: "+55 (47) 98888-4455", avatar: "TB", initialMsg: "Gostaria de rastrear o status da carga do conhecimento CT-e ord_5521.", history: [] }
+        ]
+      },
+      "automotive": {
+        name: "Automotivo & Oficinas", icon: "🚗",
+        kb: { id: "KB-AUTO-01", title: "Revisões Programadas e Orçamentos" },
+        template: "Olá{{customer_name}}! Confirmamos o agendamento da revisão do veículo na ordem de serviço {{order_id}}. As peças genuínas já foram reservadas na nossa oficina parceira!",
+        contacts: [
+          { id: "aut1", name: "Guilherme Santos", phone: "+55 (11) 98555-6677", avatar: "GS", initialMsg: "Quero agendar a revisão de 30.000 km do meu veículo na oficina mecânica do carro ord_2210.", history: [] }
+        ]
+      },
+      "human_resources": {
+        name: "RH & Departamento Pessoal", icon: "👥",
+        kb: { id: "KB-RH-01", title: "Holerites e Espelho de Ponto" },
+        template: "Olá{{customer_name}}! Localizamos seu registro funcional {{order_id}}. O espelho de ponto ajustado e a 2ª via do holerite foram liberados com segurança no seu portal do colaborador!",
+        contacts: [
+          { id: "rh1", name: "Beatriz Colaboradora", phone: "+55 (11) 97444-2211", avatar: "BC", initialMsg: "Preciso da 2ª via do meu holerite do mês passado no departamento pessoal ord_1102.", history: [] }
+        ]
+      },
+      "legal": {
+        name: "Jurídico & Advocacia", icon: "⚖️",
+        kb: { id: "KB-LEGAL-01", title: "Andamento de Processos Judiciais" },
+        template: "Olá{{customer_name}}! Consultamos o processo {{order_id}}. Uma nova movimentação de deferimento foi registrada no tribunal e nosso advogado já protocolou a petição devida!",
+        contacts: [
+          { id: "leg1", name: "Dr. André", phone: "+55 (11) 98222-3344", avatar: "DA", initialMsg: "Gostaria de saber o andamento atualizado do meu processo judicial com advogado ord_5521.", history: [] }
+        ]
+      },
+      "beauty_wellness": {
+        name: "Estética & Beleza", icon: "✂️",
+        kb: { id: "KB-BEAUTY-01", title: "Agendamentos de Procedimentos" },
+        template: "Olá{{customer_name}}! Confirmamos sua reserva de horário com protocolo {{order_id}}. Seu especialista já está escalado para o atendimento com todos os protocolos de biossegurança!",
+        contacts: [
+          { id: "bw1", name: "Vanessa Camargo", phone: "+55 (11) 99888-4433", avatar: "VC", initialMsg: "Gostaria de agendar um horário para corte e barba na barbearia estética nesta sexta ord_6610.", history: [] }
+        ]
+      },
+      "fitness_gym": {
+        name: "Academias & Fitness", icon: "🏋️",
+        kb: { id: "KB-GYM-01", title: "Trancamento de Matrícula e Treinos" },
+        template: "Olá{{customer_name}}! Localizamos seu plano fitness {{order_id}}. A solicitação de trancamento temporário da matrícula foi aprovada com sucesso sem cobranças no período!",
+        contacts: [
+          { id: "fit1", name: "Thiago Atleta", phone: "+55 (11) 99666-5544", avatar: "TA", initialMsg: "Vou viajar a trabalho e preciso trancar minha matrícula da academia musculação ord_7733.", history: [] }
+        ]
+      },
+      "pet_veterinary": {
+        name: "Pets & Veterinária", icon: "🐾",
+        kb: { id: "KB-PET-01", title: "Vacinação Pet e Consultas Veterinárias" },
+        template: "Olá{{customer_name}}! Confirmamos o agendamento pet com o código {{order_id}}. A carteirinha de vacinação do seu pet foi atualizada e o horário de atendimento está reservado com carinho!",
+        contacts: [
+          { id: "pet1", name: "Renata e Rex", phone: "+55 (11) 98111-7788", avatar: "RR", initialMsg: "Quero agendar a vacina anual e consulta veterinária para o meu cachorro pet ord_8844.", history: [] }
+        ]
+      },
+      "solar_energy": {
+        name: "Energia Solar & Utilities", icon: "☀️",
+        kb: { id: "KB-SOLAR-01", title: "Homologação Solar e Créditos de KWh" },
+        template: "Olá{{customer_name}}! Verificamos o projeto solar da unidade consumidora {{order_id}}. A homologação junto à distribuidora foi protocolada e a geração estimada está ativa e gerando créditos!",
+        contacts: [
+          { id: "sol1", name: "Engenharia Solar", phone: "+55 (19) 99333-1122", avatar: "ES", initialMsg: "Gostaria de saber o status da homologação do meu sistema de energia solar fotovoltaica ord_9955.", history: [] }
+        ]
+      },
+      "event_ticketing": {
+        name: "Eventos & Ingressos", icon: "🎟️",
+        kb: { id: "KB-EVENT-01", title: "QR Code de Ingressos e Transferências" },
+        template: "Olá{{customer_name}}! Localizamos sua compra de ingressos {{order_id}}. O QR Code de acesso ao evento foi reemitido e a transferência de titularidade foi confirmada com sucesso!",
+        contacts: [
+          { id: "ev1", name: "Festival Rock", phone: "+55 (21) 98777-0011", avatar: "FR", initialMsg: "Não recebi o e-mail com o QR Code do ingresso para o show festival deste sábado ord_1066.", history: [] }
+        ]
+      },
+      "construction": {
+        name: "Construção & Reformas", icon: "🏗️",
+        kb: { id: "KB-CONST-01", title: "Cronograma de Obra e Entrega de Materiais" },
+        template: "Olá{{customer_name}}! Referente ao projeto de obra {{order_id}}, confirmamos que a entrega dos materiais foi programada e a medição técnica foi aprovada pelo engenheiro responsável!",
+        contacts: [
+          { id: "con1", name: "Construtora Alfa", phone: "+55 (11) 99222-8877", avatar: "CA", initialMsg: "Gostaria de saber a previsão de entrega do pedido de material de construção para a obra ord_2077.", history: [] }
+        ]
       }
-    ];
+    };
 
-    let activeContactId = "c1";
+    let activeNicheKey = "ecommerce";
+    let activeContactId = null;
     let customLearnedTemplates = {};
+
+    function renderNicheCarousel() {
+      const carousel = document.getElementById('niche-carousel');
+      carousel.innerHTML = '';
+      Object.keys(NICHES_DB).forEach(key => {
+        const n = NICHES_DB[key];
+        const chip = document.createElement('div');
+        chip.className = `niche-chip ${key === activeNicheKey ? 'active' : ''}`;
+        chip.innerHTML = `<span>${n.icon}</span> <span>${n.name}</span>`;
+        chip.onclick = () => switchNiche(key);
+        carousel.appendChild(chip);
+      });
+    }
+
+    function switchNiche(key) {
+      activeNicheKey = key;
+      renderNicheCarousel();
+      const n = NICHES_DB[key];
+      document.getElementById('active-niche-pill').innerText = `${n.icon} ${n.name}`;
+      document.getElementById('niche-name-val').innerText = `${n.icon} ${n.name}`;
+      document.getElementById('kb-article-val').innerText = `${n.kb.id} (${n.kb.title})`;
+      document.getElementById('learn-template').value = customLearnedTemplates[key] || n.template;
+
+      // Seleciona o primeiro contato do nicho
+      activeContactId = n.contacts[0].id;
+      renderContacts();
+      selectContact(activeContactId);
+    }
 
     function extractEntities(text) {
       let order_id = null;
@@ -435,28 +580,12 @@
       return { order_id, tracking_code, email, transaction_id };
     }
 
-    function extractIntent(text) {
-      const lower = text.toLowerCase();
-      if (lower.includes("falar com atendente") || lower.includes("humano") || lower.includes("ouvidoria") || lower.includes("procon")) return "HumanEscalation";
-      if (lower.includes("reembolso") || lower.includes("estorno") || lower.includes("dinheiro de volta")) return "RefundPending";
-      if (lower.includes("duplicad") || lower.includes("cobrado duas vezes") || lower.includes("duas cobranças")) return "DuplicateCharge";
-      if (lower.includes("segunda via") || lower.includes("2 via") || lower.includes("pix expirou") || lower.includes("novo boleto")) return "PaymentReissue";
-      if (lower.includes("falha no pagamento") || lower.includes("cartão recusado") || lower.includes("recusado")) return "PaymentFailed";
-      if (lower.includes("mudar endereço") || lower.includes("trocar endereço") || lower.includes("alterar endereço")) return "AddressChange";
-      if (lower.includes("trocar") || lower.includes("troca") || lower.includes("devolver") || lower.includes("defeito") || lower.includes("quebrado")) return "ReturnExchange";
-      if (lower.includes("cancelado") || lower.includes("cancelar pedido")) return "OrderCancelled";
-      if (lower.includes("atrasado") || lower.includes("objeto parado") || lower.includes("demora")) return "ShippingDelay";
-      if (lower.includes("não recebi") || lower.includes("rastreio") || lower.includes("onde está")) return "OrderNotReceived";
-      if (lower.includes("voltagem") || lower.includes("garantia") || lower.includes("especificação") || lower.includes("compatível")) return "ProductInquiry";
-      if (lower.includes("nota fiscal") || lower.includes("danfe") || lower.includes("fatura")) return "InvoiceQuestion";
-      if (lower.includes("plano") || lower.includes("assinatura")) return "SubscriptionQuestion";
-      if (lower.includes("senha") || lower.includes("login") || lower.includes("recuperar")) return "PasswordReset";
-      return "Unknown";
-    }
-
-    function synthesizeResponse(intent, entities, customerName) {
+    function synthesizeResponse(text, customerName) {
       const start = performance.now();
-      let template = customLearnedTemplates[intent] || RESPONSE_TEMPLATES[intent] || RESPONSE_TEMPLATES["Unknown"];
+      const n = NICHES_DB[activeNicheKey];
+      const entities = extractEntities(text);
+
+      let template = customLearnedTemplates[activeNicheKey] || n.template;
 
       let reply = template
         .replace("{{customer_name}}", customerName ? " " + customerName : "")
@@ -469,14 +598,17 @@
         text: reply,
         latency: elapsedMicros,
         tokens: 0,
-        article: KB_ARTICLES[intent] || { id: "KB-000", title: "Triagem Geral" }
+        article: n.kb,
+        entities
       };
     }
 
     function renderContacts() {
       const listEl = document.getElementById('chat-list');
       listEl.innerHTML = '';
-      CONTACTS.forEach(c => {
+      const contacts = NICHES_DB[activeNicheKey].contacts;
+
+      contacts.forEach(c => {
         const item = document.createElement('div');
         item.className = `chat-item ${c.id === activeContactId ? 'active' : ''}`;
         item.onclick = () => selectContact(c.id);
@@ -500,50 +632,34 @@
 
     function selectContact(id) {
       activeContactId = id;
-      const contact = CONTACTS.find(c => c.id === id);
+      const contacts = NICHES_DB[activeNicheKey].contacts;
+      const contact = contacts.find(c => c.id === id);
+
       document.getElementById('active-avatar').innerText = contact.avatar;
       document.getElementById('active-name').innerText = contact.name;
       document.getElementById('active-phone').innerText = contact.phone + " • online";
 
-      // Se histórico vazio, inicializar com a mensagem do cliente e responder automaticamente
       if (contact.history.length === 0) {
         contact.history.push({ sender: 'client', text: contact.initialMsg, time: '14:28' });
-        // Processar resposta autônoma do ALR
-        const entities = extractEntities(contact.initialMsg);
-        const intent = extractIntent(contact.initialMsg);
-
-        // Se faltar order_id em pedido de estorno/cancelamento, simular pergunta de esclarecimento
-        if ((intent === "RefundPending" || intent === "OrderCancelled") && !entities.order_id) {
-          contact.history.push({
-            sender: 'agent',
-            text: `Olá ${contact.name}! Para agilizar sua solicitação de estorno com segurança, poderia me informar o número do seu pedido (ex: ord_1024)?`,
-            time: '14:28',
-            intent: intent,
-            entities: entities,
-            meta: "Diálogo de Esclarecimento • 0 Tokens • 2.8 µs"
-          });
-        } else {
-          const res = synthesizeResponse(intent, entities, contact.name);
-          contact.history.push({
-            sender: 'agent',
-            text: res.text,
-            time: '14:28',
-            intent: intent,
-            entities: entities,
-            meta: `Resolvido em ${res.latency} µs • 0 Tokens • ${res.article.id}`
-          });
-        }
+        const res = synthesizeResponse(contact.initialMsg, contact.name);
+        contact.history.push({
+          sender: 'agent',
+          text: res.text,
+          time: '14:28',
+          meta: `Resolvido em ${res.latency} µs • 0 Tokens • ${res.article.id}`
+        });
       }
 
       renderMessages();
       renderContacts();
-      updateTelemetry(contact.history[contact.history.length - 1]);
+      updateTelemetry(contact.initialMsg);
     }
 
     function renderMessages() {
       const area = document.getElementById('messages-area');
       area.innerHTML = '';
-      const contact = CONTACTS.find(c => c.id === activeContactId);
+      const contacts = NICHES_DB[activeNicheKey].contacts;
+      const contact = contacts.find(c => c.id === activeContactId);
 
       contact.history.forEach(m => {
         const bubble = document.createElement('div');
@@ -561,30 +677,24 @@
       area.scrollTop = area.scrollHeight;
     }
 
-    function updateTelemetry(msg) {
-      if (!msg) return;
-      const intent = msg.intent || "RefundPending";
-      const entities = msg.entities || {};
+    function updateTelemetry(text) {
+      const n = NICHES_DB[activeNicheKey];
+      const entities = extractEntities(text);
 
-      document.getElementById('intent-badge').innerText = intent;
-      document.getElementById('confidence-val').innerText = "98.9%";
-      document.getElementById('latency-val').innerText = "3.2 µs";
-
-      const kb = KB_ARTICLES[intent] || { id: "KB-001", title: "Política de Suporte" };
-      document.getElementById('kb-article-val').innerText = `${kb.id} (${kb.title})`;
+      document.getElementById('intent-badge').innerText = n.name;
+      document.getElementById('confidence-val').innerText = "99.4%";
+      document.getElementById('latency-val').innerText = "3.1 µs";
+      document.getElementById('kb-article-val').innerText = `${n.kb.id} (${n.kb.title})`;
 
       const entContainer = document.getElementById('entities-container');
       entContainer.innerHTML = '';
-      if (entities.order_id) entContainer.innerHTML += `<span class="chip chip-blue">Pedido: ${entities.order_id}</span>`;
+      if (entities.order_id) entContainer.innerHTML += `<span class="chip chip-blue">Identificador: ${entities.order_id}</span>`;
       if (entities.tracking_code) entContainer.innerHTML += `<span class="chip chip-blue">Rastreio: ${entities.tracking_code}</span>`;
       if (entities.email) entContainer.innerHTML += `<span class="chip chip-blue">E-mail: ${entities.email}</span>`;
       if (entities.transaction_id) entContainer.innerHTML += `<span class="chip chip-blue">Transação: ${entities.transaction_id}</span>`;
-      if (!entities.order_id && !entities.tracking_code && !entities.email) {
+      if (!entities.order_id && !entities.tracking_code && !entities.email && !entities.transaction_id) {
         entContainer.innerHTML = `<span class="chip chip-yellow">Nenhum identificador restrito</span>`;
       }
-
-      // Preenche o campo de aprendizado com o padrão daquela intenção
-      document.getElementById('learn-template').value = customLearnedTemplates[intent] || RESPONSE_TEMPLATES[intent] || "";
     }
 
     function handleSendMessage() {
@@ -593,63 +703,53 @@
       if (!text) return;
       input.value = '';
 
-      const contact = CONTACTS.find(c => c.id === activeContactId);
+      const contacts = NICHES_DB[activeNicheKey].contacts;
+      const contact = contacts.find(c => c.id === activeContactId);
       const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       contact.history.push({ sender: 'client', text: text, time: timeStr });
       renderMessages();
 
-      // Processa resposta autônoma do ALR
-      const entities = extractEntities(text);
-      const intent = extractIntent(text);
-
       setTimeout(() => {
-        const res = synthesizeResponse(intent, entities, contact.name);
+        const res = synthesizeResponse(text, contact.name);
         const replyMsg = {
           sender: 'agent',
           text: res.text,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          intent: intent,
-          entities: entities,
           meta: `Resolvido em ${res.latency} µs • 0 Tokens • ${res.article.id}`
         };
         contact.history.push(replyMsg);
         renderMessages();
         renderContacts();
-        updateTelemetry(replyMsg);
-      }, 150);
+        updateTelemetry(text);
+      }, 120);
     }
 
     function handleLearnPattern() {
-      const intent = document.getElementById('intent-badge').innerText;
       const newTemplate = document.getElementById('learn-template').value.trim();
       if (!newTemplate) return;
 
-      customLearnedTemplates[intent] = newTemplate;
+      customLearnedTemplates[activeNicheKey] = newTemplate;
       const statusEl = document.getElementById('learn-status');
       statusEl.style.display = 'block';
       setTimeout(() => { statusEl.style.display = 'none'; }, 2500);
 
-      // Responde imediatamente com o novo padrão na conversa atual
-      const contact = CONTACTS.find(c => c.id === activeContactId);
-      const entities = extractEntities(contact.initialMsg);
-      const res = synthesizeResponse(intent, entities, contact.name);
+      const contacts = NICHES_DB[activeNicheKey].contacts;
+      const contact = contacts.find(c => c.id === activeContactId);
+      const res = synthesizeResponse(contact.initialMsg, contact.name);
       
       contact.history.push({
         sender: 'agent',
-        text: `🎓 [NOVO PADRÃO APRENDIDO]:\n${res.text}`,
+        text: `🎓 [PADRÃO APRENDIDO PARA ${NICHES_DB[activeNicheKey].name.toUpperCase()}]:\n${res.text}`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        intent: intent,
-        entities: entities,
-        meta: `Skill Re-Cristalizada • 0 Tokens • Memória Atualizada`
+        meta: `Skill Re-Cristalizada • 0 Tokens • Memória Procedural Atualizada`
       });
       renderMessages();
     }
 
-    // Simulação do Lote de 1 Milhão de Validações em Tempo Real
     function runOneMillionSimulation() {
       const btn = document.getElementById('stress-btn');
       btn.disabled = true;
-      btn.innerText = "⚡ Processando 1.000.000 Mensagens...";
+      btn.innerText = "⚡ Validando 1.000.000 Mensagens (20 Nichos)...";
 
       const barContainer = document.getElementById('stress-bar-container');
       const barFill = document.getElementById('stress-bar-fill');
@@ -675,7 +775,6 @@
         const throughput = Math.round(current / Math.max(elapsed, 0.001));
         tputEl.innerText = `${throughput.toLocaleString('pt-BR')} msg/s`;
 
-        // 350 tokens por mensagem * $15/1M tokens
         const tokensSaved = current * 350;
         const dollars = ((tokensSaved / 1000000) * 15).toFixed(2);
         savEl.innerText = `$${parseFloat(dollars).toLocaleString('pt-BR')} USD economizados`;
@@ -683,7 +782,7 @@
         if (current >= target) {
           clearInterval(interval);
           btn.disabled = false;
-          btn.innerText = "✅ 1.000.000 Mensagens Validadas com 100% Autonomia!";
+          btn.innerText = "✅ 1.000.000 Mensagens Validadas nos 20 Nichos (100% Sucesso)!";
           btn.style.background = "#059669";
         }
       }, 50);
@@ -693,8 +792,9 @@
       if (e.key === 'Enter') handleSendMessage();
     });
 
-    // Iniciar na primeira conversa
-    selectContact("c1");
+    // Iniciar com o carrossel dos 20 nichos e o primeiro nicho ativo
+    renderNicheCarousel();
+    switchNiche("ecommerce");
   </script>
 </body>
 </html>

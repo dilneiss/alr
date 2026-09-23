@@ -169,6 +169,9 @@ impl StateExtractor {
             SupportIntent::InvoiceQuestion
         } else if text.contains("assinatura")
             || text.contains("subscription")
+            || text.contains("trancar")
+            || text.contains("matrícula")
+            || text.contains("matricula")
             || (text.contains("plano") && !text.contains("pagamento"))
         {
             SupportIntent::SubscriptionQuestion
@@ -240,6 +243,14 @@ impl StateExtractor {
             || text.contains("not received")
             || text.contains("rastreio")
             || text.contains("onde está")
+            || text.contains("processo judicial")
+            || text.contains("advogado")
+            || text.contains("ingresso")
+            || text.contains("show")
+            || text.contains("material de construção")
+            || text.contains("status da carga")
+            || text.contains("previsão de entrega")
+            || (text.contains("obra") && !text.contains("cobrança"))
         {
             SupportIntent::OrderNotReceived
         } else if text.contains("voltagem")
@@ -248,6 +259,23 @@ impl StateExtractor {
             || text.contains("compatível")
             || text.contains("como funciona")
             || text.contains("manual")
+            || text.contains("consulta")
+            || text.contains("médic")
+            || text.contains("exame")
+            || text.contains("curso")
+            || text.contains("certificado")
+            || text.contains("aluno")
+            || text.contains("revisão")
+            || text.contains("oficina")
+            || text.contains("corte e barba")
+            || text.contains("estética")
+            || text.contains("barbearia")
+            || text.contains("vacina")
+            || text.contains("veterinár")
+            || text.contains("pet")
+            || text.contains("solar")
+            || text.contains("fotovoltaic")
+            || text.contains("inversor")
             || text.contains("tamanho do produto")
         {
             SupportIntent::ProductInquiry
@@ -261,6 +289,12 @@ impl StateExtractor {
         } else if text.contains("erro")
             || text.contains("bug")
             || text.contains("travou")
+            || text.contains("sem conexão")
+            || text.contains("visita técnica")
+            || text.contains("guincho")
+            || text.contains("seguradora")
+            || text.contains("apólice")
+            || text.contains("quebrou")
             || text.contains("technical")
         {
             SupportIntent::TechnicalIssue

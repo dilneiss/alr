@@ -74,6 +74,10 @@ path = "../../tests/phase12_dino_tests.rs"
 name = "phase13_whatsapp_omnichannel_tests"
 path = "../../tests/phase13_whatsapp_omnichannel_tests.rs"
 
+[[test]]
+name = "phase14_multi_niche_omnichannel_tests"
+path = "../../tests/phase14_multi_niche_omnichannel_tests.rs"
+
 [dependencies]
 alr-core = { workspace = true }
 alr-memory = { workspace = true }

@@ -2,6 +2,7 @@ pub mod browser_agent;
 pub mod conflict;
 pub mod learning;
 pub mod r#loop;
+pub mod niche;
 pub mod orchestration;
 pub mod planner_3d;
 pub mod procedural;
@@ -20,6 +21,7 @@ pub mod trust;
 
 pub use browser_agent::{BrowserAgent, BrowserSkill, BrowserSkillStep};
 pub use conflict::{ConflictResolutionStrategy, PolicyConflictEngine};
+pub use niche::{BusinessNiche, NicheDefinition, NicheRegistry};
 pub use orchestration::EpisodeOrchestrator;
 pub use planner_3d::{
     HierarchicalPlanner, HighLevelPlan, Recovery3DStrategy, SubGoal, SubGoalKind,
