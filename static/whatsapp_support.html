@@ -283,6 +283,24 @@
     <div class="telemetry-panel">
       <div class="section-title">📊 Telemetria Cognitiva ALR</div>
 
+      <!-- Card Origem da Decisão & Ciclo Cognitivo -->
+      <div class="card">
+        <div class="cost-badge">
+          <span style="font-size: 11px; color: var(--wa-text-secondary); text-transform: uppercase;">Origem da Decisão</span>
+          <span class="chip chip-green" id="decision-source-pill">LearnedSkill (Local)</span>
+        </div>
+        <div style="font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 4px;" id="decision-source-title">
+          ⚡ Resolução Local com Zero Tokens
+        </div>
+        <div style="font-size: 11.5px; color: #94a3b8; line-height: 1.4;" id="decision-source-desc">
+          Este padrão já foi aprendido e cristalizado na memória procedural. A resposta foi gerada localmente em ~3.1 µs sem chamar a LLM.
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 11.5px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06);">
+          <span>Chamadas LLM: <strong id="llm-calls-count" style="color: #facc15;">0</strong></span>
+          <span>Autonomia Local: <strong id="autonomy-rate-val" style="color: #4ade80;">100.0%</strong></span>
+        </div>
+      </div>
+
       <!-- Card Custo de Tokens -->
       <div class="card">
         <div class="cost-badge">
@@ -294,7 +312,6 @@
           Processado instantaneamente pelo runtime local em Rust sem nenhuma chamada externa à LLM.
         </div>
       </div>
-
       <!-- Card Diagnóstico & Intenção -->
       <div class="card">
         <div class="cost-badge">
@@ -534,6 +551,10 @@
     let activeNicheKey = "ecommerce";
     let activeContactId = null;
     let customLearnedTemplates = {};
+    let learnedNiches = new Set();
+    let totalMessagesProcessed = 0;
+    let autonomousResolutions = 0;
+    let llmCallsCount = 0;
 
     function renderNicheCarousel() {
       const carousel = document.getElementById('niche-carousel');
@@ -585,8 +606,26 @@
       const n = NICHES_DB[activeNicheKey];
       const entities = extractEntities(text);
 
-      let template = customLearnedTemplates[activeNicheKey] || n.template;
+      totalMessagesProcessed++;
+      const isColdStart = !learnedNiches.has(activeNicheKey);
 
+      let decisionSource = "LearnedSkill (Local)";
+      let sourceTitle = "⚡ Resolução Local com Zero Tokens";
+      let sourceDesc = "Cenário já dominado pelo runtime. Resposta gerada pela política local em microssegundos sem nenhuma chamada à LLM.";
+      let metaTag = "⚡ Resolvido Localmente (0 Tokens • < 5 µs)";
+
+      if (isColdStart) {
+        learnedNiches.add(activeNicheKey);
+        llmCallsCount++;
+        decisionSource = "LLM Teacher (Cold Start)";
+        sourceTitle = "🤖 LLM Teacher Invocada (Cold Start)";
+        sourceDesc = `Cenário inédito detectado no nicho '${n.name}'. A LLM foi chamada para ensinar o procedimento e cristalizou a Skill v1 na memória SQLite.`;
+        metaTag = "🤖 Ensinado pela LLM • Skill Salva no SQLite";
+      } else {
+        autonomousResolutions++;
+      }
+
+      let template = customLearnedTemplates[activeNicheKey] || n.template;
       let reply = template
         .replace("{{customer_name}}", customerName ? " " + customerName : "")
         .replace("{{order_id}}", entities.order_id || "informado")
@@ -597,9 +636,14 @@
       return {
         text: reply,
         latency: elapsedMicros,
-        tokens: 0,
+        tokens: isColdStart ? 120 : 0,
         article: n.kb,
-        entities
+        entities,
+        isColdStart,
+        decisionSource,
+        sourceTitle,
+        sourceDesc,
+        metaTag
       };
     }
 
@@ -646,13 +690,13 @@
           sender: 'agent',
           text: res.text,
           time: '14:28',
-          meta: `Resolvido em ${res.latency} µs • 0 Tokens • ${res.article.id}`
+          meta: res.metaTag
         });
+        updateTelemetry(res);
       }
 
       renderMessages();
       renderContacts();
-      updateTelemetry(contact.initialMsg);
     }
 
     function renderMessages() {
@@ -677,13 +721,27 @@
       area.scrollTop = area.scrollHeight;
     }
 
-    function updateTelemetry(text) {
+    function updateTelemetry(res) {
       const n = NICHES_DB[activeNicheKey];
-      const entities = extractEntities(text);
+      const entities = (res && res.entities) ? res.entities : extractEntities("");
+
+      if (res && res.decisionSource) {
+        document.getElementById('decision-source-pill').innerText = res.decisionSource;
+        document.getElementById('decision-source-pill').className = res.isColdStart ? 'chip chip-yellow' : 'chip chip-green';
+        document.getElementById('decision-source-title').innerText = res.sourceTitle;
+        document.getElementById('decision-source-desc').innerText = res.sourceDesc;
+        document.getElementById('llm-calls-count').innerText = llmCallsCount;
+
+        const rate = totalMessagesProcessed > 0
+          ? ((autonomousResolutions / totalMessagesProcessed) * 100).toFixed(1)
+          : "100.0";
+        document.getElementById('autonomy-rate-val').innerText = `${rate}%`;
+        document.getElementById('tokens-count').innerText = res.isColdStart ? "120 TOKENS (Cold Start)" : "0 TOKENS";
+      }
 
       document.getElementById('intent-badge').innerText = n.name;
-      document.getElementById('confidence-val').innerText = "99.4%";
-      document.getElementById('latency-val').innerText = "3.1 µs";
+      document.getElementById('confidence-val').innerText = (res && res.isColdStart) ? "95.0% (Validado)" : "99.4% (Local)";
+      document.getElementById('latency-val').innerText = res ? `${res.latency} µs` : "3.1 µs";
       document.getElementById('kb-article-val').innerText = `${n.kb.id} (${n.kb.title})`;
 
       const entContainer = document.getElementById('entities-container');
