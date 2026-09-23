@@ -268,7 +268,7 @@ flowchart TD
         EnvCopy --> QdrantConf[QDRANT_URL = http://localhost:6333<br/>Memória Semântica Vetorial]
         EnvCopy --> LLMChoice{Qual Provedor de LLM Usar?}
         
-        LLMChoice -- Modo Offline / Testes -- > MockLLM[MockLlmTeacher<br/>LLM_API_KEY vazia ou mock<br/>Zero Custo / 100% Determinístico]
+        LLMChoice -- Modo Offline / Testes --> MockLLM[MockLlmTeacher<br/>LLM_API_KEY vazia ou mock<br/>Zero Custo / 100% Determinístico]
         LLMChoice -- OpenAI Oficial --> OpenAIConf[LLM_BASE_URL = https://api.openai.com/v1<br/>LLM_API_KEY = sk-...<br/>LLM_MODEL = gpt-4o-mini / gpt-4o]
         LLMChoice -- Local / Self-Hosted --> LocalConf[LLM_BASE_URL = http://localhost:11434/v1<br/>Ollama / vLLM / LM Studio / Laya<br/>LLM_MODEL = laya-multilingual / mistral]
         LLMChoice -- Gateways / OpenRouter --> GatewayConf[LLM_BASE_URL = https://openrouter.ai/api/v1<br/>LLM_API_KEY = sk-or-...<br/>LLM_MODEL = deepseek / claude / openai]
