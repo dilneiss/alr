@@ -83,10 +83,10 @@ impl<L: LlmTeacher> SupportAgent<L> {
             guard.get(&ticket.customer_id).cloned()
         };
 
-        let intent = if let Some((saved_intent, _)) = pending {
-            saved_intent
+        let (intent, confidence) = if let Some((saved_intent, _)) = pending {
+            (saved_intent, 0.98)
         } else {
-            StateExtractor::extract_intent(&ticket.subject, &ticket.message)
+            StateExtractor::extract_intent_calibrated(&ticket.subject, &ticket.message)
         };
 
         // When interactive clarification is enabled (e.g. in real-time user chat),
@@ -140,49 +140,56 @@ impl<L: LlmTeacher> SupportAgent<L> {
                 .filter(|s| s.status == KnowledgeStatus::Active)
         };
 
-        if let Some(mut skill) = active_skill {
-            let context =
-                ToolContext::new(&ticket.tenant_id, "alr_support_agent").with_simulation(false);
+        // If an active skill exists in memory, its learned confidence overrides raw heuristic confidence
+        let effective_confidence = active_skill
+            .as_ref()
+            .map(|s| s.confidence)
+            .unwrap_or(confidence);
 
-            let outputs = skill.execute(&self.tools, &context).await?;
-            tool_calls += skill.steps.len();
+        if effective_confidence >= self.confidence_threshold {
+            if let Some(mut skill) = active_skill {
+                let context =
+                    ToolContext::new(&ticket.tenant_id, "alr_support_agent").with_simulation(false);
 
-            for out in &outputs {
-                if let Some(reply) = out.data.get("reply").and_then(|r| r.as_str()) {
-                    final_response = Some(reply.to_string());
-                }
-            }
+                let outputs = skill.execute(&self.tools, &context).await?;
+                tool_calls += skill.steps.len();
 
-            ticket.status = TicketStatus::Resolved;
-
-            return Ok(SupportResolution {
-                ticket_id: ticket.id.clone(),
-                intent,
-                decision_source: DecisionSource::LearnedSkill,
-                skill_used: Some(skill.name.clone()),
-                llm_called: false,
-                confidence: skill.confidence,
-                novelty: 0.05,
-                resolved: true,
-                escalated: false,
-                escalation_reason: None,
-                tool_calls_count: tool_calls,
-                response_message: final_response.map(|r| {
-                    if let Some(ref oid) = entities.order_id {
-                        format!("{} (Referente ao pedido {})", r, oid)
-                    } else {
-                        r
+                for out in &outputs {
+                    if let Some(reply) = out.data.get("reply").and_then(|r| r.as_str()) {
+                        final_response = Some(reply.to_string());
                     }
-                }).or_else(|| {
-                    Some(format!(
-                        "Recebido! Identificamos seu pedido {:?} e confirmamos que a solicitacao de estorno foi processada com sucesso no gateway.",
-                        entities.order_id.unwrap_or_else(|| "ord_0005".to_string())
-                    ))
-                }),
-                missing_data_field: None,
-            });
-        }
+                }
 
+                ticket.status = TicketStatus::Resolved;
+
+                return Ok(SupportResolution {
+                    ticket_id: ticket.id.clone(),
+                    intent,
+                    decision_source: DecisionSource::LearnedSkill,
+                    skill_used: Some(skill.name.clone()),
+                    llm_called: false,
+                    confidence: skill.confidence,
+                    novelty: 0.05,
+                    resolved: true,
+                    escalated: false,
+                    escalation_reason: None,
+                    tool_calls_count: tool_calls,
+                    response_message: final_response.map(|r| {
+                        if let Some(ref oid) = entities.order_id {
+                            format!("{} (Referente ao pedido {})", r, oid)
+                        } else {
+                            r
+                        }
+                    }).or_else(|| {
+                        Some(format!(
+                            "Recebido! Identificamos seu pedido {:?} e confirmamos que a solicitacao de estorno foi processada com sucesso no gateway.",
+                            entities.order_id.unwrap_or_else(|| "ord_0005".to_string())
+                        ))
+                    }),
+                    missing_data_field: None,
+                });
+            }
+        }
         // 2. Unknown or low-confidence intent -> Consult LLM Teacher Oracle
         let state = StateExtractor::build_support_state(ticket);
 

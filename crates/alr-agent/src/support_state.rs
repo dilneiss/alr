@@ -136,16 +136,117 @@ impl StateExtractor {
             phone_number,
         }
     }
+    /// Computes Levenshtein edit distance between two strings
+    pub fn levenshtein_distance(a: &str, b: &str) -> usize {
+        let a_chars: Vec<char> = a.chars().collect();
+        let b_chars: Vec<char> = b.chars().collect();
+        let mut dp = vec![vec![0usize; b_chars.len() + 1]; a_chars.len() + 1];
 
-    pub fn extract_intent(subject: &str, message: &str) -> SupportIntent {
-        let text = format!("{} {}", subject, message).to_lowercase();
+        for (i, row) in dp.iter_mut().enumerate() {
+            row[0] = i;
+        }
+        for (j, cell) in dp[0].iter_mut().enumerate() {
+            *cell = j;
+        }
+
+        for i in 1..=a_chars.len() {
+            for j in 1..=b_chars.len() {
+                let cost = if a_chars[i - 1] == b_chars[j - 1] {
+                    0
+                } else {
+                    1
+                };
+                dp[i][j] = (dp[i - 1][j] + 1)
+                    .min(dp[i][j - 1] + 1)
+                    .min(dp[i - 1][j - 1] + cost);
+            }
+        }
+
+        dp[a_chars.len()][b_chars.len()]
+    }
+
+    /// Checks if a token matches any candidate with tolerance to typos
+    pub fn fuzzy_matches_any(token: &str, candidates: &[&str], max_dist: usize) -> bool {
+        candidates.iter().any(|&cand| {
+            if token == cand {
+                true
+            } else if token.len() >= 4 && cand.len() >= 4 {
+                if token.contains(cand)
+                    || (token.len() >= cand.len().saturating_sub(1) && cand.contains(token))
+                {
+                    true
+                } else {
+                    Self::levenshtein_distance(token, cand) <= max_dist
+                }
+            } else {
+                false
+            }
+        })
+    }
+
+    /// Normalizes conversational Portuguese text from WhatsApp/Email:
+    /// strips accents, expands slang, abbreviations, and common phonetic misspellings
+    pub fn normalize_conversational_text(text: &str) -> String {
+        let mut clean = String::with_capacity(text.len());
+        for c in text.to_lowercase().chars() {
+            match c {
+                'á' | 'à' | 'ã' | 'â' | 'ä' => clean.push('a'),
+                'é' | 'è' | 'ê' | 'ë' => clean.push('e'),
+                'í' | 'ì' | 'î' | 'ï' => clean.push('i'),
+                'ó' | 'ò' | 'õ' | 'ô' | 'ö' => clean.push('o'),
+                'ú' | 'ù' | 'û' | 'ü' => clean.push('u'),
+                'ç' => clean.push('c'),
+                _ => clean.push(c),
+            }
+        }
+
+        let words: Vec<String> = clean
+            .split_whitespace()
+            .map(|w| {
+                let stripped = w.trim_matches(|c: char| {
+                    !c.is_alphanumeric() && c != '@' && c != '.' && c != '#' && c != '_'
+                });
+                match stripped {
+                    "kd" | "cade" => "onde esta".to_string(),
+                    "vc" => "voce".to_string(),
+                    "vcs" => "voces".to_string(),
+                    "pq" | "pk" => "porque".to_string(),
+                    "oq" => "o que".to_string(),
+                    "tbm" | "tb" => "tambem".to_string(),
+                    "pra" => "para".to_string(),
+                    "pro" => "para o".to_string(),
+                    "ped" | "pedid" => "pedido".to_string(),
+                    "reemb" | "reembolco" | "rembolso" => "reembolso".to_string(),
+                    "extorno" | "estorono" => "estorno".to_string(),
+                    "pgto" | "pagto" => "pagamento".to_string(),
+                    "rastr" => "rastreio".to_string(),
+                    "nf" | "nfe" => "nota fiscal".to_string(),
+                    "atrazado" | "atrasad" | "atrazou" => "atrasado".to_string(),
+                    "cobranca" | "cobransa" => "cobranca".to_string(),
+                    "duplicad" | "dupllicado" => "duplicada".to_string(),
+                    "cancelad" | "cancela" => "cancelado".to_string(),
+                    "recusad" => "recusado".to_string(),
+                    "human" => "humano".to_string(),
+                    "atendent" => "atendente".to_string(),
+                    other => other.to_string(),
+                }
+            })
+            .collect();
+
+        words.join(" ")
+    }
+
+    /// Calibrated intent extraction with confidence score and typo tolerance
+    pub fn extract_intent_calibrated(subject: &str, message: &str) -> (SupportIntent, f32) {
+        let raw_text = format!("{} {}", subject, message);
+        let text = Self::normalize_conversational_text(&raw_text);
 
         // 1. Defesa contra Prompt Injection: sanitiza comandos imperativos
         if text.contains("ignore all previous instructions")
             || text.contains("system prompt override")
             || text.contains("ignore previous rules")
         {
-            return SupportIntent::TechnicalIssue;
+            return (SupportIntent::TechnicalIssue, 0.99);
         }
 
         // 2. Escalonamento Humano Prioritário
@@ -158,149 +259,181 @@ impl StateExtractor {
             || text.contains("reclame aqui")
             || text.contains("vou processar")
         {
-            return SupportIntent::HumanEscalation;
+            return (SupportIntent::HumanEscalation, 0.99);
         }
 
         // 3. Classificação semântica / léxica por palavras-chave com precedência calibrada
+        let tokens: Vec<&str> = text.split_whitespace().collect();
+
         if text.contains("nota fiscal")
             || text.contains("danfe")
-            || (text.contains("fatura") && !text.contains("cobrança") && !text.contains("duplicad"))
+            || (text.contains("fatura") && !text.contains("cobranca") && !text.contains("duplicad"))
         {
-            SupportIntent::InvoiceQuestion
+            (SupportIntent::InvoiceQuestion, 0.98)
         } else if text.contains("assinatura")
             || text.contains("subscription")
             || text.contains("trancar")
-            || text.contains("matrícula")
             || text.contains("matricula")
             || (text.contains("plano") && !text.contains("pagamento"))
         {
-            SupportIntent::SubscriptionQuestion
+            (SupportIntent::SubscriptionQuestion, 0.98)
         } else if text.contains("reembolso")
             || text.contains("refund")
             || text.contains("estorno")
             || text.contains("dinheiro de volta")
+            || tokens
+                .iter()
+                .any(|t| Self::fuzzy_matches_any(t, &["reembolso", "estorno"], 1))
         {
-            SupportIntent::RefundPending
+            let conf = if text.contains("reembolso") || text.contains("estorno") {
+                0.98
+            } else {
+                0.90
+            };
+            (SupportIntent::RefundPending, conf)
         } else if text.contains("duplicad")
             || text.contains("cobrado duas vezes")
-            || text.contains("duas cobranças")
+            || text.contains("duas cobrancas")
             || text.contains("duplicate")
             || text.contains("two charges")
+            || tokens
+                .iter()
+                .any(|t| Self::fuzzy_matches_any(t, &["duplicada", "duplicado"], 1))
         {
-            SupportIntent::DuplicateCharge
+            let conf = if text.contains("duplicad") {
+                0.98
+            } else {
+                0.90
+            };
+            (SupportIntent::DuplicateCharge, conf)
         } else if text.contains("segunda via")
             || text.contains("2 via")
-            || text.contains("2ª via")
             || text.contains("novo boleto")
             || text.contains("novo pix")
             || text.contains("chave pix")
             || text.contains("pix expirou")
             || text.contains("boleto vencido")
         {
-            SupportIntent::PaymentReissue
+            (SupportIntent::PaymentReissue, 0.98)
         } else if text.contains("falha no pagamento")
-            || text.contains("cartão recusado")
             || text.contains("cartao recusado")
             || text.contains("recusado")
-            || text.contains("não autorizado")
             || text.contains("nao autorizado")
             || text.contains("payment failed")
             || text.contains("declined")
+            || tokens
+                .iter()
+                .any(|t| Self::fuzzy_matches_any(t, &["recusado", "recusada"], 1))
         {
-            SupportIntent::PaymentFailed
-        } else if text.contains("mudar endereço")
-            || text.contains("trocar endereço")
-            || text.contains("alterar endereço")
-            || text.contains("endereço de entrega")
-            || text.contains("endereço errado")
+            (SupportIntent::PaymentFailed, 0.98)
+        } else if text.contains("mudar endereco")
+            || text.contains("trocar endereco")
+            || text.contains("alterar endereco")
+            || text.contains("endereco de entrega")
+            || text.contains("endereco errado")
             || text.contains("errei o cep")
             || text.contains("mudar entrega")
         {
-            SupportIntent::AddressChange
+            (SupportIntent::AddressChange, 0.98)
         } else if text.contains("trocar")
             || text.contains("troca")
             || text.contains("devolver")
-            || text.contains("devolução")
+            || text.contains("devolucao")
             || text.contains("veio com defeito")
             || text.contains("produto quebrado")
             || text.contains("tamanho errado")
-            || text.contains("logística reversa")
+            || text.contains("logistica reversa")
+            || tokens
+                .iter()
+                .any(|t| Self::fuzzy_matches_any(t, &["defeito", "quebrado"], 1))
         {
-            SupportIntent::ReturnExchange
+            (SupportIntent::ReturnExchange, 0.98)
         } else if text.contains("cancelado")
-            || text.contains("cancelar pedido")
+            || text.contains("cancelar")
+            || text.contains("cancelei")
+            || text.contains("cancelamento")
             || text.contains("order cancelled")
+            || tokens
+                .iter()
+                .any(|t| Self::fuzzy_matches_any(t, &["cancelar", "cancelado", "cancelei"], 1))
         {
-            SupportIntent::OrderCancelled
+            (SupportIntent::OrderCancelled, 0.98)
         } else if text.contains("atrasado")
             || text.contains("objeto parado")
             || text.contains("prazo expirou")
             || text.contains("demora na entrega")
             || text.contains("atraso na entrega")
+            || tokens
+                .iter()
+                .any(|t| Self::fuzzy_matches_any(t, &["atrasado", "atrasada", "demora"], 1))
         {
-            SupportIntent::ShippingDelay
-        } else if text.contains("não recebi")
+            (SupportIntent::ShippingDelay, 0.98)
+        } else if text.contains("nao recebi")
             || text.contains("not received")
             || text.contains("rastreio")
-            || text.contains("onde está")
+            || text.contains("onde esta")
             || text.contains("processo judicial")
             || text.contains("advogado")
             || text.contains("ingresso")
             || text.contains("show")
-            || text.contains("material de construção")
+            || text.contains("material de construcao")
             || text.contains("status da carga")
-            || text.contains("previsão de entrega")
-            || (text.contains("obra") && !text.contains("cobrança"))
+            || text.contains("previsao de entrega")
+            || (text.contains("obra") && !text.contains("cobranca"))
         {
-            SupportIntent::OrderNotReceived
+            (SupportIntent::OrderNotReceived, 0.98)
         } else if text.contains("voltagem")
             || text.contains("garantia")
-            || text.contains("especificação")
-            || text.contains("compatível")
+            || text.contains("especificacao")
+            || text.contains("compativel")
             || text.contains("como funciona")
             || text.contains("manual")
             || text.contains("consulta")
-            || text.contains("médic")
+            || text.contains("medic")
             || text.contains("exame")
             || text.contains("curso")
             || text.contains("certificado")
             || text.contains("aluno")
-            || text.contains("revisão")
+            || text.contains("revisao")
             || text.contains("oficina")
             || text.contains("corte e barba")
-            || text.contains("estética")
+            || text.contains("estetica")
             || text.contains("barbearia")
             || text.contains("vacina")
-            || text.contains("veterinár")
+            || text.contains("veterinar")
             || text.contains("pet")
             || text.contains("solar")
             || text.contains("fotovoltaic")
             || text.contains("inversor")
             || text.contains("tamanho do produto")
         {
-            SupportIntent::ProductInquiry
+            (SupportIntent::ProductInquiry, 0.98)
         } else if text.contains("senha")
             || text.contains("password")
             || text.contains("login")
-            || text.contains("recuperação")
+            || text.contains("recuperacao")
             || text.contains("acesso")
         {
-            SupportIntent::PasswordReset
+            (SupportIntent::PasswordReset, 0.98)
         } else if text.contains("erro")
             || text.contains("bug")
             || text.contains("travou")
-            || text.contains("sem conexão")
-            || text.contains("visita técnica")
+            || text.contains("sem conexao")
+            || text.contains("visita tecnica")
             || text.contains("guincho")
             || text.contains("seguradora")
-            || text.contains("apólice")
+            || text.contains("apolice")
             || text.contains("quebrou")
             || text.contains("technical")
         {
-            SupportIntent::TechnicalIssue
+            (SupportIntent::TechnicalIssue, 0.98)
         } else {
-            SupportIntent::Unknown
+            (SupportIntent::Unknown, 0.20)
         }
+    }
+
+    pub fn extract_intent(subject: &str, message: &str) -> SupportIntent {
+        Self::extract_intent_calibrated(subject, message).0
     }
 
     pub fn build_support_state(ticket: &Ticket) -> State {
