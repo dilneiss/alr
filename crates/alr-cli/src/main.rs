@@ -17,9 +17,9 @@ use alr_core::{
 };
 use alr_environment::{AbstractAction, EnvironmentAdapter, Real3DRenderedLab};
 use alr_execution::{
-    ChannelInputController, GlobalEmergencyStop, InputAction, InputController, KillSwitchConfig,
-    MouseController, MouseCoordinates, SafeInputController, SimulatedKeyboardController,
-    SimulatedMouseController,
+    ChannelInputController, DesktopNotificationService, GlobalEmergencyStop, InputAction,
+    InputController, KillSwitchConfig, MouseController, MouseCoordinates, SafeInputController,
+    SimulatedKeyboardController, SimulatedMouseController, ThreatLevel, WindowsToastNotifier,
 };
 use alr_games::{
     BombermanEnvironment, Card, CardGameEnvironment, ChromeDinoEnvironment, DinoAction,
@@ -39,8 +39,9 @@ use alr_models::{
 };
 use alr_models::{LayaGuardedDinoPolicy, LocalTypedJudgeEngine};
 use alr_perception::{
-    CameraState, CaptureRegion, RawImage, ScreenCapturer, ScreenErrorDetector,
-    SimulatedScreenCapturer, Visual3DPerception, VisualDetection, VisualSnakeDetector,
+    CameraState, CaptureRegion, CctvSurveillanceEngine, PerimeterZone, RawImage, RgbaColor,
+    ScreenCapturer, ScreenErrorDetector, SimulatedScreenCapturer, Visual3DPerception,
+    VisualDetection, VisualSnakeDetector,
 };
 use alr_snake::game::{Environment, SnakeEnvironment};
 use alr_snake::{BenchmarkReport, SnakeBenchmarkRunner, SnakeVisualRenderer};
@@ -305,6 +306,14 @@ enum Commands {
     /// Demonstração completa de automação web autônoma (navegação, busca, espera, extração e comparação de preços)
     #[command(name = "web-demo")]
     WebDemo,
+    /// Demonstração de Monitoramento de Câmera de Segurança (CCTV) com Visão Computacional local e Notificação do Windows
+    #[command(name = "cctv-demo")]
+    CctvDemo {
+        #[arg(long, default_value_t = 6)]
+        frames: usize,
+        #[arg(long)]
+        live: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -1472,6 +1481,9 @@ async fn main() -> Result<()> {
         }
         Commands::WebDemo => {
             run_web_demo().await?;
+        }
+        Commands::CctvDemo { frames, live } => {
+            run_cctv_demo(frames, live)?;
         }
         Commands::FinalAcceptance => {
             println!(
@@ -7053,5 +7065,266 @@ async fn run_web_demo() -> Result<()> {
     );
 
     driver.close(&session).await?;
+    Ok(())
+}
+
+fn run_cctv_demo(frames: usize, live: bool) -> Result<()> {
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "   ALR REAL-TIME CCTV SURVEILLANCE & EDGE VISION DEMONSTRATION    "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!("Mecanismo : Visão Computacional Local em CPU (Temporal Differencing + Clustering)");
+    println!("Perímetro : Zonas Seguras e Barreiras Virtuais (Virtual Tripwire / ROI)");
+    println!("Ameaças   : Seguro, Baixo, Médio, Alto, Invasão Crítica");
+    println!(
+        "Desktop   : Windows Toast Notifications + Alerta Sonoro MessageBeep ({})",
+        if live {
+            "ATIVO (AO VIVO NO DESKTOP)".green().bold()
+        } else {
+            "SIMULAÇÃO / DRY-RUN (use --live para disparo físico)".yellow()
+        }
+    );
+    println!();
+
+    // 1. Inicializa o motor de vigilância CCTV com zonas de perímetro
+    let mut engine = CctvSurveillanceEngine::new();
+    let zone_public = PerimeterZone::new("Zona Externa - Acesso Público", 10, 20, 130, 200, false);
+    let zone_datacenter =
+        PerimeterZone::new("Perímetro Restrito - Data Center", 160, 40, 140, 160, true);
+
+    engine.add_zone(zone_public);
+    engine.add_zone(zone_datacenter);
+
+    let notifier = WindowsToastNotifier::new(!live);
+
+    println!(
+        "{}",
+        "[CONFIGURAÇÃO DE ZONAS DE VIGILÂNCIA]".bold().yellow()
+    );
+    for zone in engine.zones() {
+        println!(
+            "  -> Zona: {:<38} | Dimensões: [{}, {} a {}, {}] | Restrita: {}",
+            zone.name,
+            zone.x,
+            zone.y,
+            zone.x + zone.width,
+            zone.y + zone.height,
+            if zone.is_restricted {
+                "SIM (DISPARO DE ALARME)".red().bold()
+            } else {
+                "NÃO (PÚBLICA)".green()
+            }
+        );
+    }
+    println!();
+
+    let bg_color = RgbaColor::new(25, 25, 25, 255);
+    let car_color = RgbaColor::new(60, 130, 210, 255);
+    let person_color = RgbaColor::new(230, 230, 230, 255);
+    let package_color = RgbaColor::new(220, 180, 50, 255);
+
+    let mut total_duration = std::time::Duration::ZERO;
+    let mut total_events_detected = 0usize;
+    let mut total_critical_breaches = 0usize;
+
+    let max_steps = frames.max(6);
+
+    for step in 1..=max_steps {
+        let mut frame = RawImage::new(320, 240, vec![0; 320 * 240 * 4]);
+        frame.fill(bg_color);
+
+        let scenario_title = match step {
+            1 => "Calibração de Fundo de Cena (Ambiente Estático)",
+            2 => "Veículo Chegando no Estacionamento Público",
+            3 => "Veículo Estacionado e Manobrando",
+            4 => "Pessoa Desembarcando e Caminhando na Área Pública",
+            5 => "INVASÃO DE PERÍMETRO: Pessoa Cruza Barreira Restrita do Data Center!",
+            6 => "Objeto/Pacote Suspeito Deixado na Área Restrita",
+            _ => "Monitoramento Contínuo em Regime Permanente",
+        };
+
+        // Modela o conteúdo visual de acordo com o cenário
+        match step {
+            1 => {
+                // Estático, sem movimento
+            }
+            2 => {
+                // Carro entrando no estacionamento público (largura 70px x altura 30px)
+                frame.draw_rect(30, 60, 70, 30, car_color);
+            }
+            3 => {
+                // Carro manobrando
+                frame.draw_rect(40, 90, 75, 32, car_color);
+            }
+            4 => {
+                // Pessoa caminhando no estacionamento público (largura 20px x altura 50px)
+                frame.draw_rect(60, 120, 20, 50, person_color);
+            }
+            5 => {
+                // Pessoa entra na zona restrita do Data Center (x=180, y=70, w=22, h=52)
+                frame.draw_rect(180, 70, 22, 52, person_color);
+            }
+            6 => {
+                // Pessoa saindo e pacote suspeito deixado (x=210, y=140, w=16, h=16)
+                frame.draw_rect(220, 60, 20, 50, person_color);
+                frame.draw_rect(200, 140, 16, 16, package_color);
+            }
+            _ => {
+                // Movimento contínuo simulado
+                let off = ((step * 15) % 80) as u32;
+                frame.draw_rect(30 + off, 100, 20, 50, person_color);
+            }
+        }
+
+        let t0 = std::time::Instant::now();
+        let events = engine.process_frame(&frame);
+        let dt = t0.elapsed();
+        total_duration += dt;
+
+        println!(
+            "{}",
+            format!(
+                "--- [FRAME {:02}/{:02}] : {} (Processamento: {:.1} µs) ---",
+                step,
+                max_steps,
+                scenario_title,
+                dt.as_secs_f64() * 1_000_000.0
+            )
+            .bold()
+        );
+
+        if events.is_empty() {
+            println!("  [OK] Nenhum movimento detectado. Perímetro calmo e monitorado.");
+        } else {
+            for ev in &events {
+                total_events_detected += 1;
+                let threat_tag = match ev.threat_level {
+                    ThreatLevel::Seguro => format!("[{:?}]", ev.threat_level).green(),
+                    ThreatLevel::Baixo => format!("[{:?}]", ev.threat_level).blue(),
+                    ThreatLevel::Medio => format!("[{:?}]", ev.threat_level).yellow(),
+                    ThreatLevel::Alto => format!("[{:?}]", ev.threat_level).bright_red(),
+                    ThreatLevel::InvasaoCritica => {
+                        format!("[{:?}]", ev.threat_level).on_red().white().bold()
+                    }
+                };
+
+                println!(
+                    "  {} Entidade: {:<15} | BBox: [{}, {}, {}x{}] | Confiança: {:.1}%",
+                    threat_tag,
+                    ev.entity_kind.as_str(),
+                    ev.bbox.x,
+                    ev.bbox.y,
+                    ev.bbox.width,
+                    ev.bbox.height,
+                    ev.confidence * 100.0
+                );
+                println!("     Detalhe: {}", ev.summary.italic());
+
+                // Se for invasão crítica de perímetro, dispara notificação do Windows
+                if ev.threat_level == ThreatLevel::InvasaoCritica {
+                    total_critical_breaches += 1;
+                    println!(
+                        "     {}",
+                        "===> DISPARANDO ALERTA MÁXIMO DE SEGURANÇA NO WINDOWS DESKTOP!"
+                            .red()
+                            .bold()
+                    );
+                    let _ = notifier.send_notification(
+                        "ALR SURVEILLANCE: INVASÃO CRÍTICA",
+                        &format!(
+                            "Intruso detectado no perímetro restrito! BBox: [{}, {}]",
+                            ev.bbox.x, ev.bbox.y
+                        ),
+                        ev.threat_level,
+                    );
+                } else if ev.threat_level == ThreatLevel::Alto {
+                    let _ = notifier.send_notification(
+                        "ALR SURVEILLANCE: AMEAÇA ELEVADA",
+                        &ev.summary,
+                        ev.threat_level,
+                    );
+                }
+            }
+        }
+
+        // Renderiza visualização ASCII do feed de vídeo no terminal para os quadros de destaque
+        if step == 2 || step == 5 || step == 6 {
+            let ascii_view = engine.render_ascii_feed(&frame, &events, 50, 10);
+            println!("{}", "  Feed da Câmera (Renderização ASCII):".cyan());
+            for line in ascii_view.lines() {
+                println!("    {}", line.bright_black());
+            }
+        }
+        println!();
+    }
+
+    // Resumo de telemetria e auditoria de desempenho
+    let avg_us = (total_duration.as_secs_f64() * 1_000_000.0) / max_steps as f64;
+    let equivalent_fps = 1_000_000.0 / avg_us.max(1.0);
+
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "             RELATÓRIO DE MONITORAMENTO CCTV CONCLUÍDO            "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!("Quadros Analisados        : {}", max_steps);
+    println!("Eventos Identificados     : {}", total_events_detected);
+    println!(
+        "Violações de Perímetro    : {}",
+        if total_critical_breaches > 0 {
+            format!("{}", total_critical_breaches).red().bold()
+        } else {
+            "0".green()
+        }
+    );
+    println!(
+        "Notificações Despachadas  : {} {}",
+        notifier.notification_count(),
+        if live {
+            "(Enviadas ao Windows Toast)"
+        } else {
+            "(Registradas em Memória - Dry Run)"
+        }
+    );
+    println!("Latência Média por Quadro : {:.1} µs (< 1 ms)", avg_us);
+    println!(
+        "Throughput Teórico CPU    : {:.0} FPS (Tempo Real)",
+        equivalent_fps
+    );
+    println!("Consumo de Tokens / Cloud : $0.00 (100% On-Device / Zero LLM Overhead)");
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+
     Ok(())
 }
