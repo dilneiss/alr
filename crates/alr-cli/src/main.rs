@@ -198,6 +198,10 @@ enum Commands {
         #[arg(long, default_value = "auto")]
         target: String,
     },
+    Showcase {
+        #[arg(long, default_value_t = 3600)]
+        port: u16,
+    },
 }
 
 #[derive(Subcommand)]
@@ -1301,6 +1305,9 @@ async fn main() -> Result<()> {
         }
         Commands::Quickstart { target } => {
             run_quickstart_tutorial(&store, &target).await?;
+        }
+        Commands::Showcase { port } => {
+            run_showcase_server(port).await?;
         }
         Commands::FinalAcceptance => {
             println!(
@@ -3985,5 +3992,52 @@ async fn run_quickstart_tutorial(store: &SqliteMemoryStore, _target: &str) -> Re
         "  4. Teste de 1M Mensagens: cargo run -p alr-cli -- support stress-test --count 1000000\n"
     );
 
+    Ok(())
+}
+
+async fn run_showcase_server(port: u16) -> Result<()> {
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "      ALR INTERACTIVE SHOWCASE & COMPLETE ECOSYSTEM DEMO         "
+            .bold()
+            .green()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .cyan()
+    );
+    println!("Web Showcase: http://localhost:{}", port);
+    println!(
+        "Interactive Modules: 5 Core Pillars, 20 Niches, Safety Shield, 3D Lab, ROI Calculator\n"
+    );
+
+    let app = axum::Router::new().route(
+        "/",
+        axum::routing::get(|| async {
+            let content = std::fs::read_to_string("static/showcase.html")
+                .or_else(|_| std::fs::read_to_string("../../static/showcase.html"))
+                .unwrap_or_else(|_| "<h1>ALR Interactive Showcase</h1>".to_string());
+            axum::response::Html(content)
+        }),
+    );
+
+    let addr = format!("127.0.0.1:{}", port);
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    println!("Servidor da Vitrine Interativa rodando em http://{}", addr);
+    println!(
+        "Abra seu navegador em http://localhost:{} ou execute:",
+        port
+    );
+    println!("  node scripts/launch_showcase.js\n");
+
+    axum::serve(listener, app).await?;
     Ok(())
 }

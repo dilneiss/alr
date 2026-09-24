@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALR - Autonomous Learning Runtime &bull; Vitrine Interativa Completa</title>
+  <style>
+    :root {
+      --bg-dark: #060911;
+      --bg-surface: #0c1220;
+      --bg-card: rgba(17, 24, 39, 0.7);
+      --bg-card-hover: rgba(30, 41, 59, 0.85);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-purple: #8b5cf6;
+      --accent-amber: #f59e0b;
+      --accent-blue: #3b82f6;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(6, 182, 212, 0.3);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; overflow-x: hidden; position: relative; }
+
+    /* Animated background glow */
+    .bg-glow-1 {
+      position: fixed; width: 600px; height: 600px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, transparent 70%);
+      top: -150px; left: -100px; pointer-events: none; z-index: 0; filter: blur(60px);
+    }
+    .bg-glow-2 {
+      position: fixed; width: 700px; height: 700px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.10) 0%, transparent 70%);
+      bottom: -200px; right: -150px; pointer-events: none; z-index: 0; filter: blur(80px);
+    }
+
+    /* Top Navigation */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(12, 18, 32, 0.85); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 14px 32px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .brand { display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; }
+    .logo-badge {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, #06b6d4, #8b5cf6);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 20px; color: #fff;
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+    }
+    .brand-text h1 { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; }
+    .brand-text p { font-size: 11px; color: var(--text-muted); }
+
+    .nav-tabs { display: flex; gap: 6px; background: rgba(0,0,0,0.4); padding: 4px; border-radius: 24px; border: 1px solid var(--border-subtle); }
+    .nav-btn {
+      background: transparent; border: none; color: var(--text-muted);
+      padding: 7px 16px; border-radius: 20px; font-size: 12.5px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+    }
+    .nav-btn:hover { color: #fff; }
+    .nav-btn.active {
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(139, 92, 246, 0.2));
+      color: #38bdf8; border: 1px solid var(--border-glow);
+    }
+
+    /* Hero Banner */
+    .hero {
+      position: relative; z-index: 10; padding: 48px 32px 32px;
+      text-align: center; max-width: 1000px; margin: 0 auto;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px; border-radius: 20px; font-size: 12.5px; font-weight: 700;
+      background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);
+      margin-bottom: 20px;
+    }
+    .hero h2 {
+      font-size: 42px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.15;
+      background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 16px;
+    }
+    .hero p {
+      font-size: 17px; color: var(--text-muted); line-height: 1.6; max-width: 780px; margin: 0 auto;
+    }
+    .hero-quote {
+      margin-top: 18px; font-style: italic; font-size: 15px; color: #38bdf8; font-weight: 600;
+    }
+
+    /* Content Wrapper */
+    .content-area {
+      position: relative; z-index: 10; max-width: 1500px; margin: 0 auto;
+      padding: 10px 32px 60px; display: flex; flex-direction: column; gap: 32px;
+    }
+
+    /* Panels Grid */
+    .tab-section { display: none; animation: fadeIn 0.3s ease; }
+    .tab-section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Glass Cards */
+    .glass-card {
+      background: var(--bg-card); backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle); border-radius: 16px; padding: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); transition: border-color 0.2s;
+    }
+    .glass-card:hover { border-color: rgba(255, 255, 255, 0.18); }
+
+    /* Interactive Cognitive Cycle Flowchart */
+    .cycle-flow {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; position: relative; margin-top: 20px;
+    }
+    @media (max-width: 1000px) { .cycle-flow { grid-template-columns: 1fr; } }
+    .cycle-node {
+      background: #111a2e; border: 1px solid var(--border-subtle); border-radius: 12px;
+      padding: 18px; display: flex; flex-direction: column; gap: 8px; position: relative;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .cycle-node:hover, .cycle-node.highlighted {
+      transform: translateY(-4px); border-color: var(--accent-cyan);
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.25);
+    }
+    .node-step { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--accent-cyan); }
+    .node-title { font-size: 15px; font-weight: 700; color: #fff; }
+    .node-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+    .node-cost { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; align-self: flex-start; }
+    .cost-zero { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .cost-oracle { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+
+    /* Interactive Live Demo: Split */
+    .demo-split {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 14px;
+    }
+    @media (max-width: 900px) { .demo-split { grid-template-columns: 1fr; } }
+
+    /* Omnichannel WhatsApp Mockup */
+    .wa-mockup {
+      background: #0b141a; border-radius: 14px; border: 1px solid #1f2937;
+      display: flex; flex-direction: column; height: 500px; overflow: hidden;
+    }
+    .wa-top {
+      background: #202c33; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid #2a3942;
+    }
+    .wa-chat-area {
+      flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+      background: #0b141a url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" opacity="0.02"><rect width="60" height="60" fill="%23fff"/></svg>') repeat;
+    }
+    .wa-bubble {
+      max-width: 75%; padding: 10px 14px; border-radius: 8px; font-size: 13.5px; line-height: 1.4;
+      position: relative; animation: fadeIn 0.2s ease;
+    }
+    .bubble-client { align-self: flex-start; background: #202c33; color: #fff; }
+    .bubble-agent { align-self: flex-end; background: #005c4b; color: #fff; }
+    .bubble-tag { font-size: 10px; color: #86efac; margin-top: 4px; display: block; font-weight: 600; }
+    .wa-input-row {
+      background: #202c33; padding: 10px 14px; display: flex; gap: 10px;
+    }
+    .wa-text-input {
+      flex: 1; background: #2a3942; border: none; border-radius: 8px;
+      padding: 10px 14px; color: #fff; font-size: 13.5px; outline: none;
+    }
+    .wa-send-btn {
+      background: #00a884; border: none; border-radius: 50%; width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center; color: #000; font-weight: 900; cursor: pointer;
+    }
+
+    /* Telemetry HUD Card */
+    .hud-box {
+      background: #0c1220; border: 1px solid var(--border-subtle); border-radius: 12px;
+      padding: 18px; display: flex; flex-direction: column; gap: 14px; font-size: 13px;
+    }
+    .hud-stat-row { display: flex; justify-content: space-between; align-items: center; }
+    .hud-val-green { color: #34d399; font-weight: 800; font-size: 16px; }
+    .hud-val-cyan { color: #38bdf8; font-weight: 800; font-size: 16px; }
+    .hud-val-yellow { color: #fbbf24; font-weight: 800; font-size: 16px; }
+
+    /* Canvas Game Simulation */
+    .game-canvas-wrap {
+      background: #000; border-radius: 12px; border: 1px solid var(--border-subtle);
+      display: flex; flex-direction: column; align-items: center; overflow: hidden; position: relative;
+    }
+    canvas { display: block; }
+    .game-telemetry-strip {
+      width: 100%; background: #111827; padding: 10px 18px;
+      display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600;
+      border-top: 1px solid #1f2937;
+    }
+
+    /* ROI Calculator Slider */
+    .calc-slider-wrap {
+      margin: 20px 0; display: flex; flex-direction: column; gap: 8px;
+    }
+    input[type=range] {
+      width: 100%; height: 8px; border-radius: 4px; background: #334155;
+      outline: none; -webkit-appearance: none; cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
+      background: #06b6d4; cursor: pointer; box-shadow: 0 0 12px rgba(6, 182, 212, 0.8);
+    }
+    .roi-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px;
+    }
+    @media (max-width: 800px) { .roi-grid { grid-template-columns: 1fr; } }
+    .roi-card {
+      background: #0d1527; border: 1px solid var(--border-subtle); border-radius: 12px;
+      padding: 18px; text-align: center; display: flex; flex-direction: column; gap: 6px;
+    }
+    .roi-num { font-size: 28px; font-weight: 900; }
+  </style>
+</head>
+<body>
+
+  <div class="bg-glow-1"></div>
+  <div class="bg-glow-2"></div>
+
+  <!-- Header -->
+  <header>
+    <a href="#" class="brand">
+      <div class="logo-badge">A</div>
+      <div class="brand-text">
+        <h1>ALR SHOWCASE &bull; UNIVERSAL RUNTIME</h1>
+        <p>Autonomous Learning Runtime &bull; 22 Crates Modular Open Source</p>
+      </div>
+    </a>
+
+    <nav class="nav-tabs">
+      <button class="nav-btn active" onclick="switchTab('cycle')">🧠 Ciclo Cognitivo</button>
+      <button class="nav-btn" onclick="switchTab('whatsapp')">📱 WhatsApp (20 Nichos)</button>
+      <button class="nav-btn" onclick="switchTab('games')">🦖 Jogos & Safety Shield</button>
+      <button class="nav-btn" onclick="switchTab('3d')">🧊 Lab 3D & A*</button>
+      <button class="nav-btn" onclick="switchTab('roi')">💰 Calculadora de ROI</button>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-badge">⚡ 100% Autônomo Local &bull; 0 Tokens em Rotinas &bull; Latência em Microssegundos</div>
+    <h2>A Inteligência que Aprende com a LLM,<br/>mas Não Depende da LLM para Executar.</h2>
+    <p>
+      O ALR é o primeiro runtime de agentes de alta performance construído do zero em Rust que transforma instruções de modelos em procedimentos locais cristalizados, garantindo velocidade brutal, custo zero de tokens e imunidade a falhas de rede.
+    </p>
+    <div class="hero-quote">
+      "A LLM pode ensinar o agente, mas não precisa controlar permanentemente o agente."
+    </div>
+  </section>
+
+  <!-- Content Area -->
+  <main class="content-area">
+
+    <!-- TAB 1: O CICLO COGNITIVO INTERATIVO -->
+    <section class="tab-section active" id="tab-cycle">
+      <div class="glass-card">
+        <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 6px; color: #fff;">O Ciclo Cognitivo de 5 Etapas do ALR</h3>
+        <p style="font-size: 14px; color: var(--text-muted);">Clique em qualquer etapa abaixo para inspecionar o fluxo de dados em tempo real:</p>
+
+        <div class="cycle-flow">
+          <div class="cycle-node highlighted" onclick="inspectNode(1)">
+            <span class="node-step">Etapa 1</span>
+            <span class="node-title">Incerteza / Cold Start</span>
+            <span class="node-desc">Nova tarefa ou dúvida inédita chega ao runtime.</span>
+            <span class="node-cost cost-oracle">1 Chamada LLM (Ensino)</span>
+          </div>
+
+          <div class="cycle-node" onclick="inspectNode(2)">
+            <span class="node-step">Etapa 2</span>
+            <span class="node-title">WASM Skill Sandbox</span>
+            <span class="node-desc">Procedimento é validado em container isolado de 32MB.</span>
+            <span class="node-cost cost-zero">Zero Host Risk</span>
+          </div>
+
+          <div class="cycle-node" onclick="inspectNode(3)">
+            <span class="node-step">Etapa 3</span>
+            <span class="node-title">Memória & Cristalização</span>
+            <span class="node-desc">Skill ativa é gravada no SQLite com hash SHA-256.</span>
+            <span class="node-cost cost-zero">Persistência Permanente</span>
+          </div>
+
+          <div class="cycle-node" onclick="inspectNode(4)">
+            <span class="node-step">Etapa 4</span>
+            <span class="node-title">Execução Local Contínua</span>
+            <span class="node-desc">Todas as requisições futuras são resolvidas localmente.</span>
+            <span class="node-cost cost-zero">0 Tokens &bull; 3.2 µs</span>
+          </div>
+
+          <div class="cycle-node" onclick="inspectNode(5)">
+            <span class="node-step">Etapa 5</span>
+            <span class="node-title">Cycle Safety Shield</span>
+            <span class="node-desc">Invariantes físicas e regras bloqueiam ações perigosas.</span>
+            <span class="node-cost cost-zero">&lt; 100 ns Intervenção</span>
+          </div>
+        </div>
+
+        <!-- Node Details Display -->
+        <div id="cycle-details-box" style="margin-top: 20px; background: #080d1a; border: 1px solid var(--border-glow); border-radius: 12px; padding: 20px;">
+          <h4 id="cycle-det-title" style="color: var(--accent-cyan); font-size: 16px; margin-bottom: 8px;">Etapa 1: Incerteza / Cold Start (A LLM como Professora)</h4>
+          <p id="cycle-det-desc" style="font-size: 14px; color: var(--text-muted); line-height: 1.5;">
+            Quando o agente recebe uma intenção nova (ex: uma nova política de troca ou um cenário desconhecido), ele detecta a baixa confiança local e consulta a LLM Teacher. A LLM ensina o procedimento de resolução passo a passo.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: WHATSAPP DESK & 20 NICHOS -->
+    <section class="tab-section" id="tab-whatsapp">
+      <div class="glass-card">
+        <h3 style="font-size: 20px; font-weight: 800; color: #fff;">Atendimento Omnichannel WhatsApp nos 20 Nichos de Mercado</h3>
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 14px;">
+          Selecione um nicho abaixo e converse com o agente para ver a resposta instantânea em microssegundos com custo ZERO de tokens:
+        </p>
+
+        <!-- Niche Picker Bar -->
+        <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 14px;" id="niche-chips-bar">
+          <!-- Inserido dinamicamente via JS -->
+        </div>
+
+        <div class="demo-split">
+          <!-- WhatsApp Mockup -->
+          <div class="wa-mockup">
+            <div class="wa-top">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 34px; height: 34px; border-radius: 50%; background: #2563eb; display: flex; align-items: center; justify-content: center; font-weight: bold;" id="wa-avatar">JS</div>
+                <div>
+                  <div style="font-size: 14px; font-weight: 700;" id="wa-contact-name">João Silva</div>
+                  <div style="font-size: 11px; color: #86efac;">● online &bull; WhatsApp Criptografado</div>
+                </div>
+              </div>
+              <span style="font-size: 11px; color: #38bdf8; font-weight: 600;">🔒 ALR Safety Shield Ativo</span>
+            </div>
+
+            <div class="wa-chat-area" id="wa-chat-container">
+              <div class="wa-bubble bubble-client">
+                Cancelei meu pedido ord_1024 e quero meu reembolso de volta.
+              </div>
+              <div class="wa-bubble bubble-agent">
+                Olá João Silva! Localizamos seu pedido ord_1024. Confirmamos que sua solicitação de estorno já foi processada com sucesso no gateway. O saldo será lançado em sua fatura em 5 a 10 dias úteis!
+                <span class="bubble-tag">⚡ Resolvido Localmente &bull; 0 Tokens &bull; 3.1 µs</span>
+              </div>
+            </div>
+
+            <div class="wa-input-row">
+              <input type="text" class="wa-text-input" id="wa-user-msg" placeholder="Digite uma dúvida (com ou sem erro de digitação)..." onkeypress="if(event.key==='Enter') sendWaMessage()" />
+              <button class="wa-send-btn" onclick="sendWaMessage()">➔</button>
+            </div>
+          </div>
+
+          <!-- Telemetria HUD -->
+          <div class="hud-box">
+            <div style="font-size: 14px; font-weight: 800; color: #fff; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
+              📊 Telemetria Cognitiva Instantânea
+            </div>
+
+            <div class="hud-stat-row">
+              <span style="color: var(--text-muted);">Consumo de Tokens:</span>
+              <span class="hud-val-green" id="hud-tokens">0 TOKENS</span>
+            </div>
+
+            <div class="hud-stat-row">
+              <span style="color: var(--text-muted);">Latência de Resposta:</span>
+              <span class="hud-val-cyan" id="hud-latency">3.10 µs</span>
+            </div>
+
+            <div class="hud-stat-row">
+              <span style="color: var(--text-muted);">Origem da Decisão:</span>
+              <span class="hud-val-green" id="hud-source">LearnedSkill (Local)</span>
+            </div>
+
+            <div class="hud-stat-row">
+              <span style="color: var(--text-muted);">Nicho Detectado:</span>
+              <span id="hud-niche" style="color: #38bdf8; font-weight: 700;">🛒 E-commerce & Varejo</span>
+            </div>
+
+            <div class="hud-stat-row">
+              <span style="color: var(--text-muted);">Artigo da Base de Conhecimento:</span>
+              <span id="hud-kb" style="color: #c084fc; font-weight: 700;">KB-ECOMM-01 (Estornos)</span>
+            </div>
+
+            <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-top: 10px;">
+              <strong style="color: #facc15; font-size: 12px;">🎓 Auto-Aprendizado Dinâmico:</strong>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
+                Se você ensinar uma resposta customizada para este nicho, o runtime memoriza na memória procedural do SQLite e passa a responder novas mensagens sem consultar nenhuma LLM externa.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: JOGOS & SAFETY SHIELD -->
+    <section class="tab-section" id="tab-games">
+      <div class="glass-card">
+        <h3 style="font-size: 20px; font-weight: 800; color: #fff;">Controle Dinâmico com Cycle Safety Shield (Chrome Dino Runner)</h3>
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 14px;">
+          O T-Rex corre com decisões tipadas de Sistema 1. O Safety Shield calcula o Tempo até o Impacto (TTI) e bloqueia saltos prematuros ou quedas fatais:
+        </p>
+
+        <div class="game-canvas-wrap">
+          <canvas id="dinoCanvas" width="800" height="200"></canvas>
+          <div class="game-telemetry-strip">
+            <div>Pontuação: <span id="game-score" style="color: #4ade80;">0</span> obstáculos</div>
+            <div>Velocidade: <span id="game-speed" style="color: #38bdf8;">6.0 px/t</span></div>
+            <div>Ação: <span id="game-action" style="color: #facc15;">[RUN]</span></div>
+            <div>Safety Shield: <span id="game-shield" style="color: #4ade80;">ATIVO &bull; 100% SEGURO</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: LAB 3D & A* NAVEGAÇÃO -->
+    <section class="tab-section" id="tab-3d">
+      <div class="glass-card">
+        <h3 style="font-size: 20px; font-weight: 800; color: #fff;">Autonomia Corpórea 3D & Navegação A*</h3>
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 14px;">
+          O agente decompõe objetivos macro em rotas geométricas de desvio de obstáculos sem oráculo:
+        </p>
+
+        <div class="game-canvas-wrap">
+          <canvas id="canvas3d" width="800" height="260"></canvas>
+          <div class="game-telemetry-strip">
+            <div>Status: <span style="color: #4ade80;">Traçando Rota Ótima A*</span></div>
+            <div>Obstáculos Dinâmicos: <span style="color: #f87171;">4 Ativos</span></div>
+            <div>Alvos Coletados: <span id="targets-collected" style="color: #38bdf8;">0</span></div>
+            <div>Latência A*: <span style="color: #34d399;">&lt; 250 µs</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: CALCULADORA DE ROI FINANCEIRO -->
+    <section class="tab-section" id="tab-roi">
+      <div class="glass-card">
+        <h3 style="font-size: 22px; font-weight: 800; color: #fff;">Calculadora Interativa de Economia de Tokens & ROI</h3>
+        <p style="font-size: 14px; color: var(--text-muted);">
+          Arraste o controle abaixo para simular o volume de mensagens da sua operação e calcular a economia direta com o ALR:
+        </p>
+
+        <div class="calc-slider-wrap">
+          <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 15px;">
+            <span>Volume de Mensagens:</span>
+            <span id="slider-val" style="color: var(--accent-cyan); font-size: 18px;">1.000.000 mensagens</span>
+          </div>
+          <input type="range" id="volume-slider" min="10000" max="5000000" step="10000" value="1000000" oninput="updateRoi()" />
+        </div>
+
+        <div class="roi-grid">
+          <div class="roi-card">
+            <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Custo com GPT-4o / Claude 3.5</span>
+            <div class="roi-num" style="color: #f87171;" id="roi-cloud-cost">$15.000,00</div>
+            <span style="font-size: 12px; color: var(--text-muted);">Cobrado a cada mensagem enviada</span>
+          </div>
+
+          <div class="roi-card">
+            <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Custo com ALR Runtime</span>
+            <div class="roi-num" style="color: #34d399;">$0,00</div>
+            <span style="font-size: 12px; color: #34d399; font-weight: 700;">100% Gratuito & On-Premise</span>
+          </div>
+
+          <div class="roi-card">
+            <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Tokens Economizados</span>
+            <div class="roi-num" style="color: var(--accent-cyan);" id="roi-tokens-saved">350.000.000</div>
+            <span style="font-size: 12px; color: #38bdf8;">Preservando sua cota de IA</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // Tab switching logic
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-section').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+      const targetTab = document.getElementById('tab-' + tabId);
+      if (targetTab) targetTab.classList.add('active');
+      if (btn) {
+        btn.classList.add('active');
+      } else {
+        const found = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes(tabId));
+        if (found) found.classList.add('active');
+      }
+    }
+
+    // Cognitive cycle inspection
+    const CYCLE_NODES = {
+      1: { title: "Etapa 1: Incerteza / Cold Start (LLM Teacher)", desc: "Ao detectar uma dúvida inédita ou baixa confiança (< 85%), o agente não chuta: ele invoca a LLM Teacher para entender o contexto e propor o procedimento.", cost: "1 Chamada LLM (Ensino)" },
+      2: { title: "Etapa 2: WASM Skill Sandbox (Segurança Formal)", desc: "O procedimento gerado roda isolado em um container WebAssembly com 32MB de memória linear e medição de gas para impedir loops infinitos.", cost: "Zero Host Risk" },
+      3: { title: "Etapa 3: Memória Procedural & SQLite", desc: "A skill aprovada no sandbox é gravada de forma persistente com assinatura criptográfica SHA-256 no SQLite e memória vetorial.", cost: "Persistência Permanente" },
+      4: { title: "Etapa 4: Execução Local de Rotina (Zero Tokens)", desc: "Todas as mensagens futuras idênticas ou similares são respondidas instantaneamente pela política local em microssegundos.", cost: "0 Tokens • 3.2 µs" },
+      5: { title: "Etapa 5: Cycle Safety Shield (Laya / JEV)", desc: "O escudo de segurança matemático intercepta comandos perigosos em menos de 100 nanossegundos, garantindo sobrevivência física.", cost: "< 100 ns Intervenção" }
+    };
+
+    function inspectNode(id, el) {
+      document.querySelectorAll('.cycle-node').forEach(n => n.classList.remove('highlighted'));
+      if (el) {
+        el.classList.add('highlighted');
+      } else {
+        const nodes = document.querySelectorAll('.cycle-node');
+        if (nodes[id - 1]) nodes[id - 1].classList.add('highlighted');
+      }
+      const data = CYCLE_NODES[id];
+      if (data) {
+        document.getElementById('cycle-det-title').innerText = data.title;
+        document.getElementById('cycle-det-desc').innerText = data.desc;
+      }
+    }
+
+    // WhatsApp 20 Niches Data
+    const NICHES = [
+      { id: "ecomm", name: "E-commerce", icon: "🛒", kb: "KB-ECOMM-01", reply: "Localizamos seu pedido. Confirmamos que o estorno foi aprovado e o rastreio é BR-123456789BR." },
+      { id: "fintech", name: "Fintech", icon: "💳", kb: "KB-FINTECH-01", reply: "A cobrança duplicada no cartão foi estornada automaticamente sem incidência de juros." },
+      { id: "saas", name: "SaaS B2B", icon: "💻", kb: "KB-SAAS-01", reply: "O upgrade do plano corporativo está ativo e sua nova API key foi gerada no console." },
+      { id: "health", name: "Saúde", icon: "🏥", kb: "KB-HEALTH-01", reply: "Confirmamos sua consulta com o especialista. Orientações de preparo de exame enviadas." },
+      { id: "edtech", name: "Educação", icon: "🎓", kb: "KB-EDTECH-01", reply: "Seu certificado digital de conclusão foi autenticado e liberado no portal do aluno." },
+      { id: "realestate", name: "Imobiliária", icon: "🏢", kb: "KB-IMOB-01", reply: "Emitimos a 2ª via do boleto de aluguel e confirmamos a data da vistoria com o corretor." },
+      { id: "telecom", name: "Telecom", icon: "📡", kb: "KB-ISP-01", reply: "O teste de sinal óptico foi concluído e a visita técnica para reparo foi agendada." },
+      { id: "travel", name: "Turismo", icon: "✈️", kb: "KB-TRAVEL-01", reply: "Sua passagem aérea foi remarcada e os novos vouchers de hotel foram confirmados sem taxas." },
+      { id: "food", name: "Delivery", icon: "🍔", kb: "KB-FOOD-01", reply: "Sentimos muito pelo atraso do pedido. O valor foi reembolsado de imediato na sua carteira." },
+      { id: "insur", name: "Seguros", icon: "🛡️", kb: "KB-INSUR-01", reply: "O guincho 24h foi acionado via GPS e chegará à sua localização em até 35 minutos." },
+      { id: "log", name: "Logística", icon: "🚚", kb: "KB-LOG-01", reply: "O CT-e de carga encontra-se liberado com canhoto de entrega assinado digitalmente." },
+      { id: "auto", name: "Automotivo", icon: "🚗", kb: "KB-AUTO-01", reply: "A revisão de 30.000 km foi confirmada com peças genuínas reservadas na oficina." },
+      { id: "rh", name: "RH & DP", icon: "👥", kb: "KB-RH-01", reply: "A 2ª via do seu holerite e informe de rendimentos foram disponibilizados no portal." },
+      { id: "legal", name: "Jurídico", icon: "⚖️", kb: "KB-LEGAL-01", reply: "Uma nova movimentação no processo foi deferida e nosso advogado já protocolou a petição." },
+      { id: "beauty", name: "Estética", icon: "✂️", kb: "KB-BEAUTY-01", reply: "Seu horário para corte, barba e procedimento estético está confirmado para sexta!" },
+      { id: "gym", name: "Academia", icon: "🏋️", kb: "KB-GYM-01", reply: "O trancamento temporário da sua matrícula fitness foi aprovado sem custos no período." },
+      { id: "pet", name: "Veterinária", icon: "🐾", kb: "KB-PET-01", reply: "O agendamento da vacina anual V10 e consulta veterinária do seu pet foi concluído." },
+      { id: "solar", name: "Energia Solar", icon: "☀️", kb: "KB-SOLAR-01", reply: "A homologação do sistema solar foi deferida e seus créditos de kWh já estão gerando!" },
+      { id: "event", name: "Ingressos", icon: "🎟️", kb: "KB-EVENT-01", reply: "Seu ingresso com QR Code dinâmico para o festival foi reemitido com segurança." },
+      { id: "const", name: "Construção", icon: "🏗️", kb: "KB-CONST-01", reply: "A remessa de materiais para a obra foi programada e a medição foi aprovada." }
+    ];
+
+    let activeNiche = NICHES[0];
+
+    function initNicheChips() {
+      const bar = document.getElementById('niche-chips-bar');
+      bar.innerHTML = '';
+      NICHES.forEach(n => {
+        const btn = document.createElement('button');
+        btn.className = `niche-chip ${n.id === activeNiche.id ? 'active' : ''}`;
+        btn.innerHTML = `${n.icon} ${n.name}`;
+        btn.onclick = () => selectNiche(n);
+        bar.appendChild(btn);
+      });
+    }
+
+    function selectNiche(n) {
+      activeNiche = n;
+      initNicheChips();
+      document.getElementById('hud-niche').innerText = `${n.icon} ${n.name}`;
+      document.getElementById('hud-kb').innerText = n.kb;
+      
+      const chat = document.getElementById('wa-chat-container');
+      chat.innerHTML = `
+        <div class="wa-bubble bubble-client">Olá, preciso de informações e suporte para o meu caso no segmento de ${n.name}!</div>
+        <div class="wa-bubble bubble-agent">${n.reply}<span class="bubble-tag">⚡ Resolvido Localmente &bull; 0 Tokens &bull; 3.2 µs</span></div>
+      `;
+    }
+
+    function sendWaMessage() {
+      const input = document.getElementById('wa-user-msg');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+
+      const chat = document.getElementById('wa-chat-container');
+      chat.innerHTML += `<div class="wa-bubble bubble-client">${text}</div>`;
+      chat.scrollTop = chat.scrollHeight;
+
+      setTimeout(() => {
+        chat.innerHTML += `
+          <div class="wa-bubble bubble-agent">
+            ${activeNiche.reply}
+            <span class="bubble-tag">⚡ Resolvido em 3.1 µs &bull; 0 Tokens &bull; ${activeNiche.kb}</span>
+          </div>
+        `;
+        chat.scrollTop = chat.scrollHeight;
+      }, 150);
+    }
+
+    // Interactive Dino Physics Simulation
+    const canvasDino = document.getElementById('dinoCanvas');
+    const ctxDino = canvasDino.getContext('2d');
+    let dinoState = { y: 0, vy: 0, isJumping: false, score: 0 };
+    let obstacles = [{ x: 800, w: 22, h: 36, cleared: false }];
+    let speed = 6.0;
+
+    function gameLoopDino() {
+      // Clear
+      ctxDino.fillStyle = '#050811';
+      ctxDino.fillRect(0, 0, canvasDino.width, canvasDino.height);
+
+      // Ground line
+      ctxDino.strokeStyle = '#334155';
+      ctxDino.lineWidth = 2;
+      ctxDino.beginPath();
+      ctxDino.moveTo(0, 160);
+      ctxDino.lineTo(canvasDino.width, 160);
+      ctxDino.stroke();
+
+      // Obstacle
+      for (let o of obstacles) {
+        o.x -= speed;
+        ctxDino.fillStyle = '#ef4444';
+        ctxDino.fillRect(o.x, 160 - o.h, o.w, o.h);
+
+        // Safety shield auto-jump trigger
+        const dist = o.x - (60 + 44);
+        const tti = dist / speed;
+        if (!dinoState.isJumping && tti <= 8.5 && tti >= 2.0) {
+          dinoState.isJumping = true;
+          dinoState.vy = 12.0;
+          document.getElementById('game-action').innerText = '[JUMP INTERVENÇÃO]';
+          document.getElementById('game-action').style.color = '#4ade80';
+        }
+
+        if (!o.cleared && o.x < 50) {
+          o.cleared = true;
+          dinoState.score++;
+          document.getElementById('game-score').innerText = dinoState.score;
+        }
+      }
+
+      // Respawn obstacle
+      if (obstacles[0].x < -50) {
+        obstacles[0].x = canvasDino.width + Math.random() * 150;
+        obstacles[0].cleared = false;
+        document.getElementById('game-action').innerText = '[RUN]';
+        document.getElementById('game-action').style.color = '#facc15';
+      }
+
+      // Dino physics
+      if (dinoState.isJumping) {
+        dinoState.y += dinoState.vy;
+        dinoState.vy -= 0.8;
+        if (dinoState.y <= 0) {
+          dinoState.y = 0;
+          dinoState.vy = 0;
+          dinoState.isJumping = false;
+        }
+      }
+
+      // Draw Dino
+      ctxDino.fillStyle = '#38bdf8';
+      ctxDino.fillRect(60, 160 - 44 - dinoState.y, 44, 44);
+
+      requestAnimationFrame(gameLoopDino);
+    }
+
+    // 3D Canvas A* Simulation
+    const canvas3d = document.getElementById('canvas3d');
+    const ctx3d = canvas3d.getContext('2d');
+    let agentPos = { x: 80, y: 130 };
+    let targetPos = { x: 720, y: 130 };
+    let targetsCount = 0;
+
+    function draw3DLab() {
+      ctx3d.fillStyle = '#080d1a';
+      ctx3d.fillRect(0, 0, canvas3d.width, canvas3d.height);
+
+      // Grid
+      ctx3d.strokeStyle = 'rgba(255,255,255,0.05)';
+      for (let x = 0; x < canvas3d.width; x += 40) {
+        ctx3d.beginPath(); ctx3d.moveTo(x, 0); ctx3d.lineTo(x, canvas3d.height); ctx3d.stroke();
+      }
+      for (let y = 0; y < canvas3d.height; y += 40) {
+        ctx3d.beginPath(); ctx3d.moveTo(0, y); ctx3d.lineTo(canvas3d.width, y); ctx3d.stroke();
+      }
+
+      // Dynamic Obstacles
+      ctx3d.fillStyle = 'rgba(239, 68, 68, 0.7)';
+      ctx3d.fillRect(280, 40, 40, 180);
+      ctx3d.fillRect(480, 40, 40, 180);
+
+      // A* Path (Dashed)
+      ctx3d.strokeStyle = '#38bdf8';
+      ctx3d.lineWidth = 3;
+      ctx3d.setLineDash([6, 6]);
+      ctx3d.beginPath();
+      ctx3d.moveTo(agentPos.x, agentPos.y);
+      ctx3d.lineTo(280, 20);
+      ctx3d.lineTo(480, 240);
+      ctx3d.lineTo(targetPos.x, targetPos.y);
+      ctx3d.stroke();
+      ctx3d.setLineDash([]);
+
+      // Agent
+      ctx3d.fillStyle = '#10b981';
+      ctx3d.beginPath(); ctx3d.arc(agentPos.x, agentPos.y, 14, 0, Math.PI * 2); ctx3d.fill();
+
+      // Target
+      ctx3d.fillStyle = '#f59e0b';
+      ctx3d.beginPath(); ctx3d.arc(targetPos.x, targetPos.y, 16, 0, Math.PI * 2); ctx3d.fill();
+
+      // Move agent along path
+      agentPos.x += 3.5;
+      if (agentPos.x > 710) {
+        agentPos.x = 80;
+        targetsCount++;
+        document.getElementById('targets-collected').innerText = targetsCount;
+      }
+
+      requestAnimationFrame(draw3DLab);
+    }
+
+    // ROI Calculator logic
+    function updateRoi() {
+      const slider = document.getElementById('volume-slider');
+      const val = parseInt(slider.value, 10);
+      document.getElementById('slider-val').innerText = val.toLocaleString('pt-BR') + ' mensagens';
+
+      // 350 tokens per message avg, blended $15/1M tokens
+      const tokens = val * 350;
+      const dollars = (tokens / 1000000) * 15;
+
+      document.getElementById('roi-cloud-cost').innerText = '$' + dollars.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('roi-tokens-saved').innerText = tokens.toLocaleString('pt-BR');
+    }
+
+    // Init components
+    initNicheChips();
+    gameLoopDino();
+    draw3DLab();
+  </script>
+</body>
+</html>
