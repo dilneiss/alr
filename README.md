@@ -30,6 +30,21 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
 13. **Automação Omnichannel & WhatsApp em 20 Nichos de Mercado (100% Local, Custo Zero de Tokens & Auto-Aprendizado Dinâmico)**
 14. **Aceleração por Hardware SIMD, Sandboxing WASM e Cockpit Web Unificado (Latência < 1 µs e Segurança Formal)**
 
+
+## ⚡ Quickstart em 3 Minutos: Do Zero ao Agente Operacional
+
+Quer ver o runtime funcionando na sua máquina agora mesmo? Em 3 passos simples você instala, configura e coloca seu primeiro agente em execução autônoma com **0 tokens consumidos e latência de microssegundos**:
+
+```bash
+# 1. Clonar o repositório
+git clone https://github.com/dilneiss/alr.git
+cd alr
+
+# 2. Executar o Quickstart Automatizado (Instala -> Configura -> Treina -> Executa)
+cargo run -p alr-cli -- quickstart
+```
+
+*Consulte o tutorial completo passo a passo em [`docs/quickstart-3-minutos.md`](docs/quickstart-3-minutos.md).*
 ---
 
 ## 📑 Sumário
@@ -578,6 +593,9 @@ cargo build --workspace
 ## 💻 Como Usar e Exemplos de Comandos da CLI
 
 ```bash
+# 0. Quickstart Guiado em 3 Minutos (Do Zero ao Agente Operacional)
+cargo run -p alr-cli -- quickstart
+
 # 1. Bateria Formal de Aceitação dos 12 Gates
 cargo run -p alr-cli -- final-acceptance
 
@@ -684,6 +702,7 @@ cargo test --workspace
 * **`cargo run -p alr-cli -- support stress-test --count 1000000`:** Validação massiva de 1 milhão de conversas reais de WhatsApp com 0 tokens e $> 72.000\text{ msg/s}$.
 * **`cargo run -p alr-cli -- whatsapp`:** Servidor HTTP local servindo o WhatsApp Desk com simulação interativa e auto-aprendizado.
 * **`cargo run -p alr-cli -- cockpit`:** Cockpit Web unificado com telemetria SIMD em tempo real, monitor de sandbox WASM e matriz dos 20 nichos.
+* **`cargo run -p alr-cli -- quickstart`:** Assistente guiado de 3 minutos: Instala -> Configura -> Treina -> Executa com 0 tokens.
 
 ---
 
