@@ -86,21 +86,22 @@ cargo run -p alr-cli -- quickstart
    * [Caso 14: Aceleração SIMD, Sandboxing WASM e Cockpit Web Unificado](#caso-14-aceleração-simd-sandboxing-wasm-e-cockpit-web-unificado)
 7. [Detector Universal de Loops & Evasão](#-detector-universal-de-loops--evasão)
 8. [Treinamento de Novas Tarefas (Guia & CLI)](#-treinamento-de-novas-tarefas-guia--cli)
-9. [Hierarquia Rígida de Decisão de 8 Níveis](#-hierarquia-rígida-de-decisão-de-8-níveis)
-10. [Estrutura Completa do Workspace Cargo (22 Crates)](#-estrutura-completa-do-workspace-cargo-22-crates)
-11. [Como Instalar e Pré-Requisitos](#-como-instalar-e-pré-requisitos)
-12. [Como Usar e Exemplos de Comandos da CLI](#-como-usar-e-exemplos-de-comandos-da-cli)
-13. [Demonstrações Práticas](#-demonstrações-práticas)
-14. [Integração MCP com OpenCode](#-integração-mcp-com-opencode)
-15. [Métricas Reais Obtidas por Nível de Evidência](#-métricas-reais-obtidas-por-nível-de-evidência)
-16. [Os 12 Gates Formais de Aceitação](#-os-12-gates-formais-de-aceitação)
-17. [Veredito de Certificação Oficial](#-veredito-de-certificação-oficial)
-18. [O Que o ALR NÃO É](#-o-que-o-alr-não-é)
-19. [Limitações Conhecidas Declaradas Honestamente](#-limitações-conhecidas-declaradas-honestamente)
-20. [Política de Interação com Jogos (Anti-Cheat)](#-política-de-interação-com-jogos-anti-cheat)
-21. [Segurança e Governança](#-segurança-e-governança)
-22. [Índice de Documentação Técnica](#-índice-de-documentação-técnica)
-23. [Licença](#-licença)
+9. [Memória Semântica Vetorial no Qdrant: Geração de Embeddings & Recuperação Autônoma](#-memória-semântica-vetorial-no-qdrant-geração-de-embeddings--recuperação-autônoma)
+10. [Hierarquia Rígida de Decisão de 8 Níveis](#-hierarquia-rígida-de-decisão-de-8-níveis)
+11. [Estrutura Completa do Workspace Cargo (22 Crates)](#-estrutura-completa-do-workspace-cargo-22-crates)
+12. [Como Instalar e Pré-Requisitos](#-como-instalar-e-pré-requisitos)
+13. [Como Usar e Exemplos de Comandos da CLI](#-como-usar-e-exemplos-de-comandos-da-cli)
+14. [Demonstrações Práticas](#-demonstrações-práticas)
+15. [Integração MCP com OpenCode](#-integração-mcp-com-opencode)
+16. [Métricas Reais Obtidas por Nível de Evidência](#-métricas-reais-obtidas-por-nível-de-evidência)
+17. [Os 12 Gates Formais de Aceitação](#-os-12-gates-formais-de-aceitação)
+18. [Veredito de Certificação Oficial](#-veredito-de-certificação-oficial)
+19. [O Que o ALR NÃO É](#-o-que-o-alr-não-é)
+20. [Limitações Conhecidas Declaradas Honestamente](#-limitações-conhecidas-declaradas-honestamente)
+21. [Política de Interação com Jogos (Anti-Cheat)](#-política-de-interação-com-jogos-anti-cheat)
+22. [Segurança e Governança](#-segurança-e-governança)
+23. [Índice de Documentação Técnica](#-índice-de-documentação-técnica)
+24. [Licença](#-licença)
 
 ---
 
@@ -512,6 +513,51 @@ cargo run -p alr-cli -- task train --type support --episodes 200
 ### Treinamento Direto por Skill (Para LLMs e Subagentes)
 O ecossistema possui a skill dedicada **`skill://alr-task-trainer`**. Qualquer modelo ou subagente pode consultar a skill para gerar o `EnvironmentAdapter`, desenhar funções de recompensa imunes a *reward hacking* e rodar os sandboxes de treino automaticamente. Consulte o manual completo em [`docs/training-new-tasks.md`](docs/training-new-tasks.md).
 
+
+---
+
+## 🧠 Memória Semântica Vetorial no Qdrant: Geração de Embeddings & Recuperação Autônoma
+
+O ALR combina persistência operacional relacional em **SQLite (WAL)** com uma camada de **Memória Semântica Vetorial** gerenciada no **Qdrant** (`http://localhost:6333`), implementada no crate `alr-memory` (`crates/alr-memory`).
+
+```mermaid
+flowchart TD
+    Doc[Políticas, FAQs & Casos Resolvidos] --> Ingest[IngestionPipeline<br/>Chunking Inteligente com Metadados]
+    Ingest --> EmbedGen[Provedor de Embeddings<br/>MockEmbeddingProvider 64d / OpenAI 1536d]
+    EmbedGen --> L2Norm[Normalização L2 Estrita<br/>normalize_l2]
+    L2Norm --> QdrantUpsert[(Qdrant REST API<br/>Collection: alr_semantic_memory)]
+    
+    UserQuery([Mensagem / Chamado do Cliente]) --> AutoTrigger{O Agente Decide<br/>Consultar Sozinho?}
+    AutoTrigger -- Procedimento Conhecido em SQLite --> LocalExec[Zero LLM & Zero Busca Vetorial<br/>Executa ProceduralSkill em < 5 µs]
+    AutoTrigger -- Dúvida / Alta Incerteza / Busca de Política --> ToolSearch[Ativação Autônoma da Ferramenta<br/>SearchKnowledgeTool / SearchSimilarTicketsTool]
+    
+    ToolSearch --> EmbedQuery[Gera Embedding da Pergunta]
+    EmbedQuery --> QdrantSearch[Busca Vetorial no Qdrant<br/>Filtro Obrigatório: must tenant_id + Score Threshold >= 0.3]
+    QdrantSearch --> RankedDocs[Retorna Top-K Documentos Canônicos<br/>Artigos KB-001 a KB-012]
+    RankedDocs --> LocalResolution[Síntese da Resposta Local ou Ensinamento Inicial]
+```
+
+### 1. Para Quais Finalidades o Sistema Usa o Qdrant?
+O Qdrant é utilizado para duas finalidades centrais e complementares:
+1. **Base de Conhecimento Canônica (Knowledge Retrieval):** Armazenar e recuperar documentos de políticas oficiais, regras de estorno, SLAs, procedimentos operacionais e artigos de suporte (ex: `KB-ECOMM-01`, `KB-FINTECH-01`, etc.) fatiados pelo `IngestionPipeline`.
+2. **Recuperação de Casos Históricos Resolvidos (Few-Shot Experience Retrieval):** Armazenar tickets e problemas do passado resolvidos com sucesso (`SemanticMemoryType::TicketResolution`), permitindo que o agente consulte como incidentes semelhantes foram solucionados anteriormente por humanos ou pela LLM.
+
+### 2. Como o Sistema Gera os Embeddings?
+A geração de embeddings é desacoplada através do trait `EmbeddingProvider` (`crates/alr-memory/src/embeddings.rs`), suportando dois modos intercambiáveis:
+* **Modo Offline & Determinístico (`MockEmbeddingProvider`):** Gera vetores de **64 dimensões** utilizando projeções semânticas por domínios de palavras-chave (reembolso, cobrança, login, cancelamento) combinadas com dispersão de n-gramas via hash determinístico. Não depende de internet, GPU ou chaves externas de API.
+* **Modo de Produção Real (`OpenAICompatibleEmbeddingProvider`):** Conecta a qualquer endpoint compatível com OpenAI (OpenAI, Azure, vLLM, Ollama, TEI - Text Embeddings Inference) gerando vetores densos (ex: `text-embedding-3-small` de 1536 dimensões).
+* **Invariante de Normalização $L_2$ (`normalize_l2`):** Todo vetor gerado — sem exceção — passa pela normalização vetorial $L_2$ ($\|v\|_2 = 1.0$), garantindo que o cálculo de distância por similaridade de cosseno no Qdrant seja exato, rápido e estável.
+
+### 3. Em Que Momento os Embeddings São Gerados e Inseridos?
+* **No Momento da Ingestão de Documentos:** Quando novas políticas, FAQs ou manuais são cadastrados no sistema (via `alr support ingest` ou `IngestionPipeline::process`), os documentos são segmentados em chunks com sobreposição estruturada, seus embeddings são gerados e enviados para o Qdrant via operação de `upsert` com payload contendo `tenant_id`, `title`, `content` e metadados.
+* **No Momento da Consulta (Tempo Real):** Quando uma mensagem chega e requer consulta à base de conhecimento, o texto da pergunta do usuário é convertido em vetor de embedding instantaneamente para ser comparado contra os pontos indexados no Qdrant.
+
+### 4. O Sistema Decide Automaticamente Quando Usar o Qdrant?
+**SIM, com base na hierarquia estrita de custo cognitivo:**
+* **Se o problema já possui uma macro/procedimento cristalizado em SQLite (`ProceduralSkill`):** O agente **NÃO gasta tempo nem recursos consultando o Qdrant**. Ele executa o procedimento memorizado localmente em microssegundos com custo zero.
+* **Se há dúvida sobre regras de negócio, valores ou políticas:** O agente decide autonomamente disparar a ferramenta `search_knowledge` ou `search_similar_tickets` através do catálogo de ferramentas do `SupportAgent`.
+* **Filtro Estrito Multi-Tenant Obrigatório:** Toda e qualquer busca no Qdrant impõe em tempo de compilação um filtro `must: [{ key: "tenant_id", match: { value: tenant } }]`, tornando matematicamente impossível o vazamento de documentos ou dados entre clientes diferentes.
+* **Filtro de Relevância por Limiar de Corte (`score_threshold: 0.3`):** Documentos com similaridade baixa são automaticamente descartados, evitando alucinações baseadas em informações irrelevantes.
 ---
 
 ## 🚦 Hierarquia Rígida de Decisão de 8 Níveis
