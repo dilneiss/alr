@@ -202,6 +202,10 @@ enum Commands {
         #[arg(long, default_value_t = 3600)]
         port: u16,
     },
+    InstallGuide {
+        #[arg(long, default_value_t = 3700)]
+        port: u16,
+    },
 }
 
 #[derive(Subcommand)]
@@ -1308,6 +1312,9 @@ async fn main() -> Result<()> {
         }
         Commands::Showcase { port } => {
             run_showcase_server(port).await?;
+        }
+        Commands::InstallGuide { port } => {
+            run_install_guide_server(port).await?;
         }
         Commands::FinalAcceptance => {
             println!(
@@ -4037,6 +4044,53 @@ async fn run_showcase_server(port: u16) -> Result<()> {
         port
     );
     println!("  node scripts/launch_showcase.js\n");
+
+    axum::serve(listener, app).await?;
+    Ok(())
+}
+
+async fn run_install_guide_server(port: u16) -> Result<()> {
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "    ALR VISUAL INSTALLATION & USAGE GUIDE (3-MIN ONBOARDING)      "
+            .bold()
+            .green()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .cyan()
+    );
+    println!("Web Guide: http://localhost:{}", port);
+    println!(
+        "Interactive Modules: Windows/Linux/macOS Selector, 1-Click Copy, Command Simulator\n"
+    );
+
+    let app = axum::Router::new().route(
+        "/",
+        axum::routing::get(|| async {
+            let content = std::fs::read_to_string("static/install_and_usage.html")
+                .or_else(|_| std::fs::read_to_string("../../static/install_and_usage.html"))
+                .unwrap_or_else(|_| "<h1>ALR Installation & Usage Guide</h1>".to_string());
+            axum::response::Html(content)
+        }),
+    );
+
+    let addr = format!("127.0.0.1:{}", port);
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    println!("Servidor do Guia de Instalação rodando em http://{}", addr);
+    println!(
+        "Abra seu navegador em http://localhost:{} ou execute:",
+        port
+    );
+    println!("  node scripts/launch_install_guide.js\n");
 
     axum::serve(listener, app).await?;
     Ok(())

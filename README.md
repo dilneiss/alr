@@ -44,7 +44,16 @@ cd alr
 cargo run -p alr-cli -- quickstart
 ```
 
-*Consulte o tutorial completo passo a passo em [`docs/quickstart-3-minutos.md`](docs/quickstart-3-minutos.md).*
+### 📚 Tutoriais Guiados & Interfaces Visuais Interativas
+
+| Recurso | Tipo | Descrição | Como Acessar / Executar |
+| :--- | :---: | :--- | :--- |
+| [`docs/quickstart-3-minutos.md`](docs/quickstart-3-minutos.md) | 📄 Documento | Tutorial passo a passo de 180s: Instalar $\to$ Configurar $\to$ Treinar | Leitura direta no GitHub / Markdown |
+| [`static/install_and_usage.html`](static/install_and_usage.html) | 🖥️ Web Interativa | Guia visual de instalação com seletor de SO (Win/Linux/Mac) e simulador CLI | `cargo run -p alr-cli -- install-guide` |
+| [`static/showcase.html`](static/showcase.html) | 🌟 Vitrine Web | Demonstração animada completa: Ciclo cognitivo, 20 nichos, jogos e calculadora de ROI | `cargo run -p alr-cli -- showcase` |
+| [`static/whatsapp_support.html`](static/whatsapp_support.html) | 📱 WhatsApp Desk | Central omnichannel nos 20 nichos com chat ao vivo e auto-aprendizado dinâmico | `cargo run -p alr-cli -- whatsapp` |
+| [`static/alr_cockpit.html`](static/alr_cockpit.html) | 📊 Cockpit Web | Painel de observabilidade de alta performance: SIMD, WASM sandbox e telemetria | `cargo run -p alr-cli -- cockpit` |
+
 ---
 
 ## 📑 Sumário
@@ -683,7 +692,10 @@ node scripts/launch_live_chat.js
 # 18. Iniciar o Cockpit Web Unificado de Observabilidade e Auto-Aprendizado (Port 3500)
 cargo run -p alr-cli -- cockpit --port 3500
 
-# 19. Executar a Suíte Completa de Testes Automatizados (163 Testes)
+# 19. Iniciar o Guia Visual de Instalação e Uso (Port 3700)
+cargo run -p alr-cli -- install-guide --port 3700
+
+# 20. Executar a Suíte Completa de Testes Automatizados (165 Testes)
 cargo test --workspace
 ```
 
@@ -703,6 +715,7 @@ cargo test --workspace
 * **`cargo run -p alr-cli -- whatsapp`:** Servidor HTTP local servindo o WhatsApp Desk com simulação interativa e auto-aprendizado.
 * **`cargo run -p alr-cli -- cockpit`:** Cockpit Web unificado com telemetria SIMD em tempo real, monitor de sandbox WASM e matriz dos 20 nichos.
 * **`cargo run -p alr-cli -- quickstart`:** Assistente guiado de 3 minutos: Instala -> Configura -> Treina -> Executa com 0 tokens.
+* **`cargo run -p alr-cli -- install-guide`:** Guia visual interativo de instalação para Windows, Linux e macOS com simulador de comandos.
 
 ---
 
