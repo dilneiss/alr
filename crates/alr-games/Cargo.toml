@@ -24,3 +24,7 @@ async-trait = { workspace = true }
 parking_lot = { workspace = true }
 rand = { workspace = true }
 tokio = { workspace = true }
+
+[[test]]
+name = "phase17_four_new_games_tests"
+path = "../../tests/phase17_four_new_games_tests.rs"

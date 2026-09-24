@@ -5,6 +5,19 @@ pub use dino::{
 };
 pub mod pong;
 pub use pong::{PongAction, PongGameEnvironment};
+pub mod cards;
+pub use cards::{
+    Card, CardAction, CardGameEnvironment, CardRank, CardSuit, GameOutcome, GamePhase, Hand,
+};
+pub mod bomberman;
+pub use bomberman::{
+    Bomb, BombermanAction, BombermanEnvironment, CellType, Enemy as BombermanEnemy, Flame,
+    Player as BombermanPlayer,
+};
+pub mod fps;
+pub use fps::{FpsAction, FpsGameEnvironment, PlayerState3D, Target3D};
+pub mod worms;
+pub use worms::{Projectile, Worm, WormsAction, WormsGameEnvironment};
 
 use anyhow::Result;
 use async_trait::async_trait;
@@ -19,6 +32,10 @@ pub enum GameGenre {
     Strategy,
     Action3D,
     Platform,
+    CardGame,
+    Bomberman,
+    FirstPersonShooter,
+    TurnBasedArtillery,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

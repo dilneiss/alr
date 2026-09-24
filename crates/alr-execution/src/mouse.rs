@@ -130,6 +130,9 @@ impl MouseController for NativeDesktopMouseController {
     }
 
     fn move_to(&self, coords: MouseCoordinates) -> Result<()> {
+        if crate::emergency::GlobalEmergencyStop::is_active() {
+            bail!("Emergency stop triggered! Physical mouse movement blocked for safety.");
+        }
         *self.last_position.lock() = coords;
         if self.dry_run {
             return Ok(());
@@ -228,10 +231,12 @@ impl MouseController for NativeDesktopMouseController {
     }
 
     fn scroll(&self, delta: i32) -> Result<()> {
+        if crate::emergency::GlobalEmergencyStop::is_active() {
+            bail!("Emergency stop triggered! Physical mouse scroll blocked for safety.");
+        }
         if self.dry_run {
             return Ok(());
         }
-
         #[cfg(target_os = "windows")]
         {
             unsafe {
@@ -259,6 +264,9 @@ impl MouseController for SimulatedMouseController {
     }
 
     fn move_to(&self, coords: MouseCoordinates) -> Result<()> {
+        if crate::emergency::GlobalEmergencyStop::is_active() {
+            bail!("Emergency stop triggered! Simulated mouse action blocked for safety.");
+        }
         *self.position.lock() = coords;
         Ok(())
     }
@@ -286,6 +294,123 @@ impl MouseController for SimulatedMouseController {
     }
 
     fn scroll(&self, _delta: i32) -> Result<()> {
+        if crate::emergency::GlobalEmergencyStop::is_active() {
+            bail!("Emergency stop triggered! Simulated mouse scroll blocked for safety.");
+        }
         Ok(())
+    }
+}
+
+/// Safety wrapper around any MouseController enforcing emergency stop, rate-limiting, and human override detection
+pub struct SafeMouseController<M: MouseController> {
+    inner: M,
+    dry_run: bool,
+    max_actions_per_second: u32,
+    last_action_time: Mutex<std::time::Instant>,
+    action_count: std::sync::atomic::AtomicU64,
+}
+
+impl<M: MouseController> SafeMouseController<M> {
+    pub fn new(inner: M, dry_run: bool, max_actions_per_second: u32) -> Self {
+        Self {
+            inner,
+            dry_run,
+            max_actions_per_second: max_actions_per_second.max(1),
+            last_action_time: Mutex::new(std::time::Instant::now() - Duration::from_secs(1)),
+            action_count: std::sync::atomic::AtomicU64::new(0),
+        }
+    }
+
+    fn check_safety(&self) -> Result<()> {
+        if crate::emergency::GlobalEmergencyStop::is_active() {
+            bail!("Emergency stop triggered! Mouse execution halted for safety.");
+        }
+
+        let min_interval = Duration::from_micros((1_000_000 / self.max_actions_per_second) as u64);
+        let mut last = self.last_action_time.lock();
+        let elapsed = last.elapsed();
+        if elapsed < min_interval {
+            std::thread::sleep(min_interval - elapsed);
+        }
+        *last = std::time::Instant::now();
+        self.action_count
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        Ok(())
+    }
+}
+
+impl<M: MouseController> MouseController for SafeMouseController<M> {
+    fn get_position(&self) -> Result<MouseCoordinates> {
+        self.inner.get_position()
+    }
+
+    fn move_to(&self, coords: MouseCoordinates) -> Result<()> {
+        self.check_safety()?;
+        if self.dry_run {
+            tracing::info!(
+                "[DRY_RUN] SafeMouseController simulated move_to: {:?}",
+                coords
+            );
+            return Ok(());
+        }
+        self.inner.move_to(coords)
+    }
+
+    fn click(&self, coords: MouseCoordinates) -> Result<()> {
+        self.check_safety()?;
+        if self.dry_run {
+            tracing::info!(
+                "[DRY_RUN] SafeMouseController simulated click: {:?}",
+                coords
+            );
+            return Ok(());
+        }
+        self.inner.click(coords)
+    }
+
+    fn right_click(&self, coords: MouseCoordinates) -> Result<()> {
+        self.check_safety()?;
+        if self.dry_run {
+            tracing::info!(
+                "[DRY_RUN] SafeMouseController simulated right_click: {:?}",
+                coords
+            );
+            return Ok(());
+        }
+        self.inner.right_click(coords)
+    }
+
+    fn double_click(&self, coords: MouseCoordinates) -> Result<()> {
+        self.check_safety()?;
+        if self.dry_run {
+            tracing::info!(
+                "[DRY_RUN] SafeMouseController simulated double_click: {:?}",
+                coords
+            );
+            return Ok(());
+        }
+        self.inner.double_click(coords)
+    }
+
+    fn drag(&self, from: MouseCoordinates, to: MouseCoordinates) -> Result<()> {
+        self.check_safety()?;
+        if self.dry_run {
+            tracing::info!(
+                "[DRY_RUN] SafeMouseController simulated drag: {:?} -> {:?}",
+                from,
+                to
+            );
+            return Ok(());
+        }
+        self.inner.drag(from, to)
+    }
+
+    fn scroll(&self, delta: i32) -> Result<()> {
+        self.check_safety()?;
+        if self.dry_run {
+            tracing::info!("[DRY_RUN] SafeMouseController simulated scroll: {}", delta);
+            return Ok(());
+        }
+        self.inner.scroll(delta)
     }
 }

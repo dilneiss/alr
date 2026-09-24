@@ -8,6 +8,7 @@ license.workspace = true
 [dependencies]
 alr-core = { workspace = true }
 alr-world = { workspace = true }
+alr-execution = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 image = { workspace = true }

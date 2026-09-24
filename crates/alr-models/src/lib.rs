@@ -19,7 +19,7 @@ pub use feature::{FeatureSchema, FeatureVectorizer};
 pub use guarded_policy::{
     GuardedDinoDecision, GuardedMoveDecision, LayaGuardedDinoPolicy, LayaGuardedSnakePolicy,
 };
-pub use ood::DistributionShiftDetector;
+pub use ood::{DistributionShiftDetector, SafeAbstentionReport};
 pub use registry::{ModelCard, ModelRegistry};
 pub use runtime::{
     LocalModelRuntime, ModelDecision, ModelHandle, ModelPrediction, OnnxModelRuntime,

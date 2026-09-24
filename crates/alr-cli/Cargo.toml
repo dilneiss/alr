@@ -86,6 +86,10 @@ path = "../../tests/phase15_flagship_performance_tests.rs"
 name = "phase16_desktop_and_new_games_tests"
 path = "../../tests/phase16_desktop_and_new_games_tests.rs"
 
+[[test]]
+name = "phase17_four_new_games_tests"
+path = "../../tests/phase17_four_new_games_tests.rs"
+
 [dependencies]
 alr-core = { workspace = true }
 alr-memory = { workspace = true }

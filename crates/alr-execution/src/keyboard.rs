@@ -54,7 +54,9 @@ impl<C: InputController> SafeInputController<C> {
 
 impl<C: InputController> InputController for SafeInputController<C> {
     fn press(&self, action: InputAction) -> Result<()> {
-        if self.emergency_stop.load(Ordering::SeqCst) {
+        if crate::emergency::GlobalEmergencyStop::is_active()
+            || self.emergency_stop.load(Ordering::SeqCst)
+        {
             bail!("Emergency stop triggered! Input execution halted for safety.");
         }
 
@@ -121,6 +123,9 @@ pub struct SimulatedKeyboardController {
 
 impl InputController for SimulatedKeyboardController {
     fn press(&self, action: InputAction) -> Result<()> {
+        if crate::emergency::GlobalEmergencyStop::is_active() {
+            bail!("Emergency stop triggered! Simulated keyboard input halted for safety.");
+        }
         self.history.lock().push(action);
         Ok(())
     }
@@ -174,10 +179,12 @@ impl NativeDesktopKeyboardController {
 
     /// Types alphanumeric text character-by-character into whatever desktop application is focused
     pub fn type_text(&self, text: &str) -> Result<()> {
+        if crate::emergency::GlobalEmergencyStop::is_active() {
+            bail!("Emergency stop triggered! Physical keyboard typing halted for safety.");
+        }
         if self.dry_run {
             return Ok(());
         }
-
         #[cfg(target_os = "windows")]
         {
             for ch in text.chars() {
@@ -209,11 +216,13 @@ impl NativeDesktopKeyboardController {
 
 impl InputController for NativeDesktopKeyboardController {
     fn press(&self, action: InputAction) -> Result<()> {
+        if crate::emergency::GlobalEmergencyStop::is_active() {
+            bail!("Emergency stop triggered! Physical keyboard press halted for safety.");
+        }
         *self.last_action.lock() = Some(action.clone());
         if self.dry_run {
             return Ok(());
         }
-
         #[cfg(target_os = "windows")]
         {
             let vk = match &action {
