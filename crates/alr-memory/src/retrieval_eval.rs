@@ -49,6 +49,7 @@ impl RetrievalEvaluator {
         let query = SemanticQuery {
             tenant_id: tenant_id.to_string(),
             vector,
+            sparse_vector: None,
             memory_type: None,
             metadata_filters: HashMap::new(),
             top_k: 5,

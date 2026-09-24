@@ -9,17 +9,22 @@ pub mod sqlite;
 pub mod traits;
 
 pub use embeddings::{
-    normalize_l2, EmbeddingProvider, MockEmbeddingProvider, OpenAICompatibleEmbeddingProvider,
+    normalize_l2, Bm25SparseVectorizer, EmbeddingProvider, HighDimensionalEmbeddingProvider,
+    MockEmbeddingProvider, OpenAICompatibleEmbeddingProvider, SparseEmbeddingProvider,
+    SparseVector, DIM_BERT_BASE, DIM_BGE_SMALL, DIM_OPENAI_SMALL,
 };
 pub use ingestion::{ChunkingConfig, IngestionDoc, IngestionPipeline};
 pub use mock_semantic::MockSemanticMemoryStore;
 pub use models::{DecisionAuditRecord, EpisodeRecord};
-pub use qdrant::QdrantSemanticMemoryStore;
+pub use qdrant::{
+    HnswConfig, QdrantCollectionConfig, QdrantSemanticMemoryStore, ScalarQuantizationConfig,
+};
 pub use retrieval_eval::{
     QueryEvaluationResult, RetrievalBenchmarkReport, RetrievalEvaluator, RetrievalTestCase,
 };
 pub use semantic::{
-    SemanticMemory, SemanticMemoryStore, SemanticMemoryType, SemanticQuery, SemanticSearchResult,
+    reciprocal_rank_fusion, SemanticMemory, SemanticMemoryStore, SemanticMemoryType, SemanticQuery,
+    SemanticSearchResult,
 };
 pub use sqlite::SqliteMemoryStore;
 pub use traits::{MemoryQuery, MemoryStore};

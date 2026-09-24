@@ -186,6 +186,7 @@ impl<S: SemanticMemoryStore, E: EmbeddingProvider> SupportTool for SearchKnowled
         let query = SemanticQuery {
             tenant_id: context.tenant_id,
             vector,
+            sparse_vector: None,
             memory_type: None,
             metadata_filters: HashMap::new(),
             top_k: 3,
@@ -238,6 +239,7 @@ impl<S: SemanticMemoryStore, E: EmbeddingProvider> SupportTool for SearchSimilar
         let query = SemanticQuery {
             tenant_id: context.tenant_id,
             vector,
+            sparse_vector: None,
             memory_type: Some(SemanticMemoryType::TicketResolution),
             metadata_filters: HashMap::new(),
             top_k: 2,

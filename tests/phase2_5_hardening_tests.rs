@@ -52,6 +52,7 @@ async fn test_real_embedding_semantic_generalization() {
             .search(SemanticQuery {
                 tenant_id: tenant.to_string(),
                 vector: query_vec,
+                sparse_vector: None,
                 memory_type: Some(SemanticMemoryType::Policy),
                 metadata_filters: HashMap::new(),
                 top_k: 1,
@@ -233,6 +234,7 @@ async fn test_cross_tenant_isolation_v2() {
         .search(SemanticQuery {
             tenant_id: "tenant_alpha".to_string(),
             vector: q_vec.clone(),
+            sparse_vector: None,
             memory_type: None,
             metadata_filters: HashMap::new(),
             top_k: 10,
@@ -253,6 +255,7 @@ async fn test_cross_tenant_isolation_v2() {
         .search(SemanticQuery {
             tenant_id: "tenant_beta".to_string(),
             vector: q_vec,
+            sparse_vector: None,
             memory_type: None,
             metadata_filters: HashMap::new(),
             top_k: 10,

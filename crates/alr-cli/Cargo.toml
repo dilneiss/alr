@@ -102,6 +102,10 @@ path = "../../tests/phase19_sentiment_routing_tests.rs"
 name = "phase20_cctv_surveillance_tests"
 path = "../../tests/phase20_cctv_surveillance_tests.rs"
 
+[[test]]
+name = "phase21_qdrant_advanced_embeddings_tests"
+path = "../../tests/phase21_qdrant_advanced_embeddings_tests.rs"
+
 [dependencies]
 alr-core = { workspace = true }
 alr-memory = { workspace = true }

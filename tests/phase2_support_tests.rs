@@ -57,6 +57,7 @@ async fn test_semantic_retrieval_returns_relevant_policy() {
         .search(SemanticQuery {
             tenant_id: tenant.to_string(),
             vector: q_vec,
+            sparse_vector: None,
             memory_type: Some(SemanticMemoryType::Policy),
             metadata_filters: std::collections::HashMap::new(),
             top_k: 2,
@@ -118,6 +119,7 @@ async fn test_tenant_isolation_in_semantic_memory() {
                 .await
                 .unwrap()
                 .remove(0),
+            sparse_vector: None,
             memory_type: None,
             metadata_filters: std::collections::HashMap::new(),
             top_k: 10,
@@ -298,6 +300,7 @@ async fn test_real_qdrant_e2e_integration() {
         .search(SemanticQuery {
             tenant_id: tenant.to_string(),
             vector: q_vec,
+            sparse_vector: None,
             memory_type: Some(SemanticMemoryType::Faq),
             metadata_filters: std::collections::HashMap::new(),
             top_k: 1,

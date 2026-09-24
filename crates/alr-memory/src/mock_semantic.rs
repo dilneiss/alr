@@ -79,10 +79,45 @@ impl SemanticMemoryStore for MockSemanticMemoryStore {
                 .partial_cmp(&a.score)
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
-        scored.truncate(query.top_k);
-        Ok(scored)
-    }
+        if let Some(sparse_q) = &query.sparse_vector {
+            let mut sparse_scored: Vec<SemanticSearchResult> = guard
+                .iter()
+                .filter(|m| m.tenant_id == query.tenant_id)
+                .filter(|m| {
+                    if let Some(target_type) = &query.memory_type {
+                        m.memory_type == *target_type
+                    } else {
+                        true
+                    }
+                })
+                .filter_map(|m| {
+                    let sv = m.sparse_vector.as_ref()?;
+                    let dot = sparse_q.dot(sv);
+                    if dot > 0.0 {
+                        Some(SemanticSearchResult {
+                            memory: m.clone(),
+                            score: dot,
+                        })
+                    } else {
+                        None
+                    }
+                })
+                .collect();
 
+            sparse_scored.sort_by(|a, b| {
+                b.score
+                    .partial_cmp(&a.score)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            });
+
+            let fused =
+                crate::semantic::reciprocal_rank_fusion(&scored, &sparse_scored, 60, query.top_k);
+            Ok(fused)
+        } else {
+            scored.truncate(query.top_k);
+            Ok(scored)
+        }
+    }
     async fn delete(&self, tenant_id: &str, ids: Vec<String>) -> Result<()> {
         let mut guard = self.memories.write();
         guard.retain(|m| m.tenant_id != tenant_id || !ids.contains(&m.id));
