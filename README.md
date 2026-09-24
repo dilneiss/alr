@@ -2,17 +2,17 @@
 
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B%20%7C%201.98.1-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-171%2F171%20Passing-brightgreen.svg)]()
-[![Autonomy Rate](https://img.shields.io/badge/Local%20Autonomy-98.8%25-orange.svg)]()
-[![Loop Evasion](https://img.shields.io/badge/Loop%20Evasion-Active-brightgreen.svg)](docs/training-new-tasks.md)
-[![Release Status](https://img.shields.io/badge/Release%20Certification-Certified%20With%20Limitations-yellow.svg)](docs/final-certification-report.md)
-[![Evidence Matrix](https://img.shields.io/badge/Evidence%20Matrix-Audited-blue.svg)](docs/evidence-matrix.md)
-[![Final Acceptance](https://img.shields.io/badge/Acceptance%20Gates-12%2F12%20Evaluated-brightgreen.svg)](docs/final-acceptance-report.md)
-[![Game Autonomy Engine](https://img.shields.io/badge/Game%20Engine-Tetris%20%7C%20Social%20Lab%20%7C%20External-purple.svg)](docs/game-engine.md)
+[![Testes](https://img.shields.io/badge/Testes-171%2F171%20Passando-brightgreen.svg)]()
+[![Taxa de Autonomia](https://img.shields.io/badge/Autonomia%20Local-98.8%25-orange.svg)]()
+[![Evasão de Loop](https://img.shields.io/badge/Evas%C3%A3o%20de%20Loop-Ativa-brightgreen.svg)](docs/training-new-tasks.md)
+[![Status de Liberação](https://img.shields.io/badge/Certifica%C3%A7%C3%A3o%20de%20Release-Certificado%20com%20Limita%C3%A7%C3%B5es-yellow.svg)](docs/final-certification-report.md)
+[![Matriz de Evidências](https://img.shields.io/badge/Matriz%20de%20Evid%C3%AAncias-Auditada-blue.svg)](docs/evidence-matrix.md)
+[![Aceitação Final](https://img.shields.io/badge/Gates%20de%20Aceita%C3%A7%C3%A3o-12%2F12%20Avaliados-brightgreen.svg)](docs/final-acceptance-report.md)
+[![Motor de Jogos](https://img.shields.io/badge/Motor%20de%20Jogos-Tetris%20%7C%20Social%20Lab%20%7C%20Dino%20%7C%20Pong-purple.svg)](docs/game-engine.md)
 [![Docker Qdrant](https://img.shields.io/badge/Qdrant-v1.12.1-red.svg)](https://qdrant.tech)
 
 > **"A LLM pode ensinar o agente, mas não precisa controlar permanentemente o agente."**  
-> *A local-first runtime for autonomous learning, memory, planning, tool execution, verification, recovery, and skill reuse across games, browsers, simulated worlds, and external environments.*
+> *Um runtime local-first para aprendizado autônomo, memória, planejamento, execução de ferramentas, verificação, recuperação e reuso de habilidades em jogos, navegadores, mundos simulados e ambientes externos.*
 
 O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos construído do zero em **Rust**. Ele demonstra como um núcleo cognitivo único aprende, valida, cristaliza, transfere, autoaperfeiçoa e coordena competências locais em múltiplos domínios:
 1. **Controle Dinâmico Discreto (Snake)**
@@ -21,15 +21,15 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
 4. **Sistemas Externos & Governança (Connectors REST, Webhooks, HMAC & Approval Gateway)**
 5. **Modelos Especializados Locais & Destilação (ONNX Real, Model Registry & OOD Abstention)**
 6. **Autonomia Corpórea 3D (3D Lab, Hierarchical Planning, A* & Spatial Memory)**
-7. **Transferência Universal de Capacidades (Environment Abstraction, Zero-Shot & Few-Shot Generalization)**
-8. **Autoaperfeiçoamento Autônomo & Auto-Cura (Failure Analysis, Hypotheses, Controlled A/B Sandbox, Anti-Reward Hacking & Atomic Rollback)**
-9. **Coordenação Multiagente Especializada (TaskGraph, MetaPlanner, Blackboard, Consensus & Team Skills)**
-10. **Game Autonomy Engine (Tetris, Social Deduction Lab, Temporal Memory, Suspicion Model & External Game Adapters)**
-11. **Validação Adversarial & Certificação Final (12 Gates de Aceitação Formais)**
-12. **Treinamento e Execução Autônoma do Chrome Dino Runner (Offline & Visão Computacional no Navegador)**
+7. **Transferência Universal de Capacidades (Abstração de Ambiente, Generalização Zero-Shot e Few-Shot)**
+8. **Autoaperfeiçoamento Autônomo & Auto-Cura (Análise de Falhas, Hipóteses, Sandbox A/B Controlado, Proteção Anti-Reward Hacking & Rollback Atômico)**
+9. **Coordenação Multiagente Especializada (Grafo de Tarefas, Meta-Planejador, Quadro Negro, Consenso & Habilidades de Equipe)**
+10. **Motor de Autonomia em Jogos (Tetris, Laboratório de Dedução Social, Memória Temporal, Modelo de Suspeita & Adaptadores Externos)**
+11. **Validação Adversarial & Certificação Final (12 Gates Formais de Aceitação)**
+12. **Treinamento e Execução Autônoma do Chrome Dino Runner (Modo Offline & Visão Computacional no Navegador)**
 13. **Automação Omnichannel & WhatsApp em 20 Nichos de Mercado (100% Local, Custo Zero de Tokens & Auto-Aprendizado Dinâmico)**
 14. **Aceleração por Hardware SIMD, Sandboxing WASM e Cockpit Web Unificado (Latência < 1 µs e Segurança Formal)**
-15. **Controle Nativo de Desktop OS & Adaptação a Novos Jogos (Windows/OS Mouse & Keyboard FFI, Pong & EnvironmentAdapter)**
+15. **Controle Nativo de Desktop OS & Adaptação a Novos Jogos (FFI de Teclado e Mouse para Windows/SO, Pong & Adaptador de Ambiente)**
 
 
 ## ⚡ Quickstart em 3 Minutos: Do Zero ao Agente Operacional
@@ -246,8 +246,8 @@ flowchart TD
     Start([Novo Objetivo / Ambiente]) --> EnvDef[1. Definição do Ambiente<br/>Implementar EnvironmentAdapter & ActionSpace]
     
     subgraph S1 [Etapa 1: Cold Start & Bootstrapping]
-        EnvDef --> Obs[Observação do Estado<br/>Vetor Normalizado de Features]
-        Obs --> NoveltyCheck{Estado Conhecido<br/>Confidence >= 0.85?}
+        EnvDef --> Obs[Observação do Estado<br/>Vetor Normalizado de Características (Features)]
+        Obs --> NoveltyCheck{Estado Conhecido<br/>Confiança >= 0.85?}
         NoveltyCheck -- Não / Incerteza --> LLMTeacher[Consultar LLM Teacher Oracle<br/>Proposta Inicial de Procedimento]
         LLMTeacher --> SynthSkill[Sintetizar Candidato de Skill<br/>ProceduralSteps ou Regras]
     end
@@ -516,7 +516,7 @@ O ecossistema possui a skill dedicada **`skill://alr-task-trainer`**. Qualquer m
 Todas as ações do runtime são resolvidas pelo `DecisionRouter` obedecendo à precedência:
 
 ```text
-1. Safety Constraints & Regras Determinísticas (Teto inviolável)
+1. Restrições de Segurança (Safety Constraints) & Regras Determinísticas (Teto inviolável)
                 ↓
 2. Skills / Procedimentos Verificados (Macros compiladas)
                 ↓
@@ -764,26 +764,26 @@ flowchart TD
 
 | ID | Nicho de Negócio | Ícone | Artigo Canônico (KB) | Exemplo de Mensagem Real no WhatsApp | Status de Autonomia |
 | :--- | :--- | :---: | :--- | :--- | :--- |
-| 1 | **E-commerce & Varejo** | 🛒 | `KB-ECOMM-01` | "Cancelei meu pedido ord_1024 e quero meu reembolso" | **PROVEN (0 Tokens)** |
-| 2 | **Fintech & Bancos Digitais** | 💳 | `KB-FINTECH-01` | "Cobrança duplicada no cartão pay_8892 do banco digital" | **PROVEN (0 Tokens)** |
-| 3 | **SaaS & Plataformas B2B** | 💻 | `KB-SAAS-01` | "Upgrade de plano Pro e erro 500 no webhook de API" | **PROVEN (0 Tokens)** |
-| 4 | **Saúde, Clínicas & Telemedicina** | 🏥 | `KB-HEALTH-01` | "Agendar consulta com cardiologista e preparo de exame" | **PROVEN (0 Tokens)** |
-| 5 | **Educação, Cursos & EdTech** | 🎓 | `KB-EDTECH-01` | "Concluí o curso e quero meu certificado autenticado" | **PROVEN (0 Tokens)** |
-| 6 | **Imobiliárias & Locação** | 🏢 | `KB-IMOB-01` | "Preciso da 2ª via do boleto de aluguel do contrato ord_3311" | **PROVEN (0 Tokens)** |
-| 7 | **Telecom & Provedores ISP** | 📡 | `KB-ISP-01` | "Internet fibra sem sinal desde cedo, preciso de visita técnica" | **PROVEN (0 Tokens)** |
-| 8 | **Turismo & Hotelaria** | ✈️ | `KB-TRAVEL-01` | "Voo cancelado e remarcação da reserva do localizador ord_9912" | **PROVEN (0 Tokens)** |
-| 9 | **Delivery & Gastronomia** | 🍔 | `KB-FOOD-01` | "Meu pedido de almoço ord_4401 está atrasado há 40 minutos" | **PROVEN (0 Tokens)** |
-| 10 | **Seguros & Assistência 24h** | 🛡️ | `KB-INSUR-01` | "Meu carro quebrou na rodovia e preciso acionar o guincho 24h" | **PROVEN (0 Tokens)** |
-| 11 | **Logística & Transportadoras** | 🚚 | `KB-LOG-01` | "Rastrear o status da carga do conhecimento CT-e ord_5521" | **PROVEN (0 Tokens)** |
-| 12 | **Automotivo & Oficinas** | 🚗 | `KB-AUTO-01` | "Agendar revisão de 30.000 km na oficina mecânica do veículo" | **PROVEN (0 Tokens)** |
-| 13 | **RH & Departamento Pessoal** | 👥 | `KB-RH-01` | "Preciso da 2ª via do meu holerite do mês passado no DP" | **PROVEN (0 Tokens)** |
-| 14 | **Jurídico & Advocacia** | ⚖️ | `KB-LEGAL-01` | "Andamento atualizado do meu processo judicial com advogado" | **PROVEN (0 Tokens)** |
-| 15 | **Estética, Beleza & Barbearia** | ✂️ | `KB-BEAUTY-01` | "Agendar horário para corte e barba na barbearia estética" | **PROVEN (0 Tokens)** |
-| 16 | **Academias & Fitness** | 🏋️ | `KB-GYM-01` | "Vou viajar e preciso trancar minha matrícula da academia" | **PROVEN (0 Tokens)** |
-| 17 | **Pets & Clínicas Veterinárias** | 🐾 | `KB-PET-01` | "Agendar vacina anual V10 e consulta para meu cachorro pet" | **PROVEN (0 Tokens)** |
-| 18 | **Energia Solar & Utilities** | ☀️ | `KB-SOLAR-01` | "Status da homologação do meu sistema solar fotovoltaico" | **PROVEN (0 Tokens)** |
-| 19 | **Eventos, Shows & Ingressos** | 🎟️ | `KB-EVENT-01` | "QR Code do ingresso para o show festival deste sábado" | **PROVEN (0 Tokens)** |
-| 20 | **Construção Civil & Reformas** | 🏗️ | `KB-CONST-01` | "Previsão de entrega do material de construção para a obra" | **PROVEN (0 Tokens)** |
+| 1 | **E-commerce & Varejo** | 🛒 | `KB-ECOMM-01` | "Cancelei meu pedido ord_1024 e quero meu reembolso" | **COMPROVADO (0 Tokens)** |
+| 2 | **Fintech & Bancos Digitais** | 💳 | `KB-FINTECH-01` | "Cobrança duplicada no cartão pay_8892 do banco digital" | **COMPROVADO (0 Tokens)** |
+| 3 | **SaaS & Plataformas B2B** | 💻 | `KB-SAAS-01` | "Upgrade de plano Pro e erro 500 no webhook de API" | **COMPROVADO (0 Tokens)** |
+| 4 | **Saúde, Clínicas & Telemedicina** | 🏥 | `KB-HEALTH-01` | "Agendar consulta com cardiologista e preparo de exame" | **COMPROVADO (0 Tokens)** |
+| 5 | **Educação, Cursos & EdTech** | 🎓 | `KB-EDTECH-01` | "Concluí o curso e quero meu certificado autenticado" | **COMPROVADO (0 Tokens)** |
+| 6 | **Imobiliárias & Locação** | 🏢 | `KB-IMOB-01` | "Preciso da 2ª via do boleto de aluguel do contrato ord_3311" | **COMPROVADO (0 Tokens)** |
+| 7 | **Telecom & Provedores ISP** | 📡 | `KB-ISP-01` | "Internet fibra sem sinal desde cedo, preciso de visita técnica" | **COMPROVADO (0 Tokens)** |
+| 8 | **Turismo & Hotelaria** | ✈️ | `KB-TRAVEL-01` | "Voo cancelado e remarcação da reserva do localizador ord_9912" | **COMPROVADO (0 Tokens)** |
+| 9 | **Delivery & Gastronomia** | 🍔 | `KB-FOOD-01` | "Meu pedido de almoço ord_4401 está atrasado há 40 minutos" | **COMPROVADO (0 Tokens)** |
+| 10 | **Seguros & Assistência 24h** | 🛡️ | `KB-INSUR-01` | "Meu carro quebrou na rodovia e preciso acionar o guincho 24h" | **COMPROVADO (0 Tokens)** |
+| 11 | **Logística & Transportadoras** | 🚚 | `KB-LOG-01` | "Rastrear o status da carga do conhecimento CT-e ord_5521" | **COMPROVADO (0 Tokens)** |
+| 12 | **Automotivo & Oficinas** | 🚗 | `KB-AUTO-01` | "Agendar revisão de 30.000 km na oficina mecânica do veículo" | **COMPROVADO (0 Tokens)** |
+| 13 | **RH & Departamento Pessoal** | 👥 | `KB-RH-01` | "Preciso da 2ª via do meu holerite do mês passado no DP" | **COMPROVADO (0 Tokens)** |
+| 14 | **Jurídico & Advocacia** | ⚖️ | `KB-LEGAL-01` | "Andamento atualizado do meu processo judicial com advogado" | **COMPROVADO (0 Tokens)** |
+| 15 | **Estética, Beleza & Barbearia** | ✂️ | `KB-BEAUTY-01` | "Agendar horário para corte e barba na barbearia estética" | **COMPROVADO (0 Tokens)** |
+| 16 | **Academias & Fitness** | 🏋️ | `KB-GYM-01` | "Vou viajar e preciso trancar minha matrícula da academia" | **COMPROVADO (0 Tokens)** |
+| 17 | **Pets & Clínicas Veterinárias** | 🐾 | `KB-PET-01` | "Agendar vacina anual V10 e consulta para meu cachorro pet" | **COMPROVADO (0 Tokens)** |
+| 18 | **Energia Solar & Utilities** | ☀️ | `KB-SOLAR-01` | "Status da homologação do meu sistema solar fotovoltaico" | **COMPROVADO (0 Tokens)** |
+| 19 | **Eventos, Shows & Ingressos** | 🎟️ | `KB-EVENT-01` | "QR Code do ingresso para o show festival deste sábado" | **COMPROVADO (0 Tokens)** |
+| 20 | **Construção Civil & Reformas** | 🏗️ | `KB-CONST-01` | "Previsão de entrega do material de construção para a obra" | **COMPROVADO (0 Tokens)** |
 ---
 
 ## 🔌 Integração MCP com OpenCode
@@ -800,24 +800,24 @@ Ferramentas expostas: `alr.environment.list`, `alr.capability.list`, `alr.capabi
 
 Os resultados do ALR são particionados em três níveis formais:
 
-### Tier A — Simulated (Ambientes Determinísticos & Laboratórios Internos)
+### Nível A — Simulado (Ambientes Determinísticos & Laboratórios Internos)
 * **Amostragem:** $N = 100.000$ passos contínuos / 500 episódios.
 * **Taxa de Sucesso:** **100.0%**
 * **Latência de Forward-Pass ONNX:** **1.90 µs** (p50) | **3.60 µs** (p95) | **4.00 µs** (p99).
 * **Ciclo End-to-End do Agente:** **3.00 µs** (p50) | **7.00 µs** (p95).
-* **Status:** **PROVEN**
+* **Status:** **COMPROVADO (PROVEN)**
 
-### Tier B — Rendered Local (Câmera, Viewport, UI Real e Sem Oráculo Privilegiado)
+### Nível B — Renderizado Local (Câmera, Viewport, UI Real e Sem Oráculo Privilegiado)
 * **Amostragem:** $N = 500$ tarefas distintas.
 * **Taxa de Sucesso:** **96.5%**
 * **Adaptação a Drift de UI/Seletores:** Reparo autônomo em 2 etapas via `SelfImprovementEngine`.
-* **Status:** **PROVEN**
+* **Status:** **COMPROVADO (PROVEN)**
 
-### Tier C — External Black-Box (Jogos Externos & Sandboxes Independentes)
+### Nível C — Caixa-Preta Externa (Jogos Externos & Sandboxes Independentes)
 * **Amostragem:** $N = 500$ tarefas.
 * **Taxa de Sucesso:** **92.0%**
 * **Violações Anti-Cheat:** **0 casos** (100% conforme com `AntiCheatEnforcer`).
-* **Status:** **PARTIALLY PROVEN** *(Comprovado em sandboxes independentes locais e Chromium real; títulos comerciais sob anti-cheat de kernel não foram testados para respeitar termos de terceiros).*
+* **Status:** **PARCIALMENTE COMPROVADO (PARTIALLY PROVEN)** *(Comprovado em sandboxes independentes locais e Chromium real; títulos comerciais sob anti-cheat de kernel não foram testados para respeitar termos de terceiros).*
 
 
 ---
@@ -863,18 +863,18 @@ O ALR foi construído para responder afirmativamente e comprovar na prática tr�
 
 | Gate | Requisito Formal | Status Auditado |
 | :--- | :--- | :--- |
-| **Gate 1 — Regression** | Fases 1 a 16 operam continuamente sem quebras | **PROVEN** (171/171 testes aprovados) |
-| **Gate 2 — Security** | Zero violações de isolamento e zero vazamentos | **PROVEN** (Invariantes ativas) |
-| **Gate 3 — Integrity** | Rejeição de falso sucesso sem mutação real de estado | **PROVEN** (`FalseSuccessValidator`) |
-| **Gate 4 — Recovery** | Recuperação determinística de agente preso | **PROVEN** (`StuckDetector` e replanejador) |
-| **Gate 5 — Generalization** | Sucesso em Holdout sem data leakage | **PROVEN** (`HoldoutManager` valida hashes disjuntos) |
-| **Gate 6 — Adaptation** | Adaptação autônoma a drift de UI/controles | **PROVEN** (`SelfImprovementEngine` adapta em 2 passos) |
-| **Gate 7 — Offline** | Execução de tarefas conhecidas com 0 dependência de LLM | **PROVEN** (Políticas locais 100% offline) |
-| **Gate 8 — Abstention** | Abstenção segura em incerteza extrema (OOD) | **PARTIALLY PROVEN** (Heurística $< 0.60$ ativa; calibração isotônica pendente) |
-| **Gate 9 — Long-Run** | Estabilidade em sessões longas (100.000 passos em 0.73s) | **PROVEN** (Zero vazamentos de memória) |
-| **Gate 10 — External Black-Box**| Operação externa legítima sem cheats ou APIs ocultas | **PARTIALLY PROVEN** (Validado em sandbox local; anticheat de kernel não testado) |
-| **Gate 11 — Auditability** | Rastreabilidade completa de decisões em SQLite | **PROVEN** (Logs estruturados com hashes causais) |
-| **Gate 12 — Reproducibility** | Bateria de testes 100% reproduzível via seeds registradas | **PROVEN** (`final-acceptance` determinístico) |
+| **Gate 1 — Regressão** | Fases 1 a 16 operam continuamente sem quebras | **COMPROVADO** (171/171 testes aprovados) |
+| **Gate 2 — Segurança** | Zero violações de isolamento e zero vazamentos | **COMPROVADO** (Invariantes ativas) |
+| **Gate 3 — Integridade** | Rejeição de falso sucesso sem mutação real de estado | **COMPROVADO** (`FalseSuccessValidator`) |
+| **Gate 4 — Recuperação** | Recuperação determinística de agente preso | **COMPROVADO** (`StuckDetector` e replanejador) |
+| **Gate 5 — Generalização** | Sucesso em Holdout sem vazamento de dados | **COMPROVADO** (`HoldoutManager` valida hashes disjuntos) |
+| **Gate 6 — Adaptação** | Adaptação autônoma a drift de UI/controles | **COMPROVADO** (`SelfImprovementEngine` adapta em 2 passos) |
+| **Gate 7 — Operação Offline** | Execução de tarefas conhecidas com 0 dependência de LLM | **COMPROVADO** (Políticas locais 100% offline) |
+| **Gate 8 — Abstenção Segura** | Abstenção segura em incerteza extrema (OOD) | **PARCIALMENTE COMPROVADO** (Heurística $< 0.60$ ativa; calibração isotônica pendente) |
+| **Gate 9 — Longa Duração** | Estabilidade em sessões longas (100.000 passos em 0.73s) | **COMPROVADO** (Zero vazamentos de memória) |
+| **Gate 10 — Caixa-Preta Externa** | Operação externa legítima sem cheats ou APIs ocultas | **PARCIALMENTE COMPROVADO** (Validado em sandbox local; anticheat de kernel não testado) |
+| **Gate 11 — Auditabilidade** | Rastreabilidade completa de decisões em SQLite | **COMPROVADO** (Logs estruturados com hashes causais) |
+| **Gate 12 — Reprodutibilidade** | Bateria de testes 100% reproduzível via seeds registradas | **COMPROVADO** (`final-acceptance` determinístico) |
 
 ---
 
@@ -882,12 +882,12 @@ O ALR foi construído para responder afirmativamente e comprovar na prática tr�
 
 ```text
 =============================================================
-             ALR — RELEASE CERTIFICATION VERDICT
+           ALR — VEREDITO DE CERTIFICAÇÃO DE RELEASE
 =============================================================
- Status: FINAL CERTIFIED WITH LIMITATIONS
- Workspace: 22 Crates (Cargo Workspace)
- Test Suite: 163 Tests (100% Passing, 0 Regressions)
- Código Inseguro: 0 Linhas de "unsafe" em Todo o Workspace
+ Status: FINALMENTE CERTIFICADO COM LIMITAÇÕES
+ Workspace: 22 Crates (Workspace Cargo em Rust)
+ Suíte de Testes: 171 Testes (100% Passando, 0 Regressões)
+ Código Inseguro: 0 Linhas de "unsafe" Descontrolado
  Autonomia Local Global: 98.8%
 =============================================================
 ```
