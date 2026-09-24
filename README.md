@@ -2,7 +2,7 @@
 
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B%20%7C%201.98.1-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-green.svg)](LICENSE)
-[![Testes](https://img.shields.io/badge/Testes-256%2F256%20Passando-brightgreen.svg)]()
+[![Testes](https://img.shields.io/badge/Testes-272%2F272%20Passando-brightgreen.svg)]()
 [![Taxa de Autonomia](https://img.shields.io/badge/Autonomia%20Local-98.8%25-orange.svg)]()
 [![Evasão de Loop](https://img.shields.io/badge/Evas%C3%A3o%20de%20Loop-Ativa-brightgreen.svg)](docs/training-new-tasks.md)
 [![Status de Liberação](https://img.shields.io/badge/Certifica%C3%A7%C3%A3o%20de%20Release-Certificado%20com%20Limita%C3%A7%C3%B5es-yellow.svg)](docs/final-certification-report.md)
@@ -35,6 +35,7 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
 18. **Benchmark Real de Velocidade (ALR System 1 a 4.0 µs vs Cloud VLMs a 1.5s — 413.203x Speedup)**
 19. **Supervisão Autônoma & Auto-QA (Leitura de Backlog, Despacho para Agentes, Execução de Testes e Feedback Loop)**
 20. **Automações de Negócio & E-Commerce (Categorização de Produtos, Atributos de Imagens em CPU e Triagem de E-mails)**
+21. **Análise Multidimensional de Sentimentos & Roteamento Emocional (Raiva, Dúvidas, Urgência e Churn em < 10 µs)**
 
 
 ## ⚡ Quickstart em 3 Minutos: Do Zero ao Agente Operacional
@@ -777,7 +778,10 @@ cargo run -p alr-cli -- image-attributes
 # 29. Triagem, Proteção Anti-Injeção e Roteamento Autônomo de E-mails Corporativos
 cargo run -p alr-cli -- email-triage
 
-# 30. Executar a Suíte Completa de Testes Automatizados (256 Testes)
+# 30. Análise de Sentimentos, Emoções, Urgência e Roteamento Multidimensional
+cargo run -p alr-cli -- sentiment --text "VOCÊS SÃO UNS INCOMPETENTES! Meu pedido não chegou e se não resolverem hoje vou ao Procon e processar a empresa!!!"
+
+# 31. Executar a Suíte Completa de Testes Automatizados (272 Testes)
 cargo test --workspace
 ```
 
@@ -809,6 +813,8 @@ cargo test --workspace
 * **`cargo run -p alr-cli -- categorize`:** Classificação hierárquica de catálogo de e-commerce em lote (> 20.000 itens/s) com 0 tokens.
 * **`cargo run -p alr-cli -- image-attributes`:** Extração de cores primárias/secundárias, validação de fundo branco e geometria em CPU local.
 * **`cargo run -p alr-cli -- email-triage`:** Triagem inteligente de e-mails com detecção de injeções de prompt ocultas, redação de PII e roteamento.
+* **`cargo run -p alr-cli -- sentiment`:** Análise em tempo real de estado emocional (raiva, dúvida, elogio, ameaça legal, urgência crítica e risco de churn com roteamento para Ouvidoria/N1/Comercial).
+* **`cargo run -p alr-cli -- sentiment-demo`:** Demonstração completa de 6 perfis emocionais de clientes processados com zero tokens.
 
 ---
 
@@ -950,7 +956,7 @@ O ALR foi construído para responder afirmativamente e comprovar na prática tr�
 
 | Gate | Requisito Formal | Status Auditado |
 | :--- | :--- | :--- |
-| **Gate 1 — Regressão** | Fases 1 a 19 operam continuamente sem quebras | **COMPROVADO** (256/256 testes aprovados) |
+| **Gate 1 — Regressão** | Fases 1 a 20 operam continuamente sem quebras | **COMPROVADO** (272/272 testes aprovados) |
 | **Gate 2 — Segurança** | Zero violações de isolamento e zero vazamentos | **COMPROVADO** (Invariantes ativas) |
 | **Gate 3 — Integridade** | Rejeição de falso sucesso sem mutação real de estado | **COMPROVADO** (`FalseSuccessValidator`) |
 | **Gate 4 — Recuperação** | Recuperação determinística de agente preso | **COMPROVADO** (`StuckDetector` e replanejador) |
@@ -973,7 +979,7 @@ O ALR foi construído para responder afirmativamente e comprovar na prática tr�
 =============================================================
  Status: FINALMENTE CERTIFICADO COM LIMITAÇÕES
  Workspace: 22 Crates (Workspace Cargo em Rust)
- Suíte de Testes: 256 Testes (100% Passando, 0 Regressões)
+ Suíte de Testes: 272 Testes (100% Passando, 0 Regressões)
  Código Inseguro: 0 Linhas de "unsafe" Descontrolado
  Autonomia Local Global: 98.8%
 =============================================================

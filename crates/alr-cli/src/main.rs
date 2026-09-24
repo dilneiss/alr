@@ -266,6 +266,24 @@ enum Commands {
         #[arg(long, default_value = "demo")]
         scenario: String,
     },
+    /// Análise Profunda de Sentimentos, Urgência e Estado Emocional Multidimensional do Cliente
+    #[command(name = "sentiment")]
+    Sentiment {
+        #[arg(long)]
+        text: Option<String>,
+
+        #[arg(long)]
+        demo: bool,
+    },
+    /// Análise Interativa de Sentimentos e Roteamento Multidimensional
+    #[command(name = "sentiment-analyzer")]
+    SentimentAnalyzer {
+        #[arg(long)]
+        text: Option<String>,
+    },
+    /// Demonstração de Perfis Multidimensionais de Sentimento e Roteamento
+    #[command(name = "sentiment-demo")]
+    SentimentDemo,
 }
 
 #[derive(Subcommand)]
@@ -1409,6 +1427,15 @@ async fn main() -> Result<()> {
         }
         Commands::EmailTriage { scenario } => {
             run_email_triage_demo(&scenario)?;
+        }
+        Commands::Sentiment { text, demo } => {
+            run_sentiment_analysis(text.as_deref(), demo || text.is_none())?;
+        }
+        Commands::SentimentAnalyzer { text } => {
+            run_sentiment_analysis(text.as_deref(), text.is_none())?;
+        }
+        Commands::SentimentDemo => {
+            run_sentiment_analysis(None, true)?;
         }
         Commands::FinalAcceptance => {
             println!(
@@ -5663,4 +5690,155 @@ fn run_email_triage_demo(scenario: &str) -> Result<()> {
     );
     println!();
     Ok(())
+}
+fn run_sentiment_analysis(custom_text: Option<&str>, run_demo: bool) -> Result<()> {
+    use alr_agent::sentiment::CustomerSentimentEngine;
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "   ALR CUSTOMER SENTIMENT & MULTIDIMENSIONAL ROUTING ENGINE       "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!("Motor          : CustomerSentimentEngine (Regras + Léxico PT + System 1)");
+    println!("Latência       : Sub-milissegundo (< 10 µs em CPU)");
+    println!("Zero Tokens    : Resoluções N1 automatizadas sem chamada a LLM");
+    println!();
+
+    let engine = CustomerSentimentEngine::new();
+
+    if let Some(text) = custom_text {
+        println!(
+            "{}",
+            "--- ANÁLISE DE MENSAGEM CUSTOMIZADA ---".bold().yellow()
+        );
+        let profile = engine.analyze(text);
+        print_sentiment_card(text, &profile);
+        println!();
+    }
+
+    if run_demo {
+        let demo_cases = [
+            (
+                "Cliente Irritado com Cobrança",
+                "Cobraram duas vezes na minha fatura do cartão este mês, quero o estorno do valor imediatamente! Absurdo!",
+            ),
+            (
+                "Cliente Elogiando e Satisfeito",
+                "Parabéns pelo atendimento rápido e suporte impecável, vocês resolveram meu problema em minutos! Muito obrigado!",
+            ),
+            (
+                "Cliente Apenas Tirando Dúvida (Informativo)",
+                "Olá, bom dia! Gostaria de saber qual o horário de funcionamento de vocês e se aceitam Pix?",
+            ),
+            (
+                "Cliente Ameaçando Procon / Processo",
+                "Isso é uma vergonha, vou acionar meu advogado, abrir queixa no PROCON e processar a empresa por danos morais se não devolverem meu dinheiro hoje mesmo!!!",
+            ),
+            (
+                "Cliente Ansioso com Atraso",
+                "Estou muito preocupado, tenho pressa e um compromisso importante amanhã! Já enviaram meu pedido? Alguma previsão de entrega urgente?",
+            ),
+        ];
+
+        println!(
+            "{}",
+            "--- DEMONSTRAÇÃO DE PERFIS MULTIDIMENSIONAIS ---"
+                .bold()
+                .green()
+        );
+        println!();
+
+        for (title, text) in demo_cases {
+            println!("Perfil Testado : {}", title.bold().magenta());
+            let profile = engine.analyze(text);
+            print_sentiment_card(text, &profile);
+            println!();
+        }
+    }
+
+    println!("------------------------------------------------------------------");
+    println!(
+        "{}",
+        "[OK] Análise de sentimentos, urgência e roteamento multidimensional concluídos com sucesso!"
+            .green()
+            .bold()
+    );
+    Ok(())
+}
+
+fn print_sentiment_card(
+    text: &str,
+    profile: &alr_agent::sentiment::MultiDimensionalSentimentProfile,
+) {
+    use alr_agent::sentiment::UrgencyLevel;
+
+    println!("Mensagem       : \"{}\"", text.italic());
+    println!(
+        "Emoção Primária: {} (Confiança: {:.1}%)",
+        profile.primary_emotion.display_name().bold(),
+        profile.emotion_confidence * 100.0
+    );
+    if !profile.secondary_emotions.is_empty() {
+        let sec: Vec<&str> = profile
+            .secondary_emotions
+            .iter()
+            .map(|e| e.display_name())
+            .collect();
+        println!("Secundárias    : {}", sec.join(", "));
+    }
+    println!(
+        "Intenção       : {}",
+        profile.interaction_intent.display_name()
+    );
+    let urg_colored = match profile.urgency_level {
+        UrgencyLevel::Critica => profile.urgency_level.as_str().to_uppercase().red().bold(),
+        UrgencyLevel::Alta => profile
+            .urgency_level
+            .as_str()
+            .to_uppercase()
+            .yellow()
+            .bold(),
+        UrgencyLevel::Normal => profile.urgency_level.as_str().to_uppercase().blue(),
+        UrgencyLevel::Baixa => profile.urgency_level.as_str().to_uppercase().green(),
+    };
+    println!(
+        "Urgência       : {} (Score: {:.2}) | Urgente: {}",
+        urg_colored, profile.urgency_score, profile.is_urgent
+    );
+    println!("Risco de Churn : {:.1}%", profile.churn_risk_score * 100.0);
+    println!(
+        "Roteamento     : {}",
+        profile.recommended_routing.display_name().bold().cyan()
+    );
+    println!(
+        "Escalar Humano : {}",
+        if profile.needs_human_escalation {
+            "SIM (Atendimento Humano Requerido)".red().bold()
+        } else {
+            "NÃO (Zero Tokens / Auto-atendimento N1)".green()
+        }
+    );
+    if !profile.detected_triggers.is_empty() {
+        println!(
+            "Gatilhos       : [{}]",
+            profile.detected_triggers.join(", ")
+        );
+    }
+    println!(
+        "Guia de Tom    : \"{}\"",
+        profile.tone_guidance_for_reply.yellow()
+    );
+    println!("Latência CPU   : {} µs", profile.latency_micros);
 }

@@ -12,6 +12,7 @@ pub mod response_learner;
 pub mod risk;
 pub mod router;
 pub mod security;
+pub mod sentiment;
 pub mod skill_lifecycle;
 pub mod skills;
 pub mod supervisor;
@@ -40,6 +41,10 @@ pub use response_learner::{KnowledgeArticle, ResponsePatternLearner, Synthesized
 pub use risk::{RiskAssessment, RiskEngine};
 pub use router::{DecisionProvider, DecisionRouter, LocalModelDecisionProvider};
 pub use security::SecurityRedTeamAuditor;
+pub use sentiment::{
+    normalize_pt, CustomerSentimentEngine, InteractionIntent, MultiDimensionalSentimentProfile,
+    PrimaryEmotion, RoutingDestination, UrgencyLevel,
+};
 pub use skill_lifecycle::{
     KnowledgeValidity, SkillHealthStatus, SkillRegressionRunner, SkillTestCase,
     VersionedSkillRegistry,
