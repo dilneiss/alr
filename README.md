@@ -74,7 +74,7 @@ cargo run -p alr-cli -- quickstart
 5. [Premissa Central](#-premissa-central)
 4. [Princípios Arquiteturais](#-princípios-arquiteturais)
 5. [O Que o Sistema Faz?](#-o-que-o-sistema-faz)
-6. [Casos de Uso Detalhados (Fases 1 a 14)](#-casos-de-uso-detalhados)
+6. [Casos de Uso Detalhados (Fases 1 a 23)](#-casos-de-uso-detalhados)
    * [Caso 1: Controle Dinâmico em Jogos (Snake)](#caso-1-controle-dinâmico-em-jogos-snake)
    * [Caso 2: Atendimento com Memória Semântica (Customer Support)](#caso-2-atendimento-com-memória-semântica-customer-support)
    * [Caso 3: Automação Web Real no Navegador (Chromium CDP)](#caso-3-automação-web-real-no-navegador-chromium-cdp)
@@ -89,6 +89,15 @@ cargo run -p alr-cli -- quickstart
    * [Caso 12: Chrome Dino Runner (Simulador Rust & Visão Computacional no Navegador)](#caso-12-chrome-dino-runner-simulador-rust--visão-computacional-no-navegador)
    * [Caso 13: Automação Omnichannel & WhatsApp em 20 Nichos com Custo Zero de Tokens](#caso-13-automação-omnichannel--whatsapp-em-20-nichos-com-custo-zero-de-tokens)
    * [Caso 14: Aceleração SIMD, Sandboxing WASM e Cockpit Web Unificado](#caso-14-aceleração-simd-sandboxing-wasm-e-cockpit-web-unificado)
+   * [Caso 15: Controle Físico do Mouse e Teclado Desktop OS](#caso-15-controle-físico-do-mouse-e-teclado-do-sistema-operacional-desktop-os-ffi)
+   * [Caso 16: Novos Gêneros de Jogos Autônomos (Cartas, Bomberman, FPS, Worms & Pong)](#caso-16-novos-gêneros-de-jogos-autônomos-cartas-bomberman-fps-3d-worms--pong)
+   * [Caso 17: Parada Segura, Botão Global de Pânico e Abstenção por Novidade (OOD)](#caso-17-parada-segura-botão-global-de-pânico-e-abstenção-por-novidade-ood)
+   * [Caso 18: Supervisor Autônomo & Auto-QA (Meta-Orquestração de Agentes)](#caso-18-supervisor-autônomo--auto-qa-meta-orquestração-de-agentes)
+   * [Caso 19: Automações de E-Commerce (Categorização e Atributos de Imagem em CPU)](#caso-19-automações-de-e-commerce-categorização-e-atributos-de-imagem-em-cpu)
+   * [Caso 20: Triagem e Proteção de E-mails Corporativos](#caso-20-triagem-e-proteção-de-e-mails-corporativos)
+   * [Caso 21: Análise Multidimensional de Sentimentos e Roteamento Emocional](#caso-21-análise-multidimensional-de-sentimentos-e-roteamento-emocional)
+   * [Caso 22: Vigilância por Câmera de Segurança (CCTV) e Notificações Desktop](#caso-22-vigilância-por-câmera-de-segurança-cctv-e-notificações-desktop)
+   * [Caso 23: Memória Semântica Vetorial de Alta Fidelidade no Qdrant](#caso-23-memória-semântica-vetorial-de-alta-fidelidade-no-qdrant)
 7. [Detector Universal de Loops & Evasão](#-detector-universal-de-loops--evasão)
 8. [Treinamento de Novas Tarefas (Guia & CLI)](#-treinamento-de-novas-tarefas-guia--cli)
 9. [Memória Semântica Vetorial no Qdrant: Geração de Embeddings & Recuperação Autônoma](#-memória-semântica-vetorial-no-qdrant-geração-de-embeddings--recuperação-autônoma)
@@ -255,7 +264,7 @@ flowchart TD
     Start([Novo Objetivo / Ambiente]) --> EnvDef[1. Definição do Ambiente<br/>Implementar EnvironmentAdapter & ActionSpace]
     
     subgraph S1 [Etapa 1: Cold Start & Bootstrapping]
-        EnvDef --> Obs[Observação do Estado<br/>Vetor Normalizado de Características (Features)]
+        EnvDef --> Obs[Observação do Estado<br/>Vetor Normalizado de Características - Features]
         Obs --> NoveltyCheck{Estado Conhecido<br/>Confiança >= 0.85?}
         NoveltyCheck -- Não / Incerteza --> LLMTeacher[Consultar LLM Teacher Oracle<br/>Proposta Inicial de Procedimento]
         LLMTeacher --> SynthSkill[Sintetizar Candidato de Skill<br/>ProceduralSteps ou Regras]
@@ -482,7 +491,54 @@ Infraestrutura de alta performance para tornar o ALR o runtime de agentes locais
 3. **Sandbox WebAssembly para Execução Segura de Skills (`crates/alr-sandbox`):**
    * Container WASM nativo em Rust (`WasmSkillSandbox`) isolando a execução de procedimentos aprendidos. Impõe limite estrito de memória linear de **$32\text{ MB}$**, controle de ciclos de computação (*gas metering*) para abortar loops infinitos e lista branca estrita de capacidades (*capability-based access*).
 4. **Cockpit Web Unificado de Observabilidade & Demonstração (`static/alr_cockpit.html`):**
-   * Painel interativo servido via `cargo run -p alr-cli -- cockpit` exibindo métricas ao vivo de CPU, throughput ($> 72.000\text{ msg/s}$), latência instantânea ($< 5\text{ µs}$), mapa interativo dos 20 nichos, monitor de memória WASM e console interativo para testar inferências com custo zero de tokens.
+
+### Caso 15: Controle Físico do Mouse e Teclado do Sistema Operacional (Desktop OS FFI)
+1. **FFI Nativo de Baixo Nível (`NativeDesktopMouseController`):** Integração com `user32.dll` via `SetCursorPos`, `GetCursorPos` e `mouse_event`, permitindo movimentação suave (`smooth_move`), cliques, duplos cliques, arrastar e scroll na tela real do computador.
+2. **Teclado Nativo (`NativeDesktopKeyboardController`):** Simulação de digitação caractere por caractere (`type_text`) e injeção de teclas físicas no aplicativo em foco.
+3. **Salvaguardas:** Modo `dry_run` e botão atômico de emergência para bloquear cliques descontrolados.
+
+### Caso 16: Novos Gêneros de Jogos Autônomos (Cartas, Bomberman, FPS 3D, Worms & Pong)
+1. **Cartas / Blackjack (`alr-games/src/cards.rs`):** Baralho de 52 cartas, cálculo dinâmico de probabilidade de estouro (*bust probability*) e parada ideal.
+2. **Bomberman Online (`alr-games/src/bomberman.rs`):** Detonação de bombas com contagem regressiva, raio de fogo em cruz e pathfinding para zonas seguras.
+3. **FPS 3D (`alr-games/src/fps.rs`):** Mira suave tridimensional por coordenadas de mouse, retícula, recuo de disparo e eliminação de alvos móveis.
+4. **Worms Balístico (`alr-games/src/worms.rs`):** Duelo tático por turnos em terreno destrutível, gravidade, vento dinâmico e parábola balística.
+5. **Pong Ball Interception (`alr-games/src/pong.rs`):** Rastreamento preditivo e rebatidas de bola em arena 2D.
+
+### Caso 17: Parada Segura, Botão Global de Pânico e Abstenção por Novidade (OOD)
+1. **Detector Multimodal de Erros de Tela (`ScreenErrorDetector`):** Reconhecimento visual de erros HTTP 500/503, crashes de processos, telas azuis (BSOD) e quedas de rede.
+2. **Botão de Emergência Global (`GlobalEmergencyStop`):** Interrupção atômica em 0 µs via código, arquivo trigger `stop.signal` ou teclas de pânico (`Esc`, `Pause`, `F12`).
+3. **Abstenção Segura sob Novidade Extrema (`DistributionShiftDetector`):** Se a confiança for $< 0.50$ em situação inédita, o ALR congela ações físicas e se recusa a agir às cegas.
+
+### Caso 18: Supervisor Autônomo & Auto-QA (Meta-Orquestração de Agentes)
+1. **Leitura de Backlog:** O ALR consome filas de tarefas (Web, Desktop ou CLI).
+2. **Despacho Estruturado:** Digita a especificação para o agente configurado e monitora o término de execução.
+3. **Extração de Testes e Auto-QA:** Extrai comandos de teste da resposta e **executa fisicamente a validação**.
+4. **Feedback Loop de Autocorreção:** Se o teste falhar, o ALR retroalimenta o agente com o erro exato até obter 100% de aprovação.
+
+### Caso 19: Automações de E-Commerce (Categorização e Atributos de Imagem em CPU)
+1. **Categorizador de Produtos (`ProductCategorizerEngine`):** Classificação hierárquica em lote a **> 20.000 itens/segundo** e 0 tokens.
+2. **Extrator de Atributos Visuais (`VisualAttributeExtractor`):** Cores primárias/secundárias em português, validação de fundo branco para marketplace e formato geométrico em CPU local (< 600 µs).
+
+### Caso 20: Triagem e Proteção de E-mails Corporativos
+1. **Proteção Anti-Prompt Injection (`TrustBoundaryEnforcer`):** Detecção de injeções ocultas em HTML (`display:none`, `font-size:0`, comentários).
+2. **Redação de PII (`SecretRedactor`):** Anonimização de CPFs, CNPJs e cartões.
+3. **Auto-Resolução e Roteamento:** Resposta automática com artigos canônicos e escalonamento para aprovação humana em cancelamentos ou ameaças legais.
+
+### Caso 21: Análise Multidimensional de Sentimentos e Roteamento Emocional
+1. **Matriz de Sentimentos (`CustomerSentimentEngine`):** Raiva, frustração, dúvida, elogio, ameaça legal e risco de churn processados em < 10 µs.
+2. **Roteamento Inteligente:** Direcionamento automático para Ouvidoria, Retenção VIP, Financeiro ou Auto-Atendimento N1.
+
+### Caso 22: Vigilância por Câmera de Segurança (CCTV) e Notificações Desktop
+1. **Visão Computacional Local (`CctvSurveillanceEngine`):** Detecção temporal de movimento, agrupamento de bounding boxes e classificação morfológica (Pessoa, Veículo, Pacote Suspeito) em tempo real (< 1 ms/frame).
+2. **Barreiras Virtuais & Perímetro Restrito (*Tripwire*):** Detecção de invasão com disparo de notificação nativa do Windows Toast e alerta sonoro Win32.
+
+### Caso 23: Memória Semântica Vetorial de Alta Fidelidade no Qdrant
+1. **Embeddings Unificados em 1536d:** Alta resolução semântica com normalização $L_2$ estrita.
+2. **Vetorização Esparsa BM25:** Captura exata de IDs técnicos (`ord_...`) e palavras-chave raras.
+3. **Quantização Escalar int8:** Redução de 75% de RAM e aceleração de busca em até 4x com fusão híbrida RRF.
+
+---
+
 ## 🔄 Detector Universal de Loops & Evasão
 
 Para impedir que agentes fiquem presos em oscilações simétricas (como a cobrinha indo e voltando entre duas direções, cliques repetidos em botões travados ou patinação em corredores 3D), o ALR integra o **`LoopEvasionEngine`**:
