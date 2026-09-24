@@ -7,6 +7,7 @@ pub mod guarded_policy;
 pub mod ood;
 pub mod registry;
 pub mod runtime;
+pub mod simd;
 pub mod typed_decision;
 pub mod typed_judge;
 
@@ -23,5 +24,6 @@ pub use registry::{ModelCard, ModelRegistry};
 pub use runtime::{
     LocalModelRuntime, ModelDecision, ModelHandle, ModelPrediction, OnnxModelRuntime,
 };
+pub use simd::SimdFeatureVectorizer;
 pub use typed_decision::{TypedDecisionOutcome, TypedQuestion};
 pub use typed_judge::{LocalTypedJudgeEngine, TypedJudge};

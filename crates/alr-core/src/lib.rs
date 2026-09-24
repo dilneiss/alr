@@ -5,6 +5,7 @@ pub mod decision;
 pub mod domain;
 pub mod novelty;
 pub mod policy;
+pub mod ring_buffer;
 pub mod state;
 
 pub use action::{Action, ActionType};
@@ -19,4 +20,5 @@ pub use domain::{
 };
 pub use novelty::{NoveltyDetector, NoveltyScore};
 pub use policy::{LocalModel, ModelOutput, Policy, PolicyPrediction};
+pub use ring_buffer::LockFreeRingBuffer;
 pub use state::{Experience, State};

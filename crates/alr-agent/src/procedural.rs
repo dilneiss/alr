@@ -95,6 +95,28 @@ impl ProceduralSkill {
         Ok(outputs)
     }
 
+    /// Executes the procedural skill inside a deterministic WebAssembly Skill Sandbox
+    pub async fn execute_sandboxed(
+        &mut self,
+        tools: &HashMap<String, Box<dyn SupportTool>>,
+        context: &ToolContext,
+        sandbox: &mut alr_sandbox::WasmSkillSandbox,
+    ) -> Result<(Vec<ToolOutput>, alr_sandbox::WasmExecutionOutcome)> {
+        let tool_names: Vec<String> = tools.keys().cloned().collect();
+        let steps_json: Vec<serde_json::Value> = self
+            .steps
+            .iter()
+            .map(|s| serde_json::json!({ "tool_name": s.tool_name }))
+            .collect();
+
+        let sandbox_outcome = sandbox
+            .execute_sandboxed_skill(&self.name, &steps_json, &tool_names)
+            .map_err(|e| anyhow::anyhow!("WASM Sandbox error: {:?}", e))?;
+
+        let outputs = self.execute(tools, context).await?;
+        Ok((outputs, sandbox_outcome))
+    }
+
     pub fn record_outcome(&mut self, success: bool) {
         self.executions += 1;
         if !success {

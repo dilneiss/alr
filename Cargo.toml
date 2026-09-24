@@ -22,6 +22,7 @@ members = [
     "crates/alr-validation",
     "crates/alr-mcp",
     "crates/alr-cli",
+    "crates/alr-sandbox",
 ]
 
 [workspace.package]
@@ -51,6 +52,7 @@ alr-multiagent = { path = "crates/alr-multiagent" }
 alr-games = { path = "crates/alr-games" }
 alr-validation = { path = "crates/alr-validation" }
 alr-mcp = { path = "crates/alr-mcp" }
+alr-sandbox = { path = "crates/alr-sandbox" }
 tokio = { version = "1.37", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
