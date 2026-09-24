@@ -13,6 +13,7 @@ pub mod router;
 pub mod security;
 pub mod skill_lifecycle;
 pub mod skills;
+pub mod supervisor;
 pub mod support_agent;
 pub mod support_state;
 pub mod support_tool;
@@ -38,6 +39,12 @@ pub use skill_lifecycle::{
     VersionedSkillRegistry,
 };
 pub use skills::{ProposalValidator, SkillManager};
+pub use supervisor::{
+    AgentCompletionPayload, AgentDriver, AgentDriverTarget, AgentSupervisionEngine,
+    CommandExecutionResult, DefaultAgentDriver, QaExecutor, SimulatedAgentDriver, SupervisorResult,
+    SupervisorSummary, SupervisorTask, SupervisorTaskStatus, SystemQaExecutor, TestExecutionPlan,
+    TestValidationOutcome,
+};
 pub use support_agent::SupportAgent;
 pub use support_state::{ExtractedEntities, StateExtractor, SupportIntent};
 pub use support_tool::{RiskLevel, SupportTool, ToolContext, ToolInput, ToolOutput};

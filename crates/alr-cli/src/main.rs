@@ -1,9 +1,10 @@
 use alr_agent::planner_3d::HierarchicalPlanner;
 use alr_agent::{
-    AgentLoop, BrowserAgent, BusinessNiche, EpisodeOrchestrator, GetCustomerTool, GetOrderTool,
-    GetPaymentTool, GetRefundPolicyTool, NicheRegistry, ResponsePatternLearner,
-    SearchKnowledgeTool, SearchSimilarTicketsTool, SendTicketReplyTool, StateExtractor,
-    SupportAgent, SupportDatabase, SupportIntent,
+    AgentCompletionPayload, AgentDriverTarget, AgentLoop, AgentSupervisionEngine, BrowserAgent,
+    BusinessNiche, EpisodeOrchestrator, GetCustomerTool, GetOrderTool, GetPaymentTool,
+    GetRefundPolicyTool, NicheRegistry, ResponsePatternLearner, SearchKnowledgeTool,
+    SearchSimilarTicketsTool, SendTicketReplyTool, SimulatedAgentDriver, StateExtractor,
+    SupervisorTask, SupportAgent, SupportDatabase, SupportIntent,
 };
 use alr_browser::{BrowserDriver, ChromiumCdpDriver, WebAppVersion};
 use alr_connectors::{
@@ -238,6 +239,17 @@ enum Commands {
     Worms {
         #[arg(long)]
         play: bool,
+    },
+    /// Motor de Meta-Orquestração e Supervisão Autônoma de Tarefas (Auto-QA com Feedback Loop)
+    Supervisor {
+        #[arg(long, default_value = "simulated")]
+        task_queue: String,
+
+        #[arg(long, default_value_t = 1)]
+        iterations: usize,
+
+        #[arg(long)]
+        verbose: bool,
     },
 }
 
@@ -1366,6 +1378,13 @@ async fn main() -> Result<()> {
         }
         Commands::Worms { play } => {
             run_worms_demo(play)?;
+        }
+        Commands::Supervisor {
+            task_queue,
+            iterations,
+            verbose,
+        } => {
+            run_supervisor_demo(&task_queue, iterations, verbose)?;
         }
         Commands::FinalAcceptance => {
             println!(
@@ -5052,5 +5071,233 @@ fn run_worms_demo(play: bool) -> Result<()> {
         .green()
         .bold()
     );
+    Ok(())
+}
+
+fn run_supervisor_demo(task_queue: &str, iterations: usize, verbose: bool) -> Result<()> {
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "   ALR AGENT SUPERVISION ENGINE & AUTONOMOUS AUTO-QA RUNNER       "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!("Modo           : Orquestração e Supervisão Multimodal (Web / Desktop / CLI)");
+    println!(
+        "Mecanismo QA   : Extração Automática de Testes + Verificação Pós-Condição + Feedback Loop"
+    );
+    println!("Fila           : {}", task_queue.yellow());
+    println!("Iterações      : {}", iterations);
+    println!();
+
+    for iter in 1..=iterations {
+        if iterations > 1 {
+            println!(
+                "{}",
+                format!("--- CICLO GERAL DE SUPERVISÃO #{}/{} ---", iter, iterations)
+                    .bold()
+                    .magenta()
+            );
+        }
+
+        let (tasks, driver) = if task_queue == "simulated" || task_queue == "demo" {
+            let driver = Arc::new(SimulatedAgentDriver::new());
+
+            let t1 = SupervisorTask::new(
+                "task-web-checkout",
+                "Fix Checkout Form Button Reactivity in Chromium CDP",
+                "When user clicks checkout, ensure button disables and spinner shows.",
+                AgentDriverTarget::Web,
+            );
+            driver.enqueue_response(
+                "task-web-checkout",
+                AgentCompletionPayload::new(
+                    "Implemented CDP button state sync and debounce handler.\n```bash\nTest: mock:pass:All 8 CDP click assertion tests passed\n```",
+                    true,
+                ),
+            );
+
+            let t2 = SupervisorTask::new(
+                "task-desktop-ocr",
+                "Native Desktop Window OCR Screen Region Calibration",
+                "Calibrate bounding box on Windows 11 HDR displays to detect modal error popups accurately.",
+                AgentDriverTarget::Desktop,
+            )
+            .with_max_retries(3);
+            // Attempt 1: fails
+            driver.enqueue_response(
+                "task-desktop-ocr",
+                AgentCompletionPayload::new(
+                    "Updated bounding box coordinates for native window OCR.\n```bash\nTest: mock:fail:BoundingBox mismatch: expected (100, 200, 400, 300) got (90, 180, 420, 310)\n```",
+                    true,
+                ),
+            );
+            // Attempt 2: self-recovers after supervisor feeds error back
+            driver.enqueue_response(
+                "task-desktop-ocr",
+                AgentCompletionPayload::new(
+                    "Fixed DPI scaling offset based on supervisor error feedback!\n```bash\nTest: mock:pass:Desktop OCR box matches HDR display metrics perfectly\n```",
+                    true,
+                ),
+            );
+
+            let t3 = SupervisorTask::new(
+                "task-cli-pipeline",
+                "High-Throughput ETL Event Stream Deduplication",
+                "Process 50k events/sec with zero memory leaks and deterministic deduplication via sliding window.",
+                AgentDriverTarget::Cli,
+            )
+            .with_max_retries(2);
+            // Attempt 1: claims completion, but test fails
+            driver.enqueue_response(
+                "task-cli-pipeline",
+                AgentCompletionPayload::new(
+                    "Completed pipeline refactoring. Everything should work now!\n```bash\nTest: mock:fail:Window buffer overflow at tick 12400\n```",
+                    true,
+                ),
+            );
+            // Attempt 2: recovers
+            driver.enqueue_response(
+                "task-cli-pipeline",
+                AgentCompletionPayload::new(
+                    "Resolved ring buffer overflow and expanded capacity!\n```bash\nTest: mock:pass:50k events deduplicated in 14ms (0 leaks, 0 dropped events)\n```",
+                    true,
+                ),
+            );
+
+            (vec![t1, t2, t3], Some(driver))
+        } else {
+            let data = std::fs::read_to_string(task_queue)
+                .with_context(|| format!("Falha ao ler arquivo de tarefas: '{}'", task_queue))?;
+            let tasks: Vec<SupervisorTask> = serde_json::from_str(&data)
+                .with_context(|| "Falha ao deserializar JSON da fila de tarefas")?;
+            (tasks, None)
+        };
+
+        let mut engine = if let Some(drv) = driver {
+            AgentSupervisionEngine::with_simulated_driver(tasks, drv)
+        } else {
+            AgentSupervisionEngine::new(tasks)
+        };
+
+        println!(
+            "{}",
+            "Iniciando ciclo de execução autônoma do Supervisor...".cyan()
+        );
+        let summary = engine.run_full_lifecycle()?;
+
+        println!();
+        println!(
+            "{}",
+            "=================================================================="
+                .bold()
+                .blue()
+        );
+        println!(
+            "{}",
+            "        RELATÓRIO DE SUPERVISÃO E AUTO-QA - ALR ENGINE            "
+                .bold()
+                .green()
+        );
+        println!(
+            "{}",
+            "=================================================================="
+                .bold()
+                .blue()
+        );
+
+        for (idx, res) in summary.results.iter().enumerate() {
+            let status_badge = if res.success {
+                "[APROVADO 100%]".green().bold()
+            } else {
+                "[REJEITADO]".red().bold()
+            };
+            let target_badge = format!("[{}]", res.target.as_str()).yellow();
+
+            println!(
+                "Tarefa #{}: {} {} - {}",
+                idx + 1,
+                target_badge,
+                res.task_title.bold(),
+                status_badge
+            );
+            println!("  - ID da Tarefa     : {}", res.task_id);
+            println!("  - Ciclos/Tentativas: {}", res.cycles);
+            if res.cycles > 1 {
+                println!(
+                    "    {}",
+                    format!(
+                        "⚡ Auto-recuperação ativada: {} ciclo(s) de feedback de erro corrigido(s) com sucesso!",
+                        res.cycles - 1
+                    )
+                    .magenta()
+                );
+            }
+            if let Some(outcome) = &res.validation_outcome {
+                println!("  - Comandos QA      : {:?}", outcome.executed_commands);
+                println!("  - Duração dos Testes: {} ms", outcome.duration_ms);
+            }
+            if verbose {
+                for ev in &res.evidence {
+                    println!("    * Evidência: {}", ev);
+                }
+            }
+            println!();
+        }
+
+        println!("------------------------------------------------------------------");
+        println!("Métricas Globais do Supervisor:");
+        println!("  - Total de Tarefas Processadas : {}", summary.total_tasks);
+        println!(
+            "  - Tarefas Aprovadas com Sucesso: {}",
+            summary.completed_tasks.to_string().green().bold()
+        );
+        println!(
+            "  - Tarefas Falhadas / Rejeitadas: {}",
+            if summary.failed_tasks == 0 {
+                summary.failed_tasks.to_string().green()
+            } else {
+                summary.failed_tasks.to_string().red().bold()
+            }
+        );
+        println!(
+            "  - Ciclos Totais de Feedback    : {}",
+            summary.total_feedback_cycles
+        );
+        println!(
+            "  - Tempo Total Transcorrido     : {} ms",
+            summary.elapsed_ms
+        );
+        println!("------------------------------------------------------------------");
+
+        if summary.failed_tasks == 0 {
+            println!(
+                "{}",
+                "[SUCESSO TOTAL] 100% das tarefas foram validadas pelo Auto-QA e aprovadas!"
+                    .bold()
+                    .green()
+            );
+        } else {
+            println!(
+                "{}",
+                "[ATENÇÃO] Algumas tarefas não atingiram a conformidade estrita de QA."
+                    .bold()
+                    .yellow()
+            );
+        }
+        println!();
+    }
+
     Ok(())
 }

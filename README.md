@@ -2,7 +2,7 @@
 
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B%20%7C%201.98.1-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-green.svg)](LICENSE)
-[![Testes](https://img.shields.io/badge/Testes-217%2F217%20Passando-brightgreen.svg)]()
+[![Testes](https://img.shields.io/badge/Testes-223%2F223%20Passando-brightgreen.svg)]()
 [![Taxa de Autonomia](https://img.shields.io/badge/Autonomia%20Local-98.8%25-orange.svg)]()
 [![Evasão de Loop](https://img.shields.io/badge/Evas%C3%A3o%20de%20Loop-Ativa-brightgreen.svg)](docs/training-new-tasks.md)
 [![Status de Liberação](https://img.shields.io/badge/Certifica%C3%A7%C3%A3o%20de%20Release-Certificado%20com%20Limita%C3%A7%C3%B5es-yellow.svg)](docs/final-certification-report.md)
@@ -33,6 +33,7 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
 16. **Parada Segura, Botão de Emergência & Abstenção por Novidade (ScreenErrorDetector, GlobalEmergencyStop & OOD)**
 17. **Novos Gêneros de Jogos Autônomos (Cartas/Blackjack, Bomberman, FPS 3D & Worms Balístico)**
 18. **Benchmark Real de Velocidade (ALR System 1 a 4.0 µs vs Cloud VLMs a 1.5s — 413.203x Speedup)**
+19. **Supervisão Autônoma & Auto-QA (Leitura de Backlog, Despacho para Agentes, Execução de Testes e Feedback Loop)**
 
 
 ## ⚡ Quickstart em 3 Minutos: Do Zero ao Agente Operacional
@@ -763,7 +764,10 @@ cargo run -p alr-cli -- fps --play
 # 25. Jogar Jogo Estilo Worms com Balística, Vento e Ângulo
 cargo run -p alr-cli -- worms --play
 
-# 26. Executar a Suíte Completa de Testes Automatizados (217 Testes)
+# 26. Supervisor Autônomo & Auto-QA (Meta-Orquestração de Agentes, Testes e Auto-Recuperação)
+cargo run -p alr-cli -- supervisor --task-queue demo --iterations 1
+
+# 27. Executar a Suíte Completa de Testes Automatizados (223 Testes)
 cargo test --workspace
 ```
 
@@ -791,6 +795,7 @@ cargo test --workspace
 * **`cargo run -p alr-cli -- bomberman --play`:** Partida do Bomberman em tempo real no terminal com bombas, explosões em cruz e fuga para zonas seguras.
 * **`cargo run -p alr-cli -- fps --play`:** Simulação de FPS 3D com mira por mouse, FOV, recuo e eliminação de alvos.
 * **`cargo run -p alr-cli -- worms --play`:** Duelo tático de artilharia estilo Worms com física parabólica, vento dinâmico e destruição de terreno.
+* **`cargo run -p alr-cli -- supervisor`:** Motor de supervisão e QA autônomo (lê fila de tarefas, despacha para agentes, extrai instruções de teste, valida no sistema e faz loop de autocorreção).
 
 ---
 
@@ -932,7 +937,7 @@ O ALR foi construído para responder afirmativamente e comprovar na prática tr�
 
 | Gate | Requisito Formal | Status Auditado |
 | :--- | :--- | :--- |
-| **Gate 1 — Regressão** | Fases 1 a 17 operam continuamente sem quebras | **COMPROVADO** (217/217 testes aprovados) |
+| **Gate 1 — Regressão** | Fases 1 a 18 operam continuamente sem quebras | **COMPROVADO** (223/223 testes aprovados) |
 | **Gate 2 — Segurança** | Zero violações de isolamento e zero vazamentos | **COMPROVADO** (Invariantes ativas) |
 | **Gate 3 — Integridade** | Rejeição de falso sucesso sem mutação real de estado | **COMPROVADO** (`FalseSuccessValidator`) |
 | **Gate 4 — Recuperação** | Recuperação determinística de agente preso | **COMPROVADO** (`StuckDetector` e replanejador) |
@@ -955,7 +960,7 @@ O ALR foi construído para responder afirmativamente e comprovar na prática tr�
 =============================================================
  Status: FINALMENTE CERTIFICADO COM LIMITAÇÕES
  Workspace: 22 Crates (Workspace Cargo em Rust)
- Suíte de Testes: 217 Testes (100% Passando, 0 Regressões)
+ Suíte de Testes: 223 Testes (100% Passando, 0 Regressões)
  Código Inseguro: 0 Linhas de "unsafe" Descontrolado
  Autonomia Local Global: 98.8%
 =============================================================
