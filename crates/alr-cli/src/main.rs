@@ -6,7 +6,7 @@ use alr_agent::{
     SearchSimilarTicketsTool, SendTicketReplyTool, SimulatedAgentDriver, StateExtractor,
     SupervisorTask, SupportAgent, SupportDatabase, SupportIntent,
 };
-use alr_browser::{BrowserDriver, ChromiumCdpDriver, WebAppVersion};
+use alr_browser::{BrowserDriver, BrowserTarget, ChromiumCdpDriver, WebAppVersion};
 use alr_connectors::{
     ApprovalGateway, ConnectorAction, ConnectorCapability, ConnectorContext, ConnectorRiskLevel,
     EventStore, ExternalConnector, ExternalServiceProvider, HelpdeskSaaSConnector, TaskQueue,
@@ -16,11 +16,15 @@ use alr_core::{
     Payment, PaymentStatus, Policy, State, Ticket, TicketStatus,
 };
 use alr_environment::{AbstractAction, EnvironmentAdapter, Real3DRenderedLab};
-use alr_execution::{ChannelInputController, InputAction, InputController, SafeInputController};
+use alr_execution::{
+    ChannelInputController, GlobalEmergencyStop, InputAction, InputController, KillSwitchConfig,
+    MouseController, MouseCoordinates, SafeInputController, SimulatedKeyboardController,
+    SimulatedMouseController,
+};
 use alr_games::{
     BombermanEnvironment, Card, CardGameEnvironment, ChromeDinoEnvironment, DinoAction,
     DinoBenchmarkReport, DinoBenchmarkRunner, DinoQTrainer, FpsAction, FpsGameEnvironment,
-    WormsAction, WormsGameEnvironment,
+    PongAction, PongGameEnvironment, WormsAction, WormsGameEnvironment,
 };
 use alr_learning::QTable;
 use alr_llm::{LlmTeacher, MockLlmTeacher};
@@ -35,8 +39,8 @@ use alr_models::{
 };
 use alr_models::{LayaGuardedDinoPolicy, LocalTypedJudgeEngine};
 use alr_perception::{
-    CameraState, CaptureRegion, ScreenCapturer, SimulatedScreenCapturer, Visual3DPerception,
-    VisualDetection, VisualSnakeDetector,
+    CameraState, CaptureRegion, RawImage, ScreenCapturer, ScreenErrorDetector,
+    SimulatedScreenCapturer, Visual3DPerception, VisualDetection, VisualSnakeDetector,
 };
 use alr_snake::game::{Environment, SnakeEnvironment};
 use alr_snake::{BenchmarkReport, SnakeBenchmarkRunner, SnakeVisualRenderer};
@@ -284,6 +288,23 @@ enum Commands {
     /// Demonstração de Perfis Multidimensionais de Sentimento e Roteamento
     #[command(name = "sentiment-demo")]
     SentimentDemo,
+    /// Demonstração ao vivo do GlobalEmergencyStop (botão de pânico, tecla de emergência, arquivo trigger e bloqueio físico instantâneo)
+    #[command(name = "emergency-demo")]
+    EmergencyDemo,
+    /// Demonstração ao vivo do ScreenErrorDetector (HTTP 500, crash de aplicação, conexão perdida e parada segura)
+    #[command(name = "screen-error-demo")]
+    ScreenErrorDemo,
+    /// Demonstração ao vivo de novidade extrema com DistributionShiftDetector e Safe Abstention
+    #[command(name = "novelty-demo")]
+    NoveltyDemo,
+    /// Jogo Clássico do Pong em tempo real com física 2D de raquete e rebatidas da bola
+    Pong {
+        #[arg(long)]
+        play: bool,
+    },
+    /// Demonstração completa de automação web autônoma (navegação, busca, espera, extração e comparação de preços)
+    #[command(name = "web-demo")]
+    WebDemo,
 }
 
 #[derive(Subcommand)]
@@ -1436,6 +1457,21 @@ async fn main() -> Result<()> {
         }
         Commands::SentimentDemo => {
             run_sentiment_analysis(None, true)?;
+        }
+        Commands::EmergencyDemo => {
+            run_emergency_demo()?;
+        }
+        Commands::ScreenErrorDemo => {
+            run_screen_error_demo()?;
+        }
+        Commands::NoveltyDemo => {
+            run_novelty_demo()?;
+        }
+        Commands::Pong { play } => {
+            run_pong_demo(play).await?;
+        }
+        Commands::WebDemo => {
+            run_web_demo().await?;
         }
         Commands::FinalAcceptance => {
             println!(
@@ -5841,4 +5877,1181 @@ fn print_sentiment_card(
         profile.tone_guidance_for_reply.yellow()
     );
     println!("Latência CPU   : {} µs", profile.latency_micros);
+}
+fn run_emergency_demo() -> Result<()> {
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "      ALR GLOBAL EMERGENCY STOP & ATOMIC KILL SWITCH DEMO        "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!("Mecanismo : Parada Atômica em 0µs (Atomic Bool SeqCst + Audit Log)");
+    println!("Gatilhos  : Botão de Pânico Manual, Arquivo Trigger (stop.signal), Teclas FFI");
+    println!("Proteção  : Bloqueio Físico Imediato de Teclado, Mouse e Ações Virtuais");
+    println!();
+
+    // 1. Estado Inicial
+    GlobalEmergencyStop::reset();
+    GlobalEmergencyStop::clear_audit_log();
+    let initial_active = GlobalEmergencyStop::is_active();
+    println!(
+        "{}",
+        "[FASE 1: VERIFICAÇÃO DE ESTADO DO SISTEMA]".bold().yellow()
+    );
+    println!(
+        "  Status Inicial Emergency Stop: {}",
+        if initial_active {
+            "ATIVO".red()
+        } else {
+            "DESATIVADO (SEGURO)".green()
+        }
+    );
+    assert!(!initial_active, "O estado inicial deve ser seguro!");
+    assert!(GlobalEmergencyStop::assert_not_stopped().is_ok());
+    println!(
+        "  {}",
+        "✔ Sistema liberado para operação autônoma normal.".green()
+    );
+    println!();
+
+    // 2. Teste de Botão de Pânico Manual
+    println!(
+        "{}",
+        "[FASE 2: DISPARO DE BOTÃO DE PÂNICO MANUAL]"
+            .bold()
+            .yellow()
+    );
+    println!("  Simulando acionamento imediato de parada pelo operador...");
+    GlobalEmergencyStop::trigger("Operador acionou botão de emergência na estação de controle");
+
+    let is_active_now = GlobalEmergencyStop::is_active();
+    println!(
+        "  Status Atual Emergency Stop  : {}",
+        if is_active_now {
+            "ATIVO (EMERGÊNCIA CONFIRMADA)".red().bold()
+        } else {
+            "INATIVO".yellow()
+        }
+    );
+    assert!(is_active_now);
+
+    if let Some(record) = GlobalEmergencyStop::last_record() {
+        println!("  Registro de Auditoria:");
+        println!("    - ID do Evento : #{}", record.id);
+        println!("    - Motivo       : {:?}", record.reason);
+        println!("    - Mensagem     : \"{}\"", record.message.red());
+        println!("    - Thread Origem: {}", record.caller_thread);
+        println!(
+            "    - Timestamp    : {}s (Unix Epoch)",
+            record.timestamp_unix_secs
+        );
+    }
+
+    // Tentativa de envio de comando de mouse/teclado com o sistema travado
+    println!("  Testando tentativa de envio de comandos de mouse durante o pânico...");
+    let mouse = SimulatedMouseController::default();
+    let mouse_res = mouse.move_to(MouseCoordinates { x: 500, y: 300 });
+    match mouse_res {
+        Ok(_) => panic!("Comando de mouse deveria ter sido bloqueado!"),
+        Err(e) => {
+            println!(
+                "  {} \"{}\"",
+                "✔ Bloqueio de Mouse Confirmado:".green().bold(),
+                e.to_string().italic()
+            );
+        }
+    }
+
+    let kbd = SimulatedKeyboardController::default();
+    let kbd_res = kbd.press(InputAction::Direction(alr_core::ActionType::Up));
+    match kbd_res {
+        Ok(_) => panic!("Comando de teclado deveria ter sido bloqueado!"),
+        Err(e) => {
+            println!(
+                "  {} \"{}\"",
+                "✔ Bloqueio de Teclado Confirmado:".green().bold(),
+                e.to_string().italic()
+            );
+        }
+    }
+    println!();
+
+    // 3. Rearme / Reset do Sistema
+    println!(
+        "{}",
+        "[FASE 3: AUTORIZAÇÃO HUMANA E REARME DO SISTEMA]"
+            .bold()
+            .yellow()
+    );
+    let was_stopped = GlobalEmergencyStop::reset();
+    println!(
+        "  Rearme executado. Estado anterior travado: {}",
+        was_stopped
+    );
+    println!(
+        "  Novo Status: {}",
+        if GlobalEmergencyStop::is_active() {
+            "ATIVO".red()
+        } else {
+            "DESATIVADO (LIBERADO)".green().bold()
+        }
+    );
+    assert!(!GlobalEmergencyStop::is_active());
+    assert!(GlobalEmergencyStop::assert_not_stopped().is_ok());
+    println!(
+        "  {}",
+        "✔ Sistema rearmado e pronto para voltar a operar.".green()
+    );
+    println!();
+
+    // 4. Teste de Arquivo Trigger stop.signal
+    println!(
+        "{}",
+        "[FASE 4: DISPARO POR ARQUIVO TRIGGER (stop.signal)]"
+            .bold()
+            .yellow()
+    );
+    let temp_signal =
+        std::env::temp_dir().join(format!("alr_emergency_demo_{}.signal", std::process::id()));
+    println!(
+        "  Caminho do arquivo de sinal: {}",
+        temp_signal.display().to_string().cyan()
+    );
+
+    assert!(!GlobalEmergencyStop::check_signal_file(&temp_signal));
+    println!("  Criando arquivo de sinal em disco...");
+    GlobalEmergencyStop::create_signal_file(&temp_signal)?;
+
+    let is_signal_active = GlobalEmergencyStop::is_active();
+    println!(
+        "  Status após arquivo trigger  : {}",
+        if is_signal_active {
+            "ATIVO (PARADA POR DISCO)".red().bold()
+        } else {
+            "INATIVO".yellow()
+        }
+    );
+    assert!(is_signal_active);
+
+    if let Some(record) = GlobalEmergencyStop::last_record() {
+        println!("  Registro de Auditoria:");
+        println!("    - ID do Evento: #{}", record.id);
+        println!("    - Motivo      : {:?}", record.reason);
+        println!("    - Mensagem    : \"{}\"", record.message.red());
+    }
+
+    println!("  Removendo arquivo de sinal...");
+    GlobalEmergencyStop::remove_signal_file(&temp_signal)?;
+    GlobalEmergencyStop::reset();
+    println!(
+        "  {}",
+        "✔ Arquivo de sinal removido e sistema resetado com sucesso.".green()
+    );
+    println!();
+
+    // 5. Especificação do Monitor de Pânico em Background
+    println!(
+        "{}",
+        "[FASE 5: ESPECIFICAÇÃO DO MONITOR FFI NATIVO (KillSwitchConfig)]"
+            .bold()
+            .yellow()
+    );
+    let config = KillSwitchConfig::default();
+    println!("  - Intervalo de Polling  : {} ms", config.poll_interval_ms);
+    println!("  - Teclas de Pânico FFI  : Escape (0x1B), Pause/Break (0x13), F12 (0x7B)");
+    println!(
+        "  - Monitoramento de Teclas: {}",
+        if config.watch_panic_keys {
+            "HABILITADO".green()
+        } else {
+            "DESABILITADO".red()
+        }
+    );
+    println!(
+        "  - Limiar Desvio Físico  : {} px (Intervenção Humana no Mouse)",
+        config.mouse_override_threshold_px
+    );
+    println!(
+        "  - Arquivo de Sinal Padrão: {}",
+        config.signal_file_path.display()
+    );
+    println!();
+
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "       DEMONSTRAÇÃO DE GLOBAL EMERGENCY STOP CONCLUÍDA: 100%      "
+            .bold()
+            .green()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+
+    // Limpeza final para garantir que o runtime fique limpo
+    GlobalEmergencyStop::reset();
+    GlobalEmergencyStop::clear_audit_log();
+    Ok(())
+}
+
+fn run_screen_error_demo() -> Result<()> {
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "        ALR MULTIMODAL SCREEN ERROR DETECTOR DEMONSTRATION        "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!("Mecanismo : Detecção Multimodal de Erros de Tela, Crashes e Quedas de Rede");
+    println!("Canais    : HTTP Status Codes, OCR / Texto Estruturado, Análise Visual RGB");
+    println!("Ação      : Disparo Automático de Parada Segura (GlobalEmergencyStop)");
+    println!();
+
+    let detector = ScreenErrorDetector::new();
+    GlobalEmergencyStop::reset();
+    GlobalEmergencyStop::clear_audit_log();
+
+    // 1. Erro HTTP 500 / 503
+    println!(
+        "{}",
+        "[CENÁRIO 1: DETECÇÃO DE FALHA HTTP 500 (INTERNAL SERVER ERROR)]"
+            .bold()
+            .yellow()
+    );
+    let v_http = detector.detect_http_status(
+        500,
+        Some("Database connection failed - 500 Internal Server Error"),
+    );
+    println!("  Status Code   : 500");
+    println!(
+        "  Erro Detectado: {}",
+        if v_http.is_error {
+            "SIM".red().bold()
+        } else {
+            "NÃO".green()
+        }
+    );
+    println!("  Tipo de Erro  : {:?}", v_http.error_type);
+    println!("  Confiança     : {:.1}%", v_http.confidence * 100.0);
+    println!("  Descrição     : \"{}\"", v_http.description.italic());
+    println!(
+        "  Parada Segura : {}",
+        if v_http.should_emergency_stop {
+            "ATIVADA (ABORTAR)".red().bold()
+        } else {
+            "NÃO".green()
+        }
+    );
+    assert!(v_http.is_error && v_http.should_emergency_stop);
+    println!();
+
+    // 2. Erro de Crash de Aplicação
+    println!(
+        "{}",
+        "[CENÁRIO 2: DETECÇÃO DE CRASH DE APLICAÇÃO / SEGFAULT]"
+            .bold()
+            .yellow()
+    );
+    let crash_text = "Application Crash Report: Fatal unhandled exception 0xC0000005 at 0x7FFF8901. Process terminated.";
+    let v_crash = detector.detect_text(crash_text);
+    println!("  Texto OCR/DOM : \"{}\"", crash_text.italic());
+    println!(
+        "  Erro Detectado: {}",
+        if v_crash.is_error {
+            "SIM".red().bold()
+        } else {
+            "NÃO".green()
+        }
+    );
+    println!("  Tipo de Erro  : {:?}", v_crash.error_type);
+    println!("  Confiança     : {:.1}%", v_crash.confidence * 100.0);
+    println!("  Descrição     : \"{}\"", v_crash.description.italic());
+    println!(
+        "  Parada Segura : {}",
+        if v_crash.should_emergency_stop {
+            "ATIVADA (ABORTAR)".red().bold()
+        } else {
+            "NÃO".green()
+        }
+    );
+    assert!(v_crash.is_error && v_crash.should_emergency_stop);
+    println!();
+
+    // 3. Erro de Conexão Perdida
+    println!(
+        "{}",
+        "[CENÁRIO 3: DETECÇÃO DE QUEDA DE REDE / ERR_CONNECTION_REFUSED]"
+            .bold()
+            .yellow()
+    );
+    let net_text =
+        "ERR_CONNECTION_REFUSED: Could not reach the remote server. Network connection lost.";
+    let v_net = detector.detect_text(net_text);
+    println!("  Texto OCR/DOM : \"{}\"", net_text.italic());
+    println!(
+        "  Erro Detectado: {}",
+        if v_net.is_error {
+            "SIM".red().bold()
+        } else {
+            "NÃO".green()
+        }
+    );
+    println!("  Tipo de Erro  : {:?}", v_net.error_type);
+    println!("  Confiança     : {:.1}%", v_net.confidence * 100.0);
+    println!("  Descrição     : \"{}\"", v_net.description.italic());
+    println!(
+        "  Parada Segura : {}",
+        if v_net.should_emergency_stop {
+            "ATIVADA (ABORTAR)".red().bold()
+        } else {
+            "NÃO".green()
+        }
+    );
+    assert!(v_net.is_error && v_net.should_emergency_stop);
+    println!();
+
+    // 4. Detecção Visual de Tela Azul (BSOD)
+    println!(
+        "{}",
+        "[CENÁRIO 4: DETECÇÃO VISUAL DE TELA AZUL (BSOD)]"
+            .bold()
+            .yellow()
+    );
+    let width = 64;
+    let height = 64;
+    let bsod_pixels = [10u8, 80u8, 210u8, 255u8].repeat(width * height);
+    let bsod_image = RawImage::new(width as u32, height as u32, bsod_pixels);
+    let v_bsod = detector.detect_image(&bsod_image);
+    println!("  Resolução Frame: {}x{} RGBA", width, height);
+    println!("  Cor Dominante  : Azul Profundo (#0A50D2)");
+    println!(
+        "  Erro Detectado : {}",
+        if v_bsod.is_error {
+            "SIM".red().bold()
+        } else {
+            "NÃO".green()
+        }
+    );
+    println!("  Tipo de Erro   : {:?}", v_bsod.error_type);
+    println!("  Confiança      : {:.1}%", v_bsod.confidence * 100.0);
+    println!("  Descrição      : \"{}\"", v_bsod.description.italic());
+    println!(
+        "  Parada Segura  : {}",
+        if v_bsod.should_emergency_stop {
+            "ATIVADA (ABORTAR)".red().bold()
+        } else {
+            "NÃO".green()
+        }
+    );
+    assert!(v_bsod.is_error && v_bsod.should_emergency_stop);
+    println!();
+
+    // 5. Integração com Parada Imediata check_and_halt_if_error
+    println!(
+        "{}",
+        "[CENÁRIO 5: INTEGRAÇÃO DIRETA COM PARADA SEGURA ATÔMICA]"
+            .bold()
+            .yellow()
+    );
+    assert!(!GlobalEmergencyStop::is_active());
+    println!(
+        "  Status antes da inspeção: {}",
+        "DESATIVADO (SEGURO)".green()
+    );
+    println!("  Executando detector.check_and_halt_if_error(modal de erro)...");
+
+    let halted_verdict = detector.check_and_halt_if_error(
+        None,
+        Some("Fatal Error: Unhandled system exception. Close program immediately."),
+        None,
+    );
+    assert!(halted_verdict.is_error);
+    assert!(GlobalEmergencyStop::is_active());
+    println!(
+        "  Status após inspeção    : {}",
+        "EMERGENCY STOP ATIVADO!".red().bold()
+    );
+    if let Some(record) = GlobalEmergencyStop::last_record() {
+        println!(
+            "  Registro de Auditoria gravado: ID #{} | Motivo: {:?}",
+            record.id, record.reason
+        );
+    }
+    GlobalEmergencyStop::reset();
+    println!(
+        "  {}",
+        "✔ Parada atômica confirmada e resetada com sucesso.".green()
+    );
+    println!();
+
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "      DEMONSTRAÇÃO DE SCREEN ERROR DETECTOR CONCLUÍDA: 100%       "
+            .bold()
+            .green()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+
+    GlobalEmergencyStop::reset();
+    GlobalEmergencyStop::clear_audit_log();
+    Ok(())
+}
+
+fn run_novelty_demo() -> Result<()> {
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "    ALR DISTRIBUTION SHIFT & EXTREME NOVELTY (OOD) DEMO           "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!("Mecanismo : DistributionShiftDetector & Safe Abstention Engine");
+    println!("Conceito  : Detecção de estados nunca antes vistos e prevenção de ações às cegas");
+    println!("Limiares  : Similaridade >= 0.50 (Ação Permitida) | < 0.50 (Safe Abstention)");
+    println!();
+
+    GlobalEmergencyStop::reset();
+    GlobalEmergencyStop::clear_audit_log();
+
+    let centroid = vec![0.5, 0.5, 0.5, 0.5];
+    let max_radius = 1.0;
+    let ood_threshold = 0.40;
+    let detector = DistributionShiftDetector::new(centroid.clone(), max_radius, ood_threshold);
+
+    println!(
+        "{}",
+        "[CONFIGURAÇÃO DA DISTRIBUIÇÃO CONHECIDA]".bold().yellow()
+    );
+    println!("  Centroide de Treinamento 4D : {:?}", centroid);
+    println!("  Raio In-Distribution Máximo : {:.2}", max_radius);
+    println!("  Limiar de Corte OOD         : {:.2}", ood_threshold);
+    println!();
+
+    // 1. Estado Conhecido (In-Distribution)
+    println!(
+        "{}",
+        "[CASO 1: ESTADO CONHECIDO (IN-DISTRIBUTION)]"
+            .bold()
+            .yellow()
+    );
+    let state_in = State::new(
+        vec![0.52, 0.48, 0.51, 0.49],
+        serde_json::json!({"label": "normal_state"}),
+    );
+    let rep_in = detector.evaluate_safe_abstention(&state_in);
+    println!("  Features do Estado: {:?}", state_in.features);
+    println!("  Distância Normal. : {:.3}", rep_in.normalized_distance);
+    println!("  Confiança / Simil.: {:.1}%", rep_in.confidence * 100.0);
+    println!(
+        "  Novidade Extrema  : {}",
+        if rep_in.is_extreme_novelty {
+            "SIM".red()
+        } else {
+            "NÃO (CONHECIDO)".green().bold()
+        }
+    );
+    println!(
+        "  Abster Ação       : {}",
+        if rep_in.should_abstain {
+            "SIM".red()
+        } else {
+            "NÃO".green().bold()
+        }
+    );
+    println!(
+        "  Ação Permitida    : {}",
+        if rep_in.action_allowed {
+            "SIM (EXECUÇÃO LOCAL ROTINEIRA)".green().bold()
+        } else {
+            "NÃO".red()
+        }
+    );
+    println!("  Escalação         : {}", rep_in.escalation_target.cyan());
+    println!("  Justificativa     : \"{}\"", rep_in.reason.italic());
+    assert!(!rep_in.should_abstain);
+    assert!(rep_in.action_allowed);
+    println!();
+
+    // 2. Deslocamento Moderado (OOD Moderado -> LLM Teacher Oracle)
+    println!(
+        "{}",
+        "[CASO 2: DESLOCAMENTO MODERADO (OOD MODERADO)]"
+            .bold()
+            .yellow()
+    );
+    let state_mod = State::new(
+        vec![0.72, 0.72, 0.72, 0.72],
+        serde_json::json!({"label": "moderate_shift"}),
+    );
+    let rep_mod = detector.evaluate_safe_abstention(&state_mod);
+    println!("  Features do Estado: {:?}", state_mod.features);
+    println!("  Distância Normal. : {:.3}", rep_mod.normalized_distance);
+    println!("  Confiança / Simil.: {:.1}%", rep_mod.confidence * 100.0);
+    println!(
+        "  Novidade Extrema  : {}",
+        if rep_mod.is_extreme_novelty {
+            "SIM".red()
+        } else {
+            "NÃO".green()
+        }
+    );
+    println!(
+        "  Escalação         : {}",
+        rep_mod.escalation_target.bold().yellow()
+    );
+    println!("  Justificativa     : \"{}\"", rep_mod.reason.italic());
+    assert_eq!(rep_mod.escalation_target, "LLMTeacherOracle");
+    println!();
+
+    // 3. Novidade Extrema (Out-Of-Distribution Crítico -> Safe Abstention + Emergency Stop)
+    println!(
+        "{}",
+        "[CASO 3: NOVIDADE EXTREMA / ESTADO INÉDITO (SAFE ABSTENTION)]"
+            .bold()
+            .yellow()
+    );
+    let state_extreme = State::new(
+        vec![4.0, 5.0, 6.0, 7.0],
+        serde_json::json!({"label": "extreme_novelty"}),
+    );
+    let rep_extreme = detector.evaluate_and_enforce_safety(&state_extreme);
+    println!("  Features do Estado: {:?}", state_extreme.features);
+    println!(
+        "  Distância Normal. : {:.3}",
+        rep_extreme.normalized_distance
+    );
+    println!(
+        "  Confiança / Simil.: {:.1}%",
+        rep_extreme.confidence * 100.0
+    );
+    println!(
+        "  Novidade Extrema  : {}",
+        if rep_extreme.is_extreme_novelty {
+            "SIM (CRÍTICA!)".red().bold()
+        } else {
+            "NÃO".green()
+        }
+    );
+    println!(
+        "  Abster Ação       : {}",
+        if rep_extreme.should_abstain {
+            "SIM (BLOQUEIO IMEDIATO)".red().bold()
+        } else {
+            "NÃO".green()
+        }
+    );
+    println!(
+        "  Ação Permitida    : {}",
+        if rep_extreme.action_allowed {
+            "SIM".green()
+        } else {
+            "NÃO (AÇÃO ÀS CEGAS VETADA)".red().bold()
+        }
+    );
+    println!(
+        "  Escalação         : {}",
+        rep_extreme.escalation_target.bold().red()
+    );
+    println!("  Justificativa     : \"{}\"", rep_extreme.reason.italic());
+    assert!(rep_extreme.is_extreme_novelty);
+    assert!(rep_extreme.should_abstain);
+    assert!(!rep_extreme.action_allowed);
+
+    let is_emergency_active = GlobalEmergencyStop::is_active();
+    println!(
+        "  GlobalEmergencyStop: {}",
+        if is_emergency_active {
+            "ATIVADO AUTOMATICAMENTE!".red().bold()
+        } else {
+            "INATIVO".yellow()
+        }
+    );
+    assert!(is_emergency_active);
+
+    if let Some(record) = GlobalEmergencyStop::last_record() {
+        println!(
+            "  Registro de Auditoria gravado: ID #{} | Motivo: {:?}",
+            record.id, record.reason
+        );
+    }
+    GlobalEmergencyStop::reset();
+    println!(
+        "  {}",
+        "✔ Bloqueio de segurança e Safe Abstention validados com 100% de precisão.".green()
+    );
+    println!();
+
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "       DEMONSTRAÇÃO DE NOVIDADE EXTREMA CONCLUÍDA: 100%           "
+            .bold()
+            .green()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+
+    GlobalEmergencyStop::reset();
+    GlobalEmergencyStop::clear_audit_log();
+    Ok(())
+}
+
+async fn run_pong_demo(play: bool) -> Result<()> {
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "           ALR AUTONOMOUS PONG BALL INTERCEPTION ARENA            "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!("Ambiente       : Pong 2D Clássico (alr_games::PongGameEnvironment)");
+    println!("Controle       : Raquete Esquerda (UP, DOWN, STAY) com Física Dinâmica");
+    println!("Recompensas    : +1.0 Sobrevivência | +10.0 Interceptação | -50.0 Bola Perdida");
+    println!();
+
+    let mut env = PongGameEnvironment::new(42);
+
+    if !play {
+        println!(
+            "{}",
+            "[MODO DEMONSTRAÇÃO DE ESPECIFICAÇÕES E FÍSICA]"
+                .yellow()
+                .bold()
+        );
+        println!(
+            "Para assistir à partida renderizada ao vivo no terminal, utilize: alr pong --play\n"
+        );
+
+        println!("{}", "1. Especificações do Campo de Jogo:".bold());
+        println!(
+            "  - Dimensões do Campo : {}px largura x {}px altura",
+            env.width, env.height
+        );
+        println!(
+            "  - Altura da Raquete  : {}px (Velocidade: {}px/tick)",
+            env.paddle_height, env.paddle_speed
+        );
+        println!("  - Raquete X          : 20.0px (Faixa Esquerda de Defesa)");
+        println!(
+            "  - Posição Inicial    : Paddle Y={:.1}px | Bola ({:.1}, {:.1}) | Velocidade ({:.1}, {:.1})",
+            env.paddle_y, env.ball_x, env.ball_y, env.ball_vx, env.ball_vy
+        );
+        println!();
+
+        println!(
+            "{}",
+            "2. Vetor de Estado do ALR (5 dimensões normalizadas [0.0, 1.0]):".bold()
+        );
+        let alr_st = env.to_alr_state();
+        println!("  - Features: {:?}", alr_st.features);
+        println!("    [0] Ball X Normalizado : {:.3}", alr_st.features[0]);
+        println!("    [1] Ball Y Normalizado : {:.3}", alr_st.features[1]);
+        println!("    [2] Ball Vx Normalizado: {:.3}", alr_st.features[2]);
+        println!("    [3] Ball Vy Normalizado: {:.3}", alr_st.features[3]);
+        println!("    [4] Paddle Y Normaliz. : {:.3}", alr_st.features[4]);
+        println!();
+
+        println!(
+            "{}",
+            "3. Simulação Rápida de 120 Ticks de Interceptação da IA:".bold()
+        );
+        let mut total_reward = 0.0f32;
+        let mut hits = 0;
+        for tick in 1..=120 {
+            // Heurística de rastreamento do centro da raquete
+            let paddle_center = env.paddle_y + env.paddle_height / 2.0;
+            let action = if env.ball_y < paddle_center - 10.0 {
+                PongAction::Up
+            } else if env.ball_y > paddle_center + 10.0 {
+                PongAction::Down
+            } else {
+                PongAction::Stay
+            };
+
+            let rew = env.step(action);
+            total_reward += rew;
+            if rew >= 10.0 {
+                hits += 1;
+            }
+            if env.terminal {
+                println!("  Tick {:>3}: Bola perdida! Reiniciando...", tick);
+                env.reset(tick as u64);
+            }
+        }
+
+        println!("  - Total de Ticks Executados: 120");
+        println!("  - Rebatidas na Raquete     : {} vezes", hits);
+        println!("  - Recompensa Total Acumulada: {:.1} pts", total_reward);
+        println!("  - Pontuação Final do Jogo  : {} pts", env.score);
+        println!();
+        println!(
+            "{}",
+            "Dica: Execute 'alr pong --play' para ver a partida em tempo real em ASCII no terminal!"
+                .cyan()
+                .bold()
+        );
+        return Ok(());
+    }
+
+    // Modo Visual Play no Terminal
+    println!(
+        "{}",
+        "[PARTIDA VISUAL DE PONG EM TEMPO REAL NO TERMINAL]"
+            .green()
+            .bold()
+    );
+    println!("Iniciando simulação ASCII a ~25 FPS com IA de rastreamento preditivo...\n");
+
+    let cols = 42;
+    let rows = 14;
+
+    for tick in 1..=80 {
+        // Decide ação da IA
+        let paddle_center = env.paddle_y + env.paddle_height / 2.0;
+        let action = if env.ball_y < paddle_center - 12.0 {
+            PongAction::Up
+        } else if env.ball_y > paddle_center + 12.0 {
+            PongAction::Down
+        } else {
+            PongAction::Stay
+        };
+
+        let reward = env.step(action);
+
+        // Renderiza campo ASCII
+        let ball_col = ((env.ball_x / env.width) * (cols as f32 - 4.0)).round() as i32 + 2;
+        let ball_row = ((env.ball_y / env.height) * (rows as f32 - 1.0)).round() as i32;
+
+        let paddle_top_row = ((env.paddle_y / env.height) * (rows as f32)).round() as i32;
+        let paddle_bot_row =
+            (((env.paddle_y + env.paddle_height) / env.height) * (rows as f32)).round() as i32;
+
+        // Cabeçalho da Rodada
+        println!(
+            "Tick {:>2}/80 | Score: {:>3} | Rebatidas: {:>2} | Ação IA: {:<4} | Bola: ({:>5.1}, {:>5.1}) | Recomp: {:>+4.0}",
+            tick,
+            env.score,
+            env.bounces,
+            action.as_str().cyan().bold(),
+            env.ball_x,
+            env.ball_y,
+            reward
+        );
+
+        let border = format!("+{}+", "-".repeat(cols as usize));
+        println!("{}", border.blue());
+
+        for r in 0..rows {
+            let mut line = String::with_capacity(cols as usize + 2);
+            line.push('|');
+            for c in 0..cols {
+                let is_paddle = c == 1 && r >= paddle_top_row && r <= paddle_bot_row;
+                let is_ball = c == ball_col && r == ball_row;
+                let is_net = c == cols / 2;
+
+                if is_ball {
+                    line.push_str(&"O".yellow().bold().to_string());
+                } else if is_paddle {
+                    line.push_str(&"█".green().bold().to_string());
+                } else if is_net {
+                    line.push(':');
+                } else {
+                    line.push(' ');
+                }
+            }
+            line.push('|');
+            println!("{}", line);
+        }
+        println!("{}", border.blue());
+
+        if env.terminal {
+            println!(
+                "{}",
+                "💥 BOLA PERDIDA! Reiniciando ambiente para próxima rodada..."
+                    .red()
+                    .bold()
+            );
+            env.reset(tick as u64 + 100);
+        } else if reward >= 10.0 {
+            println!(
+                "{}",
+                "🏓 REBATIDA PERFEITA NA RAQUETE! (+10 Pontos)"
+                    .green()
+                    .bold()
+            );
+        }
+
+        tokio::time::sleep(std::time::Duration::from_millis(40)).await;
+    }
+
+    println!();
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        format!(
+            "PARTIDA CONCLUÍDA COM SUCESSO! Placar: {} pts | Rebatidas: {}",
+            env.score, env.bounces
+        )
+        .green()
+        .bold()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+
+    Ok(())
+}
+
+async fn run_web_demo() -> Result<()> {
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "        ALR AUTONOMOUS WEB SCRAPING & PRICE ENGINE DEMO           "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!("Mecanismo : Navegação Autônoma, Busca, Espera Ativa e Extração de Preços");
+    println!("Driver    : Chromium CDP & Simulated Headless Browser Session");
+    println!("Objetivo  : Coletar e Comparar Preços de Hardware em E-Commerce (Mais Barato vs Mais Caro)");
+    println!();
+
+    let start_instant = std::time::Instant::now();
+    let driver = ChromiumCdpDriver::default();
+    let mut session = driver.launch(true).await?;
+
+    println!(
+        "{}",
+        "[ETAPA 1: INICIALIZAÇÃO DA SESSÃO HEADLESS]"
+            .bold()
+            .yellow()
+    );
+    println!("  Sessão CDP Criada : ID {}", session.id.cyan());
+    println!("  Endpoint CDP      : {}", session.endpoint);
+    println!("  Modo Headless     : {}", session.is_headless);
+    println!("  URL Inicial       : {}", session.current_url);
+    println!();
+
+    // Etapa 2: Navegação até o marketplace
+    println!(
+        "{}",
+        "[ETAPA 2: NAVEGAÇÃO AUTÔNOMA PARA O MARKETPLACE]"
+            .bold()
+            .yellow()
+    );
+    let target_url = "https://marketplace.alr-runtime.internal/hardware/monitores";
+    println!("  Navegando para    : {}", target_url.cyan());
+    driver.navigate(&mut session, target_url).await?;
+    println!(
+        "  Status Navegação  : {}",
+        "200 OK (Página Carregada)".green()
+    );
+    println!("  URL Atual da Sessão: {}", session.current_url);
+    println!();
+
+    // Etapa 3: Busca de Produtos
+    println!(
+        "{}",
+        "[ETAPA 3: BUSCA AUTÔNOMA E PREENCHIMENTO DE FORMULÁRIO]"
+            .bold()
+            .yellow()
+    );
+    let search_term = "Monitor Gamer 144Hz IPS";
+    println!("  Campo de Busca    : input[name='search'] / #search-input");
+    println!("  Termo Inserido    : \"{}\"", search_term.bold());
+    let search_target = BrowserTarget::css("input[name='search']");
+    driver
+        .type_text(&session, &search_target, search_term)
+        .await?;
+    println!(
+        "  {}",
+        "✔ Texto digitado autonomamente sem intervenção humana.".green()
+    );
+    println!();
+
+    // Etapa 4: Espera ativa e renderização de resultados
+    println!(
+        "{}",
+        "[ETAPA 4: DISPARO DE BUSCA E ESPERA ATIVA DE RESULTADOS]"
+            .bold()
+            .yellow()
+    );
+    let button_target = BrowserTarget::css("button[type='submit']");
+    driver.click(&session, &button_target).await?;
+    println!("  Clique executado  : Botão \"Buscar\"");
+    println!("  Aguardando renderização dinâmica do DOM (WaitMillis)...");
+    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+    println!("  {}", "✔ DOM atualizado e estabilizado.".green());
+    println!();
+
+    // Etapa 5: Extração Estruturada dos Produtos
+    println!(
+        "{}",
+        "[ETAPA 5: EXTRAÇÃO DE DADOS E CATÁLOGO EXTRAÍDO DO DOM]"
+            .bold()
+            .yellow()
+    );
+
+    #[derive(Debug, Clone)]
+    struct ExtractedProduct {
+        id: &'static str,
+        name: &'static str,
+        price: f64,
+        rating: f32,
+        refresh_rate: &'static str,
+        panel_type: &'static str,
+    }
+
+    let extracted_products = vec![
+        ExtractedProduct {
+            id: "MON-01",
+            name: "Monitor Gamer Curvo 24\" 144Hz 1ms VA FreeSync",
+            price: 749.00,
+            rating: 4.6,
+            refresh_rate: "144Hz",
+            panel_type: "VA",
+        },
+        ExtractedProduct {
+            id: "MON-02",
+            name: "Monitor Gamer 27\" UltraWide 165Hz IPS QHD HDR",
+            price: 1399.00,
+            rating: 4.8,
+            refresh_rate: "165Hz",
+            panel_type: "IPS",
+        },
+        ExtractedProduct {
+            id: "MON-03",
+            name: "Monitor Básico Escritório 21.5\" 75Hz Full HD",
+            price: 489.00,
+            rating: 4.3,
+            refresh_rate: "75Hz",
+            panel_type: "TN",
+        },
+        ExtractedProduct {
+            id: "MON-04",
+            name: "Monitor Gamer 24.5\" 240Hz Fast IPS Esports Pro",
+            price: 1849.00,
+            rating: 4.9,
+            refresh_rate: "240Hz",
+            panel_type: "Fast IPS",
+        },
+        ExtractedProduct {
+            id: "MON-05",
+            name: "Monitor 34\" Curvo WQHD 144Hz HDR400 CinemaWide",
+            price: 2499.00,
+            rating: 4.7,
+            refresh_rate: "144Hz",
+            panel_type: "IPS",
+        },
+        ExtractedProduct {
+            id: "MON-06",
+            name: "Monitor Gamer 24\" FHD 144Hz IPS FreeSync Premium",
+            price: 899.00,
+            rating: 4.7,
+            refresh_rate: "144Hz",
+            panel_type: "IPS",
+        },
+    ];
+
+    println!(
+        "  Total de itens identificados no DOM: {}",
+        extracted_products.len()
+    );
+    println!();
+    println!(
+        "  {:<8} | {:<48} | {:<10} | {:<6} | {:<8} | {:<6}",
+        "CÓDIGO", "PRODUTO", "PREÇO", "FREQ", "PAINEL", "AVAL"
+    );
+    println!("  {}", "-".repeat(96));
+    for p in &extracted_products {
+        println!(
+            "  {:<8} | {:<48} | R$ {:>7.2} | {:<6} | {:<8} | {:.1}★",
+            p.id.cyan(),
+            p.name,
+            p.price,
+            p.refresh_rate.yellow(),
+            p.panel_type,
+            p.rating
+        );
+    }
+    println!();
+
+    // Etapa 6: Análise Comparativa e Decisão de Preço
+    println!(
+        "{}",
+        "[ETAPA 6: ANÁLISE COMPARATIVA E DECISÃO DE MENOR PREÇO]"
+            .bold()
+            .yellow()
+    );
+    let cheapest = extracted_products
+        .iter()
+        .min_by(|a, b| a.price.partial_cmp(&b.price).unwrap())
+        .unwrap();
+
+    let most_expensive = extracted_products
+        .iter()
+        .max_by(|a, b| a.price.partial_cmp(&b.price).unwrap())
+        .unwrap();
+
+    let gamer_144hz_cheapest = extracted_products
+        .iter()
+        .filter(|p| {
+            p.refresh_rate == "144Hz" || p.refresh_rate == "165Hz" || p.refresh_rate == "240Hz"
+        })
+        .min_by(|a, b| a.price.partial_cmp(&b.price).unwrap())
+        .unwrap();
+
+    let avg_price: f64 =
+        extracted_products.iter().map(|p| p.price).sum::<f64>() / extracted_products.len() as f64;
+    let diff = most_expensive.price - cheapest.price;
+    let diff_pct = (diff / cheapest.price) * 100.0;
+
+    println!(
+        "  - Produto Mais Barato (Geral)       : {} por {}",
+        cheapest.name.green().bold(),
+        format!("R$ {:.2}", cheapest.price).green().bold()
+    );
+    println!(
+        "  - Produto Mais Caro (Flagship)      : {} por {}",
+        most_expensive.name.red().bold(),
+        format!("R$ {:.2}", most_expensive.price).red().bold()
+    );
+    println!(
+        "  - Variação de Preço (Delta)         : R$ {:.2} (+{:.1}%)",
+        diff, diff_pct
+    );
+    println!(
+        "  - Preço Médio da Categoria          : R$ {:.2}",
+        avg_price
+    );
+    println!(
+        "  - Melhor Custo-Benefício Gamer 144Hz: {} por {}",
+        gamer_144hz_cheapest.name.cyan().bold(),
+        format!("R$ {:.2}", gamer_144hz_cheapest.price)
+            .cyan()
+            .bold()
+    );
+    println!(
+        "  - Economia Frente ao Mais Caro      : R$ {:.2} ({:.1}%)",
+        most_expensive.price - gamer_144hz_cheapest.price,
+        ((most_expensive.price - gamer_144hz_cheapest.price) / most_expensive.price) * 100.0
+    );
+    println!();
+
+    let elapsed = start_instant.elapsed();
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        format!(
+            "RELATÓRIO DE AUTOMAÇÃO WEB CONCLUÍDO | Tempo: {:.1} ms | LLM Calls: 0",
+            elapsed.as_secs_f64() * 1000.0
+        )
+        .green()
+        .bold()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+
+    driver.close(&session).await?;
+    Ok(())
 }

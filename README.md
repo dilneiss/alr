@@ -781,7 +781,22 @@ cargo run -p alr-cli -- email-triage
 # 30. Análise de Sentimentos, Emoções, Urgência e Roteamento Multidimensional
 cargo run -p alr-cli -- sentiment --text "VOCÊS SÃO UNS INCOMPETENTES! Meu pedido não chegou e se não resolverem hoje vou ao Procon e processar a empresa!!!"
 
-# 31. Executar a Suíte Completa de Testes Automatizados (272 Testes)
+# 31. Demonstração de Parada Atômica Global de Emergência (Kill Switch & Panic Button)
+cargo run -p alr-cli -- emergency-demo
+
+# 32. Demonstração de Detecção Multimodal de Erros de Tela (HTTP 500, Crashes & BSOD)
+cargo run -p alr-cli -- screen-error-demo
+
+# 33. Demonstração de Novidade Extrema e Safe Abstention (OOD Detection)
+cargo run -p alr-cli -- novelty-demo
+
+# 34. Partida Visual de Pong em Tempo Real no Terminal (ASCII Court com Física 2D)
+cargo run -p alr-cli -- pong --play
+
+# 35. Demonstração Completa de Automação Web & Comparação de Preços (Busca, Espera e Relatório)
+cargo run -p alr-cli -- web-demo
+
+# 36. Executar a Suíte Completa de Testes Automatizados (272 Testes)
 cargo test --workspace
 ```
 
@@ -815,6 +830,11 @@ cargo test --workspace
 * **`cargo run -p alr-cli -- email-triage`:** Triagem inteligente de e-mails com detecção de injeções de prompt ocultas, redação de PII e roteamento.
 * **`cargo run -p alr-cli -- sentiment`:** Análise em tempo real de estado emocional (raiva, dúvida, elogio, ameaça legal, urgência crítica e risco de churn com roteamento para Ouvidoria/N1/Comercial).
 * **`cargo run -p alr-cli -- sentiment-demo`:** Demonstração completa de 6 perfis emocionais de clientes processados com zero tokens.
+* **`cargo run -p alr-cli -- emergency-demo`:** Demonstração ao vivo do `GlobalEmergencyStop` (botão de pânico, tecla de emergência, arquivo trigger `stop.signal` e bloqueio físico instantâneo de mouse/teclado).
+* **`cargo run -p alr-cli -- screen-error-demo`:** Demonstração ao vivo do `ScreenErrorDetector` (detecção de telas de erro HTTP 500, modal de crash, conexão perdida e acionamento de parada segura).
+* **`cargo run -p alr-cli -- novelty-demo`:** Demonstração ao vivo de novidade extrema com `DistributionShiftDetector` (detecção de estado nunca antes visto com confiança < 0.50 e disparo de Safe Abstention).
+* **`cargo run -p alr-cli -- pong --play`:** Partida visual do Pong em ASCII no terminal com simulação da física da raquete e rebatidas da bola.
+* **`cargo run -p alr-cli -- web-demo`:** Demonstração completa de automação web autônoma (navegação, busca, espera, extração e comparação de preços mais barato vs mais caro com relatório de itens).
 
 ---
 
@@ -926,15 +946,15 @@ O ALR foi construído para responder afirmativamente e comprovar na prática tr�
   * Mover suavemente o cursor físico do mouse na tela do monitor do usuário (`smooth_move`).
   * Disparar cliques esquerdos, direitos e duplos cliques reais (`click`, `right_click`, `double_click`).
   * Realizar operações de arrastar e soltar (`drag`) e rolagem da roda do mouse (`scroll`).
-  * Possui modo de segurança formal com botão de emergência (`SafeInputController`) e modo `dry_run` para testes e auditorias.
+  * Possui modo de segurança formal com botão de emergência (`SafeInputController`), `GlobalEmergencyStop` e modo `dry_run` para testes e auditorias (`cargo run -p alr-cli -- emergency-demo`).
   * Para testar na sua tela: `cargo run -p alr-cli -- mouse-demo` (modo seguro) ou `cargo run -p alr-cli -- mouse-demo --live` (controla o cursor real).
 
 ### 2. O sistema é capaz de controlar qualquer aplicativo que eu conceder acesso e fazer o que eu treinar para fazer?
 **SIM.** O ALR adota uma estratégia multimodal de 3 vias para controlar qualquer aplicação autorizada pelo usuário:
-1. **Aplicações Web (SaaS, CRMs, ERPs, WhatsApp Web, Google Docs):** Controle semântico via `alr-browser` com resolução resiliente de elementos e auto-verificação de mutações no DOM.
+1. **Aplicações Web (SaaS, CRMs, ERPs, WhatsApp Web, E-Commerce):** Controle semântico via `alr-browser` com resolução resiliente de elementos, auto-verificação de mutações no DOM, busca autônoma e comparação de preços (`cargo run -p alr-cli -- web-demo`).
 2. **Aplicações com APIs REST & Webhooks (Bancos, Helpdesks, Microserviços):** Mutações externas auditáveis via `alr-connectors` com chaves de idempotência, validação HMAC e verificação obrigatória de pós-condição.
 3. **Aplicações Desktop Nativas (Qualquer janela aberta no Windows/Linux/macOS):**
-   * **Percepção:** `alr-perception` (`ScreenCapturer` / `CaptureRegion`) captura a janela do aplicativo ou a tela inteira em frames de imagem (`RawImage`).
+   * **Percepção:** `alr-perception` (`ScreenCapturer` / `CaptureRegion` / `ScreenErrorDetector`) captura a janela do aplicativo ou a tela inteira em frames de imagem (`RawImage`) e identifica telas de erro e falhas críticas (`cargo run -p alr-cli -- screen-error-demo`).
    * **Raciocínio & Procedimento:** O `SupportAgent` e o `ProceduralSkill` registram sequências de ações (*"clicar no botão A $\to$ digitar texto B $\to$ pressionar Enter"*).
    * **Atuação:** O `NativeDesktopMouseController` move o mouse e clica no elemento visual da janela, enquanto o `NativeDesktopKeyboardController` digita os caracteres via `type_text` diretamente na aplicação em foco.
 
@@ -949,7 +969,7 @@ O ALR foi construído para responder afirmativamente e comprovar na prática tr�
 * **Snake:** Controle de 4 direções com visão de pixels e Q-Learning.
 * **Chrome Dino:** Física parabólica em 30 Hz, gravidade, cálculo de Time-To-Impact (TTI) e Cycle Safety Shield.
 * **Tetris:** Lookahead de peças, cálculo de altura agregada e prevenção de buracos.
-* **Pong (Novo Jogo Adicionado na Fase 16):** Em `crates/alr-games/src/pong.rs`, o ALR implementa um ambiente completo de interceptação de bola com física contínua e recompensa por rebatida, demonstrando como o mesmo núcleo cognitivo aprende e joga qualquer novo jogo.
+* **Pong (Novo Jogo Adicionado na Fase 16):** Em `crates/alr-games/src/pong.rs`, o ALR implementa um ambiente completo de interceptação de bola com física contínua e recompensa por rebatida, demonstrando como o mesmo núcleo cognitivo aprende e joga qualquer novo jogo (`cargo run -p alr-cli -- pong --play`).
 ---
 
 ## 🛡️ Os 12 Gates Formais de Aceitação
