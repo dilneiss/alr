@@ -206,6 +206,11 @@ enum Commands {
         #[arg(long, default_value_t = 3700)]
         port: u16,
     },
+    /// Demonstração de Controle Nativo de Mouse do Desktop (Windows/OS)
+    MouseDemo {
+        #[arg(long)]
+        live: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -1315,6 +1320,9 @@ async fn main() -> Result<()> {
         }
         Commands::InstallGuide { port } => {
             run_install_guide_server(port).await?;
+        }
+        Commands::MouseDemo { live } => {
+            run_mouse_demo(live)?;
         }
         Commands::FinalAcceptance => {
             println!(
@@ -4093,5 +4101,84 @@ async fn run_install_guide_server(port: u16) -> Result<()> {
     println!("  node scripts/launch_install_guide.js\n");
 
     axum::serve(listener, app).await?;
+    Ok(())
+}
+
+fn run_mouse_demo(live: bool) -> Result<()> {
+    use alr_execution::{MouseController, MouseCoordinates, NativeDesktopMouseController};
+    println!(
+        "{}",
+        "========================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "       ALR NATIVE DESKTOP MOUSE CONTROLLER DEMO          "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "========================================================="
+            .bold()
+            .blue()
+    );
+    let dry_run = !live;
+    if dry_run {
+        println!("{}", "[MODO SEGURO / DRY-RUN ATIVADO]".yellow());
+        println!(
+            "Para mover o cursor físico na tela em tempo real, execute: cargo run -p alr-cli -- mouse-demo --live\n"
+        );
+    } else {
+        println!(
+            "{}",
+            "[MODO LIVE ATIVADO - CONTROLANDO MOUSE FÍSICO DO COMPUTADOR]"
+                .green()
+                .bold()
+        );
+        println!("Aviso: O cursor do mouse se moverá na sua tela em 1 segundo!\n");
+        std::thread::sleep(std::time::Duration::from_millis(1000));
+    }
+
+    let controller = NativeDesktopMouseController::new(dry_run);
+    let start_pos = controller.get_position()?;
+    println!(
+        "[1/4] Posição Atual do Cursor: x={}, y={}",
+        start_pos.x, start_pos.y
+    );
+
+    let target1 = MouseCoordinates {
+        x: (start_pos.x + 80).max(10),
+        y: (start_pos.y + 80).max(10),
+    };
+    println!(
+        "[2/4] Movendo cursor suavemente para: x={}, y={}",
+        target1.x, target1.y
+    );
+    controller.smooth_move(target1, 15, 10)?;
+
+    let target2 = MouseCoordinates {
+        x: (start_pos.x - 40).max(10),
+        y: (start_pos.y + 40).max(10),
+    };
+    println!(
+        "[3/4] Movendo cursor para segundo alvo: x={}, y={}",
+        target2.x, target2.y
+    );
+    controller.smooth_move(target2, 15, 10)?;
+
+    println!(
+        "[4/4] Retornando cursor à posição inicial: x={}, y={}",
+        start_pos.x, start_pos.y
+    );
+    controller.smooth_move(start_pos, 15, 10)?;
+
+    println!(
+        "{}",
+        "\n[OK] Teste de Controle de Mouse concluído com sucesso!"
+            .green()
+            .bold()
+    );
     Ok(())
 }

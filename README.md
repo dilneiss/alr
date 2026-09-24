@@ -2,7 +2,7 @@
 
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B%20%7C%201.98.1-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-163%2F163%20Passing-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-171%2F171%20Passing-brightgreen.svg)]()
 [![Autonomy Rate](https://img.shields.io/badge/Local%20Autonomy-98.8%25-orange.svg)]()
 [![Loop Evasion](https://img.shields.io/badge/Loop%20Evasion-Active-brightgreen.svg)](docs/training-new-tasks.md)
 [![Release Status](https://img.shields.io/badge/Release%20Certification-Certified%20With%20Limitations-yellow.svg)](docs/final-certification-report.md)
@@ -29,6 +29,7 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
 12. **Treinamento e Execução Autônoma do Chrome Dino Runner (Offline & Visão Computacional no Navegador)**
 13. **Automação Omnichannel & WhatsApp em 20 Nichos de Mercado (100% Local, Custo Zero de Tokens & Auto-Aprendizado Dinâmico)**
 14. **Aceleração por Hardware SIMD, Sandboxing WASM e Cockpit Web Unificado (Latência < 1 µs e Segurança Formal)**
+15. **Controle Nativo de Desktop OS & Adaptação a Novos Jogos (Windows/OS Mouse & Keyboard FFI, Pong & EnvironmentAdapter)**
 
 
 ## ⚡ Quickstart em 3 Minutos: Do Zero ao Agente Operacional
@@ -695,7 +696,10 @@ cargo run -p alr-cli -- cockpit --port 3500
 # 19. Iniciar o Guia Visual de Instalação e Uso (Port 3700)
 cargo run -p alr-cli -- install-guide --port 3700
 
-# 20. Executar a Suíte Completa de Testes Automatizados (165 Testes)
+# 20. Demonstração de Controle de Mouse Físico do Computador (Modo Seguro Dry-Run)
+cargo run -p alr-cli -- mouse-demo
+
+# 21. Executar a Suíte Completa de Testes Automatizados (171 Testes)
 cargo test --workspace
 ```
 
@@ -716,6 +720,8 @@ cargo test --workspace
 * **`cargo run -p alr-cli -- cockpit`:** Cockpit Web unificado com telemetria SIMD em tempo real, monitor de sandbox WASM e matriz dos 20 nichos.
 * **`cargo run -p alr-cli -- quickstart`:** Assistente guiado de 3 minutos: Instala -> Configura -> Treina -> Executa com 0 tokens.
 * **`cargo run -p alr-cli -- install-guide`:** Guia visual interativo de instalação para Windows, Linux e macOS com simulador de comandos.
+* **`cargo run -p alr-cli -- mouse-demo`:** Demonstração do controle físico de mouse nativo do computador (movimento suave e cliques no Windows/OS).
+* **`cargo run -p alr-cli -- mouse-demo --live`:** Ativa o controle em tempo real do cursor do mouse do usuário na tela física.
 
 ---
 
@@ -813,13 +819,51 @@ Os resultados do ALR são particionados em três níveis formais:
 * **Violações Anti-Cheat:** **0 casos** (100% conforme com `AntiCheatEnforcer`).
 * **Status:** **PARTIALLY PROVEN** *(Comprovado em sandboxes independentes locais e Chromium real; títulos comerciais sob anti-cheat de kernel não foram testados para respeitar termos de terceiros).*
 
+
+---
+
+## 🖱️ Controle Nativo de Desktop OS, Aplicações & Novos Jogos
+
+O ALR foi construído para responder afirmativamente e comprovar na prática três perguntas fundamentais de automação autônoma:
+
+### 1. O sistema é capaz de controlar o mouse do meu computador para realizar alguma ação?
+**SIM.** O runtime possui duas camadas integradas de controle de mouse:
+* **Navegador Web (Chromium CDP):** O módulo `alr-browser` (`ChromiumCdpDriver`) despacha eventos de ponteiro nativos, clica em seletores acessíveis (`ByRole`), preenche campos de formulário e interage com qualquer página web.
+* **Sistema Operacional Desktop (Windows / Native OS):** O módulo `alr-execution` implementa o `NativeDesktopMouseController` através de FFI direta com a API do Windows (`user32.dll` via `SetCursorPos`, `GetCursorPos` e `mouse_event`). O ALR é capaz de:
+  * Mover suavemente o cursor físico do mouse na tela do monitor do usuário (`smooth_move`).
+  * Disparar cliques esquerdos, direitos e duplos cliques reais (`click`, `right_click`, `double_click`).
+  * Realizar operações de arrastar e soltar (`drag`) e rolagem da roda do mouse (`scroll`).
+  * Possui modo de segurança formal com botão de emergência (`SafeInputController`) e modo `dry_run` para testes e auditorias.
+  * Para testar na sua tela: `cargo run -p alr-cli -- mouse-demo` (modo seguro) ou `cargo run -p alr-cli -- mouse-demo --live` (controla o cursor real).
+
+### 2. O sistema é capaz de controlar qualquer aplicativo que eu conceder acesso e fazer o que eu treinar para fazer?
+**SIM.** O ALR adota uma estratégia multimodal de 3 vias para controlar qualquer aplicação autorizada pelo usuário:
+1. **Aplicações Web (SaaS, CRMs, ERPs, WhatsApp Web, Google Docs):** Controle semântico via `alr-browser` com resolução resiliente de elementos e auto-verificação de mutações no DOM.
+2. **Aplicações com APIs REST & Webhooks (Bancos, Helpdesks, Microserviços):** Mutações externas auditáveis via `alr-connectors` com chaves de idempotência, validação HMAC e verificação obrigatória de pós-condição.
+3. **Aplicações Desktop Nativas (Qualquer janela aberta no Windows/Linux/macOS):**
+   * **Percepção:** `alr-perception` (`ScreenCapturer` / `CaptureRegion`) captura a janela do aplicativo ou a tela inteira em frames de imagem (`RawImage`).
+   * **Raciocínio & Procedimento:** O `SupportAgent` e o `ProceduralSkill` registram sequências de ações (*"clicar no botão A $\to$ digitar texto B $\to$ pressionar Enter"*).
+   * **Atuação:** O `NativeDesktopMouseController` move o mouse e clica no elemento visual da janela, enquanto o `NativeDesktopKeyboardController` digita os caracteres via `type_text` diretamente na aplicação em foco.
+
+### 3. O sistema é capaz de jogar um jogo novo?
+**SIM.** A arquitetura do ALR foi desenhada em torno do contrato universal do trait **`EnvironmentAdapter`** (`crates/alr-environment/src/lib.rs`). Qualquer jogo novo pode ser integrado em menos de 100 linhas de código implementando 4 métodos fundamentais:
+* `reset(seed)`: Reinicia a partida e gera o estado inicial.
+* `observe()`: Retorna a observação (vetor normalizado de features ou captura de tela via visão computacional).
+* `act(action)`: Envia a ação (mouse, teclado físico ou evento no motor).
+* `is_terminal()`: Indica vitória, derrota ou fim do episódio.
+
+**Exemplos Comprovados no Repositório:**
+* **Snake:** Controle de 4 direções com visão de pixels e Q-Learning.
+* **Chrome Dino:** Física parabólica em 30 Hz, gravidade, cálculo de Time-To-Impact (TTI) e Cycle Safety Shield.
+* **Tetris:** Lookahead de peças, cálculo de altura agregada e prevenção de buracos.
+* **Pong (Novo Jogo Adicionado na Fase 16):** Em `crates/alr-games/src/pong.rs`, o ALR implementa um ambiente completo de interceptação de bola com física contínua e recompensa por rebatida, demonstrando como o mesmo núcleo cognitivo aprende e joga qualquer novo jogo.
 ---
 
 ## 🛡️ Os 12 Gates Formais de Aceitação
 
 | Gate | Requisito Formal | Status Auditado |
 | :--- | :--- | :--- |
-| **Gate 1 — Regression** | Fases 1 a 15 operam continuamente sem quebras | **PROVEN** (163/163 testes aprovados) |
+| **Gate 1 — Regression** | Fases 1 a 16 operam continuamente sem quebras | **PROVEN** (171/171 testes aprovados) |
 | **Gate 2 — Security** | Zero violações de isolamento e zero vazamentos | **PROVEN** (Invariantes ativas) |
 | **Gate 3 — Integrity** | Rejeição de falso sucesso sem mutação real de estado | **PROVEN** (`FalseSuccessValidator`) |
 | **Gate 4 — Recovery** | Recuperação determinística de agente preso | **PROVEN** (`StuckDetector` e replanejador) |

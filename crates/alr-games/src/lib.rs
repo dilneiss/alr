@@ -3,6 +3,8 @@ pub use dino::{
     ChromeDinoEnvironment, DinoAction, DinoBenchmarkReport, DinoBenchmarkRunner, DinoObservation,
     DinoObstacle, DinoQTrainer, DinoStepResult, ObstacleType,
 };
+pub mod pong;
+pub use pong::{PongAction, PongGameEnvironment};
 
 use anyhow::Result;
 use async_trait::async_trait;
