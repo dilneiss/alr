@@ -31,8 +31,8 @@ use alr_llm::{LlmTeacher, MockLlmTeacher};
 use alr_mcp::{McpContext, McpServer};
 use alr_memory::{
     Bm25SparseVectorizer, HighDimensionalEmbeddingProvider, IngestionDoc, IngestionPipeline,
-    MockEmbeddingProvider, MockSemanticMemoryStore, QdrantSemanticMemoryStore, SemanticMemory,
-    SemanticMemoryStore, SemanticMemoryType, SemanticQuery, SqliteMemoryStore,
+    MockSemanticMemoryStore, QdrantSemanticMemoryStore, SemanticMemory, SemanticMemoryStore,
+    SemanticMemoryType, SemanticQuery, SqliteMemoryStore,
 };
 use alr_models::{
     DataSplit, DistillationPipeline, DistributionShiftDetector, ExperienceDataset,
@@ -1981,10 +1981,10 @@ fn seed_support_database(db: &SupportDatabase, count: usize) {
 
 async fn ingest_support_knowledge(tenant_id: &str) -> Result<()> {
     let qdrant = QdrantSemanticMemoryStore::from_env();
-    let embedder = MockEmbeddingProvider::new(64);
+    let embedder = HighDimensionalEmbeddingProvider::openai_1536();
     let pipeline = IngestionPipeline::default();
 
-    let _ = qdrant.ensure_collection(64).await;
+    let _ = qdrant.ensure_collection(1536).await;
 
     pipeline
         .ingest_document(
@@ -2018,7 +2018,7 @@ async fn ingest_support_knowledge(tenant_id: &str) -> Result<()> {
 }
 
 fn setup_support_agent_tools<L: LlmTeacher>(agent: &mut SupportAgent<L>, db: &SupportDatabase) {
-    let embedder = Arc::new(MockEmbeddingProvider::new(64));
+    let embedder = Arc::new(HighDimensionalEmbeddingProvider::openai_1536());
     let qdrant = Arc::new(QdrantSemanticMemoryStore::from_env());
 
     agent.register_tool(Box::new(GetCustomerTool { db: db.clone() }));

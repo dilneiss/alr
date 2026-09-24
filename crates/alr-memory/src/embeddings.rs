@@ -17,7 +17,9 @@ pub struct MockEmbeddingProvider {
 
 impl Default for MockEmbeddingProvider {
     fn default() -> Self {
-        Self { dimension: 64 }
+        Self {
+            dimension: DIM_OPENAI_SMALL,
+        }
     }
 }
 
@@ -133,7 +135,7 @@ pub struct HighDimensionalEmbeddingProvider {
 
 impl Default for HighDimensionalEmbeddingProvider {
     fn default() -> Self {
-        Self::bge_small_384()
+        Self::openai_1536()
     }
 }
 

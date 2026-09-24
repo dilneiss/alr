@@ -267,9 +267,29 @@ impl QdrantSemanticMemoryStore {
             .request_builder(reqwest::Method::GET, &path)
             .send()
             .await?;
-
         if check_res.status().is_success() {
-            return Ok(());
+            if let Ok(info_json) = check_res.json::<serde_json::Value>().await {
+                let existing_dim = info_json["result"]["config"]["params"]["vectors"]["size"]
+                    .as_u64()
+                    .or_else(|| {
+                        info_json["result"]["config"]["params"]["vectors"][""]["size"].as_u64()
+                    });
+                if let Some(dim) = existing_dim {
+                    if dim != dimension as u64 {
+                        // Dimension mismatch: recreate collection with target dimension
+                        let _ = self
+                            .request_builder(reqwest::Method::DELETE, &path)
+                            .send()
+                            .await;
+                    } else {
+                        return Ok(());
+                    }
+                } else {
+                    return Ok(());
+                }
+            } else {
+                return Ok(());
+            }
         }
 
         let mut body = json!({

@@ -9,7 +9,7 @@
 use crate::procedural::{ProceduralSkill, ProceduralStep};
 use crate::support_state::SupportIntent;
 use alr_core::KnowledgeStatus;
-use alr_memory::{EmbeddingProvider, MockEmbeddingProvider, SemanticMemoryStore};
+use alr_memory::{EmbeddingProvider, HighDimensionalEmbeddingProvider, SemanticMemoryStore};
 use alr_models::{TypedJudge, TypedQuestion};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
@@ -501,7 +501,7 @@ impl ProductCategorizerEngine {
     /// Creates a new categorizer engine with standard taxonomy and rules
     pub fn new() -> Self {
         let taxonomy = ProductTaxonomy::default_ecommerce();
-        let embedding_provider = Arc::new(MockEmbeddingProvider::new(64));
+        let embedding_provider = Arc::new(HighDimensionalEmbeddingProvider::openai_1536());
         let mut engine = Self {
             taxonomy,
             deterministic_rules: Vec::new(),

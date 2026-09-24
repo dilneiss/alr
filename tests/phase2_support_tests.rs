@@ -5,7 +5,7 @@ use alr_agent::{
 use alr_core::Ticket;
 use alr_llm::{LlmTeacher, MockLlmTeacher};
 use alr_memory::{
-    EmbeddingProvider, IngestionDoc, IngestionPipeline, MockEmbeddingProvider,
+    EmbeddingProvider, HighDimensionalEmbeddingProvider, IngestionDoc, IngestionPipeline,
     MockSemanticMemoryStore, QdrantSemanticMemoryStore, SemanticMemory, SemanticMemoryStore,
     SemanticMemoryType, SemanticQuery, SqliteMemoryStore,
 };
@@ -16,7 +16,7 @@ use std::sync::Arc;
 #[tokio::test]
 async fn test_semantic_retrieval_returns_relevant_policy() {
     let store = MockSemanticMemoryStore::new();
-    let embedder = MockEmbeddingProvider::new(64);
+    let embedder = HighDimensionalEmbeddingProvider::openai_1536();
     let pipeline = IngestionPipeline::default();
 
     let tenant = "tenant_test_1";
@@ -79,7 +79,7 @@ async fn test_semantic_retrieval_returns_relevant_policy() {
 #[tokio::test]
 async fn test_tenant_isolation_in_semantic_memory() {
     let store = MockSemanticMemoryStore::new();
-    let embedder = MockEmbeddingProvider::new(64);
+    let embedder = HighDimensionalEmbeddingProvider::openai_1536();
 
     let vec_a = embedder
         .embed(&["Documento confidencial do Tenant Alpha".to_string()])
@@ -266,9 +266,9 @@ fn test_prompt_injection_resistance() {
 #[tokio::test]
 async fn test_real_qdrant_e2e_integration() {
     let qdrant = QdrantSemanticMemoryStore::from_env();
-    let embedder = MockEmbeddingProvider::new(64);
+    let embedder = HighDimensionalEmbeddingProvider::openai_1536();
 
-    if qdrant.ensure_collection(64).await.is_err() {
+    if qdrant.ensure_collection(1536).await.is_err() {
         eprintln!("Skipping live Qdrant test: Qdrant service not reachable at localhost:6333");
         return;
     }

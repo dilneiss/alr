@@ -6,7 +6,7 @@ use alr_agent::{
 };
 use alr_core::KnowledgeStatus;
 use alr_memory::{
-    EmbeddingProvider, IngestionDoc, IngestionPipeline, MockEmbeddingProvider,
+    EmbeddingProvider, HighDimensionalEmbeddingProvider, IngestionDoc, IngestionPipeline,
     MockSemanticMemoryStore, RetrievalEvaluator, RetrievalTestCase, SemanticMemory,
     SemanticMemoryStore, SemanticMemoryType, SemanticQuery,
 };
@@ -16,7 +16,7 @@ use std::time::Duration;
 /// 1. REAL EMBEDDING PROVIDER & SEMANTIC GENERALIZATION
 #[tokio::test]
 async fn test_real_embedding_semantic_generalization() {
-    let embedder = MockEmbeddingProvider::new(64);
+    let embedder = HighDimensionalEmbeddingProvider::openai_1536();
     let store = MockSemanticMemoryStore::new();
 
     let tenant = "tenant_semantic_gen";
@@ -77,7 +77,7 @@ async fn test_real_embedding_semantic_generalization() {
 /// 2. RETRIEVAL EVALUATOR & HOLDOUT ACCURACY (Hit@1, Hit@3, Hit@5, MRR)
 #[tokio::test]
 async fn test_retrieval_holdout_accuracy() {
-    let embedder = MockEmbeddingProvider::new(64);
+    let embedder = HighDimensionalEmbeddingProvider::openai_1536();
     let store = MockSemanticMemoryStore::new();
     let tenant = "tenant_eval";
     let pipeline = IngestionPipeline::default();
@@ -190,7 +190,7 @@ fn test_retrieved_document_cannot_execute_commands() {
 #[tokio::test]
 async fn test_cross_tenant_isolation_v2() {
     let store = MockSemanticMemoryStore::new();
-    let embedder = MockEmbeddingProvider::new(64);
+    let embedder = HighDimensionalEmbeddingProvider::openai_1536();
 
     let vec_a = embedder
         .embed(&["Tenant Alpha confidential financial policy".to_string()])
