@@ -86,6 +86,26 @@ impl SecretRedactor {
 
         sanitized
     }
+
+    pub fn redact_pii(text: &str) -> String {
+        let mut sanitized = Self::redact_text(text);
+        let patterns = [
+            (r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b", "[REDACTED_CPF]"),
+            (r"\b\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}\b", "[REDACTED_CNPJ]"),
+            (
+                r"\b\d{4}[ -]?\d{4}[ -]?\d{4}[ -]?\d{4}\b",
+                "[REDACTED_CARD]",
+            ),
+        ];
+
+        for (pat, repl) in patterns {
+            if let Ok(re) = regex::Regex::new(pat) {
+                sanitized = re.replace_all(&sanitized, repl).to_string();
+            }
+        }
+
+        sanitized
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]

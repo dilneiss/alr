@@ -1,9 +1,14 @@
+pub mod attributes;
 pub mod capture;
 pub mod error_detector;
 pub mod image;
 pub mod perception_3d;
 pub mod snake;
 
+pub use attributes::{
+    BackgroundType, ColorSwatch, DetectedShape, ExtractedVisualAttributes, ImageColorProfile,
+    ImageDimensions, VisualAttributeExtractor,
+};
 pub use capture::{CaptureRegion, ScreenCapturer, SimulatedScreenCapturer};
 pub use error_detector::{ErrorScreenType, ScreenErrorDetector, ScreenErrorVerdict};
 pub use image::{RawImage, RgbaColor};

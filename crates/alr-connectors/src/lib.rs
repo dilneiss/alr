@@ -1,5 +1,6 @@
 pub mod approvals;
 pub mod connector;
+pub mod email;
 pub mod provider;
 pub mod resilience;
 pub mod rest;
@@ -11,6 +12,10 @@ pub use approvals::{ApprovalGateway, ApprovalRequest, ApprovalStatus};
 pub use connector::{
     AllowedHostPolicy, ConnectorAction, ConnectorCapability, ConnectorContext, ConnectorId,
     ConnectorResult, ConnectorRiskLevel, ExternalConnector,
+};
+pub use email::{
+    EmailAttachment, EmailCategory, EmailSentiment, EmailTriageProcessor, EmailTriageVerdict,
+    EmailUrgency, ExtractedEntities, InboundEmail, TrustBoundaryEnforcer,
 };
 pub use provider::{ExternalServiceProvider, HelpdeskSaaSConnector};
 pub use resilience::{CircuitBreaker, CircuitState};

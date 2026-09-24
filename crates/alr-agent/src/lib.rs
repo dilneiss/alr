@@ -1,4 +1,5 @@
 pub mod browser_agent;
+pub mod categorizer;
 pub mod conflict;
 pub mod learning;
 pub mod r#loop;
@@ -21,6 +22,11 @@ pub mod tools;
 pub mod trust;
 
 pub use browser_agent::{BrowserAgent, BrowserSkill, BrowserSkillStep};
+pub use categorizer::{
+    cosine_similarity, BatchCategorizationReport, CategoryClassificationResult, CategoryDefinition,
+    ClassificationMethod, CrystallizedCategorySkill, CrystallizedSkillStore, DeterministicRule,
+    ProductCatalogItem, ProductCategorizerEngine, ProductTaxonomy, TaxonomyNode,
+};
 pub use conflict::{ConflictResolutionStrategy, PolicyConflictEngine};
 pub use niche::{BusinessNiche, NicheDefinition, NicheRegistry};
 pub use orchestration::EpisodeOrchestrator;
