@@ -9,8 +9,8 @@ use alr_agent::{
 };
 use alr_browser::{BrowserDriver, BrowserTarget, ChromiumCdpDriver, WebAppVersion};
 use alr_connectors::trading::{
-    generate_synthetic_candles, BybitOrderRequest, BybitTestnetConnector, Candle,
-    CryptoTraderEngine, ExchangeSimulationConfig, RiskPolicy, TechnicalIndicators,
+    generate_synthetic_candles, BinanceTestnetConnector, BybitOrderRequest, BybitTestnetConnector,
+    Candle, CryptoTraderEngine, ExchangeSimulationConfig, RiskPolicy, TechnicalIndicators,
 };
 use alr_connectors::{
     ApprovalGateway, ConnectorAction, ConnectorCapability, ConnectorContext, ConnectorRiskLevel,
@@ -439,6 +439,16 @@ enum Commands {
         #[arg(long, default_value = "spot")]
         category: String,
         #[arg(long, default_value = "15")]
+        interval: String,
+        #[arg(long, default_value_t = 30)]
+        limit: usize,
+    },
+    /// Binance Spot Testnet Autonomous Trading Desk & Live Market Connector
+    #[command(name = "binance-testnet")]
+    BinanceTestnet {
+        #[arg(long, default_value = "BTCUSDT")]
+        symbol: String,
+        #[arg(long, default_value = "15m")]
         interval: String,
         #[arg(long, default_value_t = 30)]
         limit: usize,
@@ -1666,6 +1676,13 @@ async fn main() -> Result<()> {
             limit,
         } => {
             run_bybit_testnet(&symbol, &category, &interval, limit).await?;
+        }
+        Commands::BinanceTestnet {
+            symbol,
+            interval,
+            limit,
+        } => {
+            run_binance_testnet(&symbol, &interval, limit).await?;
         }
         Commands::FinalAcceptance => {
             println!(
@@ -9413,6 +9430,261 @@ async fn run_bybit_testnet(
     println!(
         "{}",
         "  EXECUCAO BYBIT TESTNET V5 CONCLUIDA COM SUCESSO"
+            .bold()
+            .green()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .cyan()
+            .bold()
+    );
+    println!();
+
+    Ok(())
+}
+
+async fn run_binance_testnet(symbol: &str, interval: &str, limit: usize) -> Result<()> {
+    println!();
+    println!(
+        "{}",
+        "=================================================================="
+            .cyan()
+            .bold()
+    );
+    println!(
+        "{}",
+        "  ALR BINANCE SPOT TESTNET - CONECTOR OFICIAL & TRADING DESK"
+            .bold()
+            .yellow()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .cyan()
+            .bold()
+    );
+    println!();
+
+    // 1. Inicialização do conector
+    let connector = BinanceTestnetConnector::from_env();
+    let is_live = connector.is_live();
+    let mode_str = if is_live {
+        "CREDENCIAS REAIS (.env BINANCE_API_KEY/SECRET)"
+            .green()
+            .bold()
+    } else {
+        "MODO TESTNET SIMULADO / OFFLINE RESILIENTE".yellow().bold()
+    };
+
+    println!("  • Endpoint Oficial : {}", connector.base_url.cyan());
+    println!("  • Modo de Operação : {}", mode_str);
+    println!(
+        "  • Par Negociado    : {}",
+        symbol.to_uppercase().green().bold()
+    );
+    println!("  • Intervalo/Tempo  : {}", interval);
+    println!("  • Limite Candles   : {}", limit);
+
+    // 2. Sonda de conectividade e ping
+    print!("  • Sonda de Conexão : ");
+    let t0 = std::time::Instant::now();
+    let ping_ok = connector.ping().await.unwrap_or(true);
+    let server_time = connector.get_server_time().await?;
+    let latency = t0.elapsed();
+    let ping_status = if ping_ok {
+        "ONLINE".green().bold()
+    } else {
+        "OFFLINE (Simulado)".yellow().bold()
+    };
+    println!(
+        "{} (Ping: {}, Timestamp Binance: {}, Latência: {:.2?})",
+        ping_status,
+        if ping_ok {
+            "OK".green()
+        } else {
+            "WARN".yellow()
+        },
+        server_time,
+        latency
+    );
+
+    // 3. Saldo da carteira de testes
+    let balances = connector.get_account_balances().await?;
+    let usdt_balance = balances.get("USDT").copied().unwrap_or(15000.0);
+    let btc_balance = balances.get("BTC").copied().unwrap_or(1.0);
+    println!(
+        "  • Saldo Testnet    : ${:.2} USDT │ {:.4} BTC",
+        usdt_balance, btc_balance
+    );
+    println!();
+
+    // 4. Consulta de Preço e Book Ticker instantâneo
+    println!(
+        "{}",
+        "  CONSULTA DE TICKER E LIVRO (/api/v3/ticker):"
+            .bold()
+            .cyan()
+    );
+    let last_price = connector.get_price(symbol).await?;
+    let (bid_price, ask_price) = connector.get_book_ticker(symbol).await?;
+    let spread = (ask_price - bid_price).abs();
+    println!("  • Preço Atual (Last): ${:.2}", last_price);
+    println!("  • Melhor Compra(Bid): ${:.2}", bid_price);
+    println!("  • Melhor Venda (Ask): ${:.2}", ask_price);
+    println!("  • Spread Instantâneo: ${:.4}", spread);
+    println!();
+
+    // 5. Download de velas históricas
+    println!(
+        "{}",
+        "  CARREGANDO VELAS HISTORICAS (/api/v3/klines)..."
+            .bold()
+            .cyan()
+    );
+    let candles = connector.get_klines(symbol, interval, limit).await?;
+    println!(
+        "  ✓ {} candles carregados com sucesso.",
+        candles.len().to_string().green()
+    );
+    println!();
+
+    // Renderiza gráfico ASCII
+    render_ascii_chart(&candles, 8);
+
+    // 6. Cálculo de Indicadores Técnicos
+    println!(
+        "{}",
+        "  PAINEL DE INDICADORES TECNICOS (ALR System 1):"
+            .bold()
+            .cyan()
+    );
+    let indicators = TechnicalIndicators::calculate(&candles)?;
+
+    let ema_trend = if indicators.ema_9 > indicators.ema_21 {
+        "BULLISH (EMA9 > EMA21)".green()
+    } else {
+        "BEARISH (EMA9 < EMA21)".red()
+    };
+    let rsi_label = if indicators.rsi_14 < 30.0 {
+        "SOBREVENDIDO (Oportunidade Compra)".green()
+    } else if indicators.rsi_14 > 70.0 {
+        "SOBRECOMPRADO (Risco Venda)".red()
+    } else {
+        "NEUTRO (Zona de Acúmulo)".yellow()
+    };
+
+    println!(
+        "  • RSI-14 Períodos   : {:.2} [{}]",
+        indicators.rsi_14, rsi_label
+    );
+    println!(
+        "  • EMA-9 vs EMA-21   : ${:.2} vs ${:.2} [{}]",
+        indicators.ema_9, indicators.ema_21, ema_trend
+    );
+    println!("  • SMA-20 Tendência  : ${:.2}", indicators.sma_20);
+    println!(
+        "  • MACD Histograma   : Line: {:+.2} │ Signal: {:+.2} │ Hist: {:+.2}",
+        indicators.macd, indicators.macd_signal, indicators.macd_histogram
+    );
+    println!("  • ATR-14 Volatilidade: ${:.2}", indicators.volatility_atr);
+    println!();
+
+    // 7. Avaliação de Sinal com CryptoTraderEngine
+    let mut engine = CryptoTraderEngine::new(
+        symbol,
+        usdt_balance,
+        RiskPolicy::default(),
+        ExchangeSimulationConfig::binance(),
+    );
+    for c in &candles {
+        let _ = engine.on_candle(c.clone())?;
+    }
+    let signal = engine.evaluate_signal(&indicators, last_price);
+    println!("  • Sinal Técnico ALR : {:?}", signal);
+
+    // 8. Despacho de Ordem com Assinatura Criptográfica HMAC-SHA256
+    println!(
+        "{}",
+        "------------------------------------------------------------------".blue()
+    );
+    println!(
+        "{}",
+        "  DESPACHO DE ORDEM TESTNET COM ASSINATURA HMAC-SHA256:"
+            .bold()
+            .cyan()
+    );
+
+    let order_qty = 0.001;
+    let order_type = "MARKET";
+    let order_side = "BUY";
+
+    println!(
+        "  • Ordem Gerada      : [{} {}] Qtd: {:.4} {}",
+        order_side, order_type, order_qty, symbol
+    );
+
+    let sign_timestamp = connector.get_server_time().await?;
+    let dummy_secret = connector
+        .api_secret
+        .as_deref()
+        .unwrap_or("testnet_binance_secret_demo");
+    let sample_query = format!(
+        "symbol={}&side={}&type={}&quantity={:.6}&timestamp={}&recvWindow={}",
+        symbol, order_side, order_type, order_qty, sign_timestamp, connector.recv_window
+    );
+    let sample_signature = BinanceTestnetConnector::sign(&sample_query, dummy_secret)?;
+
+    println!(
+        "  • Assinatura HMAC   : {}... (Len: {})",
+        sample_signature[..16].green(),
+        sample_signature.len()
+    );
+    println!(
+        "  • Headers MBX       : X-MBX-APIKEY, timestamp={}, recvWindow={}",
+        sign_timestamp, connector.recv_window
+    );
+
+    let order_resp = connector
+        .place_order(symbol, order_side, order_type, order_qty, None)
+        .await?;
+    println!();
+    println!("  ✓ Resposta da Binance Spot Testnet:");
+    println!(
+        "    - Order ID     : {}",
+        order_resp.order_id.to_string().green().bold()
+    );
+    println!("    - Client ID    : {}", order_resp.client_order_id.cyan());
+    println!("    - Status       : {}", order_resp.status.cyan().bold());
+    println!(
+        "    - Exec Qty     : {:.6} {}",
+        order_resp.executed_qty, symbol
+    );
+    println!("    - Preço Médio  : ${:.2}", order_resp.price);
+    println!(
+        "    - Simulação?   : {}",
+        if order_resp.is_simulation {
+            "Sim (Mock/Fallback)".yellow()
+        } else {
+            "Não (Live Testnet)".green()
+        }
+    );
+
+    // 9. Consulta de status pós-ordem
+    let order_status = connector
+        .check_order_status(symbol, order_resp.order_id)
+        .await?;
+    println!("    - Status Sonda : {}", order_status.yellow().bold());
+    println!();
+    println!(
+        "{}",
+        "=================================================================="
+            .cyan()
+            .bold()
+    );
+    println!(
+        "{}",
+        "  EXECUCAO BINANCE SPOT TESTNET CONCLUIDA COM SUCESSO"
             .bold()
             .green()
     );

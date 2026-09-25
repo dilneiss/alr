@@ -27,7 +27,8 @@ pub use secrets::{
 };
 pub use tasks::{AgentCheckpoint, AgentTask, TaskPriority, TaskQueue, TaskStatus};
 pub use trading::{
-    generate_synthetic_candles, parse_bybit_kline_response, BybitOrderRequest, BybitOrderResponse,
+    generate_synthetic_candles, parse_binance_kline_response, parse_bybit_kline_response,
+    BinanceOrderResponse, BinanceTestnetConnector, BybitOrderRequest, BybitOrderResponse,
     BybitTestnetConnector, BybitTicker, Candle, CandleTick, CryptoTraderEngine,
     ExchangeSimulationConfig, OrderBook, OrderSide, RiskControlPolicy, RiskPolicy,
     TechnicalIndicators, TradeExecution, TradeExecutionReport, TradingAction, TradingPosition,
