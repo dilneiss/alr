@@ -3,6 +3,7 @@ pub mod categorizer;
 pub mod conflict;
 pub mod learning;
 pub mod r#loop;
+pub mod marketing_ops;
 pub mod niche;
 pub mod orchestration;
 pub mod planner_3d;
@@ -29,6 +30,19 @@ pub use categorizer::{
     ProductCatalogItem, ProductCategorizerEngine, ProductTaxonomy, TaxonomyNode,
 };
 pub use conflict::{ConflictResolutionStrategy, PolicyConflictEngine};
+pub use marketing_ops::{
+    AdFormat, AdPromise, AdsConvertingTerm, AnchorType, CannibalizationAction,
+    CannibalizationDetector, CannibalizationReport, CannibalizationSeverity, CitationAnalysis,
+    CitationChecker, CitationSentiment, CompetitorCitationReport, CompetitorCitationTracker,
+    CompetitorSoV, ContentFormatRecommendation, ContentOpportunityItem, ConvertingTermsGapFinder,
+    ConvertingTermsGapReport, CreativeTagging, CreativeTaggingResult, EngineCitationInput,
+    GapPriority, GateStatus, GeoAggregatedReport, HookType, IndexedPage, InternalLinkDecision,
+    InternalLinkMap, InternalPageDoc, LandingPageContent, LandingPageMatch, LandingPageMatchResult,
+    LlmAuditEntry, LlmEngine, MarketingOpsEngine, MarketingSuiteDemoReport, MatchStatus,
+    NegativeMatchPattern, OfferType, PageContentInput, PageSeoProfile, SearchIntentCategory,
+    SearchTermTriage, SearchTermTriageResult, TargetAudience, ThinPageGate, ThinPageGateVerdict,
+    TopicalRelationship, TriageAction,
+};
 pub use niche::{BusinessNiche, NicheDefinition, NicheRegistry};
 pub use orchestration::EpisodeOrchestrator;
 pub use planner_3d::{

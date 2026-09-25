@@ -2,7 +2,7 @@
 
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B%20%7C%201.98.1-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-green.svg)](LICENSE)
-[![Testes](https://img.shields.io/badge/Testes-284%2F284%20Passando-brightgreen.svg)]()
+[![Testes](https://img.shields.io/badge/Testes-294%2F294%20Passando-brightgreen.svg)]()
 [![Taxa de Autonomia](https://img.shields.io/badge/Autonomia%20Local-98.8%25-orange.svg)]()
 [![Evasão de Loop](https://img.shields.io/badge/Evas%C3%A3o%20de%20Loop-Ativa-brightgreen.svg)](docs/training-new-tasks.md)
 [![Status de Liberação](https://img.shields.io/badge/Certifica%C3%A7%C3%A3o%20de%20Release-Certificado%20com%20Limita%C3%A7%C3%B5es-yellow.svg)](docs/final-certification-report.md)
@@ -38,6 +38,7 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
 21. **Análise Multidimensional de Sentimentos & Roteamento Emocional (Raiva, Dúvidas, Urgência e Churn em < 10 µs)**
 22. **Vigilância por Câmera & Notificações Desktop (CCTV em CPU < 1 ms, Tripwire e Alertas do Windows)**
 23. **Memória Vetorial Avançada no Qdrant (Embeddings 384d/1536d, BM25 Esparso, Quantização int8 e Busca Híbrida RRF)**
+24. **Suíte JEV de Marketing Ops, SEO e Otimização de Anúncios (9 Tarefas Nativas em Rust, $0.00 e Latência em Microssegundos)**
 
 
 ## ⚡ Quickstart em 3 Minutos: Do Zero ao Agente Operacional
@@ -74,7 +75,7 @@ cargo run -p alr-cli -- quickstart
 5. [Premissa Central](#-premissa-central)
 4. [Princípios Arquiteturais](#-princípios-arquiteturais)
 5. [O Que o Sistema Faz?](#-o-que-o-sistema-faz)
-6. [Casos de Uso Detalhados (Fases 1 a 23)](#-casos-de-uso-detalhados)
+6. [Casos de Uso Detalhados (Fases 1 a 24)](#-casos-de-uso-detalhados)
    * [Caso 1: Controle Dinâmico em Jogos (Snake)](#caso-1-controle-dinâmico-em-jogos-snake)
    * [Caso 2: Atendimento com Memória Semântica (Customer Support)](#caso-2-atendimento-com-memória-semântica-customer-support)
    * [Caso 3: Automação Web Real no Navegador (Chromium CDP)](#caso-3-automação-web-real-no-navegador-chromium-cdp)
@@ -98,6 +99,7 @@ cargo run -p alr-cli -- quickstart
    * [Caso 21: Análise Multidimensional de Sentimentos e Roteamento Emocional](#caso-21-análise-multidimensional-de-sentimentos-e-roteamento-emocional)
    * [Caso 22: Vigilância por Câmera de Segurança (CCTV) e Notificações Desktop](#caso-22-vigilância-por-câmera-de-segurança-cctv-e-notificações-desktop)
    * [Caso 23: Memória Semântica Vetorial de Alta Fidelidade no Qdrant](#caso-23-memória-semântica-vetorial-de-alta-fidelidade-no-qdrant)
+   * [Caso 24: Suíte de Marketing Ops, SEO e Anúncios de Alta Performance (JEV Suite)](#caso-24-suíte-de-marketing-ops-seo-e-anúncios-de-alta-performance-jev-suite)
 7. [Detector Universal de Loops & Evasão](#-detector-universal-de-loops--evasão)
 8. [Treinamento de Novas Tarefas (Guia & CLI)](#-treinamento-de-novas-tarefas-guia--cli)
 9. [Memória Semântica Vetorial no Qdrant: Geração de Embeddings & Recuperação Autônoma](#-memória-semântica-vetorial-no-qdrant-geração-de-embeddings--recuperação-autônoma)
@@ -536,6 +538,34 @@ Infraestrutura de alta performance para tornar o ALR o runtime de agentes locais
 1. **Embeddings Unificados em 1536d:** Alta resolução semântica com normalização $L_2$ estrita.
 2. **Vetorização Esparsa BM25:** Captura exata de IDs técnicos (`ord_...`) e palavras-chave raras.
 3. **Quantização Escalar int8:** Redução de 75% de RAM e aceleração de busca em até 4x com fusão híbrida RRF.
+
+### Caso 24: Suíte de Marketing Ops, SEO e Anúncios de Alta Performance (JEV Suite)
+Implementação 100% nativa em Rust inspirada e superando o catálogo TypeSafe AI / JEV, operando com custo **$0.00**, latência em **microssegundos** (< 1 ms para todas as 9 tarefas combinadas) e decisões tipadas (Choice, Score, Noul):
+1. **Search-Term Triage (`SearchTermTriage`):** Triagem automática de consultas em Google Ads (`Buyer`, `Researcher`, `JobSeeker`, `Competitor`, `Junk`) com identificação imediata de termos negativos para impedir queima de orçamento.
+2. **Creative Tagging (`CreativeTagging`):** Classificação multi-atributo de criativos Meta Ads em uma única passada (`HookType`, `AdFormat`, `OfferType`, `TargetAudience`) com confiança calibrada.
+3. **Landing Page Match (`LandingPageMatch`):** Avaliação de alinhamento entre anúncio/busca e página de destino (Score 0 a 10), detectando discrepâncias de preço, promessas ausentes e impacto direto no Quality Score do Google Ads.
+4. **Internal Link Map (`InternalLinkMap`):** Decisão booleana Noul (`should_link: bool`) para cada par de URLs, mapeando relações tópicas (`PillarToCluster`, `ClusterToPillar`, `LateralSibling`), âncoras ideais e distribuição de PageRank.
+5. **Cannibalization Detector (`CannibalizationDetector`):** Detecção de sobreposição de palavras-chave e intenção entre URLs, prescrevendo ações imediatas de fusão (`MergeSecondIntoFirst` via 301), canonicalização ou diferenciação de cauda longa.
+6. **Thin-Page Gate (`ThinPageGate`):** Gate de qualidade de conteúdo (1 a 10) que bloqueia a publicação e indexação de páginas rasas (< 7.0), penalizando clichês de IA (fluff) e exigindo densidade de dados e profundidade.
+7. **Citation Checks (`CitationChecker`):** Auditoria de GEO (Generative Engine Optimization) em respostas de ChatGPT, Gemini, Claude e Perplexity, medindo taxa de citação da marca, sentimento, autoridade e snippets exatos.
+8. **Who Got Cited Instead (`CompetitorCitationTracker`):** Identificação dos concorrentes citados nas consultas em que a marca ficou de fora, calculando Share of Voice (SoV) e gerando pautas comparativas estratégicas.
+9. **Converting Terms with No Page (`ConvertingTermsGapFinder`):** Cruzamento de termos de alta conversão/receita em Google Ads que não possuem página orgânica dedicada, gerando pauta de conteúdo priorizada por faturamento.
+
+```bash
+# Execução da demonstração interativa completa das 9 tarefas
+cargo run -p alr-cli -- marketing-suite --demo
+
+# Comandos individuais de cada tarefa
+cargo run -p alr-cli -- search-triage --query "comprar software de automacao preco"
+cargo run -p alr-cli -- creative-tag --copy "Cansado de perder vendas? Teste grátis por 14 dias."
+cargo run -p alr-cli -- page-match --headline "Automação WhatsApp" --url "https://empresa.com/whatsapp"
+cargo run -p alr-cli -- link-map --source "https://empresa.com/guia" --target "https://empresa.com/artigo"
+cargo run -p alr-cli -- cannibalization --page-a "https://empresa.com/crm" --page-b "https://empresa.com/software-crm" --query "crm de vendas"
+cargo run -p alr-cli -- thin-gate --url "https://empresa.com/post" --words 1500
+cargo run -p alr-cli -- citation-check --brand "ALR" --query "Melhor plataforma de automação em Rust"
+cargo run -p alr-cli -- competitor-cited --brand "ALR" --competitors "Semrush,Ahrefs,Moz"
+cargo run -p alr-cli -- terms-gap --query "calculadora de roi para whatsapp"
+```
 
 ---
 

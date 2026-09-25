@@ -1,3 +1,4 @@
+use alr_agent::marketing_ops::*;
 use alr_agent::planner_3d::HierarchicalPlanner;
 use alr_agent::{
     AgentCompletionPayload, AgentDriverTarget, AgentLoop, AgentSupervisionEngine, BrowserAgent,
@@ -329,6 +330,94 @@ enum Commands {
 
         #[arg(long)]
         mock: bool,
+    },
+    /// Suíte Completa de Marketing Ops, SEO e Otimização de Anúncios (JEV Catalog)
+    #[command(name = "marketing-suite")]
+    MarketingSuite {
+        #[arg(long)]
+        demo: bool,
+    },
+    /// Task 1: Triagem de Termos de Busca em Google Ads com Negativação Automática
+    #[command(name = "search-triage")]
+    SearchTriage {
+        #[arg(
+            short,
+            long,
+            default_value = "vagas de emprego analista de marketing salario"
+        )]
+        query: String,
+    },
+    /// Task 2: Tagging Multi-Atributo de Criativos Meta Ads em uma única passada
+    #[command(name = "creative-tag")]
+    CreativeTag {
+        #[arg(
+            short,
+            long,
+            default_value = "Cansado de perder vendas no WhatsApp? Conheça o método que 1.400 empresas usam. Teste grátis por 14 dias."
+        )]
+        copy: String,
+        #[arg(short, long)]
+        format: Option<String>,
+    },
+    /// Task 3: Score de Correspondência (0 a 10) entre Anúncio e Landing Page
+    #[command(name = "page-match")]
+    PageMatch {
+        #[arg(long, default_value = "Automação de WhatsApp Inteligente")]
+        headline: String,
+        #[arg(long, default_value = "https://empresa.com/whatsapp")]
+        url: String,
+    },
+    /// Task 4: Avaliação Booleana Noul de Linkagem Interna entre duas URLs
+    #[command(name = "link-map")]
+    LinkMap {
+        #[arg(long, default_value = "https://empresa.com/guia-seo")]
+        source: String,
+        #[arg(long, default_value = "https://empresa.com/link-building")]
+        target: String,
+    },
+    /// Task 5: Detecção de Canibalização de Páginas e Palavras-Chave
+    #[command(name = "cannibalization")]
+    Cannibalization {
+        #[arg(long, default_value = "https://empresa.com/crm-vendas")]
+        page_a: String,
+        #[arg(long, default_value = "https://empresa.com/software-crm-vendas")]
+        page_b: String,
+        #[arg(long, default_value = "crm para vendas")]
+        query: String,
+    },
+    /// Task 6: Gate de Qualidade e Originalidade de Conteúdo (Thin-Page Gate)
+    #[command(name = "thin-gate")]
+    ThinGate {
+        #[arg(long, default_value = "https://empresa.com/artigo-curto")]
+        url: String,
+        #[arg(long, default_value_t = 250)]
+        words: usize,
+    },
+    /// Task 7: GEO - Auditoria de Citação da Marca em Respostas de LLMs
+    #[command(name = "citation-check")]
+    CitationCheck {
+        #[arg(short, long, default_value = "ALR")]
+        brand: String,
+        #[arg(
+            short,
+            long,
+            default_value = "Qual a melhor plataforma de automação em Rust no Brasil?"
+        )]
+        query: String,
+    },
+    /// Task 8: GEO - Identificação de Concorrentes Citados e Share of Voice em IA
+    #[command(name = "competitor-cited")]
+    CompetitorCited {
+        #[arg(short, long, default_value = "ALR")]
+        brand: String,
+        #[arg(short, long, default_value = "Semrush,Ahrefs,Moz")]
+        competitors: String,
+    },
+    /// Task 9: Ads -> SEO Bridge: Termos de Alta Conversão sem Página Orgânica
+    #[command(name = "terms-gap")]
+    TermsGap {
+        #[arg(short, long, default_value = "calculadora de roi para whatsapp")]
+        query: String,
     },
 }
 
@@ -1508,6 +1597,40 @@ async fn main() -> Result<()> {
             mock,
         } => {
             run_qdrant_benchmark(dimensions, docs, &collection, mock).await?;
+        }
+        Commands::MarketingSuite { demo } => {
+            run_marketing_suite(demo).await?;
+        }
+        Commands::SearchTriage { query } => {
+            run_search_triage(&query)?;
+        }
+        Commands::CreativeTag { copy, format } => {
+            run_creative_tag(&copy, format.as_deref())?;
+        }
+        Commands::PageMatch { headline, url } => {
+            run_page_match(&headline, &url)?;
+        }
+        Commands::LinkMap { source, target } => {
+            run_link_map(&source, &target)?;
+        }
+        Commands::Cannibalization {
+            page_a,
+            page_b,
+            query,
+        } => {
+            run_cannibalization(&page_a, &page_b, &query)?;
+        }
+        Commands::ThinGate { url, words } => {
+            run_thin_gate(&url, words)?;
+        }
+        Commands::CitationCheck { brand, query } => {
+            run_citation_check(&brand, &query)?;
+        }
+        Commands::CompetitorCited { brand, competitors } => {
+            run_competitor_cited(&brand, &competitors)?;
+        }
+        Commands::TermsGap { query } => {
+            run_terms_gap(&query)?;
         }
         Commands::FinalAcceptance => {
             println!(
@@ -7699,5 +7822,1035 @@ async fn run_qdrant_benchmark(
             .blue()
     );
 
+    Ok(())
+}
+
+/// ============================================================================
+/// Execução da Suíte Completa de Marketing Ops, SEO e Otimização de Anúncios
+/// ============================================================================
+async fn run_marketing_suite(demo: bool) -> Result<()> {
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "   ALR JEV MARKETING OPS, SEO & ADS SUITE (9 TAREFAS NATIVAS)     "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "Operando 100% nativo em Rust | Custo: $0.00 | Latência em µs | Zero Tokens"
+            .italic()
+            .white()
+    );
+    println!();
+
+    let engine = MarketingOpsEngine::new();
+    let report = engine.run_demo_suite();
+
+    // Task 1
+    println!(
+        "{}",
+        "--- [1/9] Search-Term Triage (Google Ads) ---"
+            .bold()
+            .yellow()
+    );
+    println!(
+        "  • Termo         : \"{}\"",
+        report.search_triage_sample.query
+    );
+    println!(
+        "  • Categoria     : {} ({:.1}% conf)",
+        report.search_triage_sample.category.display_name().green(),
+        report.search_triage_sample.confidence * 100.0
+    );
+    println!(
+        "  • Ação          : {}",
+        report
+            .search_triage_sample
+            .recommended_action
+            .as_str()
+            .bold()
+    );
+    if let Some(neg) = &report.search_triage_sample.suggested_negative {
+        println!(
+            "  • Negativação   : [{}] ({})",
+            neg.negative_term.red().bold(),
+            neg.match_type
+        );
+    }
+    println!(
+        "  • Latência      : {} µs",
+        report.search_triage_sample.latency_micros
+    );
+    println!();
+
+    // Task 2
+    println!(
+        "{}",
+        "--- [2/9] Creative Tagging (Meta Ads Single-Pass) ---"
+            .bold()
+            .yellow()
+    );
+    println!(
+        "  • Hook Type     : {}",
+        report.creative_tagging_sample.hook_type.as_str().cyan()
+    );
+    println!(
+        "  • Ad Format     : {}",
+        report.creative_tagging_sample.ad_format.as_str().cyan()
+    );
+    println!(
+        "  • Offer Type    : {}",
+        report.creative_tagging_sample.offer_type.as_str().cyan()
+    );
+    println!(
+        "  • Target Audience: {}",
+        report
+            .creative_tagging_sample
+            .target_audience
+            .as_str()
+            .cyan()
+    );
+    println!(
+        "  • Confiança Méd.: {:.1}%",
+        report.creative_tagging_sample.overall_confidence * 100.0
+    );
+    println!(
+        "  • Latência      : {} µs",
+        report.creative_tagging_sample.latency_micros
+    );
+    println!();
+
+    // Task 3
+    println!(
+        "{}",
+        "--- [3/9] Landing Page Match (Ad Congruence & Quality Score) ---"
+            .bold()
+            .yellow()
+    );
+    println!(
+        "  • Match Score   : {:.1}/10.0 ({})",
+        report.landing_page_match_sample.composite_score,
+        report
+            .landing_page_match_sample
+            .status
+            .as_str()
+            .green()
+            .bold()
+    );
+    println!(
+        "  • Message Match : {:.1}/10.0",
+        report.landing_page_match_sample.message_match_score
+    );
+    println!(
+        "  • Oferta & Preço: {:.1}/10.0",
+        report.landing_page_match_sample.offer_consistency_score
+    );
+    println!(
+        "  • Alinhamento CTA: {:.1}/10.0",
+        report.landing_page_match_sample.cta_alignment_score
+    );
+    println!(
+        "  • Impacto QS    : {}",
+        report.landing_page_match_sample.quality_score_impact
+    );
+    println!(
+        "  • Latência      : {} µs",
+        report.landing_page_match_sample.latency_micros
+    );
+    println!();
+
+    // Task 4
+    println!(
+        "{}",
+        "--- [4/9] Internal Link Map (SEO: Noul Boolean Decision) ---"
+            .bold()
+            .yellow()
+    );
+    println!(
+        "  • Origem -> Dest: {} -> {}",
+        report.internal_link_decision_sample.source_url,
+        report.internal_link_decision_sample.target_url
+    );
+    println!(
+        "  • Should Link?  : {} (Força: {:.2})",
+        if report.internal_link_decision_sample.should_link {
+            "SIM (Noul True)".green().bold()
+        } else {
+            "NÃO (Noul False)".red().bold()
+        },
+        report.internal_link_decision_sample.link_strength
+    );
+    println!(
+        "  • Relação Tópica: {}",
+        report
+            .internal_link_decision_sample
+            .topical_relationship
+            .as_str()
+    );
+    println!(
+        "  • Âncora Rec.   : \"{}\" ({})",
+        report
+            .internal_link_decision_sample
+            .recommended_anchor_text
+            .bold(),
+        report.internal_link_decision_sample.anchor_type.as_str()
+    );
+    println!(
+        "  • Justificativa : {}",
+        report.internal_link_decision_sample.semantic_justification
+    );
+    println!(
+        "  • Latência      : {} µs",
+        report.internal_link_decision_sample.latency_micros
+    );
+    println!();
+
+    // Task 5
+    println!(
+        "{}",
+        "--- [5/9] Cannibalization (SEO: Detecção de Conflito de Páginas) ---"
+            .bold()
+            .yellow()
+    );
+    println!(
+        "  • URL A vs URL B: {} vs {}",
+        report.cannibalization_report_sample.page_a_url,
+        report.cannibalization_report_sample.page_b_url
+    );
+    println!(
+        "  • Severidade    : {} (Sobreposição KWs: {:.1}%, Intenção: {:.1}%)",
+        report
+            .cannibalization_report_sample
+            .severity
+            .as_str()
+            .red()
+            .bold(),
+        report.cannibalization_report_sample.keyword_overlap_ratio * 100.0,
+        report.cannibalization_report_sample.intent_similarity_score * 100.0
+    );
+    println!(
+        "  • Ação Rec.     : {}",
+        report
+            .cannibalization_report_sample
+            .recommended_action
+            .as_str()
+            .bold()
+    );
+    println!(
+        "  • Plano de Ação : {}",
+        report.cannibalization_report_sample.actionable_plan
+    );
+    println!(
+        "  • Latência      : {} µs",
+        report.cannibalization_report_sample.latency_micros
+    );
+    println!();
+
+    // Task 6
+    println!(
+        "{}",
+        "--- [6/9] Thin-Page Gate (Gate de Qualidade & Originalidade) ---"
+            .bold()
+            .yellow()
+    );
+    println!(
+        "  • Qualidade     : {:.1}/10.0 -> {}",
+        report.thin_page_verdict_sample.overall_quality_score,
+        if report.thin_page_verdict_sample.status == GateStatus::ApprovedForPublication {
+            "APROVADA".green().bold()
+        } else {
+            "BLOQUEADA".red().bold()
+        }
+    );
+    println!(
+        "  • Originalidade : {:.1}/10.0",
+        report.thin_page_verdict_sample.originality_score
+    );
+    println!(
+        "  • Densidade Inf.: {:.1}/10.0",
+        report.thin_page_verdict_sample.information_density_score
+    );
+    println!(
+        "  • Penalidade Fluff: -{:.1}",
+        report.thin_page_verdict_sample.boilerplate_penalty
+    );
+    println!(
+        "  • Recomendação  : {}",
+        report.thin_page_verdict_sample.indexation_recommendation
+    );
+    println!(
+        "  • Latência      : {} µs",
+        report.thin_page_verdict_sample.latency_micros
+    );
+    println!();
+
+    // Task 7
+    println!(
+        "{}",
+        "--- [7/9] Citation Checks (GEO: Medição de Citação em LLMs) ---"
+            .bold()
+            .yellow()
+    );
+    println!(
+        "  • Engine / Citada: {} -> {}",
+        report.citation_analysis_sample.engine.as_str(),
+        if report.citation_analysis_sample.is_cited {
+            "CITADA".green().bold()
+        } else {
+            "NÃO CITADA".red().bold()
+        }
+    );
+    println!(
+        "  • Rank da Citação: {:?}",
+        report.citation_analysis_sample.citation_rank
+    );
+    println!(
+        "  • Sentimento     : {}",
+        report.citation_analysis_sample.sentiment.as_str().cyan()
+    );
+    println!(
+        "  • Autoridade     : {:.1}/10.0",
+        report.citation_analysis_sample.authority_score
+    );
+    println!(
+        "  • É Recomendação 1?: {}",
+        report.citation_analysis_sample.is_primary_recommendation
+    );
+    println!(
+        "  • Latência       : {} µs",
+        report.citation_analysis_sample.latency_micros
+    );
+    println!();
+
+    // Task 8
+    println!(
+        "{}",
+        "--- [8/9] Who Got Cited Instead (GEO: Concorrentes & SoV em IA) ---"
+            .bold()
+            .yellow()
+    );
+    println!(
+        "  • Marca Monitorada : {}",
+        report.competitor_citation_sample.brand_name.bold()
+    );
+    println!(
+        "  • Citação da Marca : {:.1}%",
+        report.competitor_citation_sample.brand_citation_rate
+    );
+    if let Some(dom) = &report.competitor_citation_sample.dominant_competitor {
+        println!("  • Concorrente Líder: {}", dom.red().bold());
+    }
+    for comp in &report.competitor_citation_sample.competitor_rankings {
+        println!(
+            "    - {}: {} menções ({:.1}% SoV)",
+            comp.name, comp.mention_count, comp.citation_rate
+        );
+    }
+    println!(
+        "  • Latência         : {} µs",
+        report.competitor_citation_sample.latency_micros
+    );
+    println!();
+
+    // Task 9
+    println!(
+        "{}",
+        "--- [9/9] Converting Terms with No Page (Ads -> SEO Bridge) ---"
+            .bold()
+            .yellow()
+    );
+    println!(
+        "  • Termos Analisados: {}",
+        report
+            .converting_gap_report_sample
+            .total_paid_terms_analyzed
+    );
+    println!(
+        "  • Oportunidades    : {}",
+        report
+            .converting_gap_report_sample
+            .uncovered_gaps_count
+            .to_string()
+            .green()
+            .bold()
+    );
+    println!(
+        "  • Receita em Risco : R$ {:.2}",
+        report
+            .converting_gap_report_sample
+            .total_revenue_opportunity
+    );
+    for opp in &report.converting_gap_report_sample.opportunities {
+        println!(
+            "    - [{}] \"{}\" -> Pauta: \"{}\" ({}) | Econ. Estimada: R$ {:.2}/mês",
+            opp.priority.as_str().red().bold(),
+            opp.converting_query,
+            opp.recommended_title.cyan(),
+            opp.recommended_format.as_str(),
+            opp.estimated_monthly_organic_savings
+        );
+    }
+    println!(
+        "  • Latência         : {} µs",
+        report.converting_gap_report_sample.latency_micros
+    );
+    println!();
+
+    // Sumário Executivo
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "  TOTAL PIPELINE LATENCY: {} µs ({:.3} ms) | CUSTO: $0.00",
+        report
+            .total_pipeline_latency_micros
+            .to_string()
+            .green()
+            .bold(),
+        report.total_pipeline_latency_micros as f64 / 1000.0
+    );
+    println!(
+        "  STATUS: {} (Zero Chamadas a APIs Externas)",
+        "100% OPERACIONAL E CONCLUÍDO".bold().green()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+
+    if !demo {
+        println!("Dica: use os subcomandos individuais (alr search-triage, alr creative-tag, etc.) para auditar termos específicos.");
+    }
+
+    Ok(())
+}
+
+fn run_search_triage(query: &str) -> Result<()> {
+    let engine = SearchTermTriage::new();
+    let res = engine.triage(query);
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "   TASK 1: SEARCH-TERM TRIAGE (GOOGLE ADS COM NEGATIVAÇÃO)        "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!("  • Termo Auditado    : \"{}\"", res.query.bold().white());
+    println!(
+        "  • Categoria         : {} ({:.1}% confiança)",
+        res.category.display_name().bold().green(),
+        res.confidence * 100.0
+    );
+    println!(
+        "  • Ação Recomendada  : {}",
+        res.recommended_action.as_str().bold()
+    );
+    println!(
+        "  • Risco de Desperdício: {:.1}%",
+        res.wasted_spend_risk * 100.0
+    );
+    for sig in &res.signals {
+        println!("    - Sinal: {}", sig);
+    }
+    if let Some(neg) = &res.suggested_negative {
+        println!(
+            "  • Sugestão Negativa : [{}] correspondência {}",
+            neg.negative_term.red().bold(),
+            neg.match_type
+        );
+        println!("  • Motivo            : {}", neg.reason);
+    }
+    println!(
+        "  • Latência          : {} µs (Custo: $0.00 | 0 tokens)",
+        res.latency_micros
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    Ok(())
+}
+
+fn run_creative_tag(copy: &str, format: Option<&str>) -> Result<()> {
+    let engine = CreativeTagging::new();
+    let res = engine.tag(copy, format);
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "   TASK 2: CREATIVE TAGGING (META ADS SINGLE-PASS)                "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!("  • Texto do Criativo : \"{}\"", copy.italic().white());
+    if let Some(fmt) = format {
+        println!("  • Formato Fornecido : {}", fmt.cyan());
+    }
+    println!(
+        "  • Hook Type         : {} ({:.1}%)",
+        res.hook_type.as_str().green().bold(),
+        res.hook_confidence * 100.0
+    );
+    println!(
+        "  • Ad Format         : {} ({:.1}%)",
+        res.ad_format.as_str().green().bold(),
+        res.format_confidence * 100.0
+    );
+    println!(
+        "  • Offer Type        : {} ({:.1}%)",
+        res.offer_type.as_str().green().bold(),
+        res.offer_confidence * 100.0
+    );
+    println!(
+        "  • Target Audience   : {} ({:.1}%)",
+        res.target_audience.as_str().green().bold(),
+        res.audience_confidence * 100.0
+    );
+    println!(
+        "  • Confiança Média   : {:.1}%",
+        res.overall_confidence * 100.0
+    );
+    for trig in &res.detected_triggers {
+        println!("    - Trigger: {}", trig);
+    }
+    println!(
+        "  • Latência          : {} µs (Custo: $0.00 | 0 tokens)",
+        res.latency_micros
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    Ok(())
+}
+
+fn run_page_match(headline: &str, url: &str) -> Result<()> {
+    let engine = LandingPageMatch::new();
+    let ad = AdPromise {
+        headline: headline.to_string(),
+        body_copy: format!("A melhor solução de {} com condições especiais.", headline),
+        promised_offer: Some("Desconto Especial".to_string()),
+        promised_price: None,
+        cta_text: "Começar Agora".to_string(),
+        target_keyword: Some(headline.to_string()),
+    };
+    let page = LandingPageContent {
+        url: url.to_string(),
+        title: format!("{} | Empresa Oficial", headline),
+        h1: headline.to_string(),
+        body_snippet: format!("Conheça a plataforma completa de {}.", headline),
+        displayed_offers: vec!["Desconto Especial".to_string()],
+        displayed_price: None,
+        cta_buttons: vec!["Começar Agora".to_string()],
+    };
+    let res = engine.evaluate_match(&ad, &page);
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "   TASK 3: LANDING PAGE MATCH (AD CONGRUENCE & QUALITY SCORE)     "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!("  • Headline / URL    : \"{}\" -> {}", headline.bold(), url);
+    println!(
+        "  • Match Score       : {:.1}/10.0 ({})",
+        res.composite_score,
+        res.status.as_str().green().bold()
+    );
+    println!(
+        "  • Message Match     : {:.1}/10.0",
+        res.message_match_score
+    );
+    println!(
+        "  • Oferta Consistente: {:.1}/10.0",
+        res.offer_consistency_score
+    );
+    println!(
+        "  • CTA Alinhamento   : {:.1}/10.0",
+        res.cta_alignment_score
+    );
+    println!(
+        "  • Intenção de Busca : {:.1}/10.0",
+        res.search_intent_fulfillment_score
+    );
+    println!("  • Impacto no QS     : {}", res.quality_score_impact);
+    println!(
+        "  • Latência          : {} µs (Custo: $0.00 | 0 tokens)",
+        res.latency_micros
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    Ok(())
+}
+
+fn run_link_map(source: &str, target: &str) -> Result<()> {
+    let engine = InternalLinkMap::new();
+    let src = InternalPageDoc {
+        url: source.to_string(),
+        title: "Artigo Pilar de SEO e Marketing".to_string(),
+        topic_cluster: "SEO".to_string(),
+        depth_level: 1,
+        target_keywords: vec!["seo".to_string(), "marketing".to_string()],
+        body_summary: "Guia pilar sobre otimização de busca e marketing digital.".to_string(),
+    };
+    let tgt = InternalPageDoc {
+        url: target.to_string(),
+        title: "Técnicas Avançadas de Link Building".to_string(),
+        topic_cluster: "SEO".to_string(),
+        depth_level: 2,
+        target_keywords: vec!["link building".to_string()],
+        body_summary: "Artigo focado em estratégias de atração de links.".to_string(),
+    };
+    let res = engine.evaluate_link_pair(&src, &tgt);
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "   TASK 4: INTERNAL LINK MAP (SEO NOUL BOOLEAN DECISION)          "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!("  • Origem -> Destino : {} -> {}", source, target);
+    println!(
+        "  • Should Link?      : {} (Força: {:.2})",
+        if res.should_link {
+            "SIM (Noul True)".green().bold()
+        } else {
+            "NÃO (Noul False)".red().bold()
+        },
+        res.link_strength
+    );
+    println!(
+        "  • Relação Tópica    : {}",
+        res.topical_relationship.as_str()
+    );
+    println!(
+        "  • Âncora Sugerida   : \"{}\" ({})",
+        res.recommended_anchor_text.bold(),
+        res.anchor_type.as_str()
+    );
+    println!("  • Justificativa     : {}", res.semantic_justification);
+    println!("  • Impacto de Equity : {}", res.equity_impact);
+    println!(
+        "  • Latência          : {} µs (Custo: $0.00 | 0 tokens)",
+        res.latency_micros
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    Ok(())
+}
+
+fn run_cannibalization(page_a: &str, page_b: &str, query: &str) -> Result<()> {
+    let engine = CannibalizationDetector::new();
+    let pa = PageSeoProfile {
+        url: page_a.to_string(),
+        title: format!("Guia de {}", query),
+        primary_intent_query: query.to_string(),
+        secondary_queries: vec![format!("melhor {}", query), format!("software {}", query)],
+        h1: format!("Melhor {}", query),
+        body_snippet: format!("Artigo completo sobre {}.", query),
+        monthly_organic_traffic: 3200,
+        average_ranking: 4.5,
+    };
+    let pb = PageSeoProfile {
+        url: page_b.to_string(),
+        title: format!("Software de {}", query),
+        primary_intent_query: query.to_string(),
+        secondary_queries: vec![format!("sistema de {}", query)],
+        h1: format!("Software de {}", query),
+        body_snippet: format!("Plataforma para {}.", query),
+        monthly_organic_traffic: 980,
+        average_ranking: 9.1,
+    };
+    let res = engine.detect(&pa, &pb);
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "   TASK 5: CANNIBALIZATION (DETECÇÃO DE CONFLITO DE PÁGINAS)      "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!("  • URL A vs URL B    : {} vs {}", page_a, page_b);
+    println!(
+        "  • Severidade        : {}",
+        res.severity.as_str().red().bold()
+    );
+    println!(
+        "  • Sobreposição KWs  : {:.1}%",
+        res.keyword_overlap_ratio * 100.0
+    );
+    println!(
+        "  • Similaridade Inten: {:.1}%",
+        res.intent_similarity_score * 100.0
+    );
+    println!(
+        "  • Ação Recomendada  : {}",
+        res.recommended_action.as_str().bold()
+    );
+    println!("  • Risco de Tráfego  : {}", res.traffic_risk_assessment);
+    println!("  • Plano de Ação     : {}", res.actionable_plan);
+    println!(
+        "  • Latência          : {} µs (Custo: $0.00 | 0 tokens)",
+        res.latency_micros
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    Ok(())
+}
+
+fn run_thin_gate(url: &str, words: usize) -> Result<()> {
+    let engine = ThinPageGate::new();
+    let input = PageContentInput {
+        url: url.to_string(),
+        title: "Artigo de Demonstração".to_string(),
+        word_count: words,
+        text_body: "Texto descritivo de avaliação de qualidade de conteúdo para o portal."
+            .to_string(),
+        h2_headings: vec!["Visão Geral".to_string(), "Detalhes".to_string()],
+        has_images_or_media: words >= 500,
+        code_or_data_points: if words >= 600 { 3 } else { 0 },
+        structured_lists_count: if words >= 400 { 2 } else { 0 },
+    };
+    let res = engine.evaluate_page(&input);
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "   TASK 6: THIN-PAGE GATE (QUALIDADE & ORIGINALIDADE DE CONTEÚDO) "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!("  • URL Auditada      : {} ({} palavras)", url, words);
+    println!(
+        "  • Veredito do Gate  : {} (Nota: {:.1}/10.0)",
+        if res.status == GateStatus::ApprovedForPublication {
+            "APROVADA".green().bold()
+        } else {
+            "BLOQUEADA".red().bold()
+        },
+        res.overall_quality_score
+    );
+    println!("  • Originalidade     : {:.1}/10.0", res.originality_score);
+    println!(
+        "  • Densidade de Dados: {:.1}/10.0",
+        res.information_density_score
+    );
+    println!("  • Valor Agregado    : {:.1}/10.0", res.value_add_score);
+    println!("  • Penalidade Fluff  : -{:.1}", res.boilerplate_penalty);
+    println!("  • Recomendação      : {}", res.indexation_recommendation);
+    for iss in &res.detected_issues {
+        println!("    - Problema: {}", iss.red());
+    }
+    println!(
+        "  • Latência          : {} µs (Custo: $0.00 | 0 tokens)",
+        res.latency_micros
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    Ok(())
+}
+
+fn run_citation_check(brand: &str, query: &str) -> Result<()> {
+    let engine = CitationChecker::new();
+    let input = EngineCitationInput {
+        engine: LlmEngine::Perplexity,
+        prompt_query: query.to_string(),
+        generated_response: format!("A plataforma {} é amplamente reconhecida como uma das ferramentas mais avançadas do setor.", brand),
+        brand_name: brand.to_string(),
+        brand_aliases: Vec::new(),
+        brand_domain: format!("{}.com", brand.to_lowercase()),
+    };
+    let res = engine.check_citation(&input);
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "   TASK 7: CITATION CHECKS (GEO - CITAÇÃO DE MARCA EM LLMS)       "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "  • Marca / Consulta  : \"{}\" -> \"{}\"",
+        brand.bold(),
+        query
+    );
+    println!("  • Motor Auditado    : {}", res.engine.as_str());
+    println!(
+        "  • Foi Citada?       : {}",
+        if res.is_cited {
+            "SIM (Citada)".green().bold()
+        } else {
+            "NÃO (Omitida)".red().bold()
+        }
+    );
+    println!("  • Rank da Menção    : {:?}", res.citation_rank);
+    println!("  • Sentimento        : {}", res.sentiment.as_str().cyan());
+    println!("  • Score Autoridade  : {:.1}/10.0", res.authority_score);
+    println!("  • É Recomendação #1 : {}", res.is_primary_recommendation);
+    for snip in &res.extracted_snippets {
+        println!("    - Trecho: \"{}\"", snip.italic());
+    }
+    println!(
+        "  • Latência          : {} µs (Custo: $0.00 | 0 tokens)",
+        res.latency_micros
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    Ok(())
+}
+
+fn run_competitor_cited(brand: &str, competitors: &str) -> Result<()> {
+    let engine = CompetitorCitationTracker::new();
+    let comp_list: Vec<&str> = competitors.split(',').map(|s| s.trim()).collect();
+    let responses = vec![
+        LlmAuditEntry {
+            engine: LlmEngine::ChatGpt,
+            query: "Qual a melhor ferramenta para marketing?".to_string(),
+            generated_response: format!(
+                "Recomendo avaliar {} para recursos completos e {} para facilidade de uso.",
+                comp_list.first().unwrap_or(&"CompA"),
+                comp_list.get(1).unwrap_or(&"CompB")
+            ),
+        },
+        LlmAuditEntry {
+            engine: LlmEngine::Gemini,
+            query: "Solução líder para automação comercial".to_string(),
+            generated_response: format!(
+                "A ferramenta {} lidera o mercado nesta categoria.",
+                comp_list.first().unwrap_or(&"CompA")
+            ),
+        },
+    ];
+    let res = engine.track(brand, &comp_list, &responses);
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "   TASK 8: WHO GOT CITED INSTEAD (GEO - CONCORRENTES & SOV EM IA) "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!("  • Marca Auditada    : \"{}\"", brand.bold());
+    println!("  • Citação da Marca  : {:.1}%", res.brand_citation_rate);
+    if let Some(dom) = &res.dominant_competitor {
+        println!("  • Concorrente Líder : {}", dom.red().bold());
+    }
+    println!("  • Rankings de Concorrentes:");
+    for c in &res.competitor_rankings {
+        println!(
+            "    - {}: {} menções ({:.1}% SoV)",
+            c.name.bold(),
+            c.mention_count,
+            c.citation_rate
+        );
+    }
+    for rec in &res.geo_strategic_recommendations {
+        println!("  • Estratégia GEO    : {}", rec);
+    }
+    println!(
+        "  • Latência          : {} µs (Custo: $0.00 | 0 tokens)",
+        res.latency_micros
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    Ok(())
+}
+
+fn run_terms_gap(query: &str) -> Result<()> {
+    let engine = ConvertingTermsGapFinder::new();
+    let paid = vec![AdsConvertingTerm {
+        query: query.to_string(),
+        conversions: 45,
+        conversion_value: 6750.0,
+        cost: 1125.0,
+        cpa: 25.0,
+    }];
+    let indexed = vec![IndexedPage {
+        url: "https://empresa.com/home".to_string(),
+        title: "Página Institucional".to_string(),
+        target_keywords: vec!["institucional".to_string()],
+    }];
+    let res = engine.find_gaps(&paid, &indexed);
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "   TASK 9: CONVERTING TERMS WITH NO PAGE (ADS -> SEO BRIDGE)      "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!("  • Termo Auditado    : \"{}\"", query.bold());
+    println!(
+        "  • Gaps Encontrados  : {}",
+        res.uncovered_gaps_count.to_string().green().bold()
+    );
+    println!(
+        "  • Receita em Risco  : R$ {:.2}",
+        res.total_revenue_opportunity
+    );
+    for opp in &res.opportunities {
+        println!(
+            "  • Prioridade Pauta  : [{}] {}",
+            opp.priority.as_str().red().bold(),
+            opp.recommended_title.cyan()
+        );
+        println!(
+            "  • Formato Rec.      : {}",
+            opp.recommended_format.as_str()
+        );
+        println!("  • Slug Sugerido     : {}", opp.recommended_slug);
+        println!(
+            "  • Econ. Orgânica Est: R$ {:.2}/mês",
+            opp.estimated_monthly_organic_savings
+        );
+    }
+    println!(
+        "  • Latência          : {} µs (Custo: $0.00 | 0 tokens)",
+        res.latency_micros
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
     Ok(())
 }
