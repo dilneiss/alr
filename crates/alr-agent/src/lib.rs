@@ -8,6 +8,7 @@ pub mod niche;
 pub mod orchestration;
 pub mod planner_3d;
 pub mod procedural;
+pub mod qa_automation;
 pub mod reliability;
 pub mod response_learner;
 pub mod risk;
@@ -49,6 +50,10 @@ pub use planner_3d::{
     HierarchicalPlanner, HighLevelPlan, Recovery3DStrategy, SubGoal, SubGoalKind,
 };
 pub use procedural::{ProceduralSkill, ProceduralStep};
+pub use qa_automation::{
+    QaAssertionResult, QaAutomationEngine, QaProgramAssertion, QaSuiteReport, QaTargetType,
+    QaTestSpec, QaVerdict, QaWebStep,
+};
 pub use r#loop::AgentLoop;
 pub use reliability::{IdempotencyStore, LlmCallBudget, LoopDetector, LoopEvasionEngine};
 pub use response_learner::{KnowledgeArticle, ResponsePatternLearner, SynthesizedResponse};

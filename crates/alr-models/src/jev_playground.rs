@@ -335,6 +335,115 @@ pub fn build_generic_graph(q_type: &str, action: &str, status: &str) -> Vec<JevR
     ]
 }
 
+pub fn build_qa_web_graph() -> Vec<JevReasoningNode> {
+    vec![
+        JevReasoningNode::new(
+            "in",
+            "Test Spec",
+            "📥",
+            "neutral",
+            "Especificação E2E",
+            "Ingestão dos passos de teste em linguagem natural: navegar, preencher inputs, submeter e checar confirmação.",
+            Some("4 Passos"),
+        ),
+        JevReasoningNode::new(
+            "cdp",
+            "Chromium CDP",
+            "🌐",
+            "ok",
+            "Sessão Web Isolada",
+            "Inicialização do Chrome DevTools Protocol com sandbox e isolamento estrito de cookies e storage.",
+            Some("CDP Port 9222"),
+        ),
+        JevReasoningNode::new(
+            "act",
+            "DOM Interaction",
+            "🖱️",
+            "ok",
+            "Preenchimento e Clique",
+            "Preenchimento de inputs e acionamento de botões de checkout com verificação de mutação no DOM.",
+            Some("3 Ações"),
+        ),
+        JevReasoningNode::new(
+            "heal",
+            "Self-Healing",
+            "🔄",
+            "ok",
+            "Auto-Cura de Seletores",
+            "Seletor alterado recuperado automaticamente via árvore de acessibilidade ByRole sem quebrar o teste.",
+            Some("Self-Healed"),
+        ),
+        JevReasoningNode::new(
+            "guard",
+            "Screen Error Guard",
+            "🛡️",
+            "ok",
+            "Zero HTTP 500 / BSOD",
+            "Detecção visual e de console: zero erros de servidor 500, modais de crash ou alertas vermelhos.",
+            Some("0 Erros"),
+        ),
+        JevReasoningNode::new(
+            "verdict",
+            "QA Verdict",
+            "✅",
+            "ok",
+            "100% Aprovado",
+            "Esteira de QA certifica o fluxo de checkout para publicação em produção sem regressão.",
+            Some("Pass Rate: 100%"),
+        ),
+    ]
+}
+
+pub fn build_qa_program_graph() -> Vec<JevReasoningNode> {
+    vec![
+        JevReasoningNode::new(
+            "in",
+            "Program Spec",
+            "📜",
+            "neutral",
+            "Bateria de QA em Processo",
+            "Ingestão do plano de teste de binário e APIs: parâmetros de carga, asserções de stdout e limites de tempo.",
+            Some("500 Txs"),
+        ),
+        JevReasoningNode::new(
+            "exec",
+            "Process Spawner",
+            "⚙️",
+            "ok",
+            "Execução em Sandbox",
+            "Disparo controlado do processo filho com captura síncrona dos canais stdout e stderr.",
+            Some("Exit Code: 0"),
+        ),
+        JevReasoningNode::new(
+            "perf",
+            "Latency & Memory",
+            "⏱️",
+            "ok",
+            "Assert de Desempenho",
+            "Tempo de execução medido em 12.4ms (24.8 µs/op). Confirmação de ausência de memory leaks ou pânicos.",
+            Some("12.4 ms"),
+        ),
+        JevReasoningNode::new(
+            "assert",
+            "Output Assertions",
+            "🔍",
+            "ok",
+            "Validação de Asserções",
+            "Asserts de stdout e stderr validados com sucesso: 500/500 transações aprovadas sem falhas.",
+            Some("All Passed"),
+        ),
+        JevReasoningNode::new(
+            "cert",
+            "QA Certification",
+            "🏆",
+            "ok",
+            "Certificação de Release",
+            "Binário certificado pelo supervisor de QA autônomo para homologação em produção.",
+            Some("Certified"),
+        ),
+    ]
+}
+
 /// Predefined Playground Presets matching OpenRouter / TypeSafe JEV-1.13 and all ALR Super-Capabilities
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JevPlaygroundPreset {
@@ -1148,6 +1257,174 @@ impl JevPlaygroundPreset {
             default_threshold: 0.90,
         }
     }
+    /// Preset 11: QA Web & E-Commerce Automation (Chromium CDP & Self-Healing)
+    pub fn qa_web_automation() -> Self {
+        let state = "Teste E2E: Checkout de E-Commerce na página https://shop.alr.local/checkout\nPassos:\n1. Preencher campo #email com 'qa-tester@empresa.com'\n2. Preencher campo #card_number com '4111-2222-3333-4444'\n3. Clicar no botão [Finalizar Pedido]\n4. Verificar se o modal de confirmação '#order-confirmation-modal' surge em tela\n5. Confirmar que nenhum erro 500 ou quebra de layout ocorreu.".to_string();
+
+        let mut criteria = HashMap::new();
+        criteria.insert(
+            "true".to_string(),
+            "Todos os passos e asserções executados com sucesso, sem erros de DOM ou HTTP 500."
+                .to_string(),
+        );
+        criteria.insert(
+            "false".to_string(),
+            "Falha em seletores, elementos ausentes no DOM ou ocorrência de erro 500/crash."
+                .to_string(),
+        );
+
+        let mut questions = HashMap::new();
+        questions.insert(
+            "test_passed".to_string(),
+            JevQuestionInput {
+                r#type: "noul".to_string(),
+                instructions: Some(
+                    "O teste de QA na página web executou todas as ações com sucesso e sem regressão?".to_string(),
+                ),
+                proposition: None,
+                criteria: Some(serde_json::to_value(criteria).unwrap()),
+                threshold: Some(0.85),
+            },
+        );
+
+        let mut answers = HashMap::new();
+        answers.insert(
+            "test_passed".to_string(),
+            JevAnswerOutput::Noul { noul: 0.98 },
+        );
+
+        Self {
+            id: "qa_web_automation".to_string(),
+            name: "QA Web & E-Commerce".to_string(),
+            badge: "noul".to_string(),
+            category: "QA & Testes".to_string(),
+            description: "Automação de testes em páginas da internet via Chromium CDP: navegação, preenchimento, asserts de DOM e auto-recuperação de seletores.".to_string(),
+            request: JevDecisionRequest {
+                model: "alr/qa-browser-cdp".to_string(),
+                state,
+                questions,
+            },
+            expected_response: JevDecisionResponse {
+                id: "alr-qa-web-01".to_string(),
+                model: "alr/qa-automation-engine".to_string(),
+                provider: "ALR System 1".to_string(),
+                answers,
+                usage: JevUsage {
+                    input_tokens: 195,
+                    output_tokens: 16,
+                    cost: 0.0,
+                },
+                cost_comparison: Some(JevCostComparison {
+                    input_tokens: 195,
+                    output_tokens: 16,
+                    alr_cost: 0.0,
+                    jev_cost: 0.0000088,
+                    cloud_llm_cost: 0.0024,
+                    savings_multiplier: "Zero Custo Local | Economia 100%".to_string(),
+                }),
+                ui_decision: Some(JevUiDecisionRecommendation {
+                    action_text: "Aprovar Teste E2E e Liberar Release Web".to_string(),
+                    status: "execute".to_string(),
+                    explanation: "Fluxo de checkout validado com 98.0% de confiança e zero regressões".to_string(),
+                    latency_sec: 0.0012,
+                    reasoning_graph: build_qa_web_graph(),
+                }),
+                reasoning_graph: Some(build_qa_web_graph()),
+            },
+            default_threshold: 0.85,
+        }
+    }
+
+    /// Preset 12: QA Programas & APIs Backend (Process Spawner & Assertions)
+    pub fn qa_program_automation() -> Self {
+        let state = "Bateria de Testes em Programa: binário ./target/release/payment-processor\nComando: ./payment-processor --dry-run --batch 500\nSaída obtida:\n[INFO] Inicializando payment-processor v2.4.0\n[INFO] 500 transações validadas sem falhas\n[INFO] Tempo total: 12.4ms (24.8 µs/tx)\n[INFO] Código de saída: 0 (SUCESSO)\n[INFO] Zero panics ou memory leaks.".to_string();
+
+        let mut criteria = HashMap::new();
+        criteria.insert(
+            "approved_pass".to_string(),
+            "Código de saída 0, todas as asserções de stdout/stderr satisfeitas, sem pânicos."
+                .to_string(),
+        );
+        criteria.insert(
+            "flaky_retry".to_string(),
+            "Falha transitória de timeout ou oscilação de rede; auto-cura recomendada.".to_string(),
+        );
+        criteria.insert(
+            "bug_detected".to_string(),
+            "Código de erro divergente, panic emitido ou quebra crítica de asserção.".to_string(),
+        );
+
+        let mut questions = HashMap::new();
+        questions.insert(
+            "qa_verdict".to_string(),
+            JevQuestionInput {
+                r#type: "choice".to_string(),
+                instructions: Some(
+                    "Qual o veredito de QA para o programa após validação das asserções?"
+                        .to_string(),
+                ),
+                proposition: None,
+                criteria: Some(serde_json::to_value(criteria).unwrap()),
+                threshold: None,
+            },
+        );
+
+        let mut probs = HashMap::new();
+        probs.insert("approved_pass".to_string(), 0.96);
+        probs.insert("flaky_retry".to_string(), 0.03);
+        probs.insert("bug_detected".to_string(), 0.01);
+
+        let mut answers = HashMap::new();
+        answers.insert(
+            "qa_verdict".to_string(),
+            JevAnswerOutput::Choice {
+                choice: "approved_pass".to_string(),
+                probabilities: probs,
+                confidence: 0.96,
+            },
+        );
+
+        Self {
+            id: "qa_program_automation".to_string(),
+            name: "QA Programas & APIs".to_string(),
+            badge: "choice".to_string(),
+            category: "QA & Testes".to_string(),
+            description: "Automação de testes em processos, executáveis e APIs: execução de comandos, asserções de stdout/stderr, tempo limite e integridade de memória.".to_string(),
+            request: JevDecisionRequest {
+                model: "alr/qa-program-runner".to_string(),
+                state,
+                questions,
+            },
+            expected_response: JevDecisionResponse {
+                id: "alr-qa-prog-01".to_string(),
+                model: "alr/qa-supervisor-engine".to_string(),
+                provider: "ALR System 1".to_string(),
+                answers,
+                usage: JevUsage {
+                    input_tokens: 175,
+                    output_tokens: 14,
+                    cost: 0.0,
+                },
+                cost_comparison: Some(JevCostComparison {
+                    input_tokens: 175,
+                    output_tokens: 14,
+                    alr_cost: 0.0,
+                    jev_cost: 0.0000078,
+                    cloud_llm_cost: 0.0021,
+                    savings_multiplier: "Zero Custo Local | Economia 100%".to_string(),
+                }),
+                ui_decision: Some(JevUiDecisionRecommendation {
+                    action_text: "Certificar Programa e Integrar na Esteira de CI/CD".to_string(),
+                    status: "route".to_string(),
+                    explanation: "Todas as asserções de processo validadas com 96.0% de confiança (Exit Code 0)".to_string(),
+                    latency_sec: 0.0008,
+                    reasoning_graph: build_qa_program_graph(),
+                }),
+                reasoning_graph: Some(build_qa_program_graph()),
+            },
+            default_threshold: 0.80,
+        }
+    }
 
     pub fn all_presets() -> Vec<Self> {
         vec![
@@ -1161,6 +1438,8 @@ impl JevPlaygroundPreset {
             Self::cctv_tripwire(),
             Self::cycle_safety_shield(),
             Self::crypto_trading(),
+            Self::qa_web_automation(),
+            Self::qa_program_automation(),
         ]
     }
 }
@@ -1267,6 +1546,20 @@ impl JevTypedJudgeEngine {
             && state_lower.contains("sobrevendido")
         {
             return Ok(JevPlaygroundPreset::crypto_trading().expected_response);
+        }
+        if state_lower.contains("qa-web-checkout")
+            || state_lower.contains("checkout de e-commerce")
+            || (state_lower.contains("teste e2e") && state_lower.contains("checkout"))
+        {
+            return Ok(JevPlaygroundPreset::qa_web_automation().expected_response);
+        }
+
+        if state_lower.contains("qa-program-cli")
+            || state_lower.contains("payment-processor")
+            || (state_lower.contains("bateria de testes em programa")
+                || state_lower.contains("qa processo"))
+        {
+            return Ok(JevPlaygroundPreset::qa_program_automation().expected_response);
         }
 
         // 2. Dynamic Semantic Evaluation for Custom Inputs

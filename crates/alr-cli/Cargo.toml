@@ -6,6 +6,10 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[lib]
+name = "alr_cli"
+path = "src/lib.rs"
+
 [[bin]]
 name = "alr"
 path = "src/main.rs"
@@ -129,6 +133,21 @@ path = "../../tests/phase26_multi_asset_trading_desk_tests.rs"
 name = "phase28_typed_judge_playground_tests"
 path = "../../tests/phase28_typed_judge_playground_tests.rs"
 
+[[test]]
+name = "phase30_qa_automation_tests"
+path = "../../tests/phase30_qa_automation_tests.rs"
+[[test]]
+name = "phase29_database_explorer_tests"
+path = "../../tests/phase29_database_explorer_tests.rs"
+
+[[test]]
+name = "phase31_real_engines_playground_tests"
+path = "../../tests/phase31_real_engines_playground_tests.rs"
+
+[[test]]
+name = "phase32_city_routing_tests"
+path = "../../tests/phase32_city_routing_tests.rs"
+
 
 [dependencies]
 alr-core = { workspace = true }
@@ -171,3 +190,5 @@ reqwest = { workspace = true }
 hmac = "0.12"
 sha2 = "0.10"
 hex = "0.4"
+rusqlite = { workspace = true }
+image = { workspace = true }
