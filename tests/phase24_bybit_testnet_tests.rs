@@ -275,7 +275,8 @@ async fn test_bybit_kline_download_and_technical_confluence() {
         | alr_connectors::trading::TradingSignal::Sell
         | alr_connectors::trading::TradingSignal::Hold
         | alr_connectors::trading::TradingSignal::StopLoss
-        | alr_connectors::trading::TradingSignal::TakeProfit => {}
+        | alr_connectors::trading::TradingSignal::TakeProfit
+        | alr_connectors::trading::TradingSignal::EarlyExit => {}
     }
 }
 

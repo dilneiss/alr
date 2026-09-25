@@ -6,8 +6,10 @@
 
 use crate::approvals::{ApprovalGateway, ApprovalRequest};
 use anyhow::{bail, Result};
+use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 
 /// Tipo de ordem / Lado de negociação
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -33,6 +35,7 @@ pub enum TradingSignal {
     Hold,
     StopLoss,
     TakeProfit,
+    EarlyExit,
 }
 
 /// Representação de uma vela (Candle / Tick) de preço
@@ -132,6 +135,10 @@ pub struct TradingPosition {
     pub entry_timestamp: i64,
     pub highest_price: f64,
     pub lowest_price: f64,
+    pub trailing_stop_pct: Option<f64>,
+    pub max_adverse_excursion_pct: f64,
+    pub adverse_bars_count: usize,
+    pub rationale: Option<RiskRationale>,
 }
 
 impl TradingPosition {
@@ -156,10 +163,25 @@ impl TradingPosition {
             entry_timestamp: timestamp,
             highest_price: entry_price,
             lowest_price: entry_price,
+            trailing_stop_pct: None,
+            max_adverse_excursion_pct: 0.0,
+            adverse_bars_count: 0,
+            rationale: None,
         }
     }
 
+    pub fn with_rationale(mut self, rationale: RiskRationale) -> Self {
+        self.rationale = Some(rationale);
+        self
+    }
+
+    pub fn with_trailing_stop(mut self, trailing_pct: f64) -> Self {
+        self.trailing_stop_pct = Some(trailing_pct);
+        self
+    }
+
     pub fn update_price(&mut self, price: f64) {
+        let prev_price = self.current_price;
         self.current_price = price;
         self.highest_price = self.highest_price.max(price);
         self.lowest_price = self.lowest_price.min(price);
@@ -168,6 +190,61 @@ impl TradingPosition {
             OrderSide::Long => (price - self.entry_price) * self.quantity,
             OrderSide::Short => (self.entry_price - price) * self.quantity,
         };
+
+        // Rastreamento dinâmico de Adverse Excursion (MAE) e barras contrárias
+        if self.entry_price > 0.0 {
+            match self.side {
+                OrderSide::Long => {
+                    let adverse =
+                        ((self.entry_price - self.lowest_price) / self.entry_price) * 100.0;
+                    self.max_adverse_excursion_pct =
+                        self.max_adverse_excursion_pct.max(adverse.max(0.0));
+                    if price < prev_price {
+                        self.adverse_bars_count += 1;
+                    } else if price >= self.entry_price {
+                        self.adverse_bars_count = 0;
+                    }
+                }
+                OrderSide::Short => {
+                    let adverse =
+                        ((self.highest_price - self.entry_price) / self.entry_price) * 100.0;
+                    self.max_adverse_excursion_pct =
+                        self.max_adverse_excursion_pct.max(adverse.max(0.0));
+                    if price > prev_price {
+                        self.adverse_bars_count += 1;
+                    } else if price <= self.entry_price {
+                        self.adverse_bars_count = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn check_early_exit(
+        &self,
+        current_price: f64,
+        ema_9: f64,
+        ema_21: f64,
+    ) -> Option<&'static str> {
+        match self.side {
+            OrderSide::Long => {
+                if self.adverse_bars_count >= 3 && current_price < ema_9 && ema_9 < ema_21 {
+                    return Some("EARLY_EXIT_MOMENTUM_BREAK");
+                }
+                if self.max_adverse_excursion_pct >= 1.25 && current_price < ema_9 {
+                    return Some("EARLY_EXIT_MAE_THRESHOLD");
+                }
+            }
+            OrderSide::Short => {
+                if self.adverse_bars_count >= 3 && current_price > ema_9 && ema_9 > ema_21 {
+                    return Some("EARLY_EXIT_MOMENTUM_BREAK");
+                }
+                if self.max_adverse_excursion_pct >= 1.25 && current_price > ema_9 {
+                    return Some("EARLY_EXIT_MAE_THRESHOLD");
+                }
+            }
+        }
+        None
     }
 
     pub fn unrealized_pnl(&self) -> f64 {
@@ -219,6 +296,122 @@ impl TradingPosition {
     }
 }
 
+/// Explicação transparente e auditável do posicionamento de risco (Risk Rationale)
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RiskRationale {
+    pub stop_loss_price: f64,
+    pub take_profit_price: f64,
+    pub risk_distance_points: f64,
+    pub risk_distance_pct: f64,
+    pub reward_distance_points: f64,
+    pub reward_distance_pct: f64,
+    pub risk_reward_ratio: f64,
+    pub stop_loss_explanation: String,
+    pub take_profit_explanation: String,
+    pub volatility_atr: f64,
+    pub supertrend_trend: String,
+    pub bollinger_context: String,
+}
+
+impl RiskRationale {
+    pub fn build(
+        entry_price: f64,
+        side: OrderSide,
+        stop_loss: f64,
+        take_profit: f64,
+        indicators: &TechnicalIndicators,
+    ) -> Self {
+        let (risk_pts, risk_pct) = match side {
+            OrderSide::Long => (
+                (entry_price - stop_loss).max(0.0),
+                if entry_price > 0.0 {
+                    ((entry_price - stop_loss) / entry_price * 100.0).max(0.0)
+                } else {
+                    0.0
+                },
+            ),
+            OrderSide::Short => (
+                (stop_loss - entry_price).max(0.0),
+                if entry_price > 0.0 {
+                    ((stop_loss - entry_price) / entry_price * 100.0).max(0.0)
+                } else {
+                    0.0
+                },
+            ),
+        };
+
+        let (reward_pts, reward_pct) = match side {
+            OrderSide::Long => (
+                (take_profit - entry_price).max(0.0),
+                if entry_price > 0.0 {
+                    ((take_profit - entry_price) / entry_price * 100.0).max(0.0)
+                } else {
+                    0.0
+                },
+            ),
+            OrderSide::Short => (
+                (entry_price - take_profit).max(0.0),
+                if entry_price > 0.0 {
+                    ((entry_price - take_profit) / entry_price * 100.0).max(0.0)
+                } else {
+                    0.0
+                },
+            ),
+        };
+
+        let rr_ratio = if risk_pts > 1e-6 {
+            (reward_pts / risk_pts * 100.0).round() / 100.0
+        } else {
+            2.0
+        };
+
+        let sl_expl = format!(
+            "Stop-Loss fixado em ${:.2} (-{:.2}% / -{:.2} pts): ancorado a 1.5x ATR (${:.2}) e protegido pela média de suporte EMA-21 (${:.2}) para filtrar ruídos.",
+            stop_loss, risk_pct, risk_pts, indicators.volatility_atr, indicators.ema_21
+        );
+
+        let tp_expl = format!(
+            "Take-Profit fixado em ${:.2} (+{:.2}% / +{:.2} pts): Relação R:R de 1:{:.2} calibrada com a resistência da Banda Superior de Bollinger (${:.2}).",
+            take_profit, reward_pct, reward_pts, rr_ratio, indicators.bollinger_upper
+        );
+
+        let st_trend = if indicators.supertrend_direction >= 0 {
+            format!("ALTA (Bullish SuperTrend a ${:.2})", indicators.supertrend)
+        } else {
+            format!("BAIXA (Bearish SuperTrend a ${:.2})", indicators.supertrend)
+        };
+
+        let bb_context = if indicators.bollinger_bandwidth < 0.035 {
+            format!(
+                "Squeeze de Bollinger detectado (BW: {:.2}%): compressão severa de volatilidade indicando iminência de rompimento direcional.",
+                indicators.bollinger_bandwidth * 100.0
+            )
+        } else {
+            format!(
+                "Banda de Bollinger normal (BW: {:.2}%): canais entre ${:.2} e ${:.2}.",
+                indicators.bollinger_bandwidth * 100.0,
+                indicators.bollinger_lower,
+                indicators.bollinger_upper
+            )
+        };
+
+        Self {
+            stop_loss_price: stop_loss,
+            take_profit_price: take_profit,
+            risk_distance_points: risk_pts,
+            risk_distance_pct: risk_pct,
+            reward_distance_points: reward_pts,
+            reward_distance_pct: reward_pct,
+            risk_reward_ratio: rr_ratio,
+            stop_loss_explanation: sl_expl,
+            take_profit_explanation: tp_expl,
+            volatility_atr: indicators.volatility_atr,
+            supertrend_trend: st_trend,
+            bollinger_context: bb_context,
+        }
+    }
+}
+
 /// Indicadores técnicos locais calculados com zero alocação adicional
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TechnicalIndicators {
@@ -230,9 +423,64 @@ pub struct TechnicalIndicators {
     pub macd_signal: f64,
     pub macd_histogram: f64,
     pub volatility_atr: f64,
+    pub bollinger_upper: f64,
+    pub bollinger_middle: f64,
+    pub bollinger_lower: f64,
+    pub bollinger_bandwidth: f64,
+    pub supertrend: f64,
+    pub supertrend_direction: i32,
+}
+
+impl Default for TechnicalIndicators {
+    fn default() -> Self {
+        Self {
+            rsi_14: 50.0,
+            sma_20: 0.0,
+            ema_9: 0.0,
+            ema_21: 0.0,
+            macd: 0.0,
+            macd_signal: 0.0,
+            macd_histogram: 0.0,
+            volatility_atr: 0.0,
+            bollinger_upper: 0.0,
+            bollinger_middle: 0.0,
+            bollinger_lower: 0.0,
+            bollinger_bandwidth: 0.0,
+            supertrend: 0.0,
+            supertrend_direction: 0,
+        }
+    }
 }
 
 impl TechnicalIndicators {
+    pub fn default_at_price(price: f64) -> Self {
+        let atr = price * 0.005;
+        Self {
+            rsi_14: 50.0,
+            sma_20: price,
+            ema_9: price,
+            ema_21: price,
+            macd: 0.0,
+            macd_signal: 0.0,
+            macd_histogram: 0.0,
+            volatility_atr: atr,
+            bollinger_upper: price * 1.01,
+            bollinger_middle: price,
+            bollinger_lower: price * 0.99,
+            bollinger_bandwidth: 0.02,
+            supertrend: price * 0.985,
+            supertrend_direction: 1,
+        }
+    }
+
+    pub fn is_bollinger_squeeze(&self, threshold: f64) -> bool {
+        self.bollinger_bandwidth < threshold
+    }
+
+    pub fn is_supertrend_bullish(&self) -> bool {
+        self.supertrend_direction >= 0
+    }
+
     pub fn calculate(candles: &[Candle]) -> Result<Self> {
         if candles.is_empty() {
             bail!("Cannot calculate technical indicators on empty candles");
@@ -247,6 +495,17 @@ impl TechnicalIndicators {
             Self::calculate_macd(&closes).unwrap_or((0.0, 0.0, 0.0));
         let volatility_atr = Self::calculate_atr(candles, 14).unwrap_or(0.0);
 
+        let (bollinger_upper, bollinger_middle, bollinger_lower, bollinger_bandwidth) =
+            Self::calculate_bollinger_bands(&closes, 20, 2.0).unwrap_or((
+                *closes.last().unwrap() * 1.02,
+                *closes.last().unwrap(),
+                *closes.last().unwrap() * 0.98,
+                0.04,
+            ));
+
+        let (supertrend, supertrend_direction) = Self::calculate_supertrend(candles, 10, 3.0)
+            .unwrap_or((*closes.last().unwrap() * 0.98, 1));
+
         Ok(Self {
             rsi_14,
             sma_20,
@@ -256,6 +515,12 @@ impl TechnicalIndicators {
             macd_signal,
             macd_histogram,
             volatility_atr,
+            bollinger_upper,
+            bollinger_middle,
+            bollinger_lower,
+            bollinger_bandwidth,
+            supertrend,
+            supertrend_direction,
         })
     }
 
@@ -381,6 +646,128 @@ impl TechnicalIndicators {
             atr = (atr * (period as f64 - 1.0) + tr) / period as f64;
         }
         Some(atr)
+    }
+
+    pub fn calculate_bollinger_bands(
+        prices: &[f64],
+        period: usize,
+        multiplier: f64,
+    ) -> Option<(f64, f64, f64, f64)> {
+        if prices.is_empty() || period == 0 {
+            return None;
+        }
+        let sma = Self::calculate_sma(prices, period)?;
+        let window = if prices.len() < period {
+            prices
+        } else {
+            &prices[prices.len() - period..]
+        };
+        let variance: f64 =
+            window.iter().map(|&p| (p - sma).powi(2)).sum::<f64>() / window.len() as f64;
+        let std_dev = variance.sqrt();
+        let upper = sma + multiplier * std_dev;
+        let lower = sma - multiplier * std_dev;
+        let bandwidth = if sma.abs() > 1e-9 {
+            (upper - lower) / sma
+        } else {
+            0.0
+        };
+        Some((upper, sma, lower, bandwidth))
+    }
+
+    pub fn calculate_supertrend(
+        candles: &[Candle],
+        period: usize,
+        multiplier: f64,
+    ) -> Option<(f64, i32)> {
+        if candles.len() < period || period == 0 {
+            return None;
+        }
+        let mut tr_list = Vec::with_capacity(candles.len());
+        tr_list.push(candles[0].high - candles[0].low);
+        for i in 1..candles.len() {
+            let h = candles[i].high;
+            let l = candles[i].low;
+            let pc = candles[i - 1].close;
+            let tr = (h - l).max((h - pc).abs()).max((l - pc).abs());
+            tr_list.push(tr);
+        }
+
+        let mut atr_series = Vec::with_capacity(candles.len());
+        let mut initial_atr: f64 = tr_list[..period].iter().sum::<f64>() / period as f64;
+        for _ in 0..period - 1 {
+            atr_series.push(initial_atr);
+        }
+        atr_series.push(initial_atr);
+        for &tr in tr_list.iter().take(candles.len()).skip(period) {
+            initial_atr = (initial_atr * (period as f64 - 1.0) + tr) / period as f64;
+            atr_series.push(initial_atr);
+        }
+
+        let mut prev_final_upper = 0.0;
+        let mut prev_final_lower = 0.0;
+        let mut supertrend = 0.0;
+        let mut direction = 1; // 1 = bullish, -1 = bearish
+
+        for i in 0..candles.len() {
+            let hl2 = (candles[i].high + candles[i].low) / 2.0;
+            let atr = atr_series[i];
+            let basic_upper = hl2 + (multiplier * atr);
+            let basic_lower = hl2 - (multiplier * atr);
+
+            let final_upper = if i == 0
+                || basic_upper < prev_final_upper
+                || candles[i - 1].close > prev_final_upper
+            {
+                basic_upper
+            } else {
+                prev_final_upper
+            };
+
+            let final_lower = if i == 0
+                || basic_lower > prev_final_lower
+                || candles[i - 1].close < prev_final_lower
+            {
+                basic_lower
+            } else {
+                prev_final_lower
+            };
+
+            if i == 0 {
+                direction = if candles[i].close >= basic_lower {
+                    1
+                } else {
+                    -1
+                };
+                supertrend = if direction == 1 {
+                    final_lower
+                } else {
+                    final_upper
+                };
+            } else {
+                let prev_supertrend = supertrend;
+                if prev_supertrend == prev_final_upper {
+                    if candles[i].close > final_upper {
+                        direction = 1;
+                        supertrend = final_lower;
+                    } else {
+                        direction = -1;
+                        supertrend = final_upper;
+                    }
+                } else if candles[i].close < final_lower {
+                    direction = -1;
+                    supertrend = final_upper;
+                } else {
+                    direction = 1;
+                    supertrend = final_lower;
+                }
+            }
+
+            prev_final_upper = final_upper;
+            prev_final_lower = final_lower;
+        }
+
+        Some((supertrend, direction))
     }
 }
 
@@ -643,15 +1030,20 @@ impl CryptoTraderEngine {
             return TradingSignal::Hold;
         }
 
-        // 3. Regras de momentum e confluência técnica
+        // 3. Regras de momentum e confluência técnica (incluindo SuperTrend)
         let trend_up = indicators.ema_9 > indicators.ema_21;
         let trend_down = indicators.ema_9 < indicators.ema_21;
         let macd_bullish = indicators.macd_histogram > 0.0;
         let macd_bearish = indicators.macd_histogram < 0.0;
+        let supertrend_bull = indicators.supertrend_direction >= 0;
+        let supertrend_bear = indicators.supertrend_direction < 0;
 
-        if (indicators.rsi_14 < 35.0 || trend_up) && macd_bullish && indicators.rsi_14 < 70.0 {
+        if (indicators.rsi_14 < 35.0 || (trend_up && supertrend_bull))
+            && macd_bullish
+            && indicators.rsi_14 < 70.0
+        {
             TradingSignal::Buy
-        } else if (indicators.rsi_14 > 65.0 || trend_down)
+        } else if (indicators.rsi_14 > 65.0 || (trend_down && supertrend_bear))
             && macd_bearish
             && indicators.rsi_14 > 30.0
         {
@@ -725,6 +1117,17 @@ impl CryptoTraderEngine {
             Some(ind) => ind,
             None => return Ok(None),
         };
+
+        // 3.1. Checa Early Exit Trigger (MAE ou quebra de momentum)
+        if let Some(pos) = &self.current_position {
+            if let Some(early_reason) =
+                pos.check_early_exit(current_price, indicators.ema_9, indicators.ema_21)
+            {
+                if let Ok(Some(exec)) = self.close_current_position(current_price, early_reason) {
+                    return Ok(Some(exec));
+                }
+            }
+        }
 
         // 4. Avalia sinal técnico
         let signal = self.evaluate_signal(&indicators, current_price);
@@ -831,7 +1234,14 @@ impl CryptoTraderEngine {
             self.cash_balance -= total_cost;
             let now_ts = self.candles.last().map(|c| c.timestamp).unwrap_or(0);
 
-            let pos = TradingPosition::new(
+            let rationale = if let Some(ind) = self.compute_indicators() {
+                RiskRationale::build(executed_price, side, stop_loss, take_profit, &ind)
+            } else {
+                let default_ind = TechnicalIndicators::default_at_price(executed_price);
+                RiskRationale::build(executed_price, side, stop_loss, take_profit, &default_ind)
+            };
+
+            let mut pos = TradingPosition::new(
                 &self.asset,
                 executed_price,
                 quantity,
@@ -839,7 +1249,12 @@ impl CryptoTraderEngine {
                 stop_loss,
                 take_profit,
                 now_ts,
-            );
+            )
+            .with_rationale(rationale);
+
+            if let Some(trailing) = self.risk_policy.trailing_stop_pct {
+                pos = pos.with_trailing_stop(trailing);
+            }
             self.current_position = Some(pos);
 
             let exec = TradeExecution {
@@ -1029,6 +1444,956 @@ impl CryptoTraderEngine {
             profit_factor,
             initial_capital: self.initial_capital,
             final_capital,
+        }
+    }
+}
+
+/// Persistência relacional de posições e ordens no SQLite com modo WAL para continuidade operacional pós-reinício
+#[derive(Clone)]
+pub struct SqliteTradingStore {
+    conn: Arc<parking_lot::Mutex<Connection>>,
+    pub db_path: Option<std::path::PathBuf>,
+}
+
+impl SqliteTradingStore {
+    pub fn open_in_memory() -> Result<Self> {
+        let conn = Connection::open_in_memory()?;
+        let store = Self {
+            conn: Arc::new(parking_lot::Mutex::new(conn)),
+            db_path: None,
+        };
+        store.run_migrations()?;
+        Ok(store)
+    }
+
+    pub fn open<P: AsRef<std::path::Path>>(path: P) -> Result<Self> {
+        if let Some(parent) = path.as_ref().parent() {
+            if !parent.as_os_str().is_empty() {
+                std::fs::create_dir_all(parent)?;
+            }
+        }
+        let conn = Connection::open(&path)?;
+        let store = Self {
+            conn: Arc::new(parking_lot::Mutex::new(conn)),
+            db_path: Some(path.as_ref().to_path_buf()),
+        };
+        store.run_migrations()?;
+        Ok(store)
+    }
+
+    pub fn run_migrations(&self) -> Result<()> {
+        let conn = self.conn.lock();
+        conn.execute_batch(
+            r#"
+            PRAGMA journal_mode = WAL;
+            PRAGMA synchronous = NORMAL;
+
+            CREATE TABLE IF NOT EXISTS trading_positions (
+                asset TEXT PRIMARY KEY,
+                entry_price REAL NOT NULL,
+                quantity REAL NOT NULL,
+                side TEXT NOT NULL,
+                stop_loss REAL NOT NULL,
+                take_profit REAL NOT NULL,
+                current_price REAL NOT NULL,
+                pnl REAL NOT NULL,
+                entry_timestamp INTEGER NOT NULL,
+                highest_price REAL NOT NULL,
+                lowest_price REAL NOT NULL,
+                trailing_stop_pct REAL,
+                max_adverse_excursion_pct REAL NOT NULL DEFAULT 0.0,
+                adverse_bars_count INTEGER NOT NULL DEFAULT 0,
+                status TEXT NOT NULL,
+                rationale TEXT,
+                updated_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS trading_executions (
+                id TEXT PRIMARY KEY,
+                timestamp INTEGER NOT NULL,
+                asset TEXT NOT NULL,
+                action TEXT NOT NULL,
+                side TEXT NOT NULL,
+                price REAL NOT NULL,
+                quantity REAL NOT NULL,
+                fee REAL NOT NULL,
+                slippage REAL NOT NULL,
+                realized_pnl REAL,
+                reason TEXT NOT NULL
+            );
+            "#,
+        )?;
+        Ok(())
+    }
+
+    pub fn save_position(&self, pos: &TradingPosition, status: &str) -> Result<()> {
+        let conn = self.conn.lock();
+        let side_str = match pos.side {
+            OrderSide::Long => "Long",
+            OrderSide::Short => "Short",
+        };
+        let rationale_json = pos
+            .rationale
+            .as_ref()
+            .map(|r| serde_json::to_string(r).unwrap_or_default());
+        let updated_at = chrono::Utc::now().to_rfc3339();
+
+        conn.execute(
+            r#"
+            INSERT INTO trading_positions (
+                asset, entry_price, quantity, side, stop_loss, take_profit,
+                current_price, pnl, entry_timestamp, highest_price, lowest_price,
+                trailing_stop_pct, max_adverse_excursion_pct, adverse_bars_count,
+                status, rationale, updated_at
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)
+            ON CONFLICT(asset) DO UPDATE SET
+                entry_price=excluded.entry_price,
+                quantity=excluded.quantity,
+                side=excluded.side,
+                stop_loss=excluded.stop_loss,
+                take_profit=excluded.take_profit,
+                current_price=excluded.current_price,
+                pnl=excluded.pnl,
+                highest_price=excluded.highest_price,
+                lowest_price=excluded.lowest_price,
+                trailing_stop_pct=excluded.trailing_stop_pct,
+                max_adverse_excursion_pct=excluded.max_adverse_excursion_pct,
+                adverse_bars_count=excluded.adverse_bars_count,
+                status=excluded.status,
+                rationale=excluded.rationale,
+                updated_at=excluded.updated_at
+            "#,
+            params![
+                pos.asset,
+                pos.entry_price,
+                pos.quantity,
+                side_str,
+                pos.stop_loss,
+                pos.take_profit,
+                pos.current_price,
+                pos.pnl,
+                pos.entry_timestamp,
+                pos.highest_price,
+                pos.lowest_price,
+                pos.trailing_stop_pct,
+                pos.max_adverse_excursion_pct,
+                pos.adverse_bars_count as i64,
+                status,
+                rationale_json,
+                updated_at,
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn load_open_positions(&self) -> Result<Vec<TradingPosition>> {
+        let conn = self.conn.lock();
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT asset, entry_price, quantity, side, stop_loss, take_profit,
+                   current_price, pnl, entry_timestamp, highest_price, lowest_price,
+                   trailing_stop_pct, max_adverse_excursion_pct, adverse_bars_count, rationale
+            FROM trading_positions
+            WHERE status = 'OPEN'
+            "#,
+        )?;
+
+        let rows = stmt.query_map([], |row| {
+            let asset: String = row.get(0)?;
+            let entry_price: f64 = row.get(1)?;
+            let quantity: f64 = row.get(2)?;
+            let side_str: String = row.get(3)?;
+            let stop_loss: f64 = row.get(4)?;
+            let take_profit: f64 = row.get(5)?;
+            let current_price: f64 = row.get(6)?;
+            let pnl: f64 = row.get(7)?;
+            let entry_timestamp: i64 = row.get(8)?;
+            let highest_price: f64 = row.get(9)?;
+            let lowest_price: f64 = row.get(10)?;
+            let trailing_stop_pct: Option<f64> = row.get(11)?;
+            let max_adverse_excursion_pct: f64 = row.get(12)?;
+            let adverse_bars_count_i64: i64 = row.get(13)?;
+            let rationale_str: Option<String> = row.get(14)?;
+
+            let side = if side_str.eq_ignore_ascii_case("Short") {
+                OrderSide::Short
+            } else {
+                OrderSide::Long
+            };
+
+            let rationale = rationale_str.and_then(|s| serde_json::from_str(&s).ok());
+
+            Ok(TradingPosition {
+                asset,
+                entry_price,
+                quantity,
+                side,
+                stop_loss,
+                take_profit,
+                current_price,
+                pnl,
+                entry_timestamp,
+                highest_price,
+                lowest_price,
+                trailing_stop_pct,
+                max_adverse_excursion_pct,
+                adverse_bars_count: adverse_bars_count_i64 as usize,
+                rationale,
+            })
+        })?;
+
+        let mut positions = Vec::new();
+        for r in rows {
+            positions.push(r?);
+        }
+        Ok(positions)
+    }
+
+    pub fn mark_position_closed(&self, asset: &str, status: &str) -> Result<()> {
+        let conn = self.conn.lock();
+        let updated_at = chrono::Utc::now().to_rfc3339();
+        conn.execute(
+            "UPDATE trading_positions SET status = ?1, updated_at = ?2 WHERE asset = ?3",
+            params![status, updated_at, asset],
+        )?;
+        Ok(())
+    }
+
+    pub fn save_execution(&self, exec: &TradeExecution) -> Result<()> {
+        let conn = self.conn.lock();
+        let action_str = format!("{:?}", exec.action);
+        let side_str = format!("{:?}", exec.side);
+        conn.execute(
+            r#"
+            INSERT INTO trading_executions (
+                id, timestamp, asset, action, side, price, quantity, fee, slippage, realized_pnl, reason
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
+            ON CONFLICT(id) DO NOTHING
+            "#,
+            params![
+                exec.id,
+                exec.timestamp,
+                exec.asset,
+                action_str,
+                side_str,
+                exec.price,
+                exec.quantity,
+                exec.fee,
+                exec.slippage,
+                exec.realized_pnl,
+                exec.reason,
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn load_executions(
+        &self,
+        asset: Option<&str>,
+        limit: usize,
+    ) -> Result<Vec<TradeExecution>> {
+        let conn = self.conn.lock();
+        let mut query = "SELECT id, timestamp, asset, action, side, price, quantity, fee, slippage, realized_pnl, reason FROM trading_executions".to_string();
+        if let Some(a) = asset {
+            query.push_str(&format!(" WHERE asset = '{}'", a));
+        }
+        query.push_str(&format!(" ORDER BY timestamp DESC LIMIT {}", limit));
+
+        let mut stmt = conn.prepare(&query)?;
+        let rows = stmt.query_map([], |row| {
+            let id: String = row.get(0)?;
+            let timestamp: i64 = row.get(1)?;
+            let asset: String = row.get(2)?;
+            let action_str: String = row.get(3)?;
+            let side_str: String = row.get(4)?;
+            let price: f64 = row.get(5)?;
+            let quantity: f64 = row.get(6)?;
+            let fee: f64 = row.get(7)?;
+            let slippage: f64 = row.get(8)?;
+            let realized_pnl: Option<f64> = row.get(9)?;
+            let reason: String = row.get(10)?;
+
+            let action = match action_str.as_str() {
+                "Buy" => TradingAction::Buy,
+                "Sell" => TradingAction::Sell,
+                "Hold" => TradingAction::Hold,
+                _ => TradingAction::ClosePosition,
+            };
+            let side = if side_str.eq_ignore_ascii_case("Short") {
+                OrderSide::Short
+            } else {
+                OrderSide::Long
+            };
+
+            Ok(TradeExecution {
+                id,
+                timestamp,
+                asset,
+                action,
+                side,
+                price,
+                quantity,
+                fee,
+                slippage,
+                realized_pnl,
+                reason,
+            })
+        })?;
+
+        let mut list = Vec::new();
+        for r in rows {
+            list.push(r?);
+        }
+        Ok(list)
+    }
+}
+
+/// Regime macro de mercado diagnosticado pelo System 2
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum MarketRegime {
+    StrongTrendingBull,
+    StrongTrendingBear,
+    SidewaysConsolidation,
+    HighVolatilitySpike,
+}
+
+/// Relatório consolidado do consultor macro (System 2)
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct MacroRegimeReport {
+    pub timestamp: i64,
+    pub regime: MarketRegime,
+    pub regime_name: String,
+    pub risk_multiplier: f64,
+    pub max_recommended_positions: usize,
+    pub rationale: String,
+    pub consensus_bullish_pct: f64,
+    pub avg_atr_volatility_pct: f64,
+}
+
+/// Consultor macro periódico de mercado com avaliação heurística determinística e suporte a LLM
+#[derive(Clone)]
+pub struct LlmMarketRegimeAdvisor {
+    pub mock_mode: bool,
+    pub last_report: Option<MacroRegimeReport>,
+}
+
+impl Default for LlmMarketRegimeAdvisor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl LlmMarketRegimeAdvisor {
+    pub fn new() -> Self {
+        Self {
+            mock_mode: true,
+            last_report: None,
+        }
+    }
+
+    /// Avalia o regime macro baseado no consenso de indicadores dos ativos líderes
+    pub fn evaluate_regime(
+        &mut self,
+        asset_indicators: &HashMap<String, (f64, TechnicalIndicators)>,
+    ) -> MacroRegimeReport {
+        let total = asset_indicators.len();
+        if total == 0 {
+            let report = MacroRegimeReport {
+                timestamp: chrono::Utc::now().timestamp(),
+                regime: MarketRegime::SidewaysConsolidation,
+                regime_name: "Consolidação Neutra (Sem Dados)".to_string(),
+                risk_multiplier: 1.0,
+                max_recommended_positions: 3,
+                rationale: "Dados insuficientes para avaliação macro. Mantendo risco padrão."
+                    .to_string(),
+                consensus_bullish_pct: 50.0,
+                avg_atr_volatility_pct: 1.0,
+            };
+            self.last_report = Some(report.clone());
+            return report;
+        }
+
+        let mut bullish_count = 0;
+        let mut bearish_count = 0;
+        let mut total_volatility_pct = 0.0;
+
+        for (price, ind) in asset_indicators.values() {
+            if *price > 0.0 {
+                let vol_pct = (ind.volatility_atr / *price) * 100.0;
+                total_volatility_pct += vol_pct;
+            }
+            if ind.supertrend_direction >= 0 && ind.ema_9 > ind.ema_21 {
+                bullish_count += 1;
+            } else if ind.supertrend_direction < 0 && ind.ema_9 < ind.ema_21 {
+                bearish_count += 1;
+            }
+        }
+
+        let avg_volatility = total_volatility_pct / total as f64;
+        let bullish_pct = (bullish_count as f64 / total as f64) * 100.0;
+        let bearish_pct = (bearish_count as f64 / total as f64) * 100.0;
+
+        let (regime, name, multiplier, max_pos, rationale) = if avg_volatility > 4.0 {
+            (
+                MarketRegime::HighVolatilitySpike,
+                "Pico de Alta Volatilidade (Spike)".to_string(),
+                0.5,
+                1,
+                format!(
+                    "Volatilidade média ATR em {:.2}%, indicando choques de liquidez ou notícias de alto impacto. Recomendado reduzir exposição a 1 posição com stops ampliados.",
+                    avg_volatility
+                ),
+            )
+        } else if bullish_pct >= 60.0 {
+            (
+                MarketRegime::StrongTrendingBull,
+                "Tendência de Alta Forte (Bull Momentum)".to_string(),
+                1.25,
+                4,
+                format!(
+                    "{:.0}% dos ativos em confluência compradora (SuperTrend + EMA9 > EMA21). Risco dinâmico expandido para capturar rali.",
+                    bullish_pct
+                ),
+            )
+        } else if bearish_pct >= 60.0 {
+            (
+                MarketRegime::StrongTrendingBear,
+                "Tendência de Baixa Acentuada (Bear Pressure)".to_string(),
+                0.65,
+                2,
+                format!(
+                    "{:.0}% dos ativos sob pressão vendedora. Exposição reduzida e controle restritivo de entradas.",
+                    bearish_pct
+                ),
+            )
+        } else {
+            (
+                MarketRegime::SidewaysConsolidation,
+                "Consolidação Lateral Ruidosa (Range)".to_string(),
+                0.8,
+                2,
+                format!(
+                    "Mercado dividido ({:.0}% altistas / {:.0}% baixistas) com compressão de Bollinger. Recomendado operar retornos à média com alvos curtos.",
+                    bullish_pct, bearish_pct
+                ),
+            )
+        };
+        let report = MacroRegimeReport {
+            timestamp: chrono::Utc::now().timestamp(),
+            regime,
+            regime_name: name,
+            risk_multiplier: multiplier,
+            max_recommended_positions: max_pos,
+            rationale,
+            consensus_bullish_pct: bullish_pct,
+            avg_atr_volatility_pct: avg_volatility,
+        };
+
+        self.last_report = Some(report.clone());
+        report
+    }
+}
+
+/// Cesta padrão dos 7 ativos líderes de volume global
+pub const DEFAULT_MULTI_ASSET_BASKET: [&str; 7] = [
+    "BTC-USDT",
+    "ETH-USDT",
+    "SOL-USDT",
+    "BNB-USDT",
+    "XRP-USDT",
+    "ADA-USDT",
+    "DOGE-USDT",
+];
+
+/// Preço base de referência para simulações e snapshots determinísticos
+pub fn asset_baseline_price(asset: &str) -> f64 {
+    match asset.to_uppercase().as_str() {
+        "BTC-USDT" | "BTCUSDT" => 64_250.0,
+        "ETH-USDT" | "ETHUSDT" => 3_480.0,
+        "SOL-USDT" | "SOLUSDT" => 152.0,
+        "BNB-USDT" | "BNBUSDT" => 585.0,
+        "XRP-USDT" | "XRPUSDT" => 0.585,
+        "ADA-USDT" | "ADAUSDT" => 0.485,
+        "DOGE-USDT" | "DOGEUSDT" => 0.125,
+        _ => 100.0,
+    }
+}
+
+/// Configuração do Desk Multi-Ativo
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MultiAssetConfig {
+    pub initial_capital: f64,
+    pub max_concurrent_positions: usize,
+    pub max_portfolio_risk_pct: f64,
+    pub max_risk_per_trade_pct: f64,
+    pub exchange_config: ExchangeSimulationConfig,
+    pub basket: Vec<String>,
+}
+
+impl Default for MultiAssetConfig {
+    fn default() -> Self {
+        Self {
+            initial_capital: 50_000.0,
+            max_concurrent_positions: 3,
+            max_portfolio_risk_pct: 10.0,
+            max_risk_per_trade_pct: 2.0,
+            exchange_config: ExchangeSimulationConfig::zero_fee(),
+            basket: DEFAULT_MULTI_ASSET_BASKET
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+        }
+    }
+}
+
+/// Snapshot individual de um ativo para o Dashboard Web
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AssetDeskStatus {
+    pub asset: String,
+    pub current_price: f64,
+    pub change_24h_pct: f64,
+    pub high_24h: f64,
+    pub low_24h: f64,
+    pub volume_24h: f64,
+    pub rsi_14: f64,
+    pub ema_9: f64,
+    pub ema_21: f64,
+    pub supertrend: f64,
+    pub supertrend_direction: i32,
+    pub bollinger_upper: f64,
+    pub bollinger_lower: f64,
+    pub bollinger_bandwidth: f64,
+    pub signal: TradingSignal,
+    pub has_position: bool,
+    pub position: Option<TradingPosition>,
+}
+
+/// Snapshot global da mesa de operações para o Dashboard Web (Axum API)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeskStatusSnapshot {
+    pub timestamp: i64,
+    pub initial_capital: f64,
+    pub total_portfolio_value: f64,
+    pub cash_balance: f64,
+    pub total_unrealized_pnl: f64,
+    pub total_unrealized_pnl_pct: f64,
+    pub realized_pnl: f64,
+    pub max_drawdown_pct: f64,
+    pub active_positions_count: usize,
+    pub max_positions_allowed: usize,
+    pub kill_switch_active: bool,
+    pub macro_regime: MacroRegimeReport,
+    pub assets: Vec<AssetDeskStatus>,
+    pub recent_executions: Vec<TradeExecution>,
+}
+
+/// Motor de Execução e Orquestração Multi-Ativo
+pub struct MultiAssetTraderEngine {
+    pub config: MultiAssetConfig,
+    pub engines: HashMap<String, CryptoTraderEngine>,
+    pub total_cash: f64,
+    pub initial_capital: f64,
+    pub store: Option<SqliteTradingStore>,
+    pub advisor: LlmMarketRegimeAdvisor,
+    pub kill_switch_active: bool,
+    pub peak_portfolio_value: f64,
+    pub max_drawdown_seen: f64,
+    pub realized_pnl: f64,
+    pub executions_log: Vec<TradeExecution>,
+}
+
+impl MultiAssetTraderEngine {
+    pub fn new(config: MultiAssetConfig) -> Self {
+        let mut engines = HashMap::new();
+        let capital_per_asset = config.initial_capital / config.basket.len().max(1) as f64;
+
+        for asset in &config.basket {
+            let risk_policy = RiskPolicy {
+                max_risk_per_trade_pct: config.max_risk_per_trade_pct,
+                max_drawdown_pct: config.max_portfolio_risk_pct,
+                trailing_stop_pct: Some(1.5),
+                stop_loss_required: true,
+                daily_loss_limit: config.initial_capital * 0.05,
+                kill_switch_active: false,
+                max_position_size: config.initial_capital * 0.25,
+                daily_loss_current: 0.0,
+            };
+            let eng = CryptoTraderEngine::new(
+                asset.clone(),
+                capital_per_asset,
+                risk_policy,
+                config.exchange_config.clone(),
+            );
+            engines.insert(asset.clone(), eng);
+        }
+
+        let initial_cap = config.initial_capital;
+        Self {
+            config,
+            engines,
+            total_cash: initial_cap,
+            initial_capital: initial_cap,
+            store: None,
+            advisor: LlmMarketRegimeAdvisor::new(),
+            kill_switch_active: false,
+            peak_portfolio_value: initial_cap,
+            max_drawdown_seen: 0.0,
+            realized_pnl: 0.0,
+            executions_log: Vec::new(),
+        }
+    }
+
+    pub fn with_store(mut self, store: SqliteTradingStore) -> Self {
+        self.store = Some(store);
+        self
+    }
+
+    pub fn with_advisor(mut self, advisor: LlmMarketRegimeAdvisor) -> Self {
+        self.advisor = advisor;
+        self
+    }
+
+    /// Restaura posições abertas do SQLite na reinicialização do robô
+    pub fn restore_open_positions_from_store(&mut self) -> Result<usize> {
+        let store = match &self.store {
+            Some(s) => s,
+            None => return Ok(0),
+        };
+
+        let open_positions = store.load_open_positions()?;
+        let mut restored = 0;
+
+        for pos in open_positions {
+            if let Some(engine) = self.engines.get_mut(&pos.asset) {
+                let cost = pos.entry_price * pos.quantity;
+                self.total_cash = (self.total_cash - cost).max(0.0);
+                engine.cash_balance = (engine.cash_balance - cost).max(0.0);
+                engine.current_position = Some(pos);
+                restored += 1;
+            }
+        }
+
+        Ok(restored)
+    }
+
+    pub fn active_positions_count(&self) -> usize {
+        self.engines
+            .values()
+            .filter(|e| e.current_position.is_some())
+            .count()
+    }
+
+    pub fn total_portfolio_value(&self) -> f64 {
+        let mut total = self.total_cash;
+        for engine in self.engines.values() {
+            if let Some(pos) = &engine.current_position {
+                let current_price = engine
+                    .candles
+                    .last()
+                    .map(|c| c.close)
+                    .unwrap_or(pos.entry_price);
+                let pos_val = match pos.side {
+                    OrderSide::Long => pos.quantity * current_price,
+                    OrderSide::Short => {
+                        let diff = pos.entry_price - current_price;
+                        (pos.quantity * pos.entry_price) + (diff * pos.quantity)
+                    }
+                };
+                total += pos_val;
+            }
+        }
+        total.max(0.0)
+    }
+
+    pub fn total_unrealized_pnl(&self) -> f64 {
+        self.engines
+            .values()
+            .filter_map(|e| e.current_position.as_ref().map(|p| p.pnl))
+            .sum()
+    }
+
+    pub fn drawdown_pct(&self) -> f64 {
+        if self.peak_portfolio_value <= 0.0 {
+            return 0.0;
+        }
+        let cur = self.total_portfolio_value();
+        let dd = (self.peak_portfolio_value - cur) / self.peak_portfolio_value * 100.0;
+        dd.max(0.0)
+    }
+
+    /// Alimentação de vela para um ativo específico com controle de capacidade da carteira
+    pub fn feed_candle(&mut self, asset: &str, candle: Candle) -> Result<Option<TradeExecution>> {
+        let has_pos = self
+            .engines
+            .get(asset)
+            .and_then(|e| e.current_position.as_ref())
+            .is_some();
+
+        // Se não tem posição e já atingiu o teto da carteira ou kill switch ativo, não permite abrir
+        if !has_pos
+            && (self.kill_switch_active
+                || self.active_positions_count() >= self.config.max_concurrent_positions)
+        {
+            if let Some(engine) = self.engines.get_mut(asset) {
+                engine.add_candle(candle);
+            }
+            return Ok(None);
+        }
+
+        let engine = match self.engines.get_mut(asset) {
+            Some(e) => e,
+            None => bail!("Asset '{}' not found in multi-asset basket", asset),
+        };
+
+        let exec = engine.on_candle(candle)?;
+
+        if let Some(trade) = &exec {
+            match trade.action {
+                TradingAction::Buy => {
+                    let cost = trade.price * trade.quantity + trade.fee;
+                    self.total_cash = (self.total_cash - cost).max(0.0);
+                    if let Some(store) = &self.store {
+                        if let Some(pos) = &engine.current_position {
+                            let _ = store.save_position(pos, "OPEN");
+                        }
+                        let _ = store.save_execution(trade);
+                    }
+                    self.executions_log.push(trade.clone());
+                }
+                TradingAction::ClosePosition | TradingAction::Sell => {
+                    let proceeds = (trade.price * trade.quantity) - trade.fee;
+                    self.total_cash += proceeds;
+                    if let Some(pnl) = trade.realized_pnl {
+                        self.realized_pnl += pnl;
+                    }
+                    if let Some(store) = &self.store {
+                        let _ = store.mark_position_closed(asset, "CLOSED");
+                        let _ = store.save_execution(trade);
+                    }
+                    self.executions_log.push(trade.clone());
+                }
+                _ => {}
+            }
+        }
+
+        // Atualiza peak e drawdown
+        let cur_val = self.total_portfolio_value();
+        if cur_val > self.peak_portfolio_value {
+            self.peak_portfolio_value = cur_val;
+        }
+        let dd = self.drawdown_pct();
+        if dd > self.max_drawdown_seen {
+            self.max_drawdown_seen = dd;
+        }
+        if dd >= self.config.max_portfolio_risk_pct {
+            self.kill_switch_active = true;
+        }
+
+        // Se a posição ainda estiver aberta, persiste a atualização de preço/trailing stop
+        if let Some(store) = &self.store {
+            if let Some(pos) = self
+                .engines
+                .get(asset)
+                .and_then(|e| e.current_position.as_ref())
+            {
+                let _ = store.save_position(pos, "OPEN");
+            }
+        }
+
+        Ok(exec)
+    }
+
+    /// Fechamento manual de posição a mercado com 1 clique
+    pub fn close_position(&mut self, asset: &str, reason: &str) -> Result<Option<TradeExecution>> {
+        let engine = match self.engines.get_mut(asset) {
+            Some(e) => e,
+            None => bail!("Asset '{}' not found", asset),
+        };
+
+        let current_price = engine
+            .candles
+            .last()
+            .map(|c| c.close)
+            .unwrap_or(asset_baseline_price(asset));
+
+        let exec = engine.close_current_position(current_price, reason)?;
+
+        if let Some(trade) = &exec {
+            let proceeds = (trade.price * trade.quantity) - trade.fee;
+            self.total_cash += proceeds;
+            if let Some(pnl) = trade.realized_pnl {
+                self.realized_pnl += pnl;
+            }
+            if let Some(store) = &self.store {
+                let _ = store.mark_position_closed(asset, "MANUAL_CLOSED");
+                let _ = store.save_execution(trade);
+            }
+            self.executions_log.push(trade.clone());
+        }
+
+        Ok(exec)
+    }
+
+    /// Zeragem de emergência de todas as posições abertas com 1 clique (Kill Switch)
+    pub fn emergency_close_all(&mut self, reason: &str) -> Result<Vec<TradeExecution>> {
+        self.kill_switch_active = true;
+        let mut closed = Vec::new();
+        let assets: Vec<String> = self.config.basket.clone();
+
+        for asset in assets {
+            if let Ok(Some(exec)) = self.close_position(&asset, reason) {
+                closed.push(exec);
+            }
+        }
+
+        Ok(closed)
+    }
+
+    /// Reativação da estratégia pós-emergência
+    pub fn reset_kill_switch(&mut self) {
+        self.kill_switch_active = false;
+        for engine in self.engines.values_mut() {
+            engine.risk_policy.kill_switch_active = false;
+        }
+    }
+
+    /// Ajuste manual de Stop-Loss e Take-Profit com recálculo do rationale e persistência
+    pub fn adjust_position_stops(
+        &mut self,
+        asset: &str,
+        new_sl: Option<f64>,
+        new_tp: Option<f64>,
+    ) -> Result<()> {
+        let engine = match self.engines.get_mut(asset) {
+            Some(e) => e,
+            None => bail!("Asset '{}' not found", asset),
+        };
+        let ind = engine.compute_indicators();
+        let pos = match engine.current_position.as_mut() {
+            Some(p) => p,
+            None => bail!("No active position for asset '{}'", asset),
+        };
+
+        if let Some(sl) = new_sl {
+            pos.stop_loss = sl;
+        }
+        if let Some(tp) = new_tp {
+            pos.take_profit = tp;
+        }
+
+        if let Some(indicators) = ind {
+            pos.rationale = Some(RiskRationale::build(
+                pos.entry_price,
+                pos.side,
+                pos.stop_loss,
+                pos.take_profit,
+                &indicators,
+            ));
+        }
+        if let Some(store) = &self.store {
+            store.save_position(pos, "OPEN")?;
+        }
+
+        Ok(())
+    }
+
+    /// Gera snapshot consolidado para o dashboard web e APIs
+    pub fn get_desk_snapshot(&mut self) -> DeskStatusSnapshot {
+        let mut asset_indicators = HashMap::new();
+        let mut asset_statuses = Vec::new();
+
+        for asset in &self.config.basket {
+            if let Some(engine) = self.engines.get(asset) {
+                let current_price = engine
+                    .candles
+                    .last()
+                    .map(|c| c.close)
+                    .unwrap_or_else(|| asset_baseline_price(asset));
+
+                let indicators = engine
+                    .compute_indicators()
+                    .unwrap_or_else(|| TechnicalIndicators::default_at_price(current_price));
+
+                asset_indicators.insert(asset.clone(), (current_price, indicators.clone()));
+
+                let change_24h_pct = if engine.candles.len() >= 2 {
+                    let first = engine
+                        .candles
+                        .first()
+                        .map(|c| c.open)
+                        .unwrap_or(current_price);
+                    if first > 0.0 {
+                        (current_price - first) / first * 100.0
+                    } else {
+                        0.0
+                    }
+                } else {
+                    0.0
+                };
+
+                let high_24h = engine
+                    .candles
+                    .iter()
+                    .map(|c| c.high)
+                    .fold(current_price, f64::max);
+                let low_24h = engine
+                    .candles
+                    .iter()
+                    .map(|c| c.low)
+                    .fold(current_price, f64::min);
+                let volume_24h = engine.candles.iter().map(|c| c.volume).sum();
+
+                let signal = engine.evaluate_signal(&indicators, current_price);
+                let has_position = engine.current_position.is_some();
+
+                asset_statuses.push(AssetDeskStatus {
+                    asset: asset.clone(),
+                    current_price,
+                    change_24h_pct,
+                    high_24h,
+                    low_24h,
+                    volume_24h,
+                    rsi_14: indicators.rsi_14,
+                    ema_9: indicators.ema_9,
+                    ema_21: indicators.ema_21,
+                    supertrend: indicators.supertrend,
+                    supertrend_direction: indicators.supertrend_direction,
+                    bollinger_upper: indicators.bollinger_upper,
+                    bollinger_lower: indicators.bollinger_lower,
+                    bollinger_bandwidth: indicators.bollinger_bandwidth,
+                    signal,
+                    has_position,
+                    position: engine.current_position.clone(),
+                });
+            }
+        }
+
+        let macro_regime = self.advisor.evaluate_regime(&asset_indicators);
+        let port_val = self.total_portfolio_value();
+        let total_unrealized = self.total_unrealized_pnl();
+        let total_unrealized_pct = if self.initial_capital > 0.0 {
+            (total_unrealized / self.initial_capital) * 100.0
+        } else {
+            0.0
+        };
+
+        let recent_executions = self.executions_log.iter().rev().take(20).cloned().collect();
+
+        DeskStatusSnapshot {
+            timestamp: chrono::Utc::now().timestamp(),
+            initial_capital: self.initial_capital,
+            total_portfolio_value: port_val,
+            cash_balance: self.total_cash,
+            total_unrealized_pnl: total_unrealized,
+            total_unrealized_pnl_pct: total_unrealized_pct,
+            realized_pnl: self.realized_pnl,
+            max_drawdown_pct: self.max_drawdown_seen,
+            active_positions_count: self.active_positions_count(),
+            max_positions_allowed: self.config.max_concurrent_positions,
+            kill_switch_active: self.kill_switch_active,
+            macro_regime,
+            assets: asset_statuses,
+            recent_executions,
         }
     }
 }
@@ -1928,6 +3293,7 @@ pub struct BinanceOrderResponse {
 }
 
 /// Conector Oficial para Binance Spot Testnet API (https://testnet.binance.vision)
+#[derive(Clone)]
 pub struct BinanceTestnetConnector {
     pub client: reqwest::Client,
     pub base_url: String,
@@ -1956,7 +3322,32 @@ impl BinanceTestnetConnector {
         }
     }
 
+    pub fn load_dotenv() {
+        if std::env::var("BINANCE_API_KEY").is_err() {
+            let paths = [".env", "../.env", "../../.env"];
+            for p in paths {
+                if let Ok(content) = std::fs::read_to_string(p) {
+                    for line in content.lines() {
+                        let line = line.trim();
+                        if line.starts_with('#') || line.is_empty() {
+                            continue;
+                        }
+                        if let Some((k, v)) = line.split_once('=') {
+                            let k = k.trim();
+                            let v = v.trim().trim_matches('"').trim_matches('\'');
+                            if std::env::var(k).is_err() {
+                                std::env::set_var(k, v);
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
     pub fn from_env() -> Self {
+        Self::load_dotenv();
         let api_key = std::env::var("BINANCE_API_KEY").ok();
         let api_secret = std::env::var("BINANCE_API_SECRET").ok();
         Self::new(api_key, api_secret)
@@ -2075,6 +3466,48 @@ impl BinanceTestnetConnector {
             100.0
         };
         Ok(base_price)
+    }
+
+    /// Consulta os preços instantâneos de múltiplos pares em lote (/api/v3/ticker/price?symbols=[...])
+    pub async fn get_prices_batch(&self, symbols: &[&str]) -> Result<HashMap<String, f64>> {
+        let symbols_json = serde_json::to_string(symbols)?;
+        let url = format!("{}/api/v3/ticker/price", self.base_url);
+        let resp = self
+            .client
+            .get(&url)
+            .query(&[("symbols", &symbols_json)])
+            .send()
+            .await;
+
+        let mut map = HashMap::new();
+        if let Ok(res) = resp {
+            if res.status().is_success() {
+                if let Ok(list) = res.json::<Vec<serde_json::Value>>().await {
+                    for item in list {
+                        if let (Some(sym), Some(p_str)) =
+                            (item["symbol"].as_str(), item["price"].as_str())
+                        {
+                            if let Ok(p) = p_str.parse::<f64>() {
+                                map.insert(sym.to_string(), p);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Ok(map)
+    }
+
+    /// Formata a quantidade para respeitar os filtros de LOT_SIZE da Binance Spot API
+    pub fn format_binance_quantity(symbol: &str, qty: f64) -> f64 {
+        match symbol.to_uppercase().as_str() {
+            "BTCUSDT" | "BTC-USDT" => (qty * 10_000.0).floor() / 10_000.0,
+            "ETHUSDT" | "ETH-USDT" => (qty * 1_000.0).floor() / 1_000.0,
+            "SOLUSDT" | "SOL-USDT" | "BNBUSDT" | "BNB-USDT" => (qty * 100.0).floor() / 100.0,
+            "XRPUSDT" | "XRP-USDT" | "ADAUSDT" | "ADA-USDT" => (qty * 10.0).floor() / 10.0,
+            "DOGEUSDT" | "DOGE-USDT" => qty.floor().max(10.0),
+            _ => (qty * 100.0).floor() / 100.0,
+        }
     }
 
     /// Consulta o melhor bid e ask (GET /api/v3/ticker/bookTicker)

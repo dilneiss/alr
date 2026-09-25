@@ -5,7 +5,7 @@
 
 use alr_connectors::trading::{
     generate_synthetic_candles, Candle, CryptoTraderEngine, ExchangeSimulationConfig, OrderSide,
-    RiskPolicy, TechnicalIndicators, TradingAction,
+    RiskPolicy, TradingAction,
 };
 use anyhow::Result;
 use async_trait::async_trait;
@@ -238,19 +238,7 @@ impl EnvironmentAdapter for TradingEnvironment {
     }
 
     async fn observe(&self) -> Result<AbstractState> {
-        let indicators = self
-            .engine
-            .compute_indicators()
-            .unwrap_or(TechnicalIndicators {
-                rsi_14: 50.0,
-                sma_20: 0.0,
-                ema_9: 0.0,
-                ema_21: 0.0,
-                macd: 0.0,
-                macd_signal: 0.0,
-                macd_histogram: 0.0,
-                volatility_atr: 0.0,
-            });
+        let indicators = self.engine.compute_indicators().unwrap_or_default();
 
         // Direção relativa inferida a partir de RSI e Médias Móveis
         let dir = if indicators.rsi_14 < 35.0 {

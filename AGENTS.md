@@ -135,6 +135,12 @@ cargo run -p alr-cli -- snake --mode visual
 
 # Benchmark de 500 tarefas externas com Holdout
 cargo run -p alr-cli -- support benchmark --tickets 5000
+
+# Mesa de Operações Quantitativa Multi-Ativo (7 Moedas + Web Cockpit)
+cargo run -p alr-cli -- trading-desk --port 3800 --capital 50000
+
+# Launcher do Cockpit Web no Google Chrome
+node scripts/launch_trading_desk.js
 ```
 
 ---

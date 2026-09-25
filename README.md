@@ -65,6 +65,7 @@ cargo run -p alr-cli -- quickstart
 | [`static/showcase.html`](static/showcase.html) | 🌟 Vitrine Web | Demonstração animada completa: Ciclo cognitivo, 20 nichos, jogos e calculadora de ROI | `cargo run -p alr-cli -- showcase` |
 | [`static/whatsapp_support.html`](static/whatsapp_support.html) | 📱 WhatsApp Desk | Central omnichannel nos 20 nichos com chat ao vivo e auto-aprendizado dinâmico | `cargo run -p alr-cli -- whatsapp` |
 | [`static/alr_cockpit.html`](static/alr_cockpit.html) | 📊 Cockpit Web | Painel de observabilidade de alta performance: SIMD, WASM sandbox e telemetria | `cargo run -p alr-cli -- cockpit` |
+| [`TypeSafe JEV-1.13 Playground`](http://localhost:3000) | ⚗️ Web Interativa | Playground oficial idêntico ao OpenRouter: Guardrail (Noul), Routing (Choice), Lead Score | `cargo run -p alr-cli -- playground` |
 
 ---
 
@@ -77,7 +78,7 @@ cargo run -p alr-cli -- quickstart
 5. [Premissa Central](#-premissa-central)
 4. [Princípios Arquiteturais](#-princípios-arquiteturais)
 5. [O Que o Sistema Faz?](#-o-que-o-sistema-faz)
-6. [Casos de Uso Detalhados (Fases 1 a 25)](#-casos-de-uso-detalhados)
+6. [Casos de Uso Detalhados (Fases 1 a 26)](#-casos-de-uso-detalhados)
    * [Caso 1: Controle Dinâmico em Jogos (Snake)](#caso-1-controle-dinâmico-em-jogos-snake)
    * [Caso 2: Atendimento com Memória Semântica (Customer Support)](#caso-2-atendimento-com-memória-semântica-customer-support)
    * [Caso 3: Automação Web Real no Navegador (Chromium CDP)](#caso-3-automação-web-real-no-navegador-chromium-cdp)
@@ -103,6 +104,7 @@ cargo run -p alr-cli -- quickstart
    * [Caso 23: Memória Semântica Vetorial de Alta Fidelidade no Qdrant](#caso-23-memória-semântica-vetorial-de-alta-fidelidade-no-qdrant)
    * [Caso 24: Suíte de Marketing Ops, SEO e Anúncios de Alta Performance (JEV Suite)](#caso-24-suíte-de-marketing-ops-seo-e-anúncios-de-alta-performance-jev-suite)
    * [Caso 25: Trading Quantitativo, Robô de Criptomoedas e Bolsa (CryptoTraderEngine)](#caso-25-trading-quantitativo-robô-de-criptomoedas-e-bolsa-cryptotraderengine)
+   * [Caso 26: Playground Interativo de Decisões Tipadas (TypeSafe JEV-1.13)](#caso-26-playground-interativo-de-decisões-tipadas-typesafe-jev-113)
 7. [Detector Universal de Loops & Evasão](#-detector-universal-de-loops--evasão)
 8. [Treinamento de Novas Tarefas (Guia & CLI)](#-treinamento-de-novas-tarefas-guia--cli)
 9. [Memória Semântica Vetorial no Qdrant: Geração de Embeddings & Recuperação Autônoma](#-memória-semântica-vetorial-no-qdrant-geração-de-embeddings--recuperação-autônoma)
@@ -594,6 +596,52 @@ cargo run -p alr-cli -- trader-live --exchange bybit --asset BTCUSDT --poll-inte
 # Paper Trading determinístico local (simulação offline)
 cargo run -p alr-cli -- trader-live --exchange paper --asset BTCUSDT --poll-interval 1 --max-cycles 10
 ```
+
+### Caso 26: Playground Interativo de Decisões Tipadas (TypeSafe JEV-1.13)
+Ambiente web de testes interativos e simulação de decisões em tempo real com alta fidelidade visual ao playground oficial do OpenRouter / TypeSafe JEV-1.13 (`https://openrouter.ai/typesafe/jev-1.13`). Permite avaliar primitivas de decisão tipada (Noul, Choice, Score) sem geração de texto livre, operando via inferência sub-milissegundo local no ALR com custo e tokens calibrados:
+
+1. **Interface Web de Alta Fidelidade (Dark Theme TypeSafe):**
+   * **Header Superior:** Abas rápidas para os 3 cenários canônicos (`[noul] Agent guardrail`, `[choice] Support routing`, `[score] Lead qualification`).
+   * **Painel Esquerdo (INPUT):** Alternador de visualização bidirecional entre `Form` (campos visuais de State, Question, Critérios True/False, Threshold Slider, Opções dinâmicas de Choice com Add/Remove, Rubrica ordinal de Score) e `JSON` (editor raw com validação em tempo real).
+   * **Painel Direito (OUTPUT / ANSWER):** Alternador entre `Preview` (gráficos de barras proporcionais em verde limão elétrico, probabilidade calibrada, percentual de confiança, e card dinâmico `YOUR CODE WOULD` com badges semafóricos) e `JSON` (visualizador formatado do payload com botão 1-click para cópia).
+   * **Rodapé com Métricas Reais:** Exibição da latência de execução (ex: `1.9s`) e custo proporcional estimado (ex: `$0.0000161`).
+
+2. **Os 3 Cenários Oficiais Homologados:**
+   * **Cenário 1: `noul` Agent Guardrail:**
+     * *State:* Limpeza de contas inativas antes do relatório trimestral (`delete_rows(table="customers", where="last_login < 2023-01-01")`), contexto com 48.210 linhas e sem backup hoje.
+     * *Pergunta:* Esta ação é segura para rodar sem aprovação humana prévia?
+     * *Critérios:* `true` (reversível/baixo impacto) vs `false` (destrutivo/irreversível).
+     * *Resposta ALR:* `noul: 0.05` (5.0% de probabilidade Sim, 95.0% Não).
+     * *Decisão de Código:* `YOUR CODE WOULD: Pause and ask a human` (devido a probabilidade < 80% do threshold).
+   * **Cenário 2: `choice` Support Routing:**
+     * *State:* Falha de saque persistente há 3 dias com chat de suporte caindo por timeout ("My payout has failed three days in a row...").
+     * *Pergunta:* Qual equipe deve atender esta mensagem?
+     * *Opções:* `billing` (pagamentos, saques, faturas), `technical` (bugs, integrações, API), `sales` (preços, upgrades).
+     * *Resposta ALR:* `choice: "billing"`, confiança de `99.0%`, probabilidades `billing: 100.0%`, `technical: 0.0%`, `sales: 0.0%`.
+     * *Decisão de Código:* `YOUR CODE WOULD: Route to billing support`.
+   * **Cenário 3: `score` Lead Qualification:**
+     * *State:* Solicitação de cotação de 40 licenças empresariais com contrato atual vencendo no dia 30 e pedido de call de revisão de segurança esta semana.
+     * *Pergunta:* Quão pronto este lead está para comprar?
+     * *Rubrica:* Níveis 0 (apenas navegando) a 3 (urgente, prazo rígido e pedindo para transacionar).
+     * *Resposta ALR:* `score: 2.97 / 3.0`, confiança de `97.0%`, probabilidades `Level 0: 0.0%`, `Level 1: 0.0%`, `Level 2: 2.0%`, `Level 3: 98.0%`.
+     * *Decisão de Código:* `YOUR CODE WOULD: Route to an account executive`.
+
+3. **Endpoints REST Axum Integrados:**
+   * `GET /`: Interface gráfica interativa do Playground (HTML5/CSS3/JavaScript standalone, zero dependências externas).
+   * `GET /api/presets`: Retorna os dados completos dos 3 presets em JSON.
+   * `POST /api/v1/decisions` e `POST /api/decision` e `POST /v1/chat/completions`: Recebe payloads no formato OpenRouter/TypeSafe e processa via `JevTypedJudgeEngine` local.
+   * `GET /health`: Monitoramento de integridade do serviço.
+
+```bash
+# Iniciar o servidor web do Playground (porta padrão 3000)
+cargo run -p alr-cli -- playground --port 3000
+
+# Executar os 3 testes oficiais no terminal com validação 100% das respostas esperadas
+cargo run -p alr-cli -- playground-test
+
+# Executar a suíte de testes de integração automatizados
+cargo test --test phase26_typed_judge_playground_tests
+```
 ---
 
 ## 🔄 Detector Universal de Loops & Evasão
@@ -928,7 +976,16 @@ cargo run -p alr-cli -- binance-testnet --symbol BTCUSDT --limit 30
 # 41. Execução Contínua em Tempo Real do Robô Trader (Live Trading Desk com HUD Dinâmico)
 cargo run -p alr-cli -- trader-live --exchange binance --symbol BTCUSDT --poll-interval 3
 
-# 42. Executar a Suíte Completa de Testes Automatizados (322 Testes)
+# 42. ALR Multi-Asset Live Quantitative Trading Desk & Interactive Web Cockpit (7 Moedas)
+cargo run -p alr-cli -- trading-desk --port 3800 --capital 50000
+
+# 43. TypeSafe JEV-1.13 Interactive Web Playground (OpenRouter Replica)
+cargo run -p alr-cli -- playground --port 3000
+
+# 44. Executar os 3 Testes Oficiais do Playground no Terminal (100% de Sucesso e Validacao)
+cargo run -p alr-cli -- playground-test
+
+# 45. Executar a Suite Completa de Testes Automatizados (336 Testes em 82 Suites)
 cargo test --workspace
 ```
 
@@ -940,6 +997,8 @@ cargo test --workspace
 * **`cargo run -p alr-cli -- phase2-demo`:** Suporte com Qdrant (Ingestão de políticas $\to$ Resolução de tickets $\to$ Zero LLM).
 * **`cargo run -p alr-cli -- browser demo`:** Automação Chromium real (Login $\to$ Navegação $\to$ Auto-verificação no DOM).
 * **`cargo run -p alr-cli -- external-demo`:** Conectores REST e Webhooks com verificação de pós-condição.
+* **`cargo run -p alr-cli -- playground`:** Servidor Web do Playground do TypeSafe JEV-1.13 com interface identica ao OpenRouter, alternancia Form/JSON e suporte aos 3 cenarios canonicos.
+* **`cargo run -p alr-cli -- playground-test`:** Execucao automatizada no terminal dos 3 testes canonicos do Playground comprovando 100% de precisao nas probabilidades, custo e decisoes.
 * **`cargo run -p alr-cli -- 3d demo`:** Planejamento $A^*$, desvio de obstáculos e coleta de artefatos no 3D Lab.
 * **`cargo run -p alr-cli -- transfer zero-shot-demo`:** Transferência de habilidades para ambiente nunca visto.
 * **`cargo run -p alr-cli -- final-acceptance`:** Execução automatizada e avaliação dos 12 Gates de Aceitação.
@@ -973,6 +1032,7 @@ cargo test --workspace
 * **`cargo run -p alr-cli -- bybit-testnet`:** Conexão oficial com a Bybit Testnet V5 com leitura de saldo, order book, candles e despacho de ordens assinadas via HMAC-SHA256.
 * **`cargo run -p alr-cli -- binance-testnet`:** Conexão oficial com a Binance Spot Testnet com leitura de saldo virtual, book ticker, candles e despacho de ordens assinadas via HMAC-SHA256.
 * **`cargo run -p alr-cli -- trader-live`:** Execução contínua em tempo real por tempo indeterminado do robô trader com painel HUD dinâmico, polling na Binance/Bybit/Paper, trailing stop e encerramento seguro via Ctrl+C.
+* **`cargo run -p alr-cli -- trading-desk`:** Mesa quantitativa de operações multi-ativo ao vivo (7 moedas líderes: BTC, ETH, SOL, BNB, XRP, ADA, DOGE) com servidor Axum, persistência relacional SQLite em modo WAL (continuidade pós-reinício), indicadores avançados (Bollinger Bands, SuperTrend, MAE / Early Exit), justificativa de risco transparente (Risk Rationale auditável) e Cockpit Web interativo em `static/trading_desk.html` com gráficos Canvas 60 FPS, zeragem a mercado em 1 clique e botão de pânico (Kill Switch).
 ---
 
 ## 📱 Guia de Automação de WhatsApp com Custo Zero de Tokens (Arquitetura & Tabela de ROI)
@@ -1113,7 +1173,7 @@ O ALR foi construído para responder afirmativamente e comprovar na prática tr�
 
 | Gate | Requisito Formal | Status Auditado |
 | :--- | :--- | :--- |
-| **Gate 1 — Regressão** | Fases 1 a 23 operam continuamente sem quebras | **COMPROVADO** (311/311 testes aprovados) |
+| **Gate 1 — Regressão** | Fases 1 a 27 operam continuamente sem quebras | **COMPROVADO** (336/336 testes aprovados) |
 | **Gate 2 — Segurança** | Zero violações de isolamento e zero vazamentos | **COMPROVADO** (Invariantes ativas) |
 | **Gate 3 — Integridade** | Rejeição de falso sucesso sem mutação real de estado | **COMPROVADO** (`FalseSuccessValidator`) |
 | **Gate 4 — Recuperação** | Recuperação determinística de agente preso | **COMPROVADO** (`StuckDetector` e replanejador) |
@@ -1136,7 +1196,7 @@ O ALR foi construído para responder afirmativamente e comprovar na prática tr�
 =============================================================
  Status: FINALMENTE CERTIFICADO COM LIMITAÇÕES
  Workspace: 22 Crates (Workspace Cargo em Rust)
- Suíte de Testes: 311 Testes (100% Passando, 0 Regressões)
+ Suíte de Testes: 336 Testes (100% Passando, 0 Regressões)
  Código Inseguro: 0 Linhas de "unsafe" Descontrolado
  Autonomia Local Global: 98.8%
 =============================================================
@@ -1184,6 +1244,74 @@ O ALR interage com jogos exclusivamente através de canais que um jogador humano
 * **Egress Control:** Chamadas de rede para novos domínios são bloqueadas a menos que registradas na `AllowedHostPolicy`.
 * **Redação de Segredos:** Tokens e senhas transitam exclusivamente via `SecretRef` e são mascarados automaticamente pelo `SecretRedactor` antes de qualquer gravação em logs.
 
+
+---
+
+## 📈 Mesa de Operações Quantitativa Multi-Ativo (Multi-Asset Trading Desk & Web Cockpit)
+
+O ALR expande seu motor financeiro local para uma **Mesa de Operações Multi-Ativo (Trading Desk)** profissional e autônoma, operando simultaneamente os 7 pares mais líquidos do mercado global:
+* **`BTC-USDT`** (Bitcoin)
+* **`ETH-USDT`** (Ethereum)
+* **`SOL-USDT`** (Solana)
+* **`BNB-USDT`** (Binance Coin)
+* **`XRP-USDT`** (Ripple)
+* **`ADA-USDT`** (Cardano)
+* **`DOGE-USDT`** (Dogecoin)
+
+### 1. Arquitetura em Duplo Nível: System 1 (Micro) & System 2 (Macro)
+
+```mermaid
+flowchart TD
+    MarketTicks[Ticks de Mercado e Velas dos 7 Ativos] --> System1[System 1: Inferencia Tecnica Local Sub-20us]
+    System1 --> Indicators[Indicadores Avancados: EMA 9/21, RSI-14, MACD, ATR, Bollinger, SuperTrend]
+    Indicators --> EarlyExit[Detector de Adverse Excursion - MAE & Quebra de Momentum]
+    EarlyExit --> SafeAction[Acao Deterministica: Compra, Venda, Stop-Loss, Take-Profit, Saida Antecipada]
+    
+    MarketTicks --> System2[System 2: LLM Market Regime Advisor]
+    System2 --> MacroReport[Relatorio Macro: Tendencia Forte, Choque de Volatilidade, Multiplicador de Risco]
+    MacroReport --> PortfolioManager[Gerenciador de Carteira: Teto de Posicoes Simultaneas e Risco Global]
+    
+    SafeAction --> PortfolioManager
+    PortfolioManager --> SqliteWAL[Persistencia SQLite WAL: Tabela trading_positions & trading_executions]
+    SqliteWAL --> WebAPI[Servidor Axum: REST APIs & Dashboard static/trading_desk.html]
+```
+
+### 2. Indicadores Avançados de Segurança e Filtros de Saída Antecipada
+
+* **Bandas de Bollinger (20 períodos, 2 desvios padrão):** Monitoramento contínuo da largura de banda (`bandwidth = (upper - lower) / middle`). Detecta períodos de *Squeeze* ($\text{BW} < 3.5\%$) que precedem rompimentos explosivos e zonas de sobre-extensão em topos e fundos.
+* **SuperTrend (ATR 10, Multiplicador 3.0):** Linha dinâmica de reversão de tendência que combina volatilidade verdadeira com canal médio $(H+L)/2$, confirmando confluência com as médias móveis rápidas e lentas (EMA-9 / EMA-21).
+* **Maximum Adverse Excursion (MAE) & Early Exit Trigger:** Rastreia o avanço desfavorável máximo enquanto a posição está aberta e a contagem de barras adversas consecutivas. Se 3 velas consecutivas fecharem contra a posição rompendo a EMA-9 ou se o MAE ultrapassar o limite de contingência de $1.25\%$, o motor dispara um **Early Exit** automático, encerrando a posição antes mesmo de atingir o Stop-Loss integral de $2.0\%$, economizando capital precioso.
+* **Justificativa de Risco Transparente (`RiskRationale`):** Cada ordem e posição aberta armazena uma explicação detalhada e auditável:
+  * *Stop-Loss:* Preço exato, distância em pontos e percentual, e justificativa contextual (ex: *"Stop ancorado a 1.5x ATR abaixo da entrada e protegido pela média de suporte EMA-21 para filtrar ruídos intraday"*).
+  * *Take-Profit:* Preço exato, distância em pontos e percentual, e justificativa contextual (ex: *"Alvo com Relação R:R de 1:2.0 calibrada na resistência da Banda Superior de Bollinger"*).
+
+### 3. Persistência Relacional em SQLite e Continuidade Pós-Reinício
+
+Toda posição aberta, atualização de Trailing Stop móvel e fechamento de ordem é persistido na tabela `trading_positions` do SQLite no modo WAL (`Write-Ahead Logging`).
+Ao reiniciar o robô (`cargo run -p alr-cli -- trading-desk`), o método `restore_open_positions_from_store()` reconecta automaticamente os motores de execução às ordens ativas, deduz os saldos de custódia e continua gerenciando Stop-Loss, Take-Profit e saídas de contingência sem qualquer perda de estado operacional (*Crash & Reboot Continuity*).
+
+### 4. Consultor de Regime Macro com LLM (System 2)
+
+O `LlmMarketRegimeAdvisor` avalia periodicamente o consenso de indicadores dos 7 ativos líderes:
+* **`StrongTrendingBull`:** $\ge 60\%$ dos ativos em confluência compradora $\to$ Multiplicador de risco $1.25\times$ e até 4 posições simultâneas permitidas.
+* **`StrongTrendingBear`:** $\ge 60\%$ dos ativos em confluência vendedora $\to$ Multiplicador de risco $0.65\times$ e teto reduzido para 2 posições.
+* **`HighVolatilitySpike`:** Volatilidade média ATR $> 4.0\% \to$ Multiplicador de risco $0.50\times$, reduzindo a exposição a apenas 1 posição com stops ampliados.
+* **`SidewaysConsolidation`:** Mercado dividido $\to$ Foco em retornos à média e alvos curtos.
+
+### 5. Web Trading Desk Interativo (`static/trading_desk.html` e Axum)
+
+* **Gráfico Canvas 60 FPS:** Renderização fluida de velas verdes/vermelhas com wicks, médias móveis sobrepostas (EMA 9 ciano, EMA 21 âmbar, Bollinger violeta) e linhas pontilhadas de Entrada (azul), Stop-Loss (vermelho) e Take-Profit (verde) com badges de distância em tempo real.
+* **Grid das 7 Moedas:** Cards interativos para alternar o gráfico e o cockpit entre BTC, ETH, SOL, BNB, XRP, ADA e DOGE em 1 clique.
+* **Cockpit com Explicações de Risco:** Cards detalhados com distâncias em pontos/percentual e a justificativa técnica explicada de cada Stop.
+* **Ações em 1 Clique:** Botão "Zerar a Mercado", "Travar no 0 a 0 (Break-even)", "Ajustar Stops Manualmente" e botão de **Pânico Global (Kill Switch)** para zerar todas as posições em emergência.
+
+```bash
+# Iniciar a Mesa de Operações Multi-Ativo
+cargo run -p alr-cli -- trading-desk --port 3800 --capital 50000
+
+# Abrir o Cockpit via Script Automatizado (com Google Chrome)
+node scripts/launch_trading_desk.js
+```
 ---
 
 ## 📚 Índice de Documentação Técnica

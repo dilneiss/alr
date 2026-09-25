@@ -4,6 +4,7 @@ pub mod distillation;
 pub mod evaluation;
 pub mod feature;
 pub mod guarded_policy;
+pub mod jev_playground;
 pub mod ood;
 pub mod registry;
 pub mod runtime;
@@ -18,6 +19,10 @@ pub use evaluation::{ModelEvaluation, ModelEvaluator};
 pub use feature::{FeatureSchema, FeatureVectorizer};
 pub use guarded_policy::{
     GuardedDinoDecision, GuardedMoveDecision, LayaGuardedDinoPolicy, LayaGuardedSnakePolicy,
+};
+pub use jev_playground::{
+    JevAnswerOutput, JevDecisionRequest, JevDecisionResponse, JevPlaygroundPreset,
+    JevQuestionInput, JevTypedJudgeEngine, JevUiDecisionRecommendation, JevUsage,
 };
 pub use ood::{DistributionShiftDetector, SafeAbstentionReport};
 pub use registry::{ModelCard, ModelRegistry};

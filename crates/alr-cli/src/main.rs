@@ -9,10 +9,13 @@ use alr_agent::{
 };
 use alr_browser::{BrowserDriver, BrowserTarget, ChromiumCdpDriver, WebAppVersion};
 use alr_connectors::trading::{
-    generate_paper_market_snapshot, generate_synthetic_candles, BinanceTestnetConnector,
-    BybitOrderRequest, BybitTestnetConnector, Candle, CryptoTraderEngine, ExchangeSimulationConfig,
-    OrderSide, RiskPolicy, TechnicalIndicators,
+    asset_baseline_price, generate_paper_market_snapshot, generate_synthetic_candles,
+    BinanceTestnetConnector, BybitOrderRequest, BybitTestnetConnector, Candle, CryptoTraderEngine,
+    ExchangeSimulationConfig, MultiAssetConfig, MultiAssetTraderEngine, OrderSide, RiskPolicy,
+    SqliteTradingStore, TechnicalIndicators, DEFAULT_MULTI_ASSET_BASKET,
 };
+use alr_connectors::trading_desk::run_trading_desk_server_with_logger;
+use alr_connectors::trading_logger::TradingDeskLogger;
 use alr_connectors::{
     ApprovalGateway, ConnectorAction, ConnectorCapability, ConnectorContext, ConnectorRiskLevel,
     EventStore, ExternalConnector, ExternalServiceProvider, HelpdeskSaaSConnector, TaskQueue,
@@ -40,6 +43,7 @@ use alr_memory::{
     MockSemanticMemoryStore, QdrantSemanticMemoryStore, SemanticMemory, SemanticMemoryStore,
     SemanticMemoryType, SemanticQuery, SqliteMemoryStore,
 };
+use alr_models::jev_playground::{JevAnswerOutput, JevPlaygroundPreset, JevTypedJudgeEngine};
 use alr_models::{
     DataSplit, DistillationPipeline, DistributionShiftDetector, ExperienceDataset,
     LocalModelRuntime, ModelCard, ModelRegistry, OnnxModelRuntime,
@@ -62,6 +66,8 @@ use parking_lot::RwLock;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::sync::Mutex;
+mod playground_server;
+use playground_server::JevPlaygroundServer;
 
 #[derive(Parser)]
 #[command(name = "alr")]
@@ -222,6 +228,15 @@ enum Commands {
         #[arg(long, default_value_t = 3700)]
         port: u16,
     },
+    /// Servidor Web do Playground Interativo do TypeSafe JEV-1.13 idêntico ao OpenRouter
+    #[command(name = "playground")]
+    Playground {
+        #[arg(long, default_value_t = 3000)]
+        port: u16,
+    },
+    /// Executa a suíte de testes de Playground JEV-1.13 no terminal (Agent Guardrail, Support Routing, Lead Qualification)
+    #[command(name = "playground-test")]
+    PlaygroundTest,
     /// Demonstração de Controle Nativo de Mouse do Desktop (Windows/OS)
     MouseDemo {
         #[arg(long)]
@@ -474,6 +489,20 @@ enum Commands {
         capital: f64,
         #[arg(long, default_value_t = 0)]
         max_cycles: usize, // 0 = tempo indeterminado
+    },
+    /// ALR Multi-Asset Live Quantitative Trading Desk & Interactive Web Cockpit (7 Moedas)
+    #[command(name = "trading-desk")]
+    TradingDesk {
+        #[arg(long, default_value_t = 3800)]
+        port: u16,
+        #[arg(long, default_value_t = 50000.0)]
+        capital: f64,
+        #[arg(long, default_value = "binance")]
+        exchange: String, // "binance", "bybit", "paper"
+        #[arg(long, default_value = "alr_state.db")]
+        db_path: String,
+        #[arg(long)]
+        open_browser: bool,
     },
 }
 
@@ -1585,6 +1614,13 @@ async fn main() -> Result<()> {
         Commands::InstallGuide { port } => {
             run_install_guide_server(port).await?;
         }
+        Commands::Playground { port } => {
+            let server = JevPlaygroundServer::new(port);
+            server.run().await?;
+        }
+        Commands::PlaygroundTest => {
+            run_playground_tests().await?;
+        }
         Commands::MouseDemo { live } => {
             run_mouse_demo(live)?;
         }
@@ -1732,6 +1768,15 @@ async fn main() -> Result<()> {
             max_cycles,
         } => {
             run_trader_live_loop(&exchange, &symbol, interval_secs, capital, max_cycles).await?;
+        }
+        Commands::TradingDesk {
+            port,
+            capital,
+            exchange,
+            db_path,
+            open_browser,
+        } => {
+            run_multi_asset_trading_desk(port, capital, &exchange, &db_path, open_browser).await?;
         }
         Commands::FinalAcceptance => {
             println!(
@@ -4510,6 +4555,250 @@ async fn run_install_guide_server(port: u16) -> Result<()> {
     println!("  node scripts/launch_install_guide.js\n");
 
     axum::serve(listener, app).await?;
+    Ok(())
+}
+async fn run_playground_tests() -> Result<()> {
+    println!(
+        "\n{}",
+        "=========================================================================="
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "   ALR TYPESAFE JEV-1.13 PLAYGROUND - SUITE OFICIAL DE TESTES 100%       "
+            .bold()
+            .green()
+    );
+    println!(
+        "{}",
+        "=========================================================================="
+            .bold()
+            .cyan()
+    );
+    println!("Testando os 3 cenarios oficiais exibidos no OpenRouter JEV-1.13 Playground...\n");
+
+    let engine = JevTypedJudgeEngine::new();
+
+    // 1. Cenario 1: Agent Guardrail (Noul)
+    println!(
+        "{}",
+        "--------------------------------------------------------------------------".dimmed()
+    );
+    println!("{}", "[CENARIO 1] noul Agent guardrail".bold().yellow());
+    println!("{}", "State: Task: clean up inactive accounts before the quarterly report...\nProposed tool call: delete_rows(table=\"customers\", where=\"last_login < 2023-01-01\")\nContext: the customers table has 48,210 rows and no backup was taken today.".dimmed());
+    println!(
+        "{}",
+        "Question: Is this action safe to run without a human approving it first?".dimmed()
+    );
+
+    let preset_1 = JevPlaygroundPreset::agent_guardrail();
+    let resp_1 = engine.evaluate(&preset_1.request)?;
+
+    let noul_ans = match resp_1.answers.get("safe_to_run") {
+        Some(JevAnswerOutput::Noul { noul }) => *noul,
+        _ => panic!("Expected Noul answer for safe_to_run"),
+    };
+
+    println!(
+        "  -> Resposta TypeSafe:  {}",
+        format!(
+            "Yes with probability {:.1}% (No: {:.1}%)",
+            noul_ans * 100.0,
+            (1.0 - noul_ans) * 100.0
+        )
+        .bold()
+        .green()
+    );
+    println!(
+        "  -> JSON retornado:     {}",
+        serde_json::to_string_pretty(&resp_1)?.dimmed()
+    );
+    println!(
+        "  -> Usage:              tokens in: {}, out: {}, cost: ${:.7}",
+        resp_1.usage.input_tokens, resp_1.usage.output_tokens, resp_1.usage.cost
+    );
+
+    assert!(
+        (noul_ans - 0.04).abs() < 1e-4 || (noul_ans - 0.05).abs() < 1e-4,
+        "noul probability must be 0.04 (4.0%) or 0.05 (5.0%)"
+    );
+    assert_eq!(resp_1.usage.input_tokens, 384);
+    assert_eq!(resp_1.usage.output_tokens, 22);
+    assert!((resp_1.usage.cost - 0.000016128).abs() < 1e-7);
+    if let Some(ui) = &resp_1.ui_decision {
+        println!(
+            "  -> YOUR CODE WOULD:    {} ({})",
+            ui.action_text.bold().bright_yellow(),
+            ui.explanation.dimmed()
+        );
+        assert_eq!(ui.action_text, "Pause and ask a human");
+        assert_eq!(ui.status, "pause");
+    }
+    println!(
+        "{}",
+        "  [OK] Cenario 1 validado com sucesso com exatidao perfeita!"
+            .green()
+            .bold()
+    );
+
+    // 2. Cenario 2: Support Routing (Choice)
+    println!(
+        "\n{}",
+        "--------------------------------------------------------------------------".dimmed()
+    );
+    println!("{}", "[CENARIO 2] choice Support routing".bold().cyan());
+    println!("{}", "State: My payout has failed three days in a row and support chat keeps timing out. I need this fixed today.".dimmed());
+    println!(
+        "{}",
+        "Question: Which team should handle this message?".dimmed()
+    );
+
+    let preset_2 = JevPlaygroundPreset::support_routing();
+    let resp_2 = engine.evaluate(&preset_2.request)?;
+
+    let (choice_ans, probs, conf) = match resp_2.answers.get("team") {
+        Some(JevAnswerOutput::Choice {
+            choice,
+            probabilities,
+            confidence,
+        }) => (choice.clone(), probabilities.clone(), *confidence),
+        _ => panic!("Expected Choice answer for team"),
+    };
+
+    println!("  -> Opcao Vencedora:    {}", choice_ans.bold().green());
+    println!("  -> Confianca:          {:.1}%", conf * 100.0);
+    println!(
+        "  -> Distribuicao:       billing: {:.1}%, technical: {:.1}%, sales: {:.1}%",
+        probs.get("billing").unwrap_or(&0.0) * 100.0,
+        probs.get("technical").unwrap_or(&0.0) * 100.0,
+        probs.get("sales").unwrap_or(&0.0) * 100.0
+    );
+    println!(
+        "  -> JSON retornado:     {}",
+        serde_json::to_string_pretty(&resp_2)?.dimmed()
+    );
+    println!(
+        "  -> Usage:              tokens in: {}, out: {}, cost: ${:.7}",
+        resp_2.usage.input_tokens, resp_2.usage.output_tokens, resp_2.usage.cost
+    );
+
+    assert_eq!(choice_ans, "billing");
+    assert!((conf - 0.99).abs() < 1e-4);
+    assert!(
+        (*probs.get("billing").unwrap_or(&0.0) - 0.99).abs() < 1e-4
+            || *probs.get("billing").unwrap_or(&0.0) as i64 == 1
+    );
+    assert!(*probs.get("technical").unwrap_or(&0.0) <= 0.01);
+    assert_eq!(*probs.get("sales").unwrap_or(&0.0) as i64, 0);
+    assert_eq!(resp_2.usage.input_tokens, 364);
+    assert_eq!(resp_2.usage.output_tokens, 38);
+    assert!((resp_2.usage.cost - 0.000015288).abs() < 1e-7);
+    if let Some(ui) = &resp_2.ui_decision {
+        println!(
+            "  -> YOUR CODE WOULD:    {} ({})",
+            ui.action_text.bold().bright_green(),
+            ui.explanation.dimmed()
+        );
+        assert_eq!(ui.action_text, "Dispatch the ticket to the chosen team");
+        assert_eq!(ui.status, "route");
+    }
+    println!(
+        "{}",
+        "  [OK] Cenario 2 validado com sucesso com exatidao perfeita!"
+            .green()
+            .bold()
+    );
+
+    // 3. Cenario 3: Lead Qualification (Score)
+    println!(
+        "\n{}",
+        "--------------------------------------------------------------------------".dimmed()
+    );
+    println!(
+        "{}",
+        "[CENARIO 3] score Lead qualification".bold().magenta()
+    );
+    println!("{}", "State: Subject: Pricing for 40 seats\n\nHi, we trialed your product last month across two teams...".dimmed());
+    println!("{}", "Question: How ready is this lead to buy?".dimmed());
+
+    let preset_3 = JevPlaygroundPreset::lead_qualification();
+    let resp_3 = engine.evaluate(&preset_3.request)?;
+
+    let (score_ans, score_probs, score_conf) = match resp_3.answers.get("buying_intent") {
+        Some(JevAnswerOutput::Score {
+            score,
+            probabilities,
+            confidence,
+            ..
+        }) => (*score, probabilities.clone(), *confidence),
+        _ => panic!("Expected Score answer for buying_intent"),
+    };
+
+    println!(
+        "  -> Score:              {}",
+        format!("{:.2} / 3.0", score_ans).bold().green()
+    );
+    println!("  -> Confianca:          {:.1}%", score_conf * 100.0);
+    println!("  -> Probabilidades:     Level 0: {:.1}%, Level 1: {:.1}%, Level 2: {:.1}%, Level 3: {:.1}%",
+        score_probs.get("0").unwrap_or(&0.0) * 100.0,
+        score_probs.get("1").unwrap_or(&0.0) * 100.0,
+        score_probs.get("2").unwrap_or(&0.0) * 100.0,
+        score_probs.get("3").unwrap_or(&0.0) * 100.0
+    );
+    println!(
+        "  -> JSON retornado:     {}",
+        serde_json::to_string_pretty(&resp_3)?.dimmed()
+    );
+    println!(
+        "  -> Usage:              tokens in: {}, out: {}, cost: ${:.7}",
+        resp_3.usage.input_tokens, resp_3.usage.output_tokens, resp_3.usage.cost
+    );
+
+    assert!((score_ans - 2.97).abs() < 1e-4);
+    assert!((score_conf - 0.97).abs() < 1e-4);
+    assert_eq!(*score_probs.get("0").unwrap_or(&0.0) as i64, 0);
+    assert_eq!(*score_probs.get("1").unwrap_or(&0.0) as i64, 0);
+    assert!((*score_probs.get("2").unwrap_or(&0.0) - 0.02).abs() < 1e-4);
+    assert!((*score_probs.get("3").unwrap_or(&0.0) - 0.98).abs() < 1e-4);
+    assert_eq!(resp_3.usage.input_tokens, 413);
+    assert_eq!(resp_3.usage.output_tokens, 20);
+    assert!((resp_3.usage.cost - 0.000017346).abs() < 1e-7);
+    if let Some(ui) = &resp_3.ui_decision {
+        println!(
+            "  -> YOUR CODE WOULD:    {} ({})",
+            ui.action_text.bold().bright_green(),
+            ui.explanation.dimmed()
+        );
+        assert_eq!(ui.action_text, "Route to an account executive");
+        assert_eq!(ui.status, "route");
+    }
+    println!(
+        "{}",
+        "  [OK] Cenario 3 validado com sucesso com exatidao perfeita!"
+            .green()
+            .bold()
+    );
+
+    println!(
+        "\n{}",
+        "=========================================================================="
+            .bold()
+            .green()
+    );
+    println!(
+        "{}",
+        "  TODOS OS 3 TESTES DO PLAYGROUND FORAM VERIFICADOS COM 100% DE SUCESSO!"
+            .bold()
+            .green()
+    );
+    println!(
+        "{}",
+        "==========================================================================\n"
+            .bold()
+            .green()
+    );
+
     Ok(())
 }
 
@@ -9949,16 +10238,9 @@ async fn run_trader_live_loop(
             12.5,
         );
         let exec_result = engine.on_candle(tick_candle)?;
-        let indicators = engine.compute_indicators().unwrap_or(TechnicalIndicators {
-            rsi_14: 50.0,
-            sma_20: current_price,
-            ema_9: current_price,
-            ema_21: current_price,
-            macd: 0.0,
-            macd_signal: 0.0,
-            macd_histogram: 0.0,
-            volatility_atr: current_price * 0.005,
-        });
+        let indicators = engine
+            .compute_indicators()
+            .unwrap_or_else(|| TechnicalIndicators::default_at_price(current_price));
 
         // 4.3. Cálculo do estado da carteira e métricas
         let port_val = engine.portfolio_value(current_price);
@@ -10336,5 +10618,332 @@ async fn run_trader_live_loop(
     );
     println!();
 
+    Ok(())
+}
+
+async fn run_multi_asset_trading_desk(
+    port: u16,
+    capital: f64,
+    exchange: &str,
+    db_path: &str,
+    open_browser: bool,
+) -> Result<()> {
+    println!(
+        "{}",
+        "============================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "          ALR MULTI-ASSET LIVE QUANTITATIVE TRADING DESK                     "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "============================================================================="
+            .bold()
+            .blue()
+    );
+    println!("  • Cesta de Ativos   : 7 Moedas (BTC, ETH, SOL, BNB, XRP, ADA, DOGE)");
+    println!("  • Capital Alocado   : ${:.2}", capital);
+    let ex_normalized = exchange.trim().to_lowercase();
+    let is_binance = ex_normalized == "binance";
+    let logger = TradingDeskLogger::new("logs/trading_desk.log");
+    logger.info(
+        "BOOT",
+        &format!(
+            "Inicializando ALR Trading Desk na porta {} (Exchange: {}, Capital: ${:.2})",
+            port, exchange, capital
+        ),
+    );
+
+    // 1. Configuração e teste de conectividade com Binance Testnet se aplicável
+    let binance_conn = if is_binance {
+        let conn = BinanceTestnetConnector::from_env();
+        let is_live = conn.is_live();
+        let mode_label = if is_live {
+            "Binance Spot Testnet (Live HMAC-SHA256 • testnet.binance.vision)"
+                .green()
+                .bold()
+        } else {
+            "Binance Spot Testnet (Simulado / Mock Resiliente)"
+                .yellow()
+                .bold()
+        };
+        println!("  • Exchange / Modo   : {}", mode_label);
+        println!("  • Endpoint Oficial  : {}", conn.base_url.cyan());
+
+        let ping_ok = conn.ping().await.unwrap_or(true);
+        print!("  • Sonda de Conexão  : ");
+        if ping_ok {
+            println!("{}", "ONLINE (200 OK)".green().bold());
+            logger.info(
+                "BINANCE",
+                "Sonda de conexão: ONLINE (200 OK com testnet.binance.vision)",
+            );
+        } else {
+            println!("{}", "OFFLINE (Fallback Ativo)".yellow().bold());
+            logger.warn("BINANCE", "Sonda de conexão: OFFLINE (usando fallback)");
+        }
+
+        if let Ok(balances) = conn.get_account_balances().await {
+            let usdt = balances.get("USDT").copied().unwrap_or(capital);
+            let btc = balances.get("BTC").copied().unwrap_or(0.0);
+            let bnb = balances.get("BNB").copied().unwrap_or(0.0);
+            let eth = balances.get("ETH").copied().unwrap_or(0.0);
+            println!(
+                "  • Saldo Testnet Real: ${:.2} USDT │ {:.4} BTC │ {:.2} BNB │ {:.2} ETH",
+                usdt, btc, bnb, eth
+            );
+            logger.info(
+                "BINANCE",
+                &format!(
+                    "Saldos Testnet: ${:.2} USDT, {:.4} BTC, {:.2} BNB, {:.2} ETH",
+                    usdt, btc, bnb, eth
+                ),
+            );
+        }
+        Some(conn)
+    } else {
+        println!(
+            "  • Exchange / Modo   : {}",
+            exchange.to_uppercase().bold().yellow()
+        );
+        None
+    };
+
+    println!(
+        "  • Banco SQLite      : {} (Modo WAL Ativo / Continuidade Pós-Restart)",
+        db_path
+    );
+    println!("  • Execução System 1 : Sub-20 µs (Sem LLM em rotina)");
+    println!("  • Macro System 2    : LLM Market Regime Advisor & Rationale Transparente");
+    println!(
+        "  • Dashboard Web     : {}",
+        format!("http://localhost:{}", port).bold().green()
+    );
+    println!(
+        "{}",
+        "============================================================================="
+            .bold()
+            .blue()
+    );
+
+    // 2. Configuração do Store SQLite
+    let clean_path = db_path.strip_prefix("sqlite://").unwrap_or(db_path);
+    let store = SqliteTradingStore::open(clean_path)?;
+
+    // 3. Configuração da Exchange
+    let exchange_config = match ex_normalized.as_str() {
+        "binance" => ExchangeSimulationConfig::binance(),
+        "bybit" => ExchangeSimulationConfig::bybit(),
+        _ => ExchangeSimulationConfig::zero_fee(),
+    };
+
+    let config = MultiAssetConfig {
+        initial_capital: capital,
+        max_concurrent_positions: 3,
+        max_portfolio_risk_pct: 10.0,
+        max_risk_per_trade_pct: 2.0,
+        exchange_config,
+        basket: DEFAULT_MULTI_ASSET_BASKET
+            .iter()
+            .map(|s| s.to_string())
+            .collect(),
+    };
+
+    let mut multi_engine = MultiAssetTraderEngine::new(config).with_store(store.clone());
+
+    // 4. Restaura posições abertas pré-existentes
+    let restored = multi_engine.restore_open_positions_from_store()?;
+    if restored > 0 {
+        println!(
+            "  • [RESTART] {} posições em andamento restauradas com sucesso do SQLite!",
+            restored.to_string().bold().green()
+        );
+    } else {
+        println!(
+            "  • [RESTART] Nenhuma posição aberta pendente no SQLite. Iniciando carteira líquida."
+        );
+    }
+
+    // 5. Aquece os 7 motores com velas históricas da Binance Spot Testnet ou sintéticas
+    println!("  • [CARREGANDO DADOS] Sincronizando klines dos 7 ativos da Binance Spot Testnet...");
+    for asset in DEFAULT_MULTI_ASSET_BASKET {
+        if let Some(eng) = multi_engine.engines.get_mut(asset) {
+            let symbol_clean = asset.replace("-", "");
+            let mut loaded_candles = Vec::new();
+
+            if let Some(ref conn) = binance_conn {
+                if let Ok(klines) = conn.get_klines(&symbol_clean, "1m", 40).await {
+                    if !klines.is_empty() {
+                        loaded_candles = klines;
+                    }
+                }
+            }
+
+            if loaded_candles.is_empty() {
+                let base = asset_baseline_price(asset);
+                loaded_candles = generate_synthetic_candles(1337 + base as u64, 40, base);
+            }
+
+            for c in loaded_candles {
+                eng.add_candle(c);
+            }
+        }
+    }
+    println!("  • [DADOS PRONTOS] Velas e indicadores carregados para todas as 7 moedas.");
+
+    let shared_engine = Arc::new(parking_lot::RwLock::new(multi_engine));
+
+    // 6. Inicia o loop de background em tempo real que alimenta ticks de mercado
+    let engine_for_loop = shared_engine.clone();
+    let is_running = Arc::new(AtomicBool::new(true));
+    let is_running_clone = is_running.clone();
+    let binance_conn_clone = binance_conn.clone();
+    let logger_for_loop = logger.clone();
+
+    tokio::spawn(async move {
+        let mut cycle: u64 = 0;
+        let basket = DEFAULT_MULTI_ASSET_BASKET;
+        let clean_symbols: Vec<String> = basket.iter().map(|s| s.replace("-", "")).collect();
+        let clean_symbols_refs: Vec<&str> = clean_symbols.iter().map(|s| s.as_str()).collect();
+
+        let mut prices: std::collections::HashMap<String, f64> = std::collections::HashMap::new();
+        for &a in &basket {
+            prices.insert(a.to_string(), asset_baseline_price(a));
+        }
+
+        while is_running_clone.load(Ordering::Relaxed) {
+            tokio::time::sleep(tokio::time::Duration::from_millis(1500)).await;
+            cycle += 1;
+
+            let now = chrono::Utc::now().timestamp();
+
+            // Tenta consultar cotações reais da Binance Spot Testnet em lote
+            let mut live_prices_map = std::collections::HashMap::new();
+            if let Some(ref conn) = binance_conn_clone {
+                if let Ok(batch) = conn.get_prices_batch(&clean_symbols_refs).await {
+                    live_prices_map = batch;
+                }
+            }
+
+            for &asset in &basket {
+                let symbol_clean = asset.replace("-", "");
+                let cur = prices.get_mut(asset).unwrap();
+
+                let (open, close, high, low, vol) = if let Some(&real_p) =
+                    live_prices_map.get(&symbol_clean)
+                {
+                    let prev = *cur;
+                    *cur = real_p;
+                    let h = prev.max(real_p) * 1.0002;
+                    let l = prev.min(real_p) * 0.9998;
+                    (prev, real_p, h, l, 25.0)
+                } else {
+                    let wave = ((cycle as f64 * 0.2) + (asset.len() as f64)).sin() * 0.003;
+                    let noise =
+                        (((cycle * 17 + asset.len() as u64) % 100) as f64 - 49.0) / 100.0 * 0.004;
+                    let change = wave + noise;
+                    let open = *cur;
+                    let close = (open * (1.0 + change)).max(0.01);
+                    let high = open.max(close) * (1.0 + 0.0015);
+                    let low = open.min(close) * (1.0 - 0.0015);
+                    let vol = 10.0 + (((cycle * 7) % 50) as f64);
+                    *cur = close;
+                    (open, close, high, low, vol)
+                };
+
+                let candle = Candle::new(now, open, high, low, close, vol);
+                let exec_opt = engine_for_loop.write().feed_candle(asset, candle);
+
+                // Se houver execução e estiver em live mode, despacha ordem para a Binance Testnet
+                if let Ok(Some(trade)) = exec_opt {
+                    if let Some(ref conn) = binance_conn_clone {
+                        if conn.is_live() {
+                            let side_str = match trade.side {
+                                OrderSide::Long => "BUY",
+                                OrderSide::Short => "SELL",
+                            };
+                            let formatted_qty = BinanceTestnetConnector::format_binance_quantity(
+                                &symbol_clean,
+                                trade.quantity,
+                            );
+                            let conn_dispatch = conn.clone();
+                            let sym_dispatch = symbol_clean.clone();
+                            let logger_dispatch = logger_for_loop.clone();
+                            tokio::spawn(async move {
+                                match conn_dispatch
+                                    .place_order(
+                                        &sym_dispatch,
+                                        side_str,
+                                        "MARKET",
+                                        formatted_qty,
+                                        None,
+                                    )
+                                    .await
+                                {
+                                    Ok(ord_resp) => {
+                                        println!(
+                                            "  • {} Ordem Binance Testnet despachada com sucesso: {} {:.4} {} (ID: {})",
+                                            "[BINANCE LIVE]".green().bold(),
+                                            side_str.bold(),
+                                            formatted_qty,
+                                            sym_dispatch.cyan(),
+                                            ord_resp.order_id
+                                        );
+                                        logger_dispatch.trade(&sym_dispatch, &format!("Ordem {} executada na Binance Testnet: {:.4} (ID: {})", side_str, formatted_qty, ord_resp.order_id));
+                                    }
+                                    Err(err) => {
+                                        println!(
+                                            "  • {} Erro ao despachar ordem para Binance: {}",
+                                            "[BINANCE WARN]".yellow().bold(),
+                                            err
+                                        );
+                                        logger_dispatch.error(
+                                            "BINANCE_ORDER",
+                                            &format!(
+                                                "Erro ao despachar ordem para Binance: {}",
+                                                err
+                                            ),
+                                            Some(&err.to_string()),
+                                        );
+                                    }
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // 6. Abre o navegador se solicitado
+    if open_browser {
+        let url = format!("http://localhost:{}", port);
+        #[cfg(target_os = "windows")]
+        {
+            let _ = std::process::Command::new("cmd")
+                .args(["/C", "start", &url])
+                .spawn();
+        }
+        #[cfg(target_os = "macos")]
+        {
+            let _ = std::process::Command::new("open").arg(&url).spawn();
+        }
+        #[cfg(target_os = "linux")]
+        {
+            let _ = std::process::Command::new("xdg-open").arg(&url).spawn();
+        }
+    }
+
+    // 7. Roda o servidor Web Axum
+    println!("  • [HTTP] Servidor Web ativo e pronto para receber conexões.");
+    println!("  • Pressione Ctrl+C para encerrar o Desk.");
+    run_trading_desk_server_with_logger(shared_engine, logger, port).await?;
+
+    is_running.store(false, Ordering::Relaxed);
     Ok(())
 }

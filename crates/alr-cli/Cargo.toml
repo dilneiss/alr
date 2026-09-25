@@ -121,6 +121,14 @@ path = "../../tests/phase24_bybit_testnet_tests.rs"
 [[test]]
 name = "phase25_binance_testnet_tests"
 path = "../../tests/phase25_binance_testnet_tests.rs"
+[[test]]
+name = "phase26_multi_asset_trading_desk_tests"
+path = "../../tests/phase26_multi_asset_trading_desk_tests.rs"
+
+[[test]]
+name = "phase28_typed_judge_playground_tests"
+path = "../../tests/phase28_typed_judge_playground_tests.rs"
+
 
 [dependencies]
 alr-core = { workspace = true }
@@ -159,6 +167,7 @@ nrand = { workspace = true }
 parking_lot = { workspace = true }
 axum = { workspace = true }
 async-trait = { workspace = true }
+reqwest = { workspace = true }
 hmac = "0.12"
 sha2 = "0.10"
 hex = "0.4"

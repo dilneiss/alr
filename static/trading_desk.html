@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALR Multi-Asset Live Quantitative Trading Desk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['Fira Code', 'monospace'],
+          },
+          colors: {
+            navy: {
+              950: '#070b12',
+              900: '#0b1120',
+              850: '#0f172a',
+              800: '#1e293b',
+              700: '#334155',
+            },
+            bull: '#10b981',
+            bear: '#ef4444',
+            cyanAccent: '#06b6d4',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #070b12;
+      color: #f1f5f9;
+      font-family: 'Inter', sans-serif;
+    }
+    .mono {
+      font-family: 'Fira Code', monospace;
+    }
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b1120;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    .pulse-green {
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulseGreen 2s infinite;
+    }
+    @keyframes pulseGreen {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .pulse-red {
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+      animation: pulseRed 2s infinite;
+    }
+    @keyframes pulseRed {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Header -->
+  <header class="border-b border-navy-800 bg-navy-900/90 sticky top-0 z-40 backdrop-blur px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 via-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 font-bold text-white tracking-wider">
+          ALR
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-lg text-white tracking-tight">ALR Live Trading Desk</h1>
+            <span id="connection-status-pill" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-green"></span>
+              CONECTANDO...
+            </span>
+            <span id="kill-switch-badge" class="hidden px-2 py-0.5 rounded text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40">
+              KILL SWITCH ATIVO
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Multi-Asset Autonomous Quantitative Execution • 7 Moedas Líquidas na Binance Spot Testnet</p>
+        </div>
+      </div>
+
+      <!-- Macro Regime Badge -->
+      <div id="macro-regime-card" class="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-lg bg-navy-850 border border-navy-700/80">
+        <div class="text-right">
+          <div class="text-[10px] uppercase font-bold tracking-wider text-slate-400">System 2 Macro Regime</div>
+          <div id="macro-regime-title" class="text-xs font-semibold text-cyan-400 flex items-center gap-1.5 justify-end">
+            <span>Carregando Regime...</span>
+          </div>
+        </div>
+        <div class="h-7 w-[1px] bg-slate-700"></div>
+        <div>
+          <div class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Risco / Posições</div>
+          <div id="macro-risk-factor" class="text-xs mono font-bold text-slate-200">1.0x • Max 3</div>
+        </div>
+      </div>
+
+      <!-- Action Buttons & Portfolio Summary -->
+      <div class="flex items-center gap-3">
+        <button id="btn-emergency-stop" onclick="triggerEmergencyStop()" class="px-3.5 py-1.5 rounded-lg bg-rose-600/90 hover:bg-rose-600 text-white font-semibold text-xs transition shadow-lg shadow-rose-900/30 flex items-center gap-1.5 active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          Pânico / Zerar Tudo
+        </button>
+        <button id="btn-reset-strategy" onclick="resetStrategy()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs transition border border-slate-700 flex items-center gap-1 active:scale-95">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Reiniciar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Connection Warning Banner (Shown when backend is down or not returning JSON) -->
+  <div id="connection-error-banner" class="hidden bg-rose-950/90 border-b border-rose-800/80 py-2.5 px-4 text-xs transition-all">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2 text-rose-300">
+        <svg class="w-4 h-4 text-rose-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <span><strong>Aviso de Conexão:</strong> <span id="connection-error-text">Backend Rust desconectado na porta 3800.</span></span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-slate-400">Inicie via terminal:</span>
+        <code class="px-2 py-0.5 rounded bg-navy-900 border border-navy-700 text-cyan-400 font-mono text-[11px]">cargo run -p alr-cli -- trading-desk --port 3800</code>
+        <button onclick="pollDeskStatus()" class="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white font-semibold text-[11px] transition active:scale-95">Reconectar Agora</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Metrics Ribbon -->
+  <div class="bg-navy-950/80 border-b border-navy-800/80 py-2.5 px-4 text-xs">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-6">
+        <div>
+          <span class="text-slate-400">Patrimônio Líquido:</span>
+          <span id="metric-portfolio-val" class="mono font-bold text-white ml-1.5 text-sm">$0.00</span>
+        </div>
+        <div>
+          <span class="text-slate-400">Saldo Livre:</span>
+          <span id="metric-cash-val" class="mono font-semibold text-slate-300 ml-1.5">$0.00</span>
+        </div>
+        <div>
+          <span class="text-slate-400">PnL Flutuante:</span>
+          <span id="metric-unrealized-pnl" class="mono font-bold ml-1.5 text-sm text-slate-400">$0.00 (0.00%)</span>
+        </div>
+        <div>
+          <span class="text-slate-400">PnL Realizado:</span>
+          <span id="metric-realized-pnl" class="mono font-semibold ml-1.5">$0.00</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-5">
+        <div>
+          <span class="text-slate-400">Posições Abertas:</span>
+          <span id="metric-active-positions" class="mono font-bold text-cyan-400 ml-1.5">0 / 3</span>
+        </div>
+        <div>
+          <span class="text-slate-400">Max Drawdown:</span>
+          <span id="metric-drawdown" class="mono font-bold text-rose-400 ml-1.5">0.00%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7-Currency Ticker Grid -->
+  <section class="max-w-7xl mx-auto px-4 pt-4 w-full">
+    <div class="text-xs uppercase font-bold tracking-wider text-slate-400 mb-2 flex items-center justify-between">
+      <span>Cesta de Ativos Líquidos (7 Moedas • Binance Spot Testnet)</span>
+      <span class="text-[11px] text-slate-500 lowercase">clique para inspecionar gráfico e posição</span>
+    </div>
+    <div id="ticker-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5 min-h-[75px]">
+      <!-- Cards rendered dynamically -->
+      <div class="col-span-full py-4 text-center text-xs text-slate-500">Conectando aos dados ao vivo da Binance Spot Testnet...</div>
+    </div>
+  </section>
+
+  <!-- Main Trading Cockpit: Chart (Left) + Detailed Position with Risk Rationale (Right) -->
+  <main class="max-w-7xl mx-auto px-4 py-4 w-full flex-1 flex flex-col gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      
+      <!-- Chart Column (8 cols) -->
+      <div class="lg:col-span-8 flex flex-col gap-3">
+        <div class="glass-panel rounded-xl p-4 flex flex-col gap-3">
+          <!-- Chart Header -->
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-navy-800 pb-3">
+            <div class="flex items-center gap-3">
+              <span id="active-asset-symbol" class="text-base font-bold text-white mono">BTC-USDT</span>
+              <span id="active-asset-price" class="text-lg font-bold text-emerald-400 mono">$0.00</span>
+              <span id="active-asset-change" class="text-xs px-2 py-0.5 rounded font-semibold mono bg-emerald-500/10 text-emerald-400">+0.00%</span>
+            </div>
+            <!-- Indicator toggles / legends -->
+            <div class="flex items-center gap-3 text-xs">
+              <span class="inline-flex items-center gap-1 text-cyan-400">
+                <span class="w-2.5 h-0.5 bg-cyan-400 inline-block"></span> EMA 9
+              </span>
+              <span class="inline-flex items-center gap-1 text-amber-400">
+                <span class="w-2.5 h-0.5 bg-amber-400 inline-block"></span> EMA 21
+              </span>
+              <span class="inline-flex items-center gap-1 text-purple-400">
+                <span class="w-2.5 h-0.5 bg-purple-400 inline-block"></span> Bollinger
+              </span>
+              <span class="inline-flex items-center gap-1 text-indigo-400">
+                <span class="w-2.5 h-0.5 bg-indigo-400 inline-block"></span> SuperTrend
+              </span>
+            </div>
+          </div>
+
+          <!-- HTML5 Canvas 60 FPS Candlestick -->
+          <div class="relative w-full aspect-[16/9] min-h-[360px] bg-navy-950 rounded-lg overflow-hidden border border-navy-800 flex items-center justify-center">
+            <canvas id="candlestick-canvas" class="w-full h-full block"></canvas>
+            <div id="chart-loading-overlay" class="absolute inset-0 bg-navy-950/80 flex items-center justify-center text-xs text-slate-400">
+              <div class="flex flex-col items-center gap-2">
+                <div class="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+                <span>Renderizando velas a 60 FPS...</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Technical Indicators Bar -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
+            <div class="p-2 rounded bg-navy-900 border border-navy-800">
+              <div class="text-[10px] uppercase text-slate-400">RSI (14)</div>
+              <div id="stat-rsi" class="mono font-semibold text-slate-200 mt-0.5">50.00</div>
+            </div>
+            <div class="p-2 rounded bg-navy-900 border border-navy-800">
+              <div class="text-[10px] uppercase text-slate-400">SuperTrend</div>
+              <div id="stat-supertrend" class="mono font-semibold text-slate-200 mt-0.5">$0.00 (Alta)</div>
+            </div>
+            <div class="p-2 rounded bg-navy-900 border border-navy-800">
+              <div class="text-[10px] uppercase text-slate-400">Bollinger Bandwidth</div>
+              <div id="stat-bollinger" class="mono font-semibold text-slate-200 mt-0.5">0.00% (Normal)</div>
+            </div>
+            <div class="p-2 rounded bg-navy-900 border border-navy-800">
+              <div class="text-[10px] uppercase text-slate-400">Volatilidade ATR (14)</div>
+              <div id="stat-atr" class="mono font-semibold text-slate-200 mt-0.5">$0.00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Position Cockpit & Transparent Risk Explanations (4 cols) -->
+      <div class="lg:col-span-4 flex flex-col gap-3">
+        
+        <!-- Active Position Card -->
+        <div class="glass-panel rounded-xl p-4 flex flex-col gap-3">
+          <div class="flex items-center justify-between border-b border-navy-800 pb-2">
+            <h2 class="text-sm font-bold text-white flex items-center gap-1.5">
+              <span>Posição em Custódia</span>
+              <span id="pos-status-badge" class="text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-slate-800 text-slate-400">SEM POSIÇÃO</span>
+            </h2>
+            <span id="pos-asset-name" class="mono text-xs text-slate-400">--</span>
+          </div>
+
+          <!-- Position Floating Metrics -->
+          <div id="pos-data-section" class="hidden flex flex-col gap-3">
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="p-2.5 rounded-lg bg-navy-900 border border-navy-800">
+                <div class="text-[10px] uppercase text-slate-400">Preço de Entrada</div>
+                <div id="pos-entry-price" class="mono font-bold text-white mt-0.5">$0.00</div>
+              </div>
+              <div class="p-2.5 rounded-lg bg-navy-900 border border-navy-800">
+                <div class="text-[10px] uppercase text-slate-400">Preço Atual</div>
+                <div id="pos-current-price" class="mono font-bold text-slate-200 mt-0.5">$0.00</div>
+              </div>
+              <div class="p-2.5 rounded-lg bg-navy-900 border border-navy-800">
+                <div class="text-[10px] uppercase text-slate-400">Tamanho da Posição</div>
+                <div id="pos-quantity" class="mono font-semibold text-slate-200 mt-0.5">0.0000</div>
+              </div>
+              <div class="p-2.5 rounded-lg bg-navy-900 border border-navy-800">
+                <div class="text-[10px] uppercase text-slate-400">PnL Flutuante</div>
+                <div id="pos-pnl" class="mono font-bold mt-0.5 text-emerald-400">$0.00 (+0.00%)</div>
+              </div>
+            </div>
+
+            <!-- MAE & Early Exit Warning -->
+            <div class="p-2.5 rounded-lg bg-navy-900/90 border border-navy-800 text-xs flex flex-col gap-1.5">
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="text-slate-400">Max Adverse Excursion (MAE):</span>
+                <span id="pos-mae" class="mono font-bold text-rose-400">0.00%</span>
+              </div>
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="text-slate-400">Barras Adversas Consecutivas:</span>
+                <span id="pos-adverse-bars" class="mono font-bold text-slate-200">0 barras</span>
+              </div>
+              <div id="pos-early-exit-status" class="mt-1 text-[11px] px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-center font-medium">
+                ✓ Posição Saudável • Sem gatilho de saída antecipada
+              </div>
+            </div>
+
+            <!-- Quick Position Control Buttons -->
+            <div class="flex gap-2">
+              <button onclick="closeCurrentPositionManual()" class="flex-1 py-2 px-3 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition shadow flex items-center justify-center gap-1 active:scale-95">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                Zerar a Mercado
+              </button>
+              <button onclick="lockBreakEven()" class="py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs transition border border-slate-700 active:scale-95" title="Mover Stop Loss para o preço de entrada (0 a 0)">
+                Travar 0 a 0
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty Position Placeholder -->
+          <div id="pos-empty-section" class="py-8 flex flex-col items-center justify-center text-center text-slate-500">
+            <svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <p class="text-xs">Nenhuma posição aberta no momento para <span id="empty-asset-name" class="font-bold text-slate-400">BTC-USDT</span>.</p>
+            <p class="text-[11px] text-slate-600 mt-1">O robô está monitorando os 7 ativos da Binance Spot em sub-microssegundo.</p>
+          </div>
+        </div>
+
+        <!-- Transparent Risk Rationale Card -->
+        <div class="glass-panel rounded-xl p-4 flex flex-col gap-3">
+          <div class="border-b border-navy-800 pb-2 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span>Justificativa de Risco (Rationale)</span>
+            </h3>
+            <span class="text-[10px] text-cyan-400 font-semibold uppercase tracking-wider">Transparência ALR</span>
+          </div>
+
+          <div id="rationale-content" class="flex flex-col gap-2.5 text-xs">
+            <!-- Stop Loss Box -->
+            <div class="p-3 rounded-lg bg-rose-950/20 border border-rose-900/40">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-bold text-rose-400 text-xs">Stop-Loss Protegido</span>
+                <span id="rationale-sl-dist" class="mono text-[11px] text-rose-300">-0.00 pts (-0.00%)</span>
+              </div>
+              <p id="rationale-sl-text" class="text-slate-300 text-[11px] leading-relaxed">
+                Aguardando abertura de posição para cálculo do risco dinâmico...
+              </p>
+            </div>
+
+            <!-- Take Profit Box -->
+            <div class="p-3 rounded-lg bg-emerald-950/20 border border-emerald-900/40">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-bold text-emerald-400 text-xs">Take-Profit Planejado</span>
+                <span id="rationale-tp-dist" class="mono text-[11px] text-emerald-300">+0.00 pts (+0.00%)</span>
+              </div>
+              <p id="rationale-tp-text" class="text-slate-300 text-[11px] leading-relaxed">
+                Aguardando abertura de posição para cálculo do alvo de lucro...
+              </p>
+            </div>
+
+            <!-- Context Box -->
+            <div class="p-2.5 rounded-lg bg-navy-900 border border-navy-800 text-[11px] text-slate-400 flex flex-col gap-1">
+              <div><strong class="text-slate-300">Relação R:R:</strong> <span id="rationale-rr" class="mono text-white">1:2.0</span></div>
+              <div><strong class="text-slate-300">SuperTrend:</strong> <span id="rationale-st" class="text-slate-200">Alta</span></div>
+              <div id="rationale-bb" class="text-slate-400">Contexto de Bollinger normal.</div>
+            </div>
+          </div>
+
+          <!-- Manual SL/TP Adjustments Drawer -->
+          <div class="border-t border-navy-800 pt-3">
+            <details class="group">
+              <summary class="text-xs font-semibold text-slate-300 cursor-pointer flex items-center justify-between hover:text-white">
+                <span>Ajustar Stop-Loss / Take-Profit Manualmente</span>
+                <svg class="w-4 h-4 transition group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </summary>
+              <div class="pt-3 flex flex-col gap-2">
+                <div>
+                  <label class="text-[10px] text-slate-400 uppercase font-semibold">Novo Stop Loss ($)</label>
+                  <input id="input-new-sl" type="number" step="any" placeholder="Ex: 62500" class="w-full mt-1 px-3 py-1.5 rounded bg-navy-950 border border-navy-700 text-white text-xs mono focus:outline-none focus:border-cyan-500">
+                </div>
+                <div>
+                  <label class="text-[10px] text-slate-400 uppercase font-semibold">Novo Take Profit ($)</label>
+                  <input id="input-new-tp" type="number" step="any" placeholder="Ex: 66000" class="w-full mt-1 px-3 py-1.5 rounded bg-navy-950 border border-navy-700 text-white text-xs mono focus:outline-none focus:border-cyan-500">
+                </div>
+                <button onclick="saveManualStops()" class="mt-1 w-full py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition active:scale-95">
+                  Salvar Novos Stops
+                </button>
+              </div>
+            </details>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Recent Executions Log Section -->
+    <section class="glass-panel rounded-xl p-4 w-full">
+      <div class="flex items-center justify-between border-b border-navy-800 pb-3 mb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Extrato Recente de Ordens Executadas (Audit Trail)</span>
+        </h3>
+        <span class="text-xs text-slate-400 mono" id="executions-count">0 ordens registradas</span>
+      </div>
+
+      <div class="overflow-x-auto max-h-60 overflow-y-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="text-[11px] uppercase font-bold text-slate-400 border-b border-navy-800 sticky top-0 bg-navy-900">
+            <tr>
+              <th class="py-2 px-3">Hora</th>
+              <th class="py-2 px-3">Ativo</th>
+              <th class="py-2 px-3">Ação / Lado</th>
+              <th class="py-2 px-3">Preço</th>
+              <th class="py-2 px-3">Quantidade</th>
+              <th class="py-2 px-3">Taxa</th>
+              <th class="py-2 px-3">PnL Realizado</th>
+              <th class="py-2 px-3">Motivo / Confluência</th>
+            </tr>
+          </thead>
+          <tbody id="executions-table-body" class="divide-y divide-navy-800/60 mono text-slate-300">
+            <tr>
+              <td colspan="8" class="text-center py-6 text-slate-500">Nenhuma ordem executada até o momento.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Central de Logs e Diagnóstico em Tempo Real (Solicitado para Debug) -->
+    <section class="glass-panel rounded-xl p-4 w-full flex flex-col gap-3">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-navy-800 pb-3">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <h3 class="text-sm font-bold text-white">Central de Logs & Diagnóstico em Arquivo (logs/trading_desk.log)</h3>
+          <span id="log-count-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-navy-800 text-slate-300">0 registros</span>
+        </div>
+        <div class="flex items-center gap-2 text-xs">
+          <!-- Filter buttons -->
+          <div class="flex rounded-lg overflow-hidden border border-navy-700 bg-navy-900 text-[11px]">
+            <button onclick="setLogFilter('ALL')" id="btn-filter-all" class="px-2.5 py-1 font-semibold text-white bg-indigo-600">TODOS</button>
+            <button onclick="setLogFilter('TRADE')" id="btn-filter-trade" class="px-2.5 py-1 font-semibold text-slate-400 hover:text-white">TRADES</button>
+            <button onclick="setLogFilter('WARN')" id="btn-filter-warn" class="px-2.5 py-1 font-semibold text-slate-400 hover:text-white">AVISOS</button>
+            <button onclick="setLogFilter('ERROR')" id="btn-filter-error" class="px-2.5 py-1 font-semibold text-slate-400 hover:text-white">ERROS</button>
+          </div>
+          <!-- Download full log file button -->
+          <a href="/api/v1/desk/logs/raw" target="_blank" download="trading_desk.log" class="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-[11px] border border-slate-700 flex items-center gap-1 transition active:scale-95" title="Baixar arquivo de log gravado em disco">
+            <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Baixar trading_desk.log
+          </a>
+        </div>
+      </div>
+
+      <!-- Log Terminal Box -->
+      <div id="log-terminal" class="w-full h-44 bg-navy-950 rounded-lg p-3 overflow-y-auto border border-navy-800 font-mono text-[11px] flex flex-col gap-1 select-text">
+        <div class="text-slate-500">Aguardando logs do backend Rust ALR...</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-navy-800 bg-navy-950 py-3 px-4 text-xs text-slate-500 text-center">
+    ALR Autonomous Learning Runtime • Multi-Asset Live Quantitative Desk • Binance Spot Testnet (testnet.binance.vision) • SQLite WAL Mode
+  </footer>
+
+  <!-- Application Logic -->
+  <script>
+    // State
+    let deskState = null;
+    let selectedAsset = 'BTC-USDT';
+    let candlesData = [];
+    let isPolling = true;
+    let rawLogs = [];
+    let activeLogFilter = 'ALL';
+    let isConnected = false;
+
+    // Toast utility
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const bg = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-slate-800 border border-slate-700';
+      toast.className = `px-4 py-2.5 rounded-lg shadow-xl text-white text-xs font-medium ${bg} transition-all transform translate-y-2 opacity-0 pointer-events-auto flex items-center gap-2`;
+      toast.innerHTML = `<span>${message}</span>`;
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // Formatters
+    const fmtUSD = (v) => {
+      if (v === undefined || v === null || isNaN(v)) return '$0.00';
+      if (Math.abs(v) < 1.0) return '$' + Number(v).toFixed(4);
+      return '$' + Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    const fmtPts = (v) => {
+      if (v === undefined || v === null || isNaN(v)) return '0.00 pts';
+      return Number(v).toFixed(2) + ' pts';
+    };
+
+    // Client Error Logger: envia falhas para o backend persistir em logs/trading_desk.log
+    function logClientError(message, details = null) {
+      console.warn('[ALR Client Log]:', message, details);
+      fetch('/api/v1/desk/client-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          level: 'ERROR',
+          module: 'BROWSER_JS',
+          message: String(message),
+          details: details ? String(details) : null
+        })
+      }).catch(() => {});
+    }
+
+    // Global Browser Error Catchers
+    window.addEventListener('error', (event) => {
+      logClientError(`JS Error: ${event.message} at ${event.filename}:${event.lineno}`, event.error?.stack);
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+      logClientError(`Unhandled Promise Rejection: ${event.reason}`, event.reason?.stack);
+    });
+
+    // Safe Fetch JSON wrapper: valida content-type para nunca quebrar com Unexpected token '<'
+    async function safeFetchJson(url, options = {}) {
+      const res = await fetch(url, options);
+      const contentType = res.headers.get('content-type') || '';
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      if (!contentType.includes('application/json')) {
+        throw new Error(`Resposta inválida (Content-Type: ${contentType}). O backend Rust ALR na porta 3800 não está respondendo com a API REST.`);
+      }
+      return await res.json();
+    }
+
+    // Connection Status Manager
+    function setConnectionStatus(connected, errorMsg = '') {
+      isConnected = connected;
+      const statusPill = document.getElementById('connection-status-pill');
+      const errorBanner = document.getElementById('connection-error-banner');
+      const errorText = document.getElementById('connection-error-text');
+
+      if (connected) {
+        statusPill.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 pulse-green"></span> ONLINE (Binance Spot Testnet)`;
+        statusPill.className = `inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20`;
+        errorBanner.classList.add('hidden');
+      } else {
+        statusPill.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400 pulse-red"></span> DESCONECTADO (Tentando reconectar...)`;
+        statusPill.className = `inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/30`;
+        errorBanner.classList.remove('hidden');
+        if (errorText) {
+          errorText.textContent = errorMsg || 'O servidor Backend em Rust não está respondendo com dados válidos na porta 3800.';
+        }
+      }
+    }
+
+    // Canvas Candlestick Rendering Engine (60 FPS)
+    function renderCandlestickChart() {
+      const canvas = document.getElementById('candlestick-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+
+      const width = rect.width;
+      const height = rect.height;
+
+      ctx.clearRect(0, 0, width, height);
+
+      if (!candlesData || candlesData.length === 0) {
+        return;
+      }
+
+      const paddingLeft = 10;
+      const paddingRight = 65;
+      const paddingTop = 25;
+      const paddingBottom = 25;
+
+      const plotWidth = width - paddingLeft - paddingRight;
+      const plotHeight = height - paddingTop - paddingBottom;
+
+      // Calculate price bounds
+      let minPrice = Infinity;
+      let maxPrice = -Infinity;
+
+      for (const c of candlesData) {
+        if (c.low < minPrice) minPrice = c.low;
+        if (c.high > maxPrice) maxPrice = c.high;
+      }
+
+      // Add margins to bounds
+      const priceRange = maxPrice - minPrice || 1.0;
+      minPrice -= priceRange * 0.05;
+      maxPrice += priceRange * 0.05;
+      const adjRange = maxPrice - minPrice;
+
+      const getY = (val) => height - paddingBottom - ((val - minPrice) / adjRange) * plotHeight;
+
+      // Draw Grid Lines (horizontal)
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      const gridSteps = 5;
+      for (let i = 0; i <= gridSteps; i++) {
+        const p = minPrice + (adjRange / gridSteps) * i;
+        const y = getY(p);
+        ctx.beginPath();
+        ctx.moveTo(paddingLeft, y);
+        ctx.lineTo(width - paddingRight, y);
+        ctx.stroke();
+
+        // Price label on right axis
+        ctx.fillStyle = '#64748b';
+        ctx.font = '10px "Fira Code", monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(fmtUSD(p), width - paddingRight + 6, y + 3);
+      }
+
+      // Draw Candlesticks
+      const n = candlesData.length;
+      const candleWidth = Math.max(2, (plotWidth / n) * 0.7);
+      const step = plotWidth / n;
+
+      for (let i = 0; i < n; i++) {
+        const c = candlesData[i];
+        const x = paddingLeft + (i + 0.5) * step;
+
+        const openY = getY(c.open);
+        const closeY = getY(c.close);
+        const highY = getY(c.high);
+        const lowY = getY(c.low);
+
+        const isBull = c.close >= c.open;
+        const color = isBull ? '#10b981' : '#ef4444';
+
+        // Wick
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x, highY);
+        ctx.lineTo(x, lowY);
+        ctx.stroke();
+
+        // Body
+        ctx.fillStyle = color;
+        const bodyTop = Math.min(openY, closeY);
+        const bodyHeight = Math.max(1.5, Math.abs(closeY - openY));
+        ctx.fillRect(x - candleWidth / 2, bodyTop, candleWidth, bodyHeight);
+      }
+
+      // Overlays: Draw Trade Lines if position exists on selected asset
+      const currentAssetObj = deskState?.assets?.find(a => a.asset === selectedAsset);
+      if (currentAssetObj && currentAssetObj.has_position && currentAssetObj.position) {
+        const pos = currentAssetObj.position;
+
+        // Entry Line (Cyan dashed)
+        const entryY = getY(pos.entry_price);
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(paddingLeft, entryY);
+        ctx.lineTo(width - paddingRight, entryY);
+        ctx.stroke();
+
+        // Entry Badge
+        ctx.fillStyle = '#06b6d4';
+        ctx.fillRect(width - paddingRight, entryY - 9, 60, 18);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '9px "Fira Code", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('ENTRY', width - paddingRight + 30, entryY + 3);
+
+        // Stop-Loss Line (Red dashed)
+        const slY = getY(pos.stop_loss);
+        ctx.strokeStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.moveTo(paddingLeft, slY);
+        ctx.lineTo(width - paddingRight, slY);
+        ctx.stroke();
+
+        // SL Badge
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(width - paddingRight, slY - 9, 60, 18);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('STOP', width - paddingRight + 30, slY + 3);
+
+        // Take-Profit Line (Green dashed)
+        const tpY = getY(pos.take_profit);
+        ctx.strokeStyle = '#10b981';
+        ctx.beginPath();
+        ctx.moveTo(paddingLeft, tpY);
+        ctx.lineTo(width - paddingRight, tpY);
+        ctx.stroke();
+
+        // TP Badge
+        ctx.fillStyle = '#10b981';
+        ctx.fillRect(width - paddingRight, tpY - 9, 60, 18);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('TARGET', width - paddingRight + 30, tpY + 3);
+
+        ctx.setLineDash([]); // Reset dash
+      }
+    }
+
+    // Select Asset
+    function selectAsset(asset) {
+      selectedAsset = asset;
+      fetchCandles(asset);
+      updateUI();
+    }
+
+    // Fetch Candles
+    async function fetchCandles(asset) {
+      try {
+        const overlay = document.getElementById('chart-loading-overlay');
+        if (overlay) overlay.classList.remove('hidden');
+        candlesData = await safeFetchJson(`/api/v1/desk/candles?asset=${encodeURIComponent(asset)}`);
+        renderCandlestickChart();
+      } catch (err) {
+        logClientError(`Error fetching candles for ${asset}: ${err.message}`);
+      } finally {
+        const overlay = document.getElementById('chart-loading-overlay');
+        if (overlay) overlay.classList.add('hidden');
+      }
+    }
+
+    // Poll Desk Status
+    async function pollDeskStatus() {
+      if (!isPolling) return;
+      try {
+        const data = await safeFetchJson('/api/v1/desk/status');
+        deskState = data;
+        setConnectionStatus(true);
+        updateUI();
+      } catch (err) {
+        setConnectionStatus(false, err.message);
+      }
+    }
+
+    // Poll System Logs
+    async function pollLogs() {
+      try {
+        rawLogs = await safeFetchJson('/api/v1/desk/logs');
+        renderLogs();
+      } catch (_) {}
+    }
+
+    function setLogFilter(filter) {
+      activeLogFilter = filter;
+      ['all', 'trade', 'warn', 'error'].forEach(f => {
+        const btn = document.getElementById(`btn-filter-${f}`);
+        if (f.toUpperCase() === filter) {
+          btn.className = 'px-2.5 py-1 font-semibold text-white bg-indigo-600';
+        } else {
+          btn.className = 'px-2.5 py-1 font-semibold text-slate-400 hover:text-white';
+        }
+      });
+      renderLogs();
+    }
+
+    function renderLogs() {
+      const container = document.getElementById('log-terminal');
+      if (!container) return;
+
+      const filtered = rawLogs.filter(l => {
+        if (activeLogFilter === 'ALL') return true;
+        return l.level === activeLogFilter;
+      });
+
+      document.getElementById('log-count-badge').textContent = `${rawLogs.length} registros`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="text-slate-500">Nenhum log encontrado para o filtro ${activeLogFilter}.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(l => {
+        let badgeColor = 'text-slate-400 bg-slate-800';
+        if (l.level === 'TRADE') badgeColor = 'text-emerald-300 bg-emerald-950/60 border border-emerald-800/50';
+        if (l.level === 'WARN') badgeColor = 'text-amber-300 bg-amber-950/60 border border-amber-800/50';
+        if (l.level === 'ERROR') badgeColor = 'text-rose-300 bg-rose-950/60 border border-rose-800/50';
+        if (l.level === 'INFO') badgeColor = 'text-cyan-300 bg-cyan-950/60 border border-cyan-800/50';
+
+        const detailsSpan = l.details ? `<span class="text-slate-500 text-[10px] ml-1">(${l.details})</span>` : '';
+
+        return `
+          <div class="flex items-start gap-2 leading-tight">
+            <span class="text-slate-500 select-none text-[10px] flex-shrink-0">${l.timestamp.split(' ')[1] || l.timestamp}</span>
+            <span class="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase flex-shrink-0 ${badgeColor}">${l.level}</span>
+            <span class="text-slate-400 text-[10px] flex-shrink-0">[${l.module}]</span>
+            <span class="text-slate-200 break-all">${l.message}${detailsSpan}</span>
+          </div>
+        `;
+      }).join('');
+
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // Update UI Elements
+    function updateUI() {
+      if (!deskState) return;
+
+      // 1. Header & Global Metrics
+      document.getElementById('metric-portfolio-val').textContent = fmtUSD(deskState.total_portfolio_value);
+      document.getElementById('metric-cash-val').textContent = fmtUSD(deskState.cash_balance);
+
+      const unPnlElem = document.getElementById('metric-unrealized-pnl');
+      const unPnlSign = deskState.total_unrealized_pnl >= 0 ? '+' : '';
+      unPnlElem.textContent = `${unPnlSign}${fmtUSD(deskState.total_unrealized_pnl)} (${unPnlSign}${deskState.total_unrealized_pnl_pct.toFixed(2)}%)`;
+      unPnlElem.className = `mono font-bold ml-1.5 text-sm ${deskState.total_unrealized_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+
+      const relPnlElem = document.getElementById('metric-realized-pnl');
+      relPnlElem.textContent = `${deskState.realized_pnl >= 0 ? '+' : ''}${fmtUSD(deskState.realized_pnl)}`;
+      relPnlElem.className = `mono font-semibold ml-1.5 ${deskState.realized_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+
+      document.getElementById('metric-active-positions').textContent = `${deskState.active_positions_count} / ${deskState.max_positions_allowed}`;
+      document.getElementById('metric-drawdown').textContent = `${deskState.max_drawdown_pct.toFixed(2)}%`;
+
+      const killBadge = document.getElementById('kill-switch-badge');
+      if (deskState.kill_switch_active) {
+        killBadge.classList.remove('hidden');
+      } else {
+        killBadge.classList.add('hidden');
+      }
+
+      // Macro Regime
+      const regime = deskState.macro_regime;
+      if (regime) {
+        document.getElementById('macro-regime-card').classList.remove('hidden');
+        document.getElementById('macro-regime-title').textContent = regime.regime_name;
+        document.getElementById('macro-risk-factor').textContent = `${regime.risk_multiplier.toFixed(2)}x • Max ${regime.max_recommended_positions}`;
+      }
+
+      // 2. Render 7-Currency Ticker Grid
+      const grid = document.getElementById('ticker-grid');
+      grid.innerHTML = '';
+      for (const a of deskState.assets || []) {
+        const isSelected = a.asset === selectedAsset;
+        const isBull = a.change_24h_pct >= 0;
+        const card = document.createElement('div');
+        card.className = `p-2.5 rounded-xl cursor-pointer transition border text-xs flex flex-col justify-between gap-1.5 ${
+          isSelected ? 'bg-indigo-950/60 border-cyan-500 shadow-md shadow-cyan-500/10' : 'bg-navy-900/80 border-navy-800 hover:border-navy-700'
+        }`;
+        card.onclick = () => selectAsset(a.asset);
+
+        const posBadge = a.has_position ?
+          `<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">POS</span>` : '';
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white mono text-[11px]">${a.asset.replace('-USDT', '')}</span>
+            ${posBadge}
+          </div>
+          <div class="mono font-bold text-white text-xs">${fmtUSD(a.current_price)}</div>
+          <div class="flex items-center justify-between text-[10px] font-medium">
+            <span class="mono ${isBull ? 'text-emerald-400' : 'text-rose-400'}">${isBull ? '+' : ''}${a.change_24h_pct.toFixed(2)}%</span>
+            <span class="text-slate-400">RSI ${a.rsi_14.toFixed(0)}</span>
+          </div>
+        `;
+        grid.appendChild(card);
+      }
+
+      // 3. Active Asset Detailed View
+      const curAsset = deskState.assets?.find(a => a.asset === selectedAsset);
+      if (curAsset) {
+        document.getElementById('active-asset-symbol').textContent = curAsset.asset;
+        document.getElementById('active-asset-price').textContent = fmtUSD(curAsset.current_price);
+        const changeElem = document.getElementById('active-asset-change');
+        const isBull = curAsset.change_24h_pct >= 0;
+        changeElem.textContent = `${isBull ? '+' : ''}${curAsset.change_24h_pct.toFixed(2)}%`;
+        changeElem.className = `text-xs px-2 py-0.5 rounded font-semibold mono ${isBull ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`;
+
+        document.getElementById('stat-rsi').textContent = curAsset.rsi_14.toFixed(2);
+        document.getElementById('stat-supertrend').textContent = `${fmtUSD(curAsset.supertrend)} (${curAsset.supertrend_direction >= 0 ? 'Alta' : 'Baixa'})`;
+        document.getElementById('stat-bollinger').textContent = `${(curAsset.bollinger_bandwidth * 100).toFixed(2)}% (${curAsset.bollinger_bandwidth < 0.035 ? 'Squeeze' : 'Normal'})`;
+
+        // Position Section
+        const posSection = document.getElementById('pos-data-section');
+        const emptySection = document.getElementById('pos-empty-section');
+        const posBadge = document.getElementById('pos-status-badge');
+        document.getElementById('pos-asset-name').textContent = curAsset.asset;
+        document.getElementById('empty-asset-name').textContent = curAsset.asset;
+
+        if (curAsset.has_position && curAsset.position) {
+          const pos = curAsset.position;
+          posSection.classList.remove('hidden');
+          emptySection.classList.add('hidden');
+
+          posBadge.textContent = pos.side.toUpperCase();
+          posBadge.className = `text-[10px] px-2 py-0.5 rounded font-bold uppercase ${pos.side === 'Long' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}`;
+
+          document.getElementById('pos-entry-price').textContent = fmtUSD(pos.entry_price);
+          document.getElementById('pos-current-price').textContent = fmtUSD(pos.current_price);
+          document.getElementById('pos-quantity').textContent = pos.quantity.toFixed(4);
+
+          const pnlElem = document.getElementById('pos-pnl');
+          const isProfitable = pos.pnl >= 0;
+          const pnlSign = isProfitable ? '+' : '';
+          const pnlPct = pos.entry_price > 0 ? (pos.pnl / (pos.entry_price * pos.quantity)) * 100 : 0;
+          pnlElem.textContent = `${pnlSign}${fmtUSD(pos.pnl)} (${pnlSign}${pnlPct.toFixed(2)}%)`;
+          pnlElem.className = `mono font-bold mt-0.5 ${isProfitable ? 'text-emerald-400' : 'text-rose-400'}`;
+
+          document.getElementById('pos-mae').textContent = `${(pos.max_adverse_excursion_pct || 0).toFixed(2)}%`;
+          document.getElementById('pos-adverse-bars').textContent = `${pos.adverse_bars_count || 0} barras`;
+
+          const exitStatus = document.getElementById('pos-early-exit-status');
+          if (pos.adverse_bars_count >= 3 || pos.max_adverse_excursion_pct >= 1.25) {
+            exitStatus.className = 'mt-1 text-[11px] px-2 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-center font-medium';
+            exitStatus.textContent = '⚠️ Alerta de Momentum: Barras contrárias ou MAE elevado';
+          } else {
+            exitStatus.className = 'mt-1 text-[11px] px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-center font-medium';
+            exitStatus.textContent = '✓ Posição Saudável • Sem gatilho de saída antecipada';
+          }
+
+          // Pre-fill inputs with current SL and TP
+          const slInput = document.getElementById('input-new-sl');
+          const tpInput = document.getElementById('input-new-tp');
+          if (!slInput.value) slInput.value = pos.stop_loss;
+          if (!tpInput.value) tpInput.value = pos.take_profit;
+
+          // Rationale rendering
+          if (pos.rationale) {
+            const r = pos.rationale;
+            document.getElementById('rationale-sl-dist').textContent = `-${fmtPts(r.risk_distance_points)} (-${r.risk_distance_pct.toFixed(2)}%)`;
+            document.getElementById('rationale-sl-text').textContent = r.stop_loss_explanation;
+
+            document.getElementById('rationale-tp-dist').textContent = `+${fmtPts(r.reward_distance_points)} (+${r.reward_distance_pct.toFixed(2)}%)`;
+            document.getElementById('rationale-tp-text').textContent = r.take_profit_explanation;
+
+            document.getElementById('rationale-rr').textContent = `1:${r.risk_reward_ratio.toFixed(2)}`;
+            document.getElementById('rationale-st').textContent = r.supertrend_trend;
+            document.getElementById('rationale-bb').textContent = r.bollinger_context;
+          }
+        } else {
+          posSection.classList.add('hidden');
+          emptySection.classList.remove('hidden');
+          posBadge.textContent = 'SEM POSIÇÃO';
+          posBadge.className = 'text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-slate-800 text-slate-400';
+
+          document.getElementById('rationale-sl-dist').textContent = '-0.00 pts (-0.00%)';
+          document.getElementById('rationale-sl-text').textContent = 'Aguardando abertura de posição para cálculo do risco dinâmico...';
+          document.getElementById('rationale-tp-dist').textContent = '+0.00 pts (+0.00%)';
+          document.getElementById('rationale-tp-text').textContent = 'Aguardando abertura de posição para cálculo do alvo de lucro...';
+        }
+      }
+
+      // 4. Executions Table
+      const execs = deskState.recent_executions || [];
+      document.getElementById('executions-count').textContent = `${execs.length} ordens registradas`;
+      const tableBody = document.getElementById('executions-table-body');
+      if (execs.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-500">Nenhuma ordem executada até o momento.</td></tr>`;
+      } else {
+        tableBody.innerHTML = execs.map(e => {
+          const dateStr = new Date(e.timestamp * 1000).toLocaleTimeString();
+          const isBuy = e.action === 'Buy';
+          const pnlText = e.realized_pnl !== null && e.realized_pnl !== undefined ?
+            `<span class="${e.realized_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${e.realized_pnl >= 0 ? '+' : ''}${fmtUSD(e.realized_pnl)}</span>` : '<span class="text-slate-500">--</span>';
+
+          return `
+            <tr class="hover:bg-navy-800/40 transition">
+              <td class="py-2 px-3 text-slate-400">${dateStr}</td>
+              <td class="py-2 px-3 font-bold text-white">${e.asset}</td>
+              <td class="py-2 px-3">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isBuy ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}">
+                  ${e.action} (${e.side})
+                </span>
+              </td>
+              <td class="py-2 px-3 text-white">${fmtUSD(e.price)}</td>
+              <td class="py-2 px-3 text-slate-300">${e.quantity.toFixed(4)}</td>
+              <td class="py-2 px-3 text-slate-400">${fmtUSD(e.fee)}</td>
+              <td class="py-2 px-3">${pnlText}</td>
+              <td class="py-2 px-3 text-[11px] text-slate-400">${e.reason}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      renderCandlestickChart();
+    }
+
+    // 1-Click Operations
+    async function triggerEmergencyStop() {
+      if (!confirm('Deseja realmente acionar o PÂNICO / ZERAR TODAS as posições imediatamente e ativar o Kill Switch?')) {
+        return;
+      }
+      try {
+        const data = await safeFetchJson('/api/v1/desk/emergency-stop', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason: 'MANUAL_EMERGENCY_PANIC_BUTTON' })
+        });
+        showToast(`⚠️ PÂNICO EXECUTADO: ${data.closed_count || 0} posições zeradas imediatamente!`, 'error');
+        await pollDeskStatus();
+        await pollLogs();
+      } catch (err) {
+        showToast('Erro ao acionar zeragem de emergência: ' + err.message, 'error');
+      }
+    }
+
+    async function resetStrategy() {
+      try {
+        const data = await safeFetchJson('/api/v1/desk/reset-strategy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        showToast('✓ Estratégia reiniciada com sucesso! Kill switch desativado.', 'success');
+        await pollDeskStatus();
+        await pollLogs();
+      } catch (err) {
+        showToast('Erro ao reiniciar estratégia: ' + err.message, 'error');
+      }
+    }
+
+    async function closeCurrentPositionManual() {
+      if (!confirm(`Zerar a posição de ${selectedAsset} a mercado agora?`)) return;
+      try {
+        const data = await safeFetchJson('/api/v1/desk/close-position', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ asset: selectedAsset, reason: 'MANUAL_1CLICK_CLOSE' })
+        });
+        if (data.success) {
+          showToast(`✓ Posição em ${selectedAsset} zerada a mercado com sucesso!`, 'success');
+          await pollDeskStatus();
+          await pollLogs();
+        } else {
+          showToast(`Aviso: ${data.message || 'Posição já estava fechada'}`, 'info');
+        }
+      } catch (err) {
+        showToast('Erro ao zerar posição: ' + err.message, 'error');
+      }
+    }
+
+    async function lockBreakEven() {
+      const curAsset = deskState?.assets?.find(a => a.asset === selectedAsset);
+      if (!curAsset || !curAsset.position) {
+        showToast('Nenhuma posição ativa para travar no 0 a 0.', 'error');
+        return;
+      }
+      const entry = curAsset.position.entry_price;
+      try {
+        const data = await safeFetchJson('/api/v1/desk/adjust-stops', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ asset: selectedAsset, stop_loss: entry })
+        });
+        if (data.success) {
+          showToast(`✓ Stop-Loss movido para o 0 a 0 (${fmtUSD(entry)}) com sucesso!`, 'success');
+          await pollDeskStatus();
+          await pollLogs();
+        }
+      } catch (err) {
+        showToast('Erro ao ajustar stop: ' + err.message, 'error');
+      }
+    }
+
+    async function saveManualStops() {
+      const sl = parseFloat(document.getElementById('input-new-sl').value);
+      const tp = parseFloat(document.getElementById('input-new-tp').value);
+      if (isNaN(sl) && isNaN(tp)) {
+        showToast('Informe ao menos um valor válido para Stop-Loss ou Take-Profit.', 'error');
+        return;
+      }
+      try {
+        const payload = { asset: selectedAsset };
+        if (!isNaN(sl)) payload.stop_loss = sl;
+        if (!isNaN(tp)) payload.take_profit = tp;
+
+        const data = await safeFetchJson('/api/v1/desk/adjust-stops', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (data.success) {
+          showToast(`✓ Stops de ${selectedAsset} atualizados com sucesso no banco de dados!`, 'success');
+          await pollDeskStatus();
+          await pollLogs();
+        } else {
+          showToast(`Erro: ${data.message}`, 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao salvar stops: ' + err.message, 'error');
+      }
+    }
+
+    // Auto-resize canvas on window resize
+    window.addEventListener('resize', renderCandlestickChart);
+
+    // Initialization
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchCandles(selectedAsset);
+      pollDeskStatus();
+      pollLogs();
+      setInterval(pollDeskStatus, 1200); // 1.2-second live polling
+      setInterval(pollLogs, 2500);       // 2.5-second live log polling
+    });
+  </script>
+</body>
+</html>

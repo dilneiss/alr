@@ -11,3 +11,6 @@ node_modules/
 dist/
 screenshots/
 replay_records/
+logs/
+*.log
+**/logs/
