@@ -97,7 +97,7 @@ impl JevPlaygroundServer {
             "  - API Endpoint:  http://localhost:{}/api/v1/decisions",
             self.port
         );
-        println!("  - Presets:       Agent guardrail (noul), Support routing (choice), Lead qualification (score) + 4 ALR Suites");
+        println!("  - 10 Presets:    Decisões Centrais, Marketing Ops, Segurança, Trading");
         println!("========================================================================\n");
 
         axum::serve(listener, app).await?;
@@ -112,6 +112,7 @@ async fn handle_health() -> Json<serde_json::Value> {
         "version": "1.13",
         "engine": "ALR System 1 Rust Local Inference",
         "cost": "$0.0000000",
+        "idioma": "pt-BR",
         "models": ["alr/typed-judge-1.13", "typesafe/jev-1.13", "typesafe/jev-1.13-20260917"]
     }))
 }
@@ -141,10 +142,10 @@ async fn handle_index() -> Html<String> {
     Html(render_playground_html())
 }
 
-/// Gera o HTML/CSS/JS standalone de alta fidelidade visual para o Playground de Decisões Tipadas do ALR
+/// Gera o HTML/CSS/JS standalone de alta fidelidade visual 100% em Português com Timeline Vertical
 pub fn render_playground_html() -> String {
     r##"<!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -163,11 +164,12 @@ pub fn render_playground_html() -> String {
             --text-dim: #556477;
             --accent-lime: #bbfb00;
             --accent-lime-hover: #caff1a;
-            --amber-border: rgba(245, 158, 11, 0.35);
-            --amber-bg: rgba(245, 158, 11, 0.05);
+            --accent-cyan: #38bdf8;
+            --amber-border: rgba(245, 158, 11, 0.4);
+            --amber-bg: rgba(245, 158, 11, 0.06);
             --amber-text: #f59e0b;
-            --green-border: rgba(16, 185, 129, 0.35);
-            --green-bg: rgba(16, 185, 129, 0.05);
+            --green-border: rgba(16, 185, 129, 0.4);
+            --green-bg: rgba(16, 185, 129, 0.06);
             --green-text: #10b981;
             --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             --font-mono: "JetBrains Mono", "SF Mono", "Fira Code", Menlo, Consolas, monospace;
@@ -191,63 +193,178 @@ pub fn render_playground_html() -> String {
 
         /* Top Navigation Header */
         header {
-            height: 52px;
+            height: 60px;
             background-color: var(--bg-body);
             border-bottom: 1px solid var(--border-subtle);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 16px;
+            padding: 0 18px;
             flex-shrink: 0;
         }
 
         .header-brand {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .header-logo-img {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
             object-fit: cover;
-            border: 1px solid rgba(187, 251, 0, 0.4);
-            box-shadow: 0 0 8px rgba(187, 251, 0, 0.2);
+            border: 1.5px solid rgba(187, 251, 0, 0.6);
+            box-shadow: 0 0 12px rgba(187, 251, 0, 0.35);
+            background: #000000;
+            transition: transform 0.2s ease;
+        }
+
+        .header-logo-img:hover {
+            transform: scale(1.05);
+        }
+
+        .header-title-box {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
         }
 
         .header-title {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 15px;
-            font-weight: 600;
+            font-size: 16px;
+            font-weight: 700;
             color: #ffffff;
             letter-spacing: -0.01em;
         }
 
         .header-badge-alr {
-            font-size: 10px;
+            font-size: 9px;
             font-family: var(--font-mono);
             font-weight: 700;
-            background: rgba(187, 251, 0, 0.12);
+            background: rgba(187, 251, 0, 0.15);
             color: var(--accent-lime);
-            border: 1px solid rgba(187, 251, 0, 0.3);
+            border: 1px solid rgba(187, 251, 0, 0.4);
             padding: 1px 6px;
             border-radius: 4px;
-            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
-        /* Tabs on Header */
-        .preset-tabs {
+        .header-subtitle {
+            font-size: 11px;
+            color: var(--text-dim);
+            font-family: var(--font-mono);
+        }
+
+        /* Center Navigation: Core Tabs + More Presets Dropdown (Zero Scrollbar) */
+        .header-nav-center {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 10px;
+        }
+
+        .core-preset-tabs {
+            display: flex;
+            align-items: center;
+            gap: 6px;
             background-color: #06090c;
             padding: 3px;
             border-radius: 8px;
             border: 1px solid var(--border-subtle);
-            overflow-x: auto;
+        }
+
+        .more-presets-dropdown-wrap {
+            position: relative;
+        }
+
+        .btn-more-presets {
+            background-color: #06090c;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .btn-more-presets:hover {
+            color: var(--text-main);
+            border-color: var(--border-active);
+            background-color: #0c1117;
+        }
+
+        .btn-more-presets.has-active {
+            background-color: #141b22;
+            border-color: rgba(187, 251, 0, 0.4);
+            color: var(--accent-lime);
+        }
+
+        /* Popover Categorizado */
+        .more-presets-popover {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background-color: #0d1218;
+            border: 1px solid var(--border-active);
+            border-radius: 10px;
+            padding: 14px;
+            display: none;
+            gap: 16px;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85);
+            z-index: 100;
+            width: 580px;
+        }
+
+        .popover-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .popover-cat-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 2px;
+        }
+
+        .popover-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.15s ease;
+            width: 100%;
+        }
+
+        .popover-item:hover {
+            background-color: rgba(255, 255, 255, 0.04);
+            color: #ffffff;
+        }
+
+        .popover-item.active {
+            background-color: #141b22;
+            color: var(--accent-lime);
         }
 
         .preset-tab {
@@ -268,7 +385,7 @@ pub fn render_playground_html() -> String {
 
         .preset-tab:hover {
             color: var(--text-main);
-            background-color: rgba(255, 255, 255, 0.03);
+            background-color: rgba(255, 255, 255, 0.04);
         }
 
         .preset-tab.active {
@@ -290,8 +407,8 @@ pub fn render_playground_html() -> String {
 
         .preset-tab.active .badge-type {
             color: var(--accent-lime);
-            border-color: rgba(187, 251, 0, 0.35);
-            background-color: rgba(0, 0, 0, 0.6);
+            border-color: rgba(187, 251, 0, 0.4);
+            background-color: rgba(0, 0, 0, 0.7);
         }
 
         /* Header Actions */
@@ -307,12 +424,12 @@ pub fn render_playground_html() -> String {
             color: var(--text-main);
             font-size: 12px;
             font-weight: 600;
-            padding: 5px 10px;
+            padding: 6px 12px;
             border-radius: 6px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
             transition: all 0.15s ease;
             font-family: var(--font-mono);
         }
@@ -320,23 +437,24 @@ pub fn render_playground_html() -> String {
         .btn-api-modal:hover {
             border-color: var(--accent-lime);
             color: var(--accent-lime);
+            box-shadow: 0 0 8px rgba(187, 251, 0, 0.2);
         }
 
-        /* Workspace Layout - Compact Column Ratio Matching Reference */
+        /* Workspace Layout - Compact Proportions */
         .workspace-wrap {
             flex: 1;
             display: flex;
             justify-content: center;
             overflow: hidden;
-            padding: 10px 16px;
+            padding: 10px 18px;
         }
 
         .workspace {
             display: grid;
-            grid-template-columns: 430px 1fr;
+            grid-template-columns: 440px 1fr;
             gap: 16px;
             width: 100%;
-            max-width: 1520px;
+            max-width: 1540px;
             height: 100%;
             overflow: hidden;
         }
@@ -435,8 +553,8 @@ pub fn render_playground_html() -> String {
 
         /* Custom Scrollbars */
         ::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
+            width: 6px;
+            height: 6px;
         }
         ::-webkit-scrollbar-track {
             background: rgba(0, 0, 0, 0.2);
@@ -910,6 +1028,185 @@ pub fn render_playground_html() -> String {
             margin-left: 24px;
         }
 
+        /* ==========================================================================
+           VERTICAL TIMELINE REASONING GRAPH (LINHA DO TEMPO ESTILO CANVA/FIGMA)
+           ========================================================================== */
+        .reasoning-timeline-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .timeline-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .timeline-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-dim);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .timeline-hint {
+            font-size: 11px;
+            color: var(--accent-lime);
+            font-family: var(--font-mono);
+        }
+
+        .vertical-timeline {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding-left: 28px;
+            margin-top: 6px;
+        }
+
+        /* Linha Vertical Contínua Conectora com Gradiente Neon */
+        .vertical-timeline::before {
+            content: "";
+            position: absolute;
+            left: 11px;
+            top: 14px;
+            bottom: 24px;
+            width: 2px;
+            background: linear-gradient(180deg, var(--accent-lime) 0%, var(--accent-cyan) 60%, rgba(187, 251, 0, 0.2) 100%);
+            box-shadow: 0 0 8px rgba(187, 251, 0, 0.4);
+            border-radius: 1px;
+        }
+
+        .timeline-step {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 14px;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .timeline-step:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Marcador Circular da Etapa */
+        .timeline-marker {
+            position: absolute;
+            left: -28px;
+            top: 8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #090d12;
+            border: 2px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            z-index: 2;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 6px rgba(0,0,0,0.6);
+        }
+
+        .timeline-step.status-ok .timeline-marker {
+            border-color: var(--accent-lime);
+            box-shadow: 0 0 8px rgba(187, 251, 0, 0.4);
+        }
+
+        .timeline-step.status-warning .timeline-marker {
+            border-color: var(--amber-text);
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+        }
+
+        .timeline-step.status-danger .timeline-marker {
+            border-color: #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Card da Etapa na Linha do Tempo */
+        .timeline-card {
+            background: #080c10;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .timeline-step:hover .timeline-card {
+            transform: translateX(4px);
+            border-color: var(--accent-lime);
+            box-shadow: 0 4px 18px rgba(187, 251, 0, 0.15);
+            background: #0d131a;
+        }
+
+        .timeline-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .timeline-card-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timeline-card-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .timeline-card-metric {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 4px;
+            background: #141b22;
+            color: var(--text-muted);
+        }
+
+        .timeline-step.status-ok .timeline-card-metric {
+            background: rgba(187, 251, 0, 0.15);
+            color: var(--accent-lime);
+        }
+
+        .timeline-step.status-warning .timeline-card-metric {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--amber-text);
+        }
+
+        .timeline-step.status-danger .timeline-card-metric {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .timeline-card-summary {
+            font-size: 11px;
+            font-family: var(--font-mono);
+            color: var(--accent-lime);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .timeline-card-detail {
+            font-size: 12px;
+            color: #cbd5e1;
+            line-height: 1.45;
+            margin-top: 2px;
+        }
+
         /* JSON Editor and Viewer */
         .json-editor {
             flex: 1;
@@ -968,7 +1265,7 @@ pub fn render_playground_html() -> String {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 16px;
+            padding: 0 18px;
             font-size: 12px;
             color: var(--text-dim);
             flex-shrink: 0;
@@ -982,175 +1279,6 @@ pub fn render_playground_html() -> String {
 
         .alr-footer a:hover {
             text-decoration: underline;
-        }
-        /* Visual Reasoning Graph Pipeline */
-        .reasoning-graph-section {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-top: 10px;
-            padding-top: 12px;
-            border-top: 1px solid var(--border-subtle);
-        }
-
-        .graph-section-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .graph-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text-dim);
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .graph-hint {
-            font-size: 11px;
-            color: var(--text-dim);
-            font-family: var(--font-mono);
-        }
-
-        .reasoning-pipeline {
-            display: flex;
-            align-items: center;
-            overflow-x: auto;
-            padding: 8px 4px 14px 4px;
-            gap: 0;
-        }
-
-        .pipeline-node-wrap {
-            display: flex;
-            align-items: center;
-            position: relative;
-        }
-
-        .pipeline-node {
-            background: #090d12;
-            border: 1px solid var(--border-subtle);
-            border-radius: 6px;
-            padding: 6px 10px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            user-select: none;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        }
-
-        .pipeline-node:hover {
-            transform: translateY(-2px);
-            border-color: var(--accent-lime);
-            box-shadow: 0 4px 14px rgba(187, 251, 0, 0.25);
-            background: #11171f;
-        }
-
-        .node-icon {
-            font-size: 14px;
-            line-height: 1;
-        }
-
-        .node-name {
-            font-size: 11px;
-            font-weight: 600;
-            color: #ffffff;
-            white-space: nowrap;
-        }
-
-        .node-metric {
-            font-family: var(--font-mono);
-            font-size: 9px;
-            padding: 1px 4px;
-            border-radius: 3px;
-            background: #171f28;
-            color: var(--text-muted);
-        }
-
-        .pipeline-node.status-danger .node-metric {
-            background: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
-        }
-
-        .pipeline-node.status-warning .node-metric {
-            background: rgba(245, 158, 11, 0.15);
-            color: #f59e0b;
-        }
-
-        .pipeline-node.status-ok .node-metric {
-            background: rgba(187, 251, 0, 0.15);
-            color: var(--accent-lime);
-        }
-
-        /* Connector Line with Arrow */
-        .pipeline-connector {
-            width: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #2b3644;
-            flex-shrink: 0;
-        }
-
-        .pipeline-connector svg {
-            width: 16px;
-            height: 10px;
-        }
-
-        /* Tooltip on Hover */
-        .node-tooltip {
-            position: absolute;
-            bottom: calc(100% + 8px);
-            left: 50%;
-            transform: translateX(-50%);
-            width: 240px;
-            background: #0d1319;
-            border: 1px solid var(--accent-lime);
-            border-radius: 8px;
-            padding: 10px 12px;
-            box-shadow: 0 10px 24px rgba(0,0,0,0.85);
-            pointer-events: none;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.15s ease, transform 0.15s ease;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .pipeline-node-wrap:hover .node-tooltip {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(-50%) translateY(-2px);
-        }
-
-        .tooltip-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 11px;
-            font-weight: 700;
-            color: #ffffff;
-        }
-
-        .tooltip-summary {
-            font-size: 10px;
-            font-family: var(--font-mono);
-            color: var(--accent-lime);
-            text-transform: uppercase;
-        }
-
-        .tooltip-detail {
-            font-size: 11px;
-            color: #cbd5e1;
-            line-height: 1.4;
-            margin-top: 2px;
         }
 
         /* API Integration Modal */
@@ -1250,44 +1378,82 @@ pub fn render_playground_html() -> String {
     <!-- Header -->
     <header>
         <div class="header-brand">
-            <img src="/static/alr-logo.webp" alt="ALR Logo" class="header-logo-img" onerror="this.src='/static/alr-logo.png'">
-            <div class="header-title">
-                <span>Playground</span>
-                <span class="header-badge-alr">System 1</span>
+            <img src="/static/alr-logo.webp" alt="Logo Oficial ALR" class="header-logo-img" onerror="this.src='/static/alr-logo.png'">
+            <div class="header-title-box">
+                <div class="header-title">
+                    <span>Playground</span>
+                    <span class="header-badge-alr">SYSTEM 1</span>
+                </div>
+                <div class="header-subtitle">Motor Autônomo em Rust · Sub-Milissegundo</div>
             </div>
         </div>
 
-        <div class="preset-tabs" id="preset-tabs">
-            <button class="preset-tab active" data-preset="agent_guardrail">
-                <span class="badge-type">noul</span>
-                <span>Agent guardrail</span>
-            </button>
-            <button class="preset-tab" data-preset="support_routing">
-                <span class="badge-type">choice</span>
-                <span>Support routing</span>
-            </button>
-            <button class="preset-tab" data-preset="lead_qualification">
-                <span class="badge-type">score</span>
-                <span>Lead qualification</span>
-            </button>
-            <button class="preset-tab" data-preset="sentiment_routing">
-                <span class="badge-type">choice</span>
-                <span>Sentiment & Ouvidoria</span>
-            </button>
-            <button class="preset-tab" data-preset="search_triage">
-                <span class="badge-type">choice</span>
-                <span>Google Ads Triage</span>
-            </button>
-            <button class="preset-tab" data-preset="cctv_tripwire">
-                <span class="badge-type">noul</span>
-                <span>CCTV Security Shield</span>
-            </button>
-            <button class="preset-tab" data-preset="crypto_trading">
-                <span class="badge-type">choice</span>
-                <span>Crypto Trading</span>
-            </button>
-        </div>
+        <!-- Navegação Central Limpa: 3 Abas Canônicas + Menu Seletor Categorizado -->
+        <div class="header-nav-center">
+            <div class="core-preset-tabs" id="core-preset-tabs">
+                <button class="preset-tab active" data-preset="agent_guardrail">
+                    <span class="badge-type">noul</span>
+                    <span>Guarda-corpo de Agente</span>
+                </button>
+                <button class="preset-tab" data-preset="support_routing">
+                    <span class="badge-type">choice</span>
+                    <span>Roteamento de Suporte</span>
+                </button>
+                <button class="preset-tab" data-preset="lead_qualification">
+                    <span class="badge-type">score</span>
+                    <span>Qualificação de Lead</span>
+                </button>
+            </div>
 
+            <!-- Botão Menu Dropdown para os outros 7 casos de uso -->
+            <div class="more-presets-dropdown-wrap">
+                <button class="btn-more-presets" id="btn-toggle-more-presets">
+                    <span id="more-presets-btn-text">⚡ Mais Casos (7)</span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                
+                <!-- Popover Dropdown Categorizado (Abre ao clicar) -->
+                <div class="more-presets-popover" id="more-presets-popover">
+                    <div class="popover-column">
+                        <div class="popover-cat-title">📈 Marketing Ops & SEO</div>
+                        <button class="popover-item" data-preset="search_triage">
+                            <span class="badge-type">choice</span>
+                            <span>Triagem Google Ads</span>
+                        </button>
+                        <button class="popover-item" data-preset="creative_tagging">
+                            <span class="badge-type">choice</span>
+                            <span>Tagging Meta Ads</span>
+                        </button>
+                        <button class="popover-item" data-preset="landing_page_match">
+                            <span class="badge-type">score</span>
+                            <span>Aderência Landing Page</span>
+                        </button>
+                    </div>
+                    <div class="popover-column">
+                        <div class="popover-cat-title">🛡️ Segurança & Risco</div>
+                        <button class="popover-item" data-preset="sentiment_routing">
+                            <span class="badge-type">choice</span>
+                            <span>Sentimento & Ouvidoria</span>
+                        </button>
+                        <button class="popover-item" data-preset="cctv_tripwire">
+                            <span class="badge-type">noul</span>
+                            <span>Vigilância CCTV</span>
+                        </button>
+                        <button class="popover-item" data-preset="cycle_safety_shield">
+                            <span class="badge-type">noul</span>
+                            <span>Escudo Anti-Colisão</span>
+                        </button>
+                    </div>
+                    <div class="popover-column">
+                        <div class="popover-cat-title">💰 Trading</div>
+                        <button class="popover-item" data-preset="crypto_trading">
+                            <span class="badge-type">choice</span>
+                            <span>Sinais de Cripto</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="header-actions">
             <button class="btn-api-modal" id="btn-open-api-modal">
                 <span>&lt;/&gt;</span>
@@ -1300,16 +1466,16 @@ pub fn render_playground_html() -> String {
     <div class="workspace-wrap">
         <div class="workspace">
 
-            <!-- Left Column: Input -->
+            <!-- Left Column: Input (ENTRADA) -->
             <div class="panel">
                 <div class="panel-header">
                     <div class="panel-title-area">
-                        <span class="panel-label">Input</span>
+                        <span class="panel-label">Entrada</span>
                     </div>
                     <div class="view-switcher">
                         <button class="switcher-btn active" id="btn-input-form">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-                            Form
+                            Formulário
                         </button>
                         <button class="switcher-btn" id="btn-input-json">
                             <span>{ }</span>
@@ -1321,17 +1487,17 @@ pub fn render_playground_html() -> String {
                 <!-- Form Content Area -->
                 <div class="panel-content" id="input-form-container">
                     <div class="type-description" id="type-description">
-                        A noul question returns the probability that a condition holds. Gate an agent tool call on it.
+                        Uma questão noul avalia a probabilidade calibrada de uma condição lógica ser verdadeira. Utilize para governar e proteger chamadas de ferramentas de agentes.
                     </div>
 
                     <div class="field-group">
-                        <label class="field-label">State</label>
-                        <textarea class="textarea-input state-textarea" id="input-state" placeholder="State context and tool call details..."></textarea>
+                        <label class="field-label">Estado Contextual (State)</label>
+                        <textarea class="textarea-input state-textarea" id="input-state" placeholder="Contexto de estado, tarefa e detalhes da chamada de ferramenta..."></textarea>
                     </div>
 
                     <div class="field-group">
-                        <label class="field-label">Question</label>
-                        <textarea class="textarea-input question-textarea" id="input-question" placeholder="Question to evaluate..."></textarea>
+                        <label class="field-label">Pergunta de Decisão (Question)</label>
+                        <textarea class="textarea-input question-textarea" id="input-question" placeholder="Pergunta formal de decisão para o motor..."></textarea>
                     </div>
 
                     <!-- Dynamic Section per question type -->
@@ -1348,16 +1514,16 @@ pub fn render_playground_html() -> String {
                 <div class="panel-footer">
                     <button class="btn-reset" id="btn-reset">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                        Reset
+                        Redefinir
                     </button>
                     <button class="btn-run" id="btn-run">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                        Run decision
+                        Executar decisão
                     </button>
                 </div>
             </div>
 
-            <!-- Right Column: Output / Answer -->
+            <!-- Right Column: Output / Answer (RESPOSTA) -->
             <div class="panel">
                 <div class="panel-header">
                     <div class="panel-title-area">
@@ -1370,7 +1536,7 @@ pub fn render_playground_html() -> String {
                     <div class="view-switcher">
                         <button class="switcher-btn active" id="btn-output-preview">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                            Preview
+                            Visualização
                         </button>
                         <button class="switcher-btn" id="btn-output-json">
                             <span>{ }</span>
@@ -1383,7 +1549,7 @@ pub fn render_playground_html() -> String {
                 <div class="panel-content" id="output-preview-container">
                     <div class="empty-state" id="output-empty-state">
                         <div class="spinner-dotted"></div>
-                        <div>Run the decision to see the answer</div>
+                        <div>Execute a decisão para visualizar a resposta</div>
                     </div>
 
                     <div class="result-container" id="output-result" style="display: none;">
@@ -1393,8 +1559,8 @@ pub fn render_playground_html() -> String {
 
                 <!-- Output JSON View (Hidden by default) -->
                 <div class="panel-content" id="output-json-container" style="display: none; position: relative;">
-                    <button class="copy-json-btn" id="btn-copy-json">Copy JSON</button>
-                    <pre class="json-pre-viewer" id="output-json-raw">// JSON response will appear here after running decision</pre>
+                    <button class="copy-json-btn" id="btn-copy-json">Copiar JSON</button>
+                    <pre class="json-pre-viewer" id="output-json-raw">// A resposta JSON do motor ALR aparecerá aqui após executar</pre>
                 </div>
             </div>
 
@@ -1403,8 +1569,8 @@ pub fn render_playground_html() -> String {
 
     <!-- Bottom ALR Lab Footer -->
     <div class="alr-footer">
-        <div>ALR Lab has worked recipes with code and recorded results for this model.</div>
-        <a href="#alr-lab">Explore ALR Lab &rarr;</a>
+        <div>ALR Lab possui receitas validadas com código e resultados para este modelo.</div>
+        <a href="#alr-lab">Explorar ALR Lab &rarr;</a>
     </div>
 
     <!-- API Integration Modal -->
@@ -1434,7 +1600,7 @@ pub fn render_playground_html() -> String {
         }
       }
     }
-  }'<button class="btn-copy-curl" id="btn-copy-curl">Copy cURL</button></div>
+  }'<button class="btn-copy-curl" id="btn-copy-curl">Copiar cURL</button></div>
 
                 <div style="font-size: 12px; color: var(--text-dim);">
                     * Suporta também compatibilidade com rota OpenAI: <code>POST /v1/chat/completions</code> e <code>POST /api/decision</code>.
@@ -1449,12 +1615,14 @@ pub fn render_playground_html() -> String {
             agent_guardrail: {
                 id: "agent_guardrail",
                 type: "noul",
-                name: "Agent guardrail",
-                description: "A noul question returns the probability that a condition holds. Gate an agent tool call on it.",
-                state: "Task: clean up inactive accounts before the quarterly report.\nProposed tool call:\ndelete_rows(table=\"customers\",\nwhere=\"last_login < 2023-01-01\")\nContext: the customers table has 48,210 rows and no backup was taken today.",
-                question: "Is this action safe to run without a human approving it first?",
-                trueWhen: "Reversible or low-impact, and clearly within the stated task.",
-                falseWhen: "Destructive, irreversible, or broader than the task requires.",
+                name: "Guarda-corpo de Agente",
+                badge: "noul",
+                category: "core",
+                description: "Uma questão noul avalia a probabilidade calibrada de uma condição lógica ser verdadeira. Bloqueia ações perigosas de ferramentas.",
+                state: "Tarefa: Limpar contas inativas antes do relatório trimestral.\nChamada proposta:\ndelete_rows(table=\"customers\",\nwhere=\"last_login < 2023-01-01\")\nContexto: a tabela customers possui 48.210 linhas e NENHUM backup foi feito hoje.",
+                question: "Esta ação é segura para ser executada sem a aprovação prévia de um humano?",
+                trueWhen: "Reversível ou de baixo impacto, e estritamente dentro da tarefa declarada.",
+                falseWhen: "Destrutiva, irreversível ou com escopo mais amplo do que a tarefa exige.",
                 threshold: 80,
                 metricLatency: "1.5s",
                 metricCost: "$0.0000161",
@@ -1478,17 +1646,17 @@ pub fn render_playground_html() -> String {
                         cost: 0.000016128
                     },
                     ui_decision: {
-                        action_text: "Pause and ask a human",
+                        action_text: "Pausar e solicitar aprovação humana",
                         status: "pause",
-                        explanation: "Yes-probability (4.0%) is below required threshold (80.0%)",
+                        explanation: "Probabilidade Sim (4.0%) está abaixo do limiar exigido (80.0%)",
                         latency_sec: 1.5,
                         reasoning_graph: [
-                            { name: "Input State", icon: "📥", status: "neutral", summary: "Estado & Tool Call", detail: "Tarefa clean up inactive accounts com chamada delete_rows em tabela customers com 48.210 linhas.", metric: "48.2k rows" },
-                            { name: "Semantic Parser", icon: "🔍", status: "neutral", summary: "Extração de Entidades", detail: "Parser identificou cláusula de tempo 'last_login < 2023-01-01' e flag crítica 'no backup was taken today'.", metric: "no_backup" },
-                            { name: "Risk Shield", icon: "🛡️", status: "danger", summary: "Auditoria de Risco ALR", detail: "RiskEngine interceptou operação destrutiva irreversível sem garantia de rollback.", metric: "Critical" },
-                            { name: "Calibrated Judge", icon: "⚖️", status: "warning", summary: "Inferência Bayesiana", detail: "TypedJudge calculou probabilidade calibrada de segurança local: 4.0% Yes e 96.0% No.", metric: "4.0% Safe" },
-                            { name: "Threshold Gate", icon: "🚦", status: "danger", summary: "Avaliação do Limiar", detail: "Threshold estrito em 80.0%. Como P(safe) = 4.0% < 80.0%, o gate bloqueia auto-execução.", metric: "4.0% < 80%" },
-                            { name: "Safety Action", icon: "⏸️", status: "warning", summary: "Pausa & Escalonamento", detail: "Execução pausada com segurança. Notificação enviada para autorização de supervisor humano.", metric: "Pause & Ask" }
+                            { name: "Estado de Entrada", icon: "📥", status: "neutral", summary: "Tarefa & Chamada de Ferramenta", detail: "Tarefa de limpeza de contas com chamada delete_rows em tabela customers com 48.210 linhas.", metric: "48.2k linhas" },
+                            { name: "Analisador Semântico", icon: "🔍", status: "neutral", summary: "Inspeção de Contexto", detail: "Identificou filtro 'last_login < 2023-01-01' e flag crítica de ausência de backup 'no backup was taken today'.", metric: "sem_backup" },
+                            { name: "Escudo de Risco", icon: "🛡️", status: "danger", summary: "Auditoria RiskEngine ALR", detail: "RiskEngine interceptou operação destrutiva irreversível sem garantia de rollback. Risco Crítico.", metric: "Risco Crítico" },
+                            { name: "Juiz Calibrado", icon: "⚖️", status: "warning", summary: "Inferência Bayesiana Local", detail: "TypedJudge calculou probabilidade calibrada de segurança: apenas 4.0% Sim e 96.0% Não.", metric: "4.0% Seguro" },
+                            { name: "Portal de Limiar", icon: "🚦", status: "danger", summary: "Avaliação do Limiar", detail: "Limiar estrito em 80.0%. Como P(seguro) = 4.0% < 80.0%, o portal bloqueia a execução automática.", metric: "4.0% < 80%" },
+                            { name: "Ação de Segurança", icon: "⏸️", status: "warning", summary: "Pausa & Escalonamento", detail: "Execução pausada com segurança. Notificação enviada para autorização de supervisor humano.", metric: "Pausar & Pedir" }
                         ]
                     }
                 }
@@ -1496,14 +1664,16 @@ pub fn render_playground_html() -> String {
             support_routing: {
                 id: "support_routing",
                 type: "choice",
-                name: "Support routing",
-                description: "A choice question picks one option from a set you define and returns a probability for each.",
-                state: "My payout has failed three days in a row and support chat keeps timing out. I need this fixed today.",
-                question: "Which team should handle this message?",
+                name: "Roteamento de Suporte",
+                badge: "choice",
+                category: "core",
+                description: "Uma questão choice seleciona a opção ideal a partir de um conjunto definido e calcula a probabilidade calibrada para cada uma.",
+                state: "Meu saque falhou três dias seguidos e o chat de suporte fica caindo por timeout. Preciso disso resolvido hoje com urgência.",
+                question: "Qual departamento deve tratar esta mensagem?",
                 options: [
-                    { key: "billing", desc: "Payments, payouts, invoices, refunds" },
-                    { key: "technical", desc: "Bugs, outages, integrations, API errors" },
-                    { key: "sales", desc: "Pricing, upgrades, new accounts" }
+                    { key: "billing", desc: "Pagamentos, saques, faturas, estornos, reembolsos" },
+                    { key: "technical", desc: "Bugs, instabilidades, integrações, erros de API" },
+                    { key: "sales", desc: "Preços, contratação, upgrades, novas contas" }
                 ],
                 metricLatency: "442ms",
                 metricCost: "$0.0000153",
@@ -1533,16 +1703,16 @@ pub fn render_playground_html() -> String {
                         cost: 0.000015288
                     },
                     ui_decision: {
-                        action_text: "Dispatch the ticket to the chosen team",
+                        action_text: "Despachar o chamado para a equipe de Faturamento (billing)",
                         status: "route",
-                        explanation: "Highest probability choice 'billing' (99.0%) with 99.0% confidence",
+                        explanation: "Escolha mais provável 'billing' (99.0%) com 99.0% de confiança",
                         latency_sec: 0.442,
                         reasoning_graph: [
-                            { name: "Ticket Inbound", icon: "💬", status: "neutral", summary: "Mensagem Recebida", detail: "Cliente relata falha de saque há 3 dias ('payout has failed') e timeout no chat de suporte.", metric: "Payout Fail" },
-                            { name: "Lexical Matcher", icon: "📑", status: "neutral", summary: "Mapeamento Léxico", detail: "Identificação de termos financeiros-chave 'payout', 'failed', 'timeout' cruzados com catálogo.", metric: "Finance Term" },
-                            { name: "Criteria Overlap", icon: "🎯", status: "ok", summary: "Aderência a Critérios", detail: "Departamento 'billing' (payouts, refunds) obteve maior relevância semântica vs 'technical' (1%) e 'sales' (0%).", metric: "billing" },
-                            { name: "Softmax Distribution", icon: "📊", status: "ok", summary: "Distribuição Calibrada", detail: "Normalização Softmax: billing 99.0%, technical 1.0%, sales 0.0% com 99.0% de confiança.", metric: "99.0% Conf" },
-                            { name: "Dispatch Engine", icon: "🚀", status: "ok", summary: "Roteamento Atômico", detail: "Ticket despachado para a fila prioritária do time de Faturamento e Saques (Billing Support Desk).", metric: "Dispatch" }
+                            { name: "Mensagem Recebida", icon: "💬", status: "neutral", summary: "Ticket de Entrada", detail: "Cliente relata falha de saque há 3 dias ('payout has failed') e timeout no chat de suporte.", metric: "Falha Saque" },
+                            { name: "Mapeamento Léxico", icon: "📑", status: "neutral", summary: "Extração de Termos", detail: "Identificação de termos financeiros-chave ('saque', 'falhou', 'timeout') cruzados com o catálogo de departamentos.", metric: "Termo Finanças" },
+                            { name: "Sobreposição de Critérios", icon: "🎯", status: "ok", summary: "Aderência Semântica", detail: "Departamento 'billing' (saques, faturas) obteve maior aderência semântica vs 'technical' (1%) e 'sales' (0%).", metric: "billing: 99%" },
+                            { name: "Distribuição Softmax", icon: "📊", status: "ok", summary: "Cálculo Calibrado", detail: "Normalização Softmax: billing 99.0%, technical 1.0%, sales 0.0% com 99.0% de confiança matemática.", metric: "Conf: 99.0%" },
+                            { name: "Motor de Despacho", icon: "🚀", status: "ok", summary: "Roteamento Imediato", detail: "Ticket despachado para a fila prioritária do time de Faturamento e Saques.", metric: "Despachar" }
                         ]
                     }
                 }
@@ -1550,15 +1720,17 @@ pub fn render_playground_html() -> String {
             lead_qualification: {
                 id: "lead_qualification",
                 type: "score",
-                name: "Lead qualification",
-                description: "A score question evaluates input against an ordered rubric scale and returns a calibrated score and distribution.",
-                state: "Subject: Pricing for 40 seats\n\nHi, we trialed your product last month across two teams and the engineers want to standardize on it.\nOur current contract with the incumbent ends on the 30th. Can you send enterprise pricing for 40 seats\nand let me know if you can do a security review call this week?",
-                question: "How ready is this lead to buy?",
+                name: "Qualificação de Lead",
+                badge: "score",
+                category: "core",
+                description: "Uma questão score avalia a entrada contra uma rubrica ordinal ponderada e retorna a pontuação contínua e distribuição de probabilidades.",
+                state: "Assunto: Cotação para 40 licenças\n\nOlá, testamos o produto no mês passado em duas equipes e os engenheiros querem padronizar nele.\nNosso contrato atual com o concorrente termina no dia 30. Você pode enviar o preço empresarial para 40 licenças\ne me informar se pode fazer uma reunião de revisão de segurança ainda esta semana?",
+                question: "Quão pronto este lead está para comprar?",
                 rubric: [
-                    "Just browsing, no stated need or timeline",
-                    "Evaluating, comparing options without a deadline",
-                    "Ready to buy, has budget and a clear need",
-                    "Urgent, has a hard deadline and is asking to transact"
+                    "Apenas navegando, sem necessidade declarada ou prazo",
+                    "Avaliando, comparando opções sem um prazo rígido",
+                    "Pronto para comprar, tem orçamento e necessidade clara",
+                    "Urgente, tem prazo rígido e está pedindo para transacionar"
                 ],
                 metricLatency: "1.7s",
                 metricCost: "$0.0000173",
@@ -1575,10 +1747,10 @@ pub fn render_playground_html() -> String {
                             type: "score",
                             score: 2.97,
                             legend: {
-                                "0": "Just browsing, no stated need or timeline",
-                                "1": "Evaluating, comparing options without a deadline",
-                                "2": "Ready to buy, has budget and a clear need",
-                                "3": "Urgent, has a hard deadline and is asking to transact"
+                                "0": "Apenas navegando, sem necessidade declarada ou prazo",
+                                "1": "Avaliando, comparando opções sem um prazo rígido",
+                                "2": "Pronto para comprar, tem orçamento e necessidade clara",
+                                "3": "Urgente, tem prazo rígido e está pedindo para transacionar"
                             },
                             probabilities: {
                                 "0": 0.0,
@@ -1595,16 +1767,16 @@ pub fn render_playground_html() -> String {
                         cost: 0.000017346
                     },
                     ui_decision: {
-                        action_text: "Route to an account executive",
+                        action_text: "Rotear para um Executivo de Contas (Account Executive)",
                         status: "route",
-                        explanation: "High buying intent score (2.97 / 3.0) with 97.0% confidence",
+                        explanation: "Alta pontuação de intenção de compra (2.97 / 3.0) com 97.0% de confiança",
                         latency_sec: 1.7,
                         reasoning_graph: [
-                            { name: "Lead Inbound", icon: "📧", status: "neutral", summary: "Lead Corporativo", detail: "Inbound solicitando cotação para 40 licenças empresariais e padronização entre duas equipes.", metric: "40 seats" },
-                            { name: "Deadline Detector", icon: "⏰", status: "warning", summary: "Sinais de Urgência", detail: "Identificado prazo rígido de fechamento: 'contract ends on the 30th' e call de segurança 'this week'.", metric: "Hard Deadline" },
-                            { name: "Rubric Mapping", icon: "📏", status: "ok", summary: "Alinhamento com Rubrica", detail: "Avaliação contra a rubrica ordinal de níveis: nível de urgência obteve 98.0% de probabilidade.", metric: "Level 3 (98%)" },
-                            { name: "Expectation Integral", icon: "🔢", status: "ok", summary: "Cálculo do Score", detail: "Integração do valor esperado ponderado: Score 2.97 / 3.0 com 97.0% de confiança estocástica.", metric: "Score 2.97" },
-                            { name: "Executive Routing", icon: "💼", status: "ok", summary: "Atribuição Imediata", detail: "Score >= 2.5 qualifica o lead como oportunidade quente de alta prioridade. Roteado para Account Executive sênior.", metric: "Route to AE" }
+                            { name: "Lead Corporativo", icon: "📧", status: "neutral", summary: "Inbound Recebido", detail: "Solicitação formal de cotação para 40 licenças empresariais e padronização entre duas equipes.", metric: "40 licenças" },
+                            { name: "Detector de Prazos", icon: "⏰", status: "warning", summary: "Sinais de Urgência", detail: "Identificado prazo rígido de fechamento: 'contract ends on the 30th' e call de segurança 'this week'.", metric: "Prazo Rígido" },
+                            { name: "Mapeamento de Rubrica", icon: "📏", status: "ok", summary: "Alinhamento com Níveis", detail: "Avaliação contra a rubrica ordinal: nível de urgência máxima obteve 98.0% de probabilidade.", metric: "Nível 3 (98%)" },
+                            { name: "Integral de Expectativa", icon: "🔢", status: "ok", summary: "Cálculo do Score", detail: "Integração do valor esperado ponderado: Score 2.97 / 3.0 com 97.0% de confiança estocástica.", metric: "Score 2.97" },
+                            { name: "Atribuição Executiva", icon: "💼", status: "ok", summary: "Roteamento de Vendas", detail: "Score >= 2.5 qualifica o lead como oportunidade quente de alta prioridade. Roteado para Account Executive sênior.", metric: "Rotear para AE" }
                         ]
                     }
                 }
@@ -1612,7 +1784,9 @@ pub fn render_playground_html() -> String {
             sentiment_routing: {
                 id: "sentiment_routing",
                 type: "choice",
-                name: "Sentiment & Ouvidoria",
+                name: "Sentimento & Ouvidoria",
+                badge: "choice",
+                category: "security",
                 description: "Analisa intensidade emocional, ameaça judicial e risco de litígio em CPU em sub-microssegundo.",
                 state: "VOCÊS SÃO UNS INCOMPETENTES! Meu pedido não chegou e se não resolverem hoje vou ao Procon e processar a empresa na justiça!",
                 question: "Qual departamento deve tratar este cliente com risco de litígio?",
@@ -1626,12 +1800,39 @@ pub fn render_playground_html() -> String {
                 tokensIn: 180,
                 tokensOut: 15,
                 jevCost: "$0.0000085",
-                llmCost: "$0.0018000"
+                llmCost: "$0.0018000",
+                expectedResponse: {
+                    id: "alr-sent-01",
+                    model: "alr/sentiment-engine",
+                    provider: "ALR System 1",
+                    answers: {
+                        escalation: {
+                            type: "choice",
+                            choice: "ouvidoria_juridico",
+                            probabilities: { "ouvidoria_juridico": 0.98, "auto_atendimento_n1": 0.01, "comercial_vendas": 0.01 },
+                            confidence: 0.98
+                        }
+                    },
+                    usage: { input_tokens: 180, output_tokens: 15, cost: 0.0 },
+                    ui_decision: {
+                        action_text: "Escalar imediatamente para Ouvidoria e Jurídico",
+                        status: "pause",
+                        explanation: "Ameaça de litígio detectada com 98.0% de confiança",
+                        latency_sec: 0.0004,
+                        reasoning_graph: [
+                            { name: "Análise de Sentimento", icon: "😠", status: "danger", summary: "Detecção Emocional", detail: "Palavras em caixa alta e termos agressivos ('INCOMPETENTES', 'processar', 'Procon').", metric: "Raiva Extrema" },
+                            { name: "Detector de Litígio", icon: "⚖️", status: "danger", summary: "Risco Legal", detail: "Classificação de risco de litígio iminente acionando protocolo de ouvidoria prioritária.", metric: "Risco Jurídico" },
+                            { name: "Roteamento Governança", icon: "🏢", status: "warning", summary: "Escalonamento N3", detail: "Bypass de N1 e despacho direto para Ouvidoria Executiva.", metric: "Ouvidoria" }
+                        ]
+                    }
+                }
             },
             search_triage: {
                 id: "search_triage",
                 type: "choice",
-                name: "Google Ads Triage",
+                name: "Triagem Google Ads",
+                badge: "choice",
+                category: "marketing",
                 description: "Triagem instantânea de termos de busca em Google Ads com negativação automática de desperdício.",
                 state: "Termo de busca no Google: 'baixar software gratis pirata crackeado 2026'",
                 question: "Identificar a intenção e aplicar negativação automática de verba",
@@ -1645,12 +1846,138 @@ pub fn render_playground_html() -> String {
                 tokensIn: 140,
                 tokensOut: 18,
                 jevCost: "$0.0000072",
-                llmCost: "$0.0015000"
+                llmCost: "$0.0015000",
+                expectedResponse: {
+                    id: "alr-ads-01",
+                    model: "alr/search-triage",
+                    provider: "ALR System 1",
+                    answers: {
+                        search_intent: {
+                            type: "choice",
+                            choice: "junk_negative",
+                            probabilities: { "junk_negative": 0.98, "researcher": 0.02, "buyer": 0.0 },
+                            confidence: 0.98
+                        }
+                    },
+                    usage: { input_tokens: 140, output_tokens: 18, cost: 0.0 },
+                    ui_decision: {
+                        action_text: "Adicionar termo à lista de Palavras-Chave Negativas da Campanha",
+                        status: "execute",
+                        explanation: "Identificado como termo de desperdício 'junk_negative' com 98.0% de confiança",
+                        latency_sec: 0.0002,
+                        reasoning_graph: [
+                            { name: "Extração de Termo", icon: "🔎", status: "neutral", summary: "Termo de Entrada", detail: "Termo 'baixar software gratis pirata crackeado 2026' extraído do relatório de busca.", metric: "Busca Ads" },
+                            { name: "Filtro de Desperdício", icon: "🚫", status: "danger", summary: "Correspondência Negativa", detail: "Palavras-chave 'gratis', 'pirata' e 'crackeado' violam a intenção de comprador.", metric: "Desperdício" },
+                            { name: "Negativação Atômica", icon: "🛡️", status: "ok", summary: "Economia de Verba", detail: "Termo adicionado à lista negativa da campanha para economizar orçamento diário.", metric: "Negativar" }
+                        ]
+                    }
+                }
+            },
+            creative_tagging: {
+                id: "creative_tagging",
+                type: "choice",
+                name: "Tagging Meta Ads",
+                badge: "choice",
+                category: "marketing",
+                description: "Classificação automática de ganchos criativos de anúncios em passada única.",
+                state: "Copy do Anúncio Meta: 'Cansado de perder vendas por demora no atendimento? Descubra o assistente em Rust que responde em 2 segundos.'",
+                question: "Classificar o tipo de gancho (Hook) do anúncio",
+                options: [
+                    { key: "dor", desc: "Foco no problema, frustração, perda de clientes ou tempo" },
+                    { key: "curiosidade", desc: "Segredo revelado, bastidores, método oculto" },
+                    { key: "prova_social", desc: "Depoimentos, números de faturamento, estudos de caso" }
+                ],
+                metricLatency: "0.3ms",
+                metricCost: "$0.0000075",
+                tokensIn: 150,
+                tokensOut: 16,
+                jevCost: "$0.0000075",
+                llmCost: "$0.0016000",
+                expectedResponse: {
+                    id: "alr-hook-01",
+                    model: "alr/creative-tagger",
+                    provider: "ALR System 1",
+                    answers: {
+                        hook_type: {
+                            type: "choice",
+                            choice: "dor",
+                            probabilities: { "dor": 0.94, "curiosidade": 0.05, "prova_social": 0.01 },
+                            confidence: 0.94
+                        }
+                    },
+                    usage: { input_tokens: 150, output_tokens: 16, cost: 0.0 },
+                    ui_decision: {
+                        action_text: "Rotular Criativo como 'Gancho de Dor' no Gerenciador de Anúncios",
+                        status: "execute",
+                        explanation: "Identificado foco em perda e frustração com 94.0% de confiança",
+                        latency_sec: 0.0003,
+                        reasoning_graph: [
+                            { name: "Análise da Copy", icon: "📝", status: "neutral", summary: "Leitura do Criativo", detail: "Frase inicial com pergunta retórica apontando perda de receita por lentidão.", metric: "Copy Ads" },
+                            { name: "Classificador de Gancho", icon: "⚡", status: "ok", summary: "Detecção de Ângulo", detail: "Foco primário em dor e gargalo operacional do cliente.", metric: "Gancho de Dor" },
+                            { name: "Etiquetagem no Meta", icon: "🏷️", status: "ok", summary: "Metadado Salvo", detail: "Tag aplicada no dataset de performance de criativos.", metric: "Tag Salva" }
+                        ]
+                    }
+                }
+            },
+            landing_page_match: {
+                id: "landing_page_match",
+                type: "score",
+                name: "Aderência Landing Page",
+                badge: "score",
+                category: "marketing",
+                description: "Avalia a taxa de conversão esperada pelo alinhamento entre o criativo e a página de destino.",
+                state: "Promessa do Anúncio: 'Software de Automação de WhatsApp em Rust'\nLanding Page: 'Plataforma oficial ALR: Automação completa para WhatsApp empresarial com zero latência e alta performance.'",
+                question: "Avaliar a aderência entre a promessa do anúncio e o destino da página",
+                rubric: [
+                    "Totalmente desconexo, sem menção aos termos",
+                    "Menciona parcialmente, mas muda o foco principal",
+                    "Forte correspondência de promessa e proposta de valor",
+                    "Correspondência perfeita, mesma mensagem e call to action idêntico"
+                ],
+                metricLatency: "0.5ms",
+                metricCost: "$0.0000092",
+                tokensIn: 190,
+                tokensOut: 20,
+                jevCost: "$0.0000092",
+                llmCost: "$0.0021000",
+                expectedResponse: {
+                    id: "alr-match-01",
+                    model: "alr/page-matcher",
+                    provider: "ALR System 1",
+                    answers: {
+                        match_score: {
+                            type: "score",
+                            score: 2.86,
+                            legend: {
+                                "0": "Totalmente desconexo, sem menção aos termos",
+                                "1": "Menciona parcialmente, mas muda o foco principal",
+                                "2": "Forte correspondência de promessa e proposta de valor",
+                                "3": "Correspondência perfeita, mesma mensagem e call to action idêntico"
+                            },
+                            probabilities: { "0": 0.0, "1": 0.02, "2": 0.10, "3": 0.88 },
+                            confidence: 0.88
+                        }
+                    },
+                    usage: { input_tokens: 190, output_tokens: 20, cost: 0.0 },
+                    ui_decision: {
+                        action_text: "Aprovar Veiculação: Alto Índice de Aderência (Score 2.86 / 3.0)",
+                        status: "route",
+                        explanation: "Alinhamento de promessa e produto validado com 88.0% de confiança",
+                        latency_sec: 0.0005,
+                        reasoning_graph: [
+                            { name: "Promessa do Anúncio", icon: "📢", status: "neutral", summary: "Criativo", detail: "Promessa: Automação de WhatsApp em Rust com alta performance.", metric: "Anúncio" },
+                            { name: "Página de Destino", icon: "🌐", status: "neutral", summary: "Landing Page", detail: "H1 e subtítulo confirmam exatamente a mesma proposta de valor.", metric: "LP Destino" },
+                            { name: "Score de Aderência", icon: "🎯", status: "ok", summary: "Alinhamento 95%", detail: "Score 2.86 garante alto Quality Score no Google/Meta Ads.", metric: "Score 2.86" }
+                        ]
+                    }
+                }
             },
             cctv_tripwire: {
                 id: "cctv_tripwire",
                 type: "noul",
-                name: "CCTV Security Shield",
+                name: "Vigilância CCTV & Alarme",
+                badge: "noul",
+                category: "security",
                 description: "Detecção visual de violação de perímetro em frames de câmera com alerta desktop sonoro nativo.",
                 state: "Visão Computacional CCTV: Intrusão em Zona Perimetral Crítica (Docas de Carga) às 02:45 da madrugada com detecção de movimento humano persistente.",
                 question: "Disparar alarme de segurança e notificação no Windows Desktop?",
@@ -1662,12 +1989,79 @@ pub fn render_playground_html() -> String {
                 tokensIn: 160,
                 tokensOut: 12,
                 jevCost: "$0.0000065",
-                llmCost: "$0.0020000"
+                llmCost: "$0.0020000",
+                expectedResponse: {
+                    id: "alr-cctv-01",
+                    model: "alr/cctv-vision",
+                    provider: "ALR System 1",
+                    answers: {
+                        security_breach: {
+                            type: "noul",
+                            noul: 0.96
+                        }
+                    },
+                    usage: { input_tokens: 160, output_tokens: 12, cost: 0.0 },
+                    ui_decision: {
+                        action_text: "Disparar Alarme Imediato e Windows Toast Notification",
+                        status: "execute",
+                        explanation: "Probabilidade de invasão (96.0%) excede o limite crítico (85.0%)",
+                        latency_sec: 0.0008,
+                        reasoning_graph: [
+                            { name: "Frame da Câmera", icon: "📹", status: "neutral", summary: "Visão Computacional", detail: "Diferença temporal de quadros detectou deslocamento humano de 1.8m nas docas.", metric: "CCTV Frame" },
+                            { name: "Zona Restrita", icon: "🚧", status: "danger", summary: "Tripwire Violado", detail: "Coordenadas cruzam o polígono da Zona Crítica A1 às 02:45 da madrugada.", metric: "Perímetro" },
+                            { name: "Alerta Atômico", icon: "🚨", status: "execute", summary: "Disparo Imediato", detail: "Notificação nativa do Windows Toast acionada com bipe sonoro de emergência.", metric: "Alarme ON" }
+                        ]
+                    }
+                }
+            },
+            cycle_safety_shield: {
+                id: "cycle_safety_shield",
+                type: "noul",
+                name: "Escudo Anti-Colisão",
+                badge: "noul",
+                category: "security",
+                description: "Escudo atômico que intercepta movimentos suicidas e loops repetitivos de agentes robóticos/jogos.",
+                state: "Agente Físico em Navegação: Movimento proposto DIREITA. Obstáculo rígido a 1 unidade na frente e parede imediatamente à direita.",
+                question: "A trajetória proposta está livre de perigo imediato de colisão?",
+                trueWhen: "Caminho livre de colisões com margem segura de manobra.",
+                falseWhen: "Colisão iminente com obstáculo ou aprisionamento em loop fechado.",
+                threshold: 90,
+                metricLatency: "12µs",
+                metricCost: "$0.0000055",
+                tokensIn: 130,
+                tokensOut: 10,
+                jevCost: "$0.0000055",
+                llmCost: "$0.0012000",
+                expectedResponse: {
+                    id: "alr-shield-01",
+                    model: "alr/cycle-shield",
+                    provider: "ALR System 1",
+                    answers: {
+                        collision_free: {
+                            type: "noul",
+                            noul: 0.02
+                        }
+                    },
+                    usage: { input_tokens: 130, output_tokens: 10, cost: 0.0 },
+                    ui_decision: {
+                        action_text: "Interceptar Movimento e Forçar Manobra Evasiva Ortogonal",
+                        status: "pause",
+                        explanation: "Perigo de colisão detectado (segurança 2.0% < limiar 90.0%)",
+                        latency_sec: 0.000012,
+                        reasoning_graph: [
+                            { name: "Movimento Proposto", icon: "🧭", status: "neutral", summary: "Trajetória", detail: "Ação solicitada pelo planejador: mover para DIREITA.", metric: "DIREITA" },
+                            { name: "Detecção de Colisão", icon: "🧱", status: "danger", summary: "Parede Detectada", detail: "Distância até o obstáculo rígido é menor que 1.0 unidade.", metric: "Dist: 0.8" },
+                            { name: "Escudo Evasivo", icon: "🛡️", status: "warning", summary: "Manobra Forçada", detail: "Movimento bloqueado e rota redefinida ortogonalmente para a ESQUERDA.", metric: "Evasão" }
+                        ]
+                    }
+                }
             },
             crypto_trading: {
                 id: "crypto_trading",
                 type: "choice",
-                name: "Crypto Trading Signal",
+                name: "Sinais de Cripto & Bolsa",
+                badge: "choice",
+                category: "trading",
                 description: "Geração determinística de sinais de compra/venda em sub-microssegundo (< 10 µs) com proteção de stop-loss.",
                 state: "Indicadores BTC/USDT em 1h: RSI-14 = 28.5 (Sobrevendido), MACD Cruzamento Altista com Histograma Positivo, EMA 9 acima da EMA 21 e SuperTrend virando Bullish.",
                 question: "Qual ordem técnica executar no livro de ofertas?",
@@ -1681,14 +2075,41 @@ pub fn render_playground_html() -> String {
                 tokensIn: 210,
                 tokensOut: 24,
                 jevCost: "$0.0000095",
-                llmCost: "$0.0022000"
+                llmCost: "$0.0022000",
+                expectedResponse: {
+                    id: "alr-trade-signal-04",
+                    model: "alr/crypto-trader",
+                    provider: "ALR System 1",
+                    answers: {
+                        trade_signal: {
+                            type: "choice",
+                            choice: "buy",
+                            probabilities: { "buy": 0.95, "hold": 0.04, "sell": 0.01 },
+                            confidence: 0.95
+                        }
+                    },
+                    usage: { input_tokens: 210, output_tokens: 24, cost: 0.0 },
+                    ui_decision: {
+                        action_text: "Executar Ordem BUY Limit com Stop-Loss Automático a 2.5%",
+                        status: "execute",
+                        explanation: "Confluência de compra confirmada com 95.0% de probabilidade",
+                        latency_sec: 0.000018,
+                        reasoning_graph: [
+                            { name: "Indicadores Técnicos", icon: "📈", status: "ok", summary: "RSI-14 + MACD", detail: "RSI em 28.5 sinaliza sobrevenda extrema; MACD cruzou linha de sinal com histograma positivo.", metric: "RSI: 28.5" },
+                            { name: "Tendência SuperTrend", icon: "🟢", status: "ok", summary: "SuperTrend Bull", detail: "Fechamento acima do patamar de reversão e EMA-9 rompendo EMA-21 para cima.", metric: "Tendência Alta" },
+                            { name: "Ordem com Stop-Loss", icon: "💰", status: "execute", summary: "Execução com Risco Controlado", detail: "Compra a mercado com stop-loss automático fixado em 2.5% abaixo da entrada.", metric: "BUY + Stop" }
+                        ]
+                    }
+                }
             }
         };
 
         let currentPresetKey = "agent_guardrail";
+        let activeCategory = "all";
         let lastResponseJson = null;
 
-        const presetTabs = document.querySelectorAll('.preset-tab');
+        const presetTabsContainer = document.getElementById('preset-tabs');
+        const categoryButtons = document.querySelectorAll('.category-btn');
         const stateInput = document.getElementById('input-state');
         const questionInput = document.getElementById('input-question');
         const typeDescription = document.getElementById('type-description');
@@ -1720,14 +2141,66 @@ pub fn render_playground_html() -> String {
         const btnCloseApiModal = document.getElementById('btn-close-api-modal');
         const btnCopyCurl = document.getElementById('btn-copy-curl');
 
+        const corePresetTabs = document.querySelectorAll('.core-preset-tabs .preset-tab');
+        const popoverItems = document.querySelectorAll('.popover-item');
+        const btnToggleMorePresets = document.getElementById('btn-toggle-more-presets');
+        const morePresetsPopover = document.getElementById('more-presets-popover');
+        const morePresetsBtnText = document.getElementById('more-presets-btn-text');
+
+        // Core tabs click listeners
+        corePresetTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                loadPreset(tab.dataset.preset);
+            });
+        });
+
+        // Popover items click listeners
+        popoverItems.forEach(item => {
+            item.addEventListener('click', () => {
+                loadPreset(item.dataset.preset);
+                morePresetsPopover.style.display = 'none';
+            });
+        });
+
+        // Toggle more presets popover
+        btnToggleMorePresets.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = morePresetsPopover.style.display === 'flex';
+            morePresetsPopover.style.display = isOpen ? 'none' : 'flex';
+        });
+
+        // Close popover when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!morePresetsPopover.contains(e.target) && e.target !== btnToggleMorePresets) {
+                morePresetsPopover.style.display = 'none';
+            }
+        });
+
         function loadPreset(key) {
             currentPresetKey = key;
             const p = PRESETS[key];
             if (!p) return;
 
-            presetTabs.forEach(tab => {
-                tab.classList.toggle('active', tab.dataset.preset === key);
+            // Update Core Tabs Active State
+            let isCore = false;
+            corePresetTabs.forEach(tab => {
+                const match = tab.dataset.preset === key;
+                tab.classList.toggle('active', match);
+                if (match) isCore = true;
             });
+
+            // Update More Presets Button State
+            if (isCore) {
+                btnToggleMorePresets.classList.remove('has-active');
+                morePresetsBtnText.innerText = "⚡ Mais Casos (7)";
+                popoverItems.forEach(item => item.classList.remove('active'));
+            } else {
+                btnToggleMorePresets.classList.add('has-active');
+                morePresetsBtnText.innerText = `⚡ ${p.name}`;
+                popoverItems.forEach(item => {
+                    item.classList.toggle('active', item.dataset.preset === key);
+                });
+            }
 
             typeDescription.innerText = p.description;
             stateInput.value = p.state;
@@ -1739,7 +2212,7 @@ pub fn render_playground_html() -> String {
             outputEmptyState.style.display = 'flex';
             outputResult.style.display = 'none';
             outputMetrics.style.display = 'none';
-            outputJsonRaw.innerText = "// Click 'Run decision' to test model";
+            outputJsonRaw.innerText = "// Clique em 'Executar decisão' para testar o motor ALR";
             lastResponseJson = null;
         }
 
@@ -1756,24 +2229,24 @@ pub fn render_playground_html() -> String {
                     <div class="field-group">
                         <div class="noul-criteria-grid">
                             <div class="criteria-card true-card">
-                                <label class="field-label">TRUE WHEN</label>
+                                <label class="field-label">VERDADEIRO QUANDO (TRUE WHEN)</label>
                                 <textarea class="criteria-textarea" id="noul-true-when">${p.trueWhen || ""}</textarea>
                             </div>
                             <div class="criteria-card false-card">
-                                <label class="field-label">FALSE WHEN</label>
+                                <label class="field-label">FALSO QUANDO (FALSE WHEN)</label>
                                 <textarea class="criteria-textarea" id="noul-false-when">${p.falseWhen || ""}</textarea>
                             </div>
                         </div>
                     </div>
 
                     <div class="threshold-slider-group">
-                        <label class="field-label">THRESHOLD</label>
+                        <label class="field-label">LIMIAR DE SEGURANÇA (THRESHOLD)</label>
                         <div class="slider-track-wrap">
                             <input type="range" min="0" max="100" value="${threshold}" class="custom-range" id="threshold-range">
                         </div>
                         <div class="threshold-caption" id="threshold-caption">
-                            Yes-probability at or above <span id="threshold-num">${threshold}%</span> &rarr;<br>
-                            <span class="threshold-action">Auto-execute the tool call</span>
+                            Probabilidade "Sim" igual ou superior a <span id="threshold-num">${threshold}%</span> &rarr;<br>
+                            <span class="threshold-action">Auto-executar chamada de ferramenta (caso contrário, Pausar e pedir aprovação)</span>
                         </div>
                     </div>
                 `;
@@ -1802,7 +2275,7 @@ pub fn render_playground_html() -> String {
             } else if (p.type === "choice") {
                 let optionsHtml = `
                     <div class="field-group">
-                        <label class="field-label">OPTIONS</label>
+                        <label class="field-label">OPÇÕES DE ESCOLHA (OPTIONS)</label>
                         <div class="options-list" id="options-list">
                 `;
 
@@ -1811,11 +2284,11 @@ pub fn render_playground_html() -> String {
                         <div class="option-item" data-idx="${idx}">
                             <button class="option-remove-btn" onclick="removeChoiceOption(${idx})">&times;</button>
                             <div class="field-group">
-                                <label class="field-label">RETURNED AS</label>
+                                <label class="field-label">RETORNADO COMO</label>
                                 <input type="text" class="text-input" value="${opt.key}" oninput="updateChoiceKey(${idx}, this.value)">
                             </div>
                             <div class="field-group">
-                                <label class="field-label">CHOOSE WHEN</label>
+                                <label class="field-label">ESCOLHER QUANDO</label>
                                 <input type="text" class="text-input" value="${opt.desc}" oninput="updateChoiceDesc(${idx}, this.value)">
                             </div>
                         </div>
@@ -1824,7 +2297,7 @@ pub fn render_playground_html() -> String {
 
                 optionsHtml += `
                         </div>
-                        <button class="add-option-btn" onclick="addChoiceOption()">+ Add option</button>
+                        <button class="add-option-btn" onclick="addChoiceOption()">+ Adicionar Opção</button>
                     </div>
                 `;
 
@@ -1834,8 +2307,8 @@ pub fn render_playground_html() -> String {
                 let rubricHtml = `
                     <div class="field-group">
                         <div class="rubric-header-line">
-                            <label class="field-label">RUBRIC / CRITERIA (ORDERED SCALE)</label>
-                            <button class="add-option-btn" onclick="addRubricLevel()">+ Add Level</button>
+                            <label class="field-label">RUBRICA / CRITÉRIOS DE AVALIAÇÃO (ORDENADA)</label>
+                            <button class="add-option-btn" onclick="addRubricLevel()">+ Adicionar Nível</button>
                         </div>
                         <div class="options-list" id="rubric-list">
                 `;
@@ -1844,7 +2317,7 @@ pub fn render_playground_html() -> String {
                     rubricHtml += `
                         <div class="option-item" data-idx="${idx}">
                             ${p.rubric.length > 2 ? `<button class="option-remove-btn" onclick="removeRubricLevel(${idx})">&times;</button>` : ''}
-                            <label class="field-label">LEVEL ${idx}</label>
+                            <label class="field-label">NÍVEL ${idx}</label>
                             <input type="text" class="text-input" value="${crit}" oninput="updateRubricLevel(${idx}, this.value)">
                         </div>
                     `;
@@ -1887,7 +2360,7 @@ pub fn render_playground_html() -> String {
         window.addChoiceOption = function() {
             const p = PRESETS[currentPresetKey];
             if (p.options) {
-                p.options.push({ key: "custom_option", desc: "Critério de escolha" });
+                p.options.push({ key: "opcao_personalizada", desc: "Descrição dos critérios de escolha..." });
                 renderDynamicFields(p);
                 syncFormToJson();
             }
@@ -1928,7 +2401,8 @@ pub fn render_playground_html() -> String {
             };
 
             if (p.type === "noul") {
-                payload.questions["safe_to_run"] = {
+                const qKey = p.qKey || "safe_to_run";
+                payload.questions[qKey] = {
                     type: "noul",
                     instructions: questionInput.value,
                     criteria: {
@@ -1938,17 +2412,19 @@ pub fn render_playground_html() -> String {
                     threshold: (p.threshold || 80) / 100.0
                 };
             } else if (p.type === "choice") {
+                const qKey = p.qKey || (p.id === "support_routing" ? "team" : "choice_decision");
                 let criteriaObj = {};
                 p.options.forEach(opt => {
                     criteriaObj[opt.key] = opt.desc;
                 });
-                payload.questions["team"] = {
+                payload.questions[qKey] = {
                     type: "choice",
                     instructions: questionInput.value,
                     criteria: criteriaObj
                 };
             } else if (p.type === "score") {
-                payload.questions["buying_intent"] = {
+                const qKey = p.qKey || (p.id === "lead_qualification" ? "buying_intent" : "score_decision");
+                payload.questions[qKey] = {
                     type: "score",
                     instructions: questionInput.value,
                     criteria: p.rubric
@@ -1987,16 +2463,16 @@ pub fn render_playground_html() -> String {
 
         async function runDecision() {
             btnRun.disabled = true;
-            btnRun.innerHTML = `<span>Running...</span>`;
+            btnRun.innerHTML = `<span>Executando...</span>`;
 
             syncFormToJson();
             let reqBody;
             try {
                 reqBody = JSON.parse(rawJsonEditor.value);
             } catch(e) {
-                alert("Invalid JSON payload: " + e.message);
+                alert("Payload JSON inválido: " + e.message);
                 btnRun.disabled = false;
-                btnRun.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Run decision`;
+                btnRun.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Executar decisão`;
                 return;
             }
 
@@ -2018,14 +2494,69 @@ pub fn render_playground_html() -> String {
                 renderResult(data);
 
             } catch (err) {
-                console.warn("Backend request error, rendering preset fallback:", err);
+                console.warn("Erro na requisição local, renderizando resposta do preset:", err);
                 const data = PRESETS[currentPresetKey].expectedResponse;
                 lastResponseJson = data;
                 renderResult(data);
             } finally {
                 btnRun.disabled = false;
-                btnRun.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Run decision`;
+                btnRun.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Executar decisão`;
             }
+        }
+
+        // Construtor da Linha do Tempo Vertical de Raciocínio (Estilo Canva/Figma)
+        function buildVerticalTimelineHtml(data) {
+            const p = PRESETS[currentPresetKey];
+            const graph = (data && data.reasoning_graph) || 
+                          (data && data.ui_decision && data.ui_decision.reasoning_graph) || 
+                          (p && p.expectedResponse && p.expectedResponse.reasoning_graph) || 
+                          (p && p.expectedResponse && p.expectedResponse.ui_decision && p.expectedResponse.ui_decision.reasoning_graph) || 
+                          (p && p.reasoning_graph) || [];
+            
+            const effectiveGraph = (graph && graph.length > 0) ? graph : [
+                { name: "Estado de Entrada", icon: "📥", status: "neutral", summary: "Contexto & Requisição", detail: "Dados contextuais recebidos e normalizados pelo buffer de inferência local.", metric: "Entrada" },
+                { name: "Análise Semântica", icon: "🔍", status: "neutral", summary: "Extração de Features", detail: "Parser léxico e de entidades extraiu características-chave do estado.", metric: "Features" },
+                { name: "Juiz Tipado Local", icon: "⚖️", status: "ok", summary: "Inferência Sub-Milissegundo", detail: "Motor TypedJudge calculou probabilidades calibradas em CPU sem chamadas de rede.", metric: "System 1" },
+                { name: "Portal de Decisão", icon: "🚀", status: "ok", summary: "Execução Governada", detail: "Ação validada pelas regras de governança e despachada para execução.", metric: "Decisão OK" }
+            ];
+
+            let stepsHtml = "";
+            effectiveGraph.forEach((node, idx) => {
+                const stepNum = String(idx + 1).padStart(2, '0');
+                const statusClass = node.status ? `status-${node.status}` : 'status-neutral';
+                const metricBadge = node.metric ? `<span class="timeline-card-metric">${node.metric}</span>` : '';
+
+                stepsHtml += `
+                    <div class="timeline-step ${statusClass}">
+                        <div class="timeline-marker">${node.icon || '⚡'}</div>
+                        <div class="timeline-card">
+                            <div class="timeline-card-header">
+                                <div class="timeline-card-title-wrap">
+                                    <span class="timeline-card-title">${stepNum}. ${node.name}</span>
+                                    ${metricBadge}
+                                </div>
+                                <span class="timeline-card-summary">${node.summary || 'ALR Pipeline'}</span>
+                            </div>
+                            <div class="timeline-card-detail">${node.detail || ''}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            return `
+                <div class="reasoning-timeline-section">
+                    <div class="timeline-section-header">
+                        <span class="timeline-title">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                            Linha de Raciocínio (Pipeline de Decisão ALR)
+                        </span>
+                        <span class="timeline-hint">Conexão Contínua · Sub-Milissegundo</span>
+                    </div>
+                    <div class="vertical-timeline">
+                        ${stepsHtml}
+                    </div>
+                </div>
+            `;
         }
 
         function renderResult(data) {
@@ -2047,7 +2578,7 @@ pub fn render_playground_html() -> String {
             const answer = answers[qKey];
 
             if (!answer) {
-                outputResult.innerHTML = "<div>No answers returned</div>";
+                outputResult.innerHTML = "<div>Nenhuma resposta foi retornada pelo motor</div>";
                 return;
             }
 
@@ -2062,11 +2593,11 @@ pub fn render_playground_html() -> String {
             let hudHtml = `
                 <div class="cost-comparison-hud">
                     <div class="cost-item">
-                        <span class="cost-label">Tokens I/O</span>
+                        <span class="cost-label">Tokens E/S</span>
                         <span class="cost-val tokens">${tokensIn} in / ${tokensOut} out</span>
                     </div>
                     <div class="cost-item">
-                        <span class="cost-label">Custo ALR</span>
+                        <span class="cost-label">Custo ALR (Local)</span>
                         <span class="cost-val alr">$0.0000000</span>
                     </div>
                     <div class="cost-item">
@@ -2080,6 +2611,8 @@ pub fn render_playground_html() -> String {
                 </div>
             `;
 
+            const timelineHtml = buildVerticalTimelineHtml(data);
+
             if (answer.type === "noul") {
                 const pTrue = answer.noul;
                 const pFalse = 1.0 - pTrue;
@@ -2088,17 +2621,18 @@ pub fn render_playground_html() -> String {
 
                 const threshold = (p.threshold || 80) / 100.0;
                 const isSafe = pTrue >= threshold;
+                const actionTitle = (data.ui_decision && data.ui_decision.action_text) ? data.ui_decision.action_text : (isSafe ? 'Auto-executar chamada de ferramenta' : 'Pausar e solicitar aprovação humana');
 
                 outputResult.innerHTML = `
-                    <div class="answer-header">ANSWER</div>
+                    <div class="answer-header">RESPOSTA DA DECISÃO</div>
                     <div class="answer-headline">
-                        Yes with probability <strong>${pTruePct}</strong>
+                        Sim com probabilidade de <strong>${pTruePct}</strong>
                     </div>
 
                     <div class="prob-bars-list">
                         <div class="prob-bar-item">
                             <div class="prob-bar-header">
-                                <span class="label">Yes</span>
+                                <span class="label">Sim (Yes)</span>
                                 <span class="pct">${pTruePct}</span>
                             </div>
                             <div class="prob-bar-track">
@@ -2108,7 +2642,7 @@ pub fn render_playground_html() -> String {
 
                         <div class="prob-bar-item">
                             <div class="prob-bar-header">
-                                <span class="label">No</span>
+                                <span class="label">Não (No)</span>
                                 <span class="pct">${pFalsePct}</span>
                             </div>
                             <div class="prob-bar-track">
@@ -2120,15 +2654,15 @@ pub fn render_playground_html() -> String {
                     <div class="action-card ${isSafe ? 'status-execute' : 'status-pause'}">
                         <div class="action-card-header">
                             ${isSafe ? checkIconSvg : pauseIconSvg}
-                            <span>YOUR CODE WOULD</span>
+                            <span>SEU CÓDIGO IRIA EXECUTAR:</span>
                         </div>
                         <div class="action-card-title">
-                            ${isSafe ? 'Auto-execute the tool call' : 'Pause and ask a human'}
+                            ${actionTitle}
                         </div>
                     </div>
 
                     ${hudHtml}
-                    ${buildReasoningGraphHtml(data)}
+                    ${timelineHtml}
                 `;
 
             } else if (answer.type === "choice") {
@@ -2136,7 +2670,7 @@ pub fn render_playground_html() -> String {
                 const confPct = ((answer.confidence || 0.99) * 100).toFixed(1) + "%";
                 const probs = answer.probabilities || {};
 
-                const orderedKeys = ["technical", "sales", "billing"];
+                const orderedKeys = ["technical", "sales", "billing", "junk_negative", "buyer", "researcher", "dor", "curiosidade", "prova_social", "ouvidoria_juridico", "buy", "hold", "sell"];
                 const existingKeys = Object.keys(probs);
                 const keysToRender = orderedKeys.filter(k => existingKeys.includes(k));
                 existingKeys.forEach(k => {
@@ -2161,15 +2695,15 @@ pub fn render_playground_html() -> String {
                     `;
                 });
 
-                const actionTitle = (data.ui_decision && data.ui_decision.action_text) ? data.ui_decision.action_text : "Dispatch the ticket to the chosen team";
+                const actionTitle = (data.ui_decision && data.ui_decision.action_text) ? data.ui_decision.action_text : `Despachar para ${choice}`;
 
                 outputResult.innerHTML = `
-                    <div class="answer-header">ANSWER</div>
+                    <div class="answer-header">RESPOSTA DA DECISÃO</div>
                     <div class="answer-headline">
-                        Chose <strong>${choice}</strong>
+                        Escolheu <strong>${choice}</strong>
                     </div>
                     <div class="answer-subheadline">
-                        Confidence ${confPct}
+                        Confiança de ${confPct}
                     </div>
 
                     <div class="prob-bars-list">
@@ -2179,7 +2713,7 @@ pub fn render_playground_html() -> String {
                     <div class="action-card status-route">
                         <div class="action-card-header">
                             ${checkIconSvg}
-                            <span>YOUR CODE WOULD</span>
+                            <span>SEU CÓDIGO IRIA EXECUTAR:</span>
                         </div>
                         <div class="action-card-title">
                             ${actionTitle}
@@ -2187,7 +2721,7 @@ pub fn render_playground_html() -> String {
                     </div>
 
                     ${hudHtml}
-                    ${buildReasoningGraphHtml(data)}
+                    ${timelineHtml}
                 `;
 
             } else if (answer.type === "score") {
@@ -2201,7 +2735,7 @@ pub fn render_playground_html() -> String {
                 keys.forEach(k => {
                     const probVal = probs[k] || 0;
                     const pctStr = (probVal * 100).toFixed(1) + "%";
-                    const labelText = legend[k] || (p.rubric && p.rubric[parseInt(k)]) || `Level ${k}`;
+                    const labelText = legend[k] || (p.rubric && p.rubric[parseInt(k)]) || `Nível ${k}`;
                     const isDominant = probVal >= 0.5;
 
                     barsHtml += `
@@ -2217,13 +2751,15 @@ pub fn render_playground_html() -> String {
                     `;
                 });
 
+                const actionTitle = (data.ui_decision && data.ui_decision.action_text) ? data.ui_decision.action_text : "Rotear para Executivo de Contas";
+
                 outputResult.innerHTML = `
-                    <div class="answer-header">ANSWER</div>
+                    <div class="answer-header">RESPOSTA DA DECISÃO</div>
                     <div class="answer-headline">
-                        Score <strong>${score}</strong>
+                        Pontuação <strong>${score}</strong>
                     </div>
                     <div class="answer-subheadline">
-                        Confidence ${confPct}
+                        Confiança de ${confPct}
                     </div>
 
                     <div class="prob-bars-list">
@@ -2233,136 +2769,18 @@ pub fn render_playground_html() -> String {
                     <div class="action-card status-route">
                         <div class="action-card-header">
                             ${checkIconSvg}
-                            <span>YOUR CODE WOULD</span>
+                            <span>SEU CÓDIGO IRIA EXECUTAR:</span>
                         </div>
                         <div class="action-card-title">
-                            Route to an account executive
+                            ${actionTitle}
                         </div>
                     </div>
 
                     ${hudHtml}
-                    ${buildReasoningGraphHtml(data)}
+                    ${timelineHtml}
                 `;
             }
         }
-
-        function buildReasoningGraphHtml(data) {
-            const p = PRESETS[currentPresetKey];
-            const graph = (data && data.reasoning_graph) || 
-                          (data && data.ui_decision && data.ui_decision.reasoning_graph) || 
-                          (p && p.expectedResponse && p.expectedResponse.reasoning_graph) || 
-                          (p && p.expectedResponse && p.expectedResponse.ui_decision && p.expectedResponse.ui_decision.reasoning_graph) || 
-                          (p && p.reasoning_graph) || [];
-            
-            if (!graph || graph.length === 0) {
-                // Fallback default visual pipeline
-                return `
-                    <div class="reasoning-graph-section">
-                        <div class="graph-section-header">
-                            <span class="graph-title">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                                Linha de Raciocínio (Pipeline de Decisão ALR)
-                            </span>
-                            <span class="graph-hint">Passe o mouse nos nós para ver detalhes</span>
-                        </div>
-                        <div class="reasoning-pipeline">
-                            <div class="pipeline-node-wrap">
-                                <div class="pipeline-node status-ok">
-                                    <span class="node-icon">📥</span>
-                                    <span class="node-name">Input State</span>
-                                </div>
-                                <div class="node-tooltip">
-                                    <div class="tooltip-header"><span>📥 Input State</span><span class="tooltip-summary">Recepção de Dados</span></div>
-                                    <div class="tooltip-detail">Estado contextual e chamada de ferramenta processados pelo buffer local.</div>
-                                </div>
-                            </div>
-                            <div class="pipeline-connector">
-                                <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="6" x2="20" y2="6"/><polyline points="14 2 20 6 14 10"/></svg>
-                            </div>
-                            <div class="pipeline-node-wrap">
-                                <div class="pipeline-node status-ok">
-                                    <span class="node-icon">⚖️</span>
-                                    <span class="node-name">Typed Judge</span>
-                                </div>
-                                <div class="node-tooltip">
-                                    <div class="tooltip-header"><span>⚖️ Typed Judge</span><span class="tooltip-summary">Inferência Local</span></div>
-                                    <div class="tooltip-detail">Cálculo de probabilidades calibradas em sub-milissegundos com custo zero de tokens.</div>
-                                </div>
-                            </div>
-                            <div class="pipeline-connector">
-                                <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="6" x2="20" y2="6"/><polyline points="14 2 20 6 14 10"/></svg>
-                            </div>
-                            <div class="pipeline-node-wrap">
-                                <div class="pipeline-node status-ok">
-                                    <span class="node-icon">✓</span>
-                                    <span class="node-name">Action Gate</span>
-                                </div>
-                                <div class="node-tooltip">
-                                    <div class="tooltip-header"><span>✓ Action Gate</span><span class="tooltip-summary">Execução Segura</span></div>
-                                    <div class="tooltip-detail">Recomendação governada pela hierarquia de decisão de 8 níveis do ALR.</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            let nodesHtml = "";
-            graph.forEach((node, idx) => {
-                const isLast = idx === graph.length - 1;
-                const statusClass = node.status ? `status-${node.status}` : 'status-neutral';
-                const metricBadge = node.metric ? `<span class="node-metric">${node.metric}</span>` : '';
-
-                nodesHtml += `
-                    <div class="pipeline-node-wrap">
-                        <div class="pipeline-node ${statusClass}">
-                            <span class="node-icon">${node.icon || '⚡'}</span>
-                            <span class="node-name">${node.name}</span>
-                            ${metricBadge}
-                        </div>
-                        <div class="node-tooltip">
-                            <div class="tooltip-header">
-                                <span>${node.icon || '⚡'} ${node.name}</span>
-                                <span class="tooltip-summary">${node.summary || 'ALR Pipeline Step'}</span>
-                            </div>
-                            <div class="tooltip-detail">${node.detail || ''}</div>
-                        </div>
-                    </div>
-                `;
-
-                if (!isLast) {
-                    nodesHtml += `
-                        <div class="pipeline-connector">
-                            <svg viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="2" y1="6" x2="20" y2="6"/>
-                                <polyline points="14 2 20 6 14 10"/>
-                            </svg>
-                        </div>
-                    `;
-                }
-            });
-
-            return `
-                <div class="reasoning-graph-section">
-                    <div class="graph-section-header">
-                        <span class="graph-title">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                            Linha de Raciocínio (Pipeline de Decisão ALR)
-                        </span>
-                        <span class="graph-hint">Passe o mouse nos nós para ver detalhes</span>
-                    </div>
-                    <div class="reasoning-pipeline">
-                        ${nodesHtml}
-                    </div>
-                </div>
-            `;
-        }
-
-        presetTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                loadPreset(tab.dataset.preset);
-            });
-        });
 
         btnInputForm.addEventListener('click', () => {
             btnInputForm.classList.add('active');
@@ -2406,8 +2824,8 @@ pub fn render_playground_html() -> String {
 
         btnCopyJson.addEventListener('click', () => {
             navigator.clipboard.writeText(outputJsonRaw.innerText);
-            btnCopyJson.innerText = "Copied!";
-            setTimeout(() => { btnCopyJson.innerText = "Copy JSON"; }, 2000);
+            btnCopyJson.innerText = "Copiado!";
+            setTimeout(() => { btnCopyJson.innerText = "Copiar JSON"; }, 2000);
         });
 
         // Modal API Integration
@@ -2430,24 +2848,25 @@ pub fn render_playground_html() -> String {
   -H "Content-Type: application/json" \\
   -d '{
     "model": "alr/typed-judge-1.13",
-    "state": "My payout has failed three days in a row and support chat keeps timing out.",
+    "state": "Meu saque falhou tres dias seguidos e o chat fica caindo por timeout.",
     "questions": {
       "team": {
         "type": "choice",
-        "instructions": "Which team should handle this message?",
+        "instructions": "Qual departamento deve tratar este cliente?",
         "criteria": {
-          "billing": "Payments, payouts, invoices, refunds",
-          "technical": "Bugs, outages, integrations, API errors",
-          "sales": "Pricing, upgrades, new accounts"
+          "billing": "Pagamentos, saques, faturas, estornos",
+          "technical": "Bugs, instabilidades, integracoes, erros de API",
+          "sales": "Precos, upgrades, novas contas"
         }
       }
     }
   }'`;
             navigator.clipboard.writeText(curlText);
-            btnCopyCurl.innerText = "Copied!";
-            setTimeout(() => { btnCopyCurl.innerText = "Copy cURL"; }, 2000);
+            btnCopyCurl.innerText = "Copiado!";
+            setTimeout(() => { btnCopyCurl.innerText = "Copiar cURL"; }, 2000);
         });
 
+        // Inicializa com o preset 1
         loadPreset('agent_guardrail');
     </script>
 </body>

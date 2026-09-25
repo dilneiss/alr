@@ -1,4 +1,7 @@
-# Autonomous Learning Runtime (ALR)
+<div align="center">
+  <img src="static/alr-logo.webp" alt="Autonomous Learning Runtime (ALR) Logo" width="180" />
+  <h1>Autonomous Learning Runtime (ALR)</h1>
+</div>
 
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B%20%7C%201.98.1-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-green.svg)](LICENSE)
@@ -65,8 +68,32 @@ cargo run -p alr-cli -- quickstart
 | [`static/showcase.html`](static/showcase.html) | 🌟 Vitrine Web | Demonstração animada completa: Ciclo cognitivo, 20 nichos, jogos e calculadora de ROI | `cargo run -p alr-cli -- showcase` |
 | [`static/whatsapp_support.html`](static/whatsapp_support.html) | 📱 WhatsApp Desk | Central omnichannel nos 20 nichos com chat ao vivo e auto-aprendizado dinâmico | `cargo run -p alr-cli -- whatsapp` |
 | [`static/alr_cockpit.html`](static/alr_cockpit.html) | 📊 Cockpit Web | Painel de observabilidade de alta performance: SIMD, WASM sandbox e telemetria | `cargo run -p alr-cli -- cockpit` |
-| [`TypeSafe JEV-1.13 Playground`](http://localhost:3000) | ⚗️ Web Interativa | Playground oficial idêntico ao OpenRouter: Guardrail (Noul), Routing (Choice), Lead Score | `cargo run -p alr-cli -- playground` |
+| [`ALR Playground Oficial`](http://localhost:3000) | ⚗️ Web Interativa | Centro Principal de Testes e Decisões Tipadas (100% PT-BR, Linha do Tempo & HUD) | `cargo run -p alr-cli -- playground` |
 
+### ⚗️ Playground Interativo do ALR: O Centro Principal de Testes e Decisões
+
+O **Playground do ALR** é o ambiente oficial para experimentar, validar e auditar todas as decisões do runtime em tempo real. Ele combina a velocidade da inferência local em Rust (sub-milissegundo), custo zero de tokens e a transparência da linha de raciocínio visual:
+
+<div align="center">
+  <img src="static/playground-execution.png" alt="Playground Oficial ALR - Execução e Linha de Raciocínio" width="100%">
+  <p><em>Figura 1: Playground do ALR em execução com a Linha do Tempo Vertical de Raciocínio (Pipeline de Decisão em Rust), HUD de economia comparativa e barras de probabilidade calibradas.</em></p>
+</div>
+
+#### 🌟 Destaques da Tela do Playground:
+1. **100% em Português:** Interface inteiramente traduzida com clareza nos formulários, métricas e recomendações de código.
+2. **Linha do Tempo Vertical de Raciocínio (Estilo Canva / Figma):** Pipeline conectado contínuo com marcadores circulares numerados (`01. Estado de Entrada`, `02. Analisador Semântico`, `03. Escudo de Risco`, `04. Juiz Calibrado`, `05. Portal de Decisão`) e explicações completas legíveis sem corte.
+3. **HUD de Economia e Comparativo de Custos:** Contadores de tokens entrada/saída com comparação transparente: **ALR $0.0000000 (100% Gratuito Local)** vs JEV $0.0000161 (163x mais caro) vs Cloud LLM $0.0025000 (155x vs JEV).
+4. **Rubrica Dinâmica com Níveis Customizáveis:** Adição e remoção de níveis (`+ Adicionar Nível`, `×`) com cálculo dinâmico da pontuação esperada.
+5. **Catálogo Completo no Dropdown `⚡ Mais Casos (7)`:** Acesso imediato a 10 cenários organizados por áreas (Decisões Centrais, Marketing Ops & SEO, Segurança & Risco, Trading).
+6. **Integração Pronta via API cURL:** Modal com comando cURL oficial para automações e microsserviços externos.
+
+```bash
+# Iniciar o Playground interativo localmente
+cargo run -p alr-cli -- playground --port 3000
+
+# Validar os testes oficiais no terminal
+cargo run -p alr-cli -- playground-test
+```
 ---
 
 ## 📑 Sumário
@@ -597,50 +624,60 @@ cargo run -p alr-cli -- trader-live --exchange bybit --asset BTCUSDT --poll-inte
 cargo run -p alr-cli -- trader-live --exchange paper --asset BTCUSDT --poll-interval 1 --max-cycles 10
 ```
 
-### Caso 26: Playground Interativo de Decisões Tipadas (TypeSafe JEV-1.13)
-Ambiente web de testes interativos e simulação de decisões em tempo real com alta fidelidade visual ao playground oficial do OpenRouter / TypeSafe JEV-1.13 (`https://openrouter.ai/typesafe/jev-1.13`). Permite avaliar primitivas de decisão tipada (Noul, Choice, Score) sem geração de texto livre, operando via inferência sub-milissegundo local no ALR com custo e tokens calibrados:
+### Caso 26: Playground Interativo de Decisões Tipadas (ALR System 1 Engine)
+Ambiente web de testes interativos e simulação de decisões em tempo real com alta fidelidade visual, operando via inferência sub-milissegundo local em Rust com custo zero de tokens e rastreamento visual da linha de raciocínio:
 
-1. **Interface Web de Alta Fidelidade (Dark Theme TypeSafe):**
-   * **Header Superior:** Abas rápidas para os 3 cenários canônicos (`[noul] Agent guardrail`, `[choice] Support routing`, `[score] Lead qualification`).
-   * **Painel Esquerdo (INPUT):** Alternador de visualização bidirecional entre `Form` (campos visuais de State, Question, Critérios True/False, Threshold Slider, Opções dinâmicas de Choice com Add/Remove, Rubrica ordinal de Score) e `JSON` (editor raw com validação em tempo real).
-   * **Painel Direito (OUTPUT / ANSWER):** Alternador entre `Preview` (gráficos de barras proporcionais em verde limão elétrico, probabilidade calibrada, percentual de confiança, e card dinâmico `YOUR CODE WOULD` com badges semafóricos) e `JSON` (visualizador formatado do payload com botão 1-click para cópia).
-   * **Rodapé com Métricas Reais:** Exibição da latência de execução (ex: `1.9s`) e custo proporcional estimado (ex: `$0.0000161`).
+<div align="center">
+  <img src="static/playground-execution.png" alt="ALR Playground - Execução e Linha de Raciocínio" width="100%">
+  <p><em>Figura: Tela do Playground do ALR com a Linha do Tempo Vertical de Raciocínio (Pipeline DAG), HUD de economia e barras de probabilidade calibradas.</em></p>
+</div>
+
+1. **Interface Web de Alta Fidelidade (100% em Português & Dark Theme):**
+   * **Header Superior Limpo (Sem Rolagem):** Logo oficial ampliada em 40px, abas de acesso rápido para as 3 decisões centrais (`[noul] Guarda-corpo de Agente`, `[choice] Roteamento de Suporte`, `[score] Qualificação de Lead`) e o menu dropdown categorizado **`⚡ Mais Casos (7) ▾`**.
+   * **Painel Esquerdo (ENTRADA):** Alternador de visualização bidirecional entre `Formulário` (campos visuais de Estado Contextual, Pergunta, Critérios Verdadeiro/Falso, Limiar de Segurança Slider, Opções dinâmicas de Escolha e Rubrica ordinal dinâmica) e `JSON` (editor raw com validação em tempo real).
+   * **Painel Direito (RESPOSTA):** Alternador entre `Visualização` (gráficos de barras proporcionais em verde limão elétrico, probabilidade calibrada, percentual de confiança, card dinâmico `SEU CÓDIGO IRIA EXECUTAR:` e a Linha do Tempo Vertical de Raciocínio) e `JSON` (visualizador formatado do payload com botão 1-clique para cópia).
+   * **HUD de Economia e Métricas em Tempo Real:** Exibição da latência de execução (ex: `1.5s`), contagem de tokens (`384 in / 22 out`), custo local ALR (**$0.0000000**), custo no concorrente JEV ($0.0000161) e custo em Cloud LLMs como GPT-4o/Claude ($0.0025000 - 155x mais caro).
+
+<div align="center">
+  <img src="static/playground-dropdown.png" alt="Menu Dropdown de Casos de Uso Categorizado" width="100%">
+  <p><em>Figura: Popover Dropdown categorizado em 3 colunas reunindo todo o catálogo de funcionalidades do ALR.</em></p>
+</div>
 
 2. **Os 3 Cenários Oficiais Homologados:**
-   * **Cenário 1: `noul` Agent Guardrail:**
-     * *State:* Limpeza de contas inativas antes do relatório trimestral (`delete_rows(table="customers", where="last_login < 2023-01-01")`), contexto com 48.210 linhas e sem backup hoje.
+   * **Cenário 1: `noul` Guarda-corpo de Agente:**
+     * *Estado:* Limpeza de contas inativas antes do relatório trimestral (`delete_rows(table="customers", where="last_login < 2023-01-01")`), contexto com 48.210 linhas e sem backup hoje.
      * *Pergunta:* Esta ação é segura para rodar sem aprovação humana prévia?
      * *Critérios:* `true` (reversível/baixo impacto) vs `false` (destrutivo/irreversível).
-     * *Resposta ALR:* `noul: 0.05` (5.0% de probabilidade Sim, 95.0% Não).
-     * *Decisão de Código:* `YOUR CODE WOULD: Pause and ask a human` (devido a probabilidade < 80% do threshold).
-   * **Cenário 2: `choice` Support Routing:**
-     * *State:* Falha de saque persistente há 3 dias com chat de suporte caindo por timeout ("My payout has failed three days in a row...").
-     * *Pergunta:* Qual equipe deve atender esta mensagem?
+     * *Resposta ALR:* `noul: 0.04` (4.0% de probabilidade Sim, 96.0% Não).
+     * *Decisão de Código:* `SEU CÓDIGO IRIA EXECUTAR: Pause and ask a human` (bloqueio atômico devido a probabilidade < 80% do threshold).
+   * **Cenário 2: `choice` Roteamento de Suporte:**
+     * *Estado:* Falha de saque persistente há 3 dias com chat de suporte caindo por timeout ("Meu saque falhou três dias seguidos...").
+     * *Pergunta:* Qual departamento deve tratar esta mensagem?
      * *Opções:* `billing` (pagamentos, saques, faturas), `technical` (bugs, integrações, API), `sales` (preços, upgrades).
-     * *Resposta ALR:* `choice: "billing"`, confiança de `99.0%`, probabilidades `billing: 100.0%`, `technical: 0.0%`, `sales: 0.0%`.
-     * *Decisão de Código:* `YOUR CODE WOULD: Route to billing support`.
-   * **Cenário 3: `score` Lead Qualification:**
-     * *State:* Solicitação de cotação de 40 licenças empresariais com contrato atual vencendo no dia 30 e pedido de call de revisão de segurança esta semana.
+     * *Resposta ALR:* `choice: "billing"`, confiança de `99.0%`, probabilidades `billing: 99.0%`, `technical: 1.0%`, `sales: 0.0%`.
+     * *Decisão de Código:* `SEU CÓDIGO IRIA EXECUTAR: Dispatch the ticket to the chosen team`.
+   * **Cenário 3: `score` Qualificação de Lead:**
+     * *Estado:* Solicitação de cotação de 40 licenças empresariais com contrato atual vencendo no dia 30 e pedido de call de revisão de segurança esta semana.
      * *Pergunta:* Quão pronto este lead está para comprar?
-     * *Rubrica:* Níveis 0 (apenas navegando) a 3 (urgente, prazo rígido e pedindo para transacionar).
-     * *Resposta ALR:* `score: 2.97 / 3.0`, confiança de `97.0%`, probabilidades `Level 0: 0.0%`, `Level 1: 0.0%`, `Level 2: 2.0%`, `Level 3: 98.0%`.
-     * *Decisão de Código:* `YOUR CODE WOULD: Route to an account executive`.
+     * *Rubrica Dinâmica:* Níveis 0 (apenas navegando) a 3 (urgente, prazo rígido e pedindo para transacionar) com suporte a adição de novos níveis (`+ Adicionar Nível`).
+     * *Resposta ALR:* `score: 2.97 / 3.0`, confiança de `97.0%`, probabilidades `Nível 0: 0.0%`, `Nível 1: 0.0%`, `Nível 2: 2.0%`, `Nível 3: 98.0%`.
+     * *Decisão de Código:* `SEU CÓDIGO IRIA EXECUTAR: Route to an account executive`.
 
-3. **Endpoints REST Axum Integrados:**
+3. **Endpoints REST Axum Integrados & Exemplo cURL:**
    * `GET /`: Interface gráfica interativa do Playground (HTML5/CSS3/JavaScript standalone, zero dependências externas).
-   * `GET /api/presets`: Retorna os dados completos dos 3 presets em JSON.
-   * `POST /api/v1/decisions` e `POST /api/decision` e `POST /v1/chat/completions`: Recebe payloads no formato OpenRouter/TypeSafe e processa via `JevTypedJudgeEngine` local.
+   * `GET /api/presets`: Retorna os dados completos dos presets em JSON.
+   * `POST /api/v1/decisions` e `POST /api/decision` e `POST /v1/chat/completions`: Recebe payloads de decisão e processa via `JevTypedJudgeEngine` local.
    * `GET /health`: Monitoramento de integridade do serviço.
 
 ```bash
 # Iniciar o servidor web do Playground (porta padrão 3000)
 cargo run -p alr-cli -- playground --port 3000
 
-# Executar os 3 testes oficiais no terminal com validação 100% das respostas esperadas
+# Executar os testes oficiais no terminal com validação 100% das respostas esperadas
 cargo run -p alr-cli -- playground-test
 
-# Executar a suíte de testes de integração automatizados
-cargo test --test phase26_typed_judge_playground_tests
+# Executar a suíte de testes de integração automatizados da Fase 28
+cargo test -p alr-cli --test phase28_typed_judge_playground_tests
 ```
 ---
 
@@ -1248,6 +1285,14 @@ O ALR interage com jogos exclusivamente através de canais que um jogador humano
 ---
 
 ## 📈 Mesa de Operações Quantitativa Multi-Ativo (Multi-Asset Trading Desk & Web Cockpit)
+
+
+<div align="center">
+  <img src="static/alr-logo.webp" alt="ALR Official Logo" width="120" />
+  <br/><br/>
+  <img src="static/trading_desk.png" alt="ALR Multi-Asset Quantitative Trading Desk Cockpit" width="100%" />
+  <p><em>Cockpit Web Interativo da Mesa Quantitativa Multi-Ativo operando em tempo real na Binance Spot Testnet com Gráfico Canvas 60 FPS, 7 Moedas Líquidas, Rationale Transparente de Risco e Central de Logs.</em></p>
+</div>
 
 O ALR expande seu motor financeiro local para uma **Mesa de Operações Multi-Ativo (Trading Desk)** profissional e autônoma, operando simultaneamente os 7 pares mais líquidos do mercado global:
 * **`BTC-USDT`** (Bitcoin)

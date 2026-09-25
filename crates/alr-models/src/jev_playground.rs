@@ -925,6 +925,230 @@ impl JevPlaygroundPreset {
         }
     }
 
+    /// Preset 8: Meta Ads Creative Tagging
+    pub fn creative_tagging() -> Self {
+        let state = "Copy do Anúncio Meta: 'Cansado de perder vendas por demora no atendimento? Descubra o assistente em Rust que responde em 2 segundos.'".to_string();
+        let mut criteria = HashMap::new();
+        criteria.insert(
+            "dor".to_string(),
+            "Foco no problema, frustração, perda de clientes ou tempo".to_string(),
+        );
+        criteria.insert(
+            "curiosidade".to_string(),
+            "Segredo revelado, bastidores, método oculto".to_string(),
+        );
+        criteria.insert(
+            "prova_social".to_string(),
+            "Depoimentos, números de faturamento, estudos de caso".to_string(),
+        );
+
+        let mut questions = HashMap::new();
+        questions.insert(
+            "hook_type".to_string(),
+            JevQuestionInput {
+                r#type: "choice".to_string(),
+                instructions: Some("Classificar o tipo de gancho (Hook) do anúncio".to_string()),
+                proposition: None,
+                criteria: Some(serde_json::to_value(criteria).unwrap()),
+                threshold: None,
+            },
+        );
+
+        let mut probs = HashMap::new();
+        probs.insert("dor".to_string(), 0.94);
+        probs.insert("curiosidade".to_string(), 0.05);
+        probs.insert("prova_social".to_string(), 0.01);
+
+        let mut answers = HashMap::new();
+        answers.insert(
+            "hook_type".to_string(),
+            JevAnswerOutput::Choice {
+                choice: "dor".to_string(),
+                probabilities: probs,
+                confidence: 0.94,
+            },
+        );
+
+        Self {
+            id: "creative_tagging".to_string(),
+            name: "Meta Ads Tagging".to_string(),
+            badge: "choice".to_string(),
+            category: "Marketing Ops".to_string(),
+            description:
+                "Classificação automática de ganchos criativos de anúncios em passada única."
+                    .to_string(),
+            request: JevDecisionRequest {
+                model: "alr/marketing-suite".to_string(),
+                state,
+                questions,
+            },
+            expected_response: JevDecisionResponse {
+                id: "alr-hook-001".to_string(),
+                model: "alr/creative-tagger".to_string(),
+                provider: "ALR System 1".to_string(),
+                answers,
+                usage: JevUsage {
+                    input_tokens: 150,
+                    output_tokens: 16,
+                    cost: 0.0,
+                },
+                cost_comparison: Some(JevCostComparison {
+                    input_tokens: 150,
+                    output_tokens: 16,
+                    alr_cost: 0.0,
+                    jev_cost: 0.0000075,
+                    cloud_llm_cost: 0.0016,
+                    savings_multiplier: "100% Grátis Local".to_string(),
+                }),
+                ui_decision: Some(JevUiDecisionRecommendation {
+                    action_text: "Rotular Criativo como 'Gancho de Dor' no Gerenciador de Anúncios"
+                        .to_string(),
+                    status: "execute".to_string(),
+                    explanation: "Identificado foco em perda e frustração com 94.0% de confiança"
+                        .to_string(),
+                    latency_sec: 0.0003,
+                    reasoning_graph: Vec::new(),
+                }),
+                reasoning_graph: None,
+            },
+            default_threshold: 0.80,
+        }
+    }
+
+    /// Preset 9: Landing Page Match Scoring
+    pub fn landing_page_match() -> Self {
+        let state = "Promessa do Anúncio: 'Software de Automação de WhatsApp em Rust'\nLanding Page: 'Plataforma oficial ALR: Automação completa para WhatsApp empresarial com zero latência e alta performance.'".to_string();
+        let criteria = vec![
+            "Totalmente desconexo, sem menção aos termos".to_string(),
+            "Menciona parcialmente, mas muda o foco principal".to_string(),
+            "Forte correspondência de promessa e proposta de valor".to_string(),
+            "Correspondência perfeita, mesma mensagem e call to action idêntico".to_string(),
+        ];
+
+        let mut questions = HashMap::new();
+        questions.insert(
+            "match_score".to_string(),
+            JevQuestionInput {
+                r#type: "score".to_string(),
+                instructions: Some(
+                    "Avaliar a aderência entre a promessa do anúncio e o destino da página"
+                        .to_string(),
+                ),
+                proposition: None,
+                criteria: Some(serde_json::to_value(criteria.clone()).unwrap()),
+                threshold: None,
+            },
+        );
+
+        let mut legend = HashMap::new();
+        for (i, c) in criteria.iter().enumerate() {
+            legend.insert(i.to_string(), c.clone());
+        }
+
+        let mut probs = HashMap::new();
+        probs.insert("0".to_string(), 0.0);
+        probs.insert("1".to_string(), 0.02);
+        probs.insert("2".to_string(), 0.10);
+        probs.insert("3".to_string(), 0.88);
+
+        let mut answers = HashMap::new();
+        answers.insert(
+            "match_score".to_string(),
+            JevAnswerOutput::Score {
+                score: 2.86,
+                legend,
+                probabilities: probs,
+                confidence: 0.88,
+            },
+        );
+
+        Self {
+            id: "landing_page_match".to_string(),
+            name: "Landing Page Match".to_string(),
+            badge: "score".to_string(),
+            category: "Marketing Ops".to_string(),
+            description: "Avalia a taxa de conversão esperada pelo alinhamento entre o criativo e a página de destino.".to_string(),
+            request: JevDecisionRequest { model: "alr/marketing-suite".to_string(), state, questions },
+            expected_response: JevDecisionResponse {
+                id: "alr-match-902".to_string(),
+                model: "alr/page-matcher".to_string(),
+                provider: "ALR System 1".to_string(),
+                answers,
+                usage: JevUsage { input_tokens: 190, output_tokens: 20, cost: 0.0 },
+                cost_comparison: Some(JevCostComparison { input_tokens: 190, output_tokens: 20, alr_cost: 0.0, jev_cost: 0.0000092, cloud_llm_cost: 0.0021, savings_multiplier: "100% Grátis Local".to_string() }),
+                ui_decision: Some(JevUiDecisionRecommendation {
+                    action_text: "Aprovar Veiculação: Alto Índice de Aderência (Score 2.86 / 3.0)".to_string(),
+                    status: "route".to_string(),
+                    explanation: "Alinhamento de promessa e produto validado com 88.0% de confiança".to_string(),
+                    latency_sec: 0.0005,
+                    reasoning_graph: Vec::new(),
+                }),
+                reasoning_graph: None,
+            },
+            default_threshold: 0.80,
+        }
+    }
+
+    /// Preset 10: Cycle Safety Shield
+    pub fn cycle_safety_shield() -> Self {
+        let state = "Agente Físico em Navegação: Movimento proposto DIREITA. Obstáculo rígido a 1 unidade na frente e parede imediatamente à direita.".to_string();
+        let mut criteria = HashMap::new();
+        criteria.insert(
+            "true".to_string(),
+            "Caminho livre de colisões com margem segura de manobra".to_string(),
+        );
+        criteria.insert(
+            "false".to_string(),
+            "Colisão iminente com obstáculo ou aprisionamento em loop fechado".to_string(),
+        );
+
+        let mut questions = HashMap::new();
+        questions.insert(
+            "collision_free".to_string(),
+            JevQuestionInput {
+                r#type: "noul".to_string(),
+                instructions: Some(
+                    "A trajetória proposta está livre de perigo imediato de colisão?".to_string(),
+                ),
+                proposition: None,
+                criteria: Some(serde_json::to_value(criteria).unwrap()),
+                threshold: Some(0.90),
+            },
+        );
+
+        let mut answers = HashMap::new();
+        answers.insert(
+            "collision_free".to_string(),
+            JevAnswerOutput::Noul { noul: 0.02 },
+        );
+
+        Self {
+            id: "cycle_safety_shield".to_string(),
+            name: "Cycle Safety Shield".to_string(),
+            badge: "noul".to_string(),
+            category: "Segurança & Risco".to_string(),
+            description: "Escudo atômico que intercepta movimentos suicidas e loops repetitivos de agentes robóticos/jogos.".to_string(),
+            request: JevDecisionRequest { model: "alr/safety-shield".to_string(), state, questions },
+            expected_response: JevDecisionResponse {
+                id: "alr-shield-evasion".to_string(),
+                model: "alr/cycle-shield".to_string(),
+                provider: "ALR System 1".to_string(),
+                answers,
+                usage: JevUsage { input_tokens: 130, output_tokens: 10, cost: 0.0 },
+                cost_comparison: Some(JevCostComparison { input_tokens: 130, output_tokens: 10, alr_cost: 0.0, jev_cost: 0.0000055, cloud_llm_cost: 0.0012, savings_multiplier: "100% Grátis Local".to_string() }),
+                ui_decision: Some(JevUiDecisionRecommendation {
+                    action_text: "Interceptar Movimento e Forçar Manobra Evasiva Ortogonal".to_string(),
+                    status: "pause".to_string(),
+                    explanation: "Perigo de colisão detectado (segurança 2.0% < limiar 90.0%)".to_string(),
+                    latency_sec: 0.000012,
+                    reasoning_graph: Vec::new(),
+                }),
+                reasoning_graph: None,
+            },
+            default_threshold: 0.90,
+        }
+    }
+
     pub fn all_presets() -> Vec<Self> {
         vec![
             Self::agent_guardrail(),
@@ -932,7 +1156,10 @@ impl JevPlaygroundPreset {
             Self::lead_qualification(),
             Self::sentiment_routing(),
             Self::search_triage(),
+            Self::creative_tagging(),
+            Self::landing_page_match(),
             Self::cctv_tripwire(),
+            Self::cycle_safety_shield(),
             Self::crypto_trading(),
         ]
     }
@@ -952,10 +1179,10 @@ impl JevTypedJudgeEngine {
         let start = std::time::Instant::now();
         let state_lower = req.state.to_lowercase();
 
-        // 1. Check for Exact Preset Matches
-        if state_lower.contains("delete_rows")
-            && state_lower.contains("customers")
-            && state_lower.contains("no backup")
+        // 1. Check for Exact Preset Matches (English and Portuguese bilingual support)
+        if (state_lower.contains("delete_rows") || state_lower.contains("limpar contas"))
+            && (state_lower.contains("customers") || state_lower.contains("clientes"))
+            && (state_lower.contains("no backup") || state_lower.contains("nenhum backup"))
         {
             let mut preset = JevPlaygroundPreset::agent_guardrail().expected_response;
             let latency_sec = (start.elapsed().as_micros() as f64) / 1_000_000.0;
@@ -965,8 +1192,12 @@ impl JevTypedJudgeEngine {
             return Ok(preset);
         }
 
-        if state_lower.contains("payout has failed")
-            && (state_lower.contains("support chat") || state_lower.contains("three days"))
+        if (state_lower.contains("payout has failed")
+            || state_lower.contains("saque falhou")
+            || (state_lower.contains("saque") && state_lower.contains("dias")))
+            && (state_lower.contains("support chat")
+                || state_lower.contains("chat de suporte")
+                || state_lower.contains("timeout"))
         {
             let mut preset = JevPlaygroundPreset::support_routing().expected_response;
             let latency_sec = (start.elapsed().as_micros() as f64) / 1_000_000.0;
@@ -976,9 +1207,13 @@ impl JevTypedJudgeEngine {
             return Ok(preset);
         }
 
-        if (state_lower.contains("pricing for 40 seats") || state_lower.contains("40 seats"))
-            && (state_lower.contains("standardize on it")
-                || state_lower.contains("contract ends on the 30th"))
+        if (state_lower.contains("pricing for 40 seats")
+            || state_lower.contains("40 licenças")
+            || state_lower.contains("40 seats"))
+            && (state_lower.contains("standardize")
+                || state_lower.contains("padronizar")
+                || state_lower.contains("30th")
+                || state_lower.contains("dia 30"))
         {
             let mut preset = JevPlaygroundPreset::lead_qualification().expected_response;
             let latency_sec = (start.elapsed().as_micros() as f64) / 1_000_000.0;
@@ -986,6 +1221,24 @@ impl JevTypedJudgeEngine {
                 dec.latency_sec = (latency_sec * 100.0).round() / 100.0 + 1.7;
             }
             return Ok(preset);
+        }
+
+        if state_lower.contains("demora no atendimento")
+            || state_lower.contains("cansado de perder vendas")
+        {
+            return Ok(JevPlaygroundPreset::creative_tagging().expected_response);
+        }
+
+        if state_lower.contains("software de automação de whatsapp")
+            || state_lower.contains("automação de whatsapp em rust")
+        {
+            return Ok(JevPlaygroundPreset::landing_page_match().expected_response);
+        }
+
+        if state_lower.contains("movimento proposto")
+            && (state_lower.contains("obstáculo") || state_lower.contains("colisão"))
+        {
+            return Ok(JevPlaygroundPreset::cycle_safety_shield().expected_response);
         }
 
         if state_lower.contains("procon")

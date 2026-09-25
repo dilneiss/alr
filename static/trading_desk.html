@@ -90,9 +90,7 @@
   <header class="border-b border-navy-800 bg-navy-900/90 sticky top-0 z-40 backdrop-blur px-4 py-3">
     <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 via-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 font-bold text-white tracking-wider">
-          ALR
-        </div>
+        <img src="/static/alr-logo.webp" alt="Logo Oficial ALR" class="w-10 h-10 rounded-xl object-cover border border-emerald-400/50 shadow-lg shadow-emerald-500/25" onerror="this.src='/static/alr-logo.png'">
         <div>
           <div class="flex items-center gap-2">
             <h1 class="font-bold text-lg text-white tracking-tight">ALR Live Trading Desk</h1>
@@ -275,7 +273,13 @@
             <span id="pos-asset-name" class="mono text-xs text-slate-400">--</span>
           </div>
 
-          <!-- Position Floating Metrics -->
+          <!-- Active Positions Quick Switcher Bar -->
+          <div id="active-positions-quick-bar" class="hidden flex flex-wrap items-center gap-1.5 pb-2 border-b border-navy-800/60">
+            <span class="text-[10px] uppercase font-bold text-slate-400 mr-0.5">Em Custódia:</span>
+            <div id="active-positions-chips" class="flex flex-wrap gap-1"></div>
+          </div>
+
+          <!-- Position Floating Metrics (Ativo Selecionado tem Posição) -->
           <div id="pos-data-section" class="hidden flex flex-col gap-3">
             <div class="grid grid-cols-2 gap-2 text-xs">
               <div class="p-2.5 rounded-lg bg-navy-900 border border-navy-800">
@@ -321,13 +325,31 @@
                 Travar 0 a 0
               </button>
             </div>
+
+            <!-- Outras posições ativas da carteira -->
+            <div id="active-positions-sublist-container" class="mt-2 pt-2 border-t border-navy-800/60 flex flex-col gap-1.5">
+              <div class="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
+                <span>Outras Posições em Custódia:</span>
+                <span id="other-pos-count-badge" class="text-[10px] text-cyan-400 mono">--</span>
+              </div>
+              <div id="active-positions-sublist" class="flex flex-col gap-1.5"></div>
+            </div>
           </div>
 
-          <!-- Empty Position Placeholder -->
-          <div id="pos-empty-section" class="py-8 flex flex-col items-center justify-center text-center text-slate-500">
-            <svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <p class="text-xs">Nenhuma posição aberta no momento para <span id="empty-asset-name" class="font-bold text-slate-400">BTC-USDT</span>.</p>
-            <p class="text-[11px] text-slate-600 mt-1">O robô está monitorando os 7 ativos da Binance Spot em sub-microssegundo.</p>
+          <!-- Empty Position Placeholder & Consolidated Portfolio Positions -->
+          <div id="pos-empty-section" class="py-3 flex flex-col gap-3">
+            <div class="p-3 rounded-lg bg-navy-900/60 border border-navy-800 text-center text-slate-400 text-xs">
+              <span class="font-bold text-slate-200" id="empty-asset-name">BTC-USDT</span>: Sem posição aberta neste ativo (Robô monitorando confluência técnica).
+            </div>
+
+            <!-- Lista de Posições Abertas na Carteira -->
+            <div id="portfolio-open-positions-block" class="flex flex-col gap-2">
+              <div class="flex items-center justify-between text-xs font-bold text-slate-300">
+                <span>Posições Abertas na Carteira</span>
+                <span id="open-positions-count-badge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">0 ativas</span>
+              </div>
+              <div id="open-positions-cards-list" class="flex flex-col gap-2"></div>
+            </div>
           </div>
         </div>
 
@@ -720,9 +742,26 @@
 
     // Select Asset
     function selectAsset(asset) {
+      window.hasUserSelectedAsset = true;
       selectedAsset = asset;
       fetchCandles(asset);
       updateUI();
+    }
+
+    // Close Specific Position by Asset
+    async function closeSpecificPosition(asset) {
+      if (!confirm(`Deseja realmente zerar a mercado a posição aberta em ${asset}?`)) return;
+      try {
+        const res = await safeFetchJson('/api/v1/desk/close-position', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ asset, reason: 'MANUAL_1CLICK_CLOSE_FROM_LIST' })
+        });
+        showToast(`Posição em ${asset} zerada com sucesso!`, 'success');
+        await pollDeskStatus();
+      } catch (err) {
+        showToast(`Erro ao zerar ${asset}: ` + err.message, 'error');
+      }
     }
 
     // Fetch Candles
@@ -815,6 +854,17 @@
     // Update UI Elements
     function updateUI() {
       if (!deskState) return;
+      // Smart Auto-Selection of Active Position if user hasn't manually clicked
+      if (!window.hasUserSelectedAsset && deskState.assets) {
+        const currentObj = deskState.assets.find(a => a.asset === selectedAsset);
+        if (!currentObj || !currentObj.has_position) {
+          const firstPos = deskState.assets.find(a => a.has_position);
+          if (firstPos) {
+            selectedAsset = firstPos.asset;
+            fetchCandles(selectedAsset);
+          }
+        }
+      }
 
       // 1. Header & Global Metrics
       document.getElementById('metric-portfolio-val').textContent = fmtUSD(deskState.total_portfolio_value);
@@ -957,6 +1007,106 @@
           document.getElementById('rationale-sl-text').textContent = 'Aguardando abertura de posição para cálculo do risco dinâmico...';
           document.getElementById('rationale-tp-dist').textContent = '+0.00 pts (+0.00%)';
           document.getElementById('rationale-tp-text').textContent = 'Aguardando abertura de posição para cálculo do alvo de lucro...';
+        }
+      }
+      // 3.1 Render All Active Positions List & Quick Switcher
+      const activePositions = (deskState.assets || []).filter(a => a.has_position && a.position);
+      const quickBar = document.getElementById('active-positions-quick-bar');
+      const quickChips = document.getElementById('active-positions-chips');
+      const openCardsList = document.getElementById('open-positions-cards-list');
+      const openCountBadge = document.getElementById('open-positions-count-badge');
+      const sublistContainer = document.getElementById('active-positions-sublist-container');
+      const sublist = document.getElementById('active-positions-sublist');
+      const otherPosBadge = document.getElementById('other-pos-count-badge');
+
+      if (activePositions.length > 0) {
+        if (quickBar) quickBar.classList.remove('hidden');
+        if (quickChips) {
+          quickChips.innerHTML = activePositions.map(a => {
+            const p = a.position;
+            const pnlSign = p.pnl >= 0 ? '+' : '';
+            const isSelected = a.asset === selectedAsset;
+            return `
+              <button onclick="selectAsset('${a.asset}')" class="px-2 py-0.5 rounded text-xs font-bold transition flex items-center gap-1 ${
+                isSelected ? 'bg-cyan-500 text-navy-950 shadow-sm' : 'bg-navy-850 hover:bg-navy-800 text-slate-200 border border-slate-700'
+              }">
+                <span>${a.asset.replace('-USDT', '')}:</span>
+                <span class="${p.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${pnlSign}${fmtUSD(p.pnl)}</span>
+              </button>
+            `;
+          }).join('');
+        }
+
+        if (openCardsList) {
+          if (openCountBadge) openCountBadge.textContent = `${activePositions.length} em custódia`;
+          openCardsList.innerHTML = activePositions.map(a => {
+            const p = a.position;
+            const pnlSign = p.pnl >= 0 ? '+' : '';
+            const pnlPct = p.entry_price > 0 ? (p.pnl / (p.entry_price * p.quantity)) * 100 : 0;
+            const isSelected = a.asset === selectedAsset;
+            return `
+              <div class="p-2.5 rounded-lg border flex flex-col gap-1.5 transition ${
+                isSelected ? 'bg-navy-900 border-cyan-500/80 shadow' : 'bg-navy-900/80 border-navy-800 hover:border-slate-700'
+              }">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-white text-xs">${a.asset}</span>
+                    <span class="text-[9px] px-1.5 py-0.2 rounded font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">${p.side}</span>
+                  </div>
+                  <div class="text-right mono font-bold text-xs ${p.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                    ${pnlSign}${fmtUSD(p.pnl)} (${pnlSign}${pnlPct.toFixed(2)}%)
+                  </div>
+                </div>
+                <div class="flex items-center justify-between text-[11px] text-slate-400 mono">
+                  <span>Entrada: ${fmtUSD(p.entry_price)}</span>
+                  <span>Atual: ${fmtUSD(a.current_price)}</span>
+                </div>
+                <div class="flex items-center justify-between pt-1 border-t border-navy-800/60 mt-0.5">
+                  <span class="text-[10px] text-slate-400">Stop: ${fmtUSD(p.stop_loss)}</span>
+                  <div class="flex items-center gap-1.5">
+                    <button onclick="selectAsset('${a.asset}')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-semibold transition">
+                      Ver Gráfico
+                    </button>
+                    <button onclick="closeSpecificPosition('${a.asset}')" class="px-2 py-0.5 rounded bg-rose-600/80 hover:bg-rose-600 text-white text-[10px] font-semibold transition">
+                      Zerar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        const otherPositions = activePositions.filter(a => a.asset !== selectedAsset);
+        if (otherPositions.length > 0 && sublistContainer && sublist) {
+          sublistContainer.classList.remove('hidden');
+          if (otherPosBadge) otherPosBadge.textContent = `${otherPositions.length} ativas`;
+          sublist.innerHTML = otherPositions.map(a => {
+            const p = a.position;
+            const pnlSign = p.pnl >= 0 ? '+' : '';
+            return `
+              <div class="px-2 py-1 rounded bg-navy-950 border border-navy-800 flex items-center justify-between text-[11px]">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-bold text-white">${a.asset}</span>
+                  <span class="mono ${p.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-semibold">${pnlSign}${fmtUSD(p.pnl)}</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <button onclick="selectAsset('${a.asset}')" class="text-cyan-400 hover:underline text-[10px]">Ver</button>
+                  <span class="text-slate-600">•</span>
+                  <button onclick="closeSpecificPosition('${a.asset}')" class="text-rose-400 hover:underline text-[10px]">Zerar</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else if (sublistContainer) {
+          sublistContainer.classList.add('hidden');
+        }
+      } else {
+        if (quickBar) quickBar.classList.add('hidden');
+        if (sublistContainer) sublistContainer.classList.add('hidden');
+        if (openCardsList) {
+          if (openCountBadge) openCountBadge.textContent = '0 ativas';
+          openCardsList.innerHTML = `<div class="text-slate-500 text-center py-4 text-xs">Nenhuma posição aberta no momento. O robô está monitorando os 7 ativos da Binance Spot.</div>`;
         }
       }
 

@@ -2060,6 +2060,13 @@ impl MultiAssetTraderEngine {
             None => return Ok(0),
         };
 
+        // 1. Restaura histórico prévio de execuções
+        if let Ok(past_execs) = store.load_executions(None, 50) {
+            if !past_execs.is_empty() {
+                self.executions_log = past_execs.into_iter().rev().collect();
+            }
+        }
+
         let open_positions = store.load_open_positions()?;
         let mut restored = 0;
 
@@ -2068,6 +2075,34 @@ impl MultiAssetTraderEngine {
                 let cost = pos.entry_price * pos.quantity;
                 self.total_cash = (self.total_cash - cost).max(0.0);
                 engine.cash_balance = (engine.cash_balance - cost).max(0.0);
+
+                // Garante que exista registro no extrato recente de ordens para cada posição em aberto
+                let has_exec = self.executions_log.iter().any(|e| {
+                    e.asset == pos.asset
+                        && (e.action == TradingAction::Buy || e.action == TradingAction::Sell)
+                });
+
+                if !has_exec {
+                    let entry_exec = TradeExecution {
+                        id: format!("exec-entry-{}", pos.asset),
+                        timestamp: pos.entry_timestamp,
+                        asset: pos.asset.clone(),
+                        action: TradingAction::Buy,
+                        side: pos.side,
+                        price: pos.entry_price,
+                        quantity: pos.quantity,
+                        fee: pos.entry_price * pos.quantity * 0.001,
+                        slippage: 0.0,
+                        realized_pnl: None,
+                        reason: pos
+                            .rationale
+                            .as_ref()
+                            .map(|r| r.supertrend_trend.clone())
+                            .unwrap_or_else(|| "Entrada Quantitativa Automatizada".to_string()),
+                    };
+                    self.executions_log.push(entry_exec);
+                }
+
                 engine.current_position = Some(pos);
                 restored += 1;
             }

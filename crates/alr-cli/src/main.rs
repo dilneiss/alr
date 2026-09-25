@@ -10812,8 +10812,16 @@ async fn run_multi_asset_trading_desk(
         let clean_symbols_refs: Vec<&str> = clean_symbols.iter().map(|s| s.as_str()).collect();
 
         let mut prices: std::collections::HashMap<String, f64> = std::collections::HashMap::new();
-        for &a in &basket {
-            prices.insert(a.to_string(), asset_baseline_price(a));
+        {
+            let eng = engine_for_loop.read();
+            for &a in &basket {
+                let last_p = eng
+                    .engines
+                    .get(a)
+                    .and_then(|e| e.candles.last().map(|c| c.close))
+                    .unwrap_or_else(|| asset_baseline_price(a));
+                prices.insert(a.to_string(), last_p);
+            }
         }
 
         while is_running_clone.load(Ordering::Relaxed) {

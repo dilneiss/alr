@@ -241,6 +241,46 @@ pub fn create_trading_desk_router_with_logger(
         .route("/api/v1/desk/logs", get(get_desk_logs_handler))
         .route("/api/v1/desk/logs/raw", get(get_desk_raw_logs_handler))
         .route("/api/v1/desk/client-log", post(post_client_log_handler))
+        .route(
+            "/static/alr-logo.webp",
+            get(|| async {
+                let bytes = std::fs::read("static/alr-logo.webp")
+                    .or_else(|_| std::fs::read("../static/alr-logo.webp"))
+                    .or_else(|_| std::fs::read("../../static/alr-logo.webp"))
+                    .unwrap_or_else(|_| include_bytes!("../../../static/alr-logo.webp").to_vec());
+                ([(axum::http::header::CONTENT_TYPE, "image/webp")], bytes)
+            }),
+        )
+        .route(
+            "/alr-logo.webp",
+            get(|| async {
+                let bytes = std::fs::read("static/alr-logo.webp")
+                    .or_else(|_| std::fs::read("../static/alr-logo.webp"))
+                    .or_else(|_| std::fs::read("../../static/alr-logo.webp"))
+                    .unwrap_or_else(|_| include_bytes!("../../../static/alr-logo.webp").to_vec());
+                ([(axum::http::header::CONTENT_TYPE, "image/webp")], bytes)
+            }),
+        )
+        .route(
+            "/static/alr-logo.png",
+            get(|| async {
+                let bytes = std::fs::read("static/alr-logo.png")
+                    .or_else(|_| std::fs::read("../static/alr-logo.png"))
+                    .or_else(|_| std::fs::read("../../static/alr-logo.png"))
+                    .unwrap_or_else(|_| include_bytes!("../../../static/alr-logo.png").to_vec());
+                ([(axum::http::header::CONTENT_TYPE, "image/png")], bytes)
+            }),
+        )
+        .route(
+            "/alr-logo.png",
+            get(|| async {
+                let bytes = std::fs::read("static/alr-logo.png")
+                    .or_else(|_| std::fs::read("../static/alr-logo.png"))
+                    .or_else(|_| std::fs::read("../../static/alr-logo.png"))
+                    .unwrap_or_else(|_| include_bytes!("../../../static/alr-logo.png").to_vec());
+                ([(axum::http::header::CONTENT_TYPE, "image/png")], bytes)
+            }),
+        )
         .with_state(state)
 }
 
