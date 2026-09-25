@@ -5,7 +5,7 @@
 
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B%20%7C%201.98.1-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-green.svg)](LICENSE)
-[![Testes](https://img.shields.io/badge/Testes-360%2F360%20Passando-brightgreen.svg)]()
+[![Testes](https://img.shields.io/badge/Testes-377%2F377%20Passando-brightgreen.svg)]()
 [![Taxa de Autonomia](https://img.shields.io/badge/Autonomia%20Local-98.8%25-orange.svg)]()
 [![Evasão de Loop](https://img.shields.io/badge/Evas%C3%A3o%20de%20Loop-Ativa-brightgreen.svg)](docs/training-new-tasks.md)
 [![Status de Liberação](https://img.shields.io/badge/Certifica%C3%A7%C3%A3o%20de%20Release-Certificado%20com%20Limita%C3%A7%C3%B5es-yellow.svg)](docs/final-certification-report.md)
@@ -13,15 +13,16 @@
 [![Aceitação Final](https://img.shields.io/badge/Gates%20de%20Aceita%C3%A7%C3%A3o-12%2F12%20Avaliados-brightgreen.svg)](docs/final-acceptance-report.md)
 [![Motor de Jogos](https://img.shields.io/badge/Motor%20de%20Jogos-Cards%20%7C%20Bomberman%20%7C%20FPS%20%7C%20Worms%20%7C%20Dino%20%7C%20Snake-purple.svg)](docs/game-engine.md)
 [![Docker Qdrant](https://img.shields.io/badge/Qdrant-v1.12.1-red.svg)](https://qdrant.tech)
+[![Documentação da API](https://img.shields.io/badge/API%20Reference-%2Fv1%2Fsystemone%20%7C%20REST%20%7C%20MCP-00d2ff.svg)](docs/api-reference.md)
 
 > **"A LLM pode ensinar o agente, mas não precisa controlar permanentemente o agente."**  
 > *Um runtime local-first para aprendizado autônomo, memória, planejamento, execução de ferramentas, verificação, recuperação e reuso de habilidades em jogos, navegadores, mundos simulados e ambientes externos.*
 
 <div align="center">
   <br>
-  <h2>⚗️ Playground Universal & Centro de Decisões Tipadas (System 1)</h2>
-  <img src="static/playground-hero.png" alt="Playground Universal ALR - Decisões Tipadas e Linha do Tempo de Raciocínio" width="100%" />
-  <p><em>Figura: Playground Universal do ALR em execução em sub-milissegundo com a Linha do Tempo Vertical de Raciocínio (Pipeline DAG), HUD de economia comparativa ($0.00 local vs $0.0025 Cloud LLM) e probabilidades calibradas.</em></p>
+  <h2>⚗️ Playground Universal com Arquitetura Dual-Sidebar (Estilo Canvas) & Decisões Tipadas (System 1)</h2>
+  <img src="static/playground-hero.png" alt="Playground Universal ALR - Layout Dual-Sidebar Estilo Canvas e Linha do Tempo de Raciocínio" width="100%" />
+  <p><em>Figura: Novo layout do Playground Universal do ALR redesenhado no padrão Dual-Sidebar (Dock de Ícones à extrema esquerda + Barra de Submenus e Busca em estilo Canvas), com Linha do Tempo Vertical de Raciocínio (Pipeline DAG), HUD de economia comparativa ($0.00 local vs $0.0025 Cloud LLM) e probabilidades calibradas.</em></p>
   <br>
   <h2>📈 Cockpit Multi-Ativo de Trading Quantitativo (Binance Spot Testnet)</h2>
   <img src="static/trading-desk-hero.png" alt="ALR Live Trading Desk - Cockpit Quantitativo 7 Ativos" width="100%" />
@@ -35,9 +36,12 @@
   <img src="static/playground-games-hero.png" alt="Arena de Jogos Autônomos no Playground ALR" width="100%" />
   <p><em>Figura: Arena de Jogos Autônomos com 8 jogos (Snake com flood-fill anti-colisão, Dino Runner, Pong 2D, Cards/Blackjack, Bomberman com dano real, FPS 3D Three.js, Worms balístico e Tetris 10x20) e botão de Auto-Retry contínuo.</em></p>
   <br>
-  <h2>🗺️ Otimizador Autônomo de Rotas Urbanas (50 Entregas com Trânsito Dinâmico & Mão Única)</h2>
-  <img src="static/playground-routes-hero.png" alt="ALR Route Optimizer - Roteirização de 50 Entregas com Trânsito e Vias de Mão Única" width="100%" />
-  <p><em>Figura: Otimizador de rotas do ALR calculando autonomamente a sequência ótima para 50 entregas a partir do Centro de Distribuição (Depot Pin), considerando congestionamento em tempo real, vias de mão única, tempo de parada por entrega e limite de jornada de 8h.</em></p>
+  <h2>🗺️ Otimizador de Rotas em Mapa Real (OpenStreetMap, CEP Brasileiro & VRP Dinâmico)</h2>
+  <img src="static/playground-routes-hero.png" alt="ALR Route Optimizer - Roteirização em Mapa Real OpenStreetMap com CEP" width="100%" />
+  <p><em>Figura: Otimizador de rotas do ALR em mapa real (OpenStreetMap / Leaflet) calculando autonomamente o trajeto ótimo de entregas a partir do CEP informado (ex: 01310-100 Av. Paulista, São Paulo), com pins numerados, polyline nas vias reais, telemetria de trânsito e manifesto completo.</em></p>
+  <h2>📚 Central de Conhecimento & Hub de Tutoriais do ALR (UI Moderna & Escaneável)</h2>
+  <img src="static/playground-tutorials-modern.png" alt="Central de Conhecimento & Tutoriais ALR - UI Moderna e Escaneável" width="100%" />
+  <p><em>Figura: Nova interface da Central de Conhecimento e Tutoriais do ALR redesenhada com Hero Card de métricas, cards categorizados com ícones temáticos, barra de busca rápida em tempo real, comparativo Abordagem Tradicional vs ALR e diagrama do Ciclo Cognitivo em 4 passos.</em></p>
   <br>
 </div>
 
@@ -69,6 +73,13 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
 25. **Trading Quantitativo, Robô de Criptomoedas e Bolsa (CryptoTraderEngine, Indicadores Locais, Stop-Loss Inviolável, Simulação de Exchanges e Trailing Stop)**
 26. **Conector Oficial Bybit Testnet V5 (Assinatura HMAC-SHA256, Order Book, Saldo Virtual e Despacho de Ordens)**
 27. **Conector Oficial Binance Spot Testnet (Assinatura HMAC-SHA256, Ticker/Book, Saldo Virtual, Klines e Despacho de Ordens)**
+28. **Motor Nativo JEV System 1 & API Canônica `/v1/systemone` (Decisões Tipadas Choice/Noul/Score, 0 Tokens, 12 µs de Latência e 80.000+ Decisões/s)**
+29. **15 Recipes Especializadas de Decisão do JEV (Rerank Semântico, Busca por Linha, Filtro RAG & Injection, Datas ISO, Reconstrução Markdown, Function Calling, Sugestão de Skills, Taxonomia Hierárquica, Verificação de Campos e Extração de Features)**
+30. **5 Casos Reais de Domínio do JEV (4 Formulários de Atendimento ao Cliente, Supervisão de Ações no Browser DOM, Telemetria & Risco de Drones, Detecção de Falhas Silenciosas em APIs e Classificação de Segmentos de Mídia)**
+31. **Gerenciamento Avançado de Contexto do AgentScope (Tool Result Offloader com SHA-256 para saídas volumosas e Context Compactor Semântico)**
+32. **Execução em Segundo Plano com Wakeup Dispatcher (BackgroundTaskManager com Notificação de Wakeup Assíncrona para Retomada Autônoma)**
+33. **Otimizador de Rotas Urbanas com Janelas de Tempo (VRP-TW, Tráfego Dinâmico e 50 Paradas)**
+34. **Protocolo A2A Multiagente, Cards de Aprovação Humana HitL e Visualizador de Diff em Tempo Real**
 
 ## ⚡ Quickstart em 3 Minutos: Do Zero ao Agente Operacional
 
@@ -88,6 +99,7 @@ cargo run -p alr-cli -- quickstart
 | Recurso | Tipo | Descrição | Como Acessar / Executar |
 | :--- | :---: | :--- | :--- |
 | [`docs/quickstart-3-minutos.md`](docs/quickstart-3-minutos.md) | 📄 Documento | Tutorial passo a passo de 180s: Instalar $\to$ Configurar $\to$ Treinar | Leitura direta no GitHub / Markdown |
+| [`docs/api-reference.md`](docs/api-reference.md) | 📡 Referência API | Documentação completa de todos os endpoints REST, `/v1/systemone`, 15 Recipes, Domínios, Trading Desk e MCP | Leitura direta ou na aba **📡 API Docs** do Playground (`http://localhost:3000`) |
 | [`static/install_and_usage.html`](static/install_and_usage.html) | 🖥️ Web Interativa | Guia visual de instalação com seletor de SO (Win/Linux/Mac) e simulador CLI | `cargo run -p alr-cli -- install-guide` |
 | [`static/showcase.html`](static/showcase.html) | 🌟 Vitrine Web | Demonstração animada completa: Ciclo cognitivo, 20 nichos, jogos e calculadora de ROI | `cargo run -p alr-cli -- showcase` |
 | [`static/whatsapp_support.html`](static/whatsapp_support.html) | 📱 WhatsApp Desk | Central omnichannel nos 20 nichos com chat ao vivo e auto-aprendizado dinâmico | `cargo run -p alr-cli -- whatsapp` |
@@ -99,8 +111,8 @@ cargo run -p alr-cli -- quickstart
 O **Playground do ALR** é o ambiente oficial unificado para experimentar, validar e auditar **tudo o que o ecossistema ALR oferece**. Ele vai muito além de uma simples API: reúne decisões tipadas em sub-milissegundos, uma **Arena com 8 Jogos Autônomos interativos em Canvas**, suítes completas de Marketing Ops, Segurança e Trading com custo zero de tokens:
 
 <div align="center">
-  <img src="static/playground-hero.png" alt="Playground Oficial ALR - Execução e Linha de Raciocínio" width="100%">
-  <p><em>Figura 1: Playground do ALR em execução com a Linha do Tempo Vertical de Raciocínio (Pipeline DAG), HUD de economia comparativa e barras de probabilidade calibradas.</em></p>
+  <img src="static/playground-hero.png" alt="Playground Oficial ALR - Layout Dual-Sidebar Estilo Canvas e Linha do Tempo de Raciocínio" width="100%">
+  <p><em>Figura 1: Playground do ALR redesenhado com arquitetura Dual-Sidebar (Dock de Ícones primário + Barra lateral secundária com submenus e busca em tempo real), exibindo a Linha do Tempo Vertical de Raciocínio (Pipeline DAG), HUD de economia comparativa e barras de probabilidade calibradas.</em></p>
 </div>
 
 <div align="center">
@@ -147,7 +159,7 @@ cargo run -p alr-cli -- playground-test
 5. [Premissa Central](#-premissa-central)
 4. [Princípios Arquiteturais](#-princípios-arquiteturais)
 5. [O Que o Sistema Faz?](#-o-que-o-sistema-faz)
-6. [Casos de Uso Detalhados (Fases 1 a 31)](#-casos-de-uso-detalhados)
+6. [Casos de Uso Detalhados (Fases 1 a 35)](#-casos-de-uso-detalhados)
    * [Caso 1: Controle Dinâmico em Jogos (Snake)](#caso-1-controle-dinâmico-em-jogos-snake)
    * [Caso 2: Atendimento com Memória Semântica (Customer Support)](#caso-2-atendimento-com-memória-semântica-customer-support)
    * [Caso 3: Automação Web Real no Navegador (Chromium CDP)](#caso-3-automação-web-real-no-navegador-chromium-cdp)
@@ -179,6 +191,10 @@ cargo run -p alr-cli -- playground-test
    * [Caso 29: Vigilância Perimetral CCTV em Tempo Real com Tripwire e Alertas Desktop](#caso-29-vigilância-perimetral-cctv-em-tempo-real-com-tripwire-e-alertas-desktop)
    * [Caso 30: Descoberta Automática de Categorias de E-Commerce com Custo Zero de Tokens](#caso-30-descoberta-automática-de-categorias-de-e-commerce-com-custo-zero-de-tokens)
    * [Caso 31: Otimização Autônoma de Rotas Urbanas (VRP com 50 Entregas, Trânsito Dinâmico e Mão Única)](#caso-31-otimização-autônoma-de-rotas-urbanas-vrp-com-50-entregas-trânsito-dinâmico-e-mão-única)
+   * [Caso 32: Bancada de Decisão CSV em Lote em CPU (Inspirado no Open-Jev com Throughput > 50.000 linhas/s)](#caso-32-bancada-de-decisão-csv-em-lote-em-cpu-throughput--50000-linhass)
+   * [Caso 33: As 5 Recipes Especializadas de Decisão do JEV (Valores, Telefones, Schemas, Citações e SQL Guardrail)](#caso-33-as-5-recipes-especializadas-de-decisão-do-jev)
+   * [Caso 34: Protocolo A2A (Agent-to-Agent), Pipelines Multiagente & Cards de Aprovação HitL (Inspirado no AgentScope)](#caso-34-protocolo-a2a-agent-to-agent-pipelines-multiagente--cards-de-aprovação-hitl)
+   * [Caso 35: Ciclo de Aprendizado Universal no Playground (Sugestão Local, Correção Humana e Reuso Determinístico)](#caso-35-ciclo-de-aprendizado-universal-no-playground-sugestão-local-correção-humana-e-reuso-determinístico)
 7. [Detector Universal de Loops & Evasão](#-detector-universal-de-loops--evasão)
 8. [Treinamento de Novas Tarefas (Guia & CLI)](#-treinamento-de-novas-tarefas-guia--cli)
 9. [Memória Semântica Vetorial no Qdrant: Geração de Embeddings & Recuperação Autônoma](#-memória-semântica-vetorial-no-qdrant-geração-de-embeddings--recuperação-autônoma)
@@ -792,37 +808,109 @@ Motor determinístico e hierárquico de catalogação de produtos para marketpla
    * Avalia regras determinísticas com pontuação léxica e normalização Softmax local.
 2. **Throughput de Alta Performance em Lote (*Batch*):**
    * Classifica mais de 50.000 produtos por segundo em CPU paralela sem gastar nenhum token de LLM ($0.00 de custo).
-   * Extração automática de tags semânticas e cristalização contínua de novas regras sem intervenção humana.
+   * Extrai tags semânticas e sinaliza visualmente classificações abaixo do limiar de 80% para correção humana segura.
+3. **Ciclo de Auto-Aprendizado Verificável:**
+   * Uma correção confirmada é cristalizada como skill determinística ativa; a mesma entrada é reexecutada imediatamente e passa de *cold start* com baixa confiança para resposta local de 100% sem nova chamada ao professor.
+   * O Playground mostra o painel de ensino, a categoria corrigida e a linha do tempo das skills aprendidas.
+4. **Taxonomia do Usuário com Recuperação Top 3:**
+   * Aceita uma categoria por linha, indexa a lista na memória semântica vetorial isolada por `tenant_id` derivado do conteúdo da lista, recupera os três candidatos mais próximos e restringe a decisão final a esse conjunto.
+   * As similaridades recuperadas são convertidas em participação relativa calibrada antes de virarem confiança, evitando apresentar score bruto como probabilidade.
+   * O campo `memory_backend` declara explicitamente a origem da recuperação (`qdrant` ou `local_vector_fallback` quando o serviço vetorial não está disponível), e a interface expõe o ranking, os escores, o método `semantic_qdrant_retrieval` e o comando cURL reproduzível.
 
 ```bash
 # Executar os testes automatizados dos motores reais da Fase 31
 cargo test -p alr-cli --test phase31_real_engines_playground_tests
 ```
 
-### Caso 31: Otimização Autônoma de Rotas Urbanas (VRP com 50 Entregas, Trânsito Dinâmico e Mão Única)
-Motor de inteligência espacial e logística (`CityRouteOptimizer`) para resolução do problema de roteamento de veículos com janelas de tempo (VRP-TW) e trânsito dinâmico em sub-milissegundos ($< 5$ ms em Rust):
+### Caso 31: Otimização Autônoma de Rotas em Mapa Real (OpenStreetMap, CEP e VRP Dinâmico)
+Motor de inteligência espacial e logística (`CityRouteOptimizer`) para resolução do problema de roteamento de veículos com janelas de tempo (VRP-TW) e trânsito dinâmico em sub-milissegundos ($< 5$ ms em Rust) integrado a **mapa real gratuito (Leaflet + OpenStreetMap)**:
 
 <div align="center">
-  <img src="static/playground-routes-hero.png" alt="Otimizador de Rotas Urbanas ALR" width="100%">
-  <p><em>Figura: Tela do Otimizador de Rotas Urbanas no Playground do ALR calculando autonomamente o trajeto ótimo de 50 paradas com mapa da cidade, linhas de congestionamento, pin reposicionável e manifesto detalhado.</em></p>
+  <img src="static/playground-routes-hero.png" alt="Otimizador de Rotas Urbanas ALR em Mapa Real" width="100%">
+  <p><em>Figura: Otimizador de Rotas Urbanas do ALR operando sobre mapa real do OpenStreetMap (São Paulo / Av. Paulista, CEP 01310-100) com paradas geocodificadas, traçado nas vias, regime de pico e manifesto detalhado.</em></p>
+  <br>
+  <img src="static/playground-routes-repositioned.png" alt="Otimizador de Rotas ALR Reposicionado por CEP no Rio de Janeiro" width="100%">
+  <p><em>Figura: Simulação de reposicionamento instantâneo via CEP 20040-002 (Centro do Rio de Janeiro), com re-geocodificação automática das paradas para logradouros cariocas (Av. Rio Branco, Av. Atlântica, Copacabana, Botafogo) e recálculo da rota em sub-milissegundos.</em></p>
 </div>
 
-1. **Restrições Reais do Cenário Urbano:**
+1. **Mapa Real 100% Gratuito & Geocodificação de CEP:**
+   * **Leaflet + OpenStreetMap:** Camada cartográfica de alta precisão sem custos de API key ou cartografia proprietária, com visualização temática e cobertura completa de vias e logradouros.
+   * **Busca por CEP Brasileiro:** Campo dedicado para digitar qualquer CEP de saída (ex: `01310-100` para SP, `20040-002` para RJ, `30130-010` para BH, `80020-010` para Curitiba, `70040-010` para Brasília), com banco local instantâneo (0 ms) e integração remota com ViaCEP / Nominatim.
+   * **Seletor de Volume de Entregas (N):** Permite simular de 10 a 100 paradas com um clique.
+   * **Logradouros e Coordenadas por Região:** Atribui nomes de ruas reais e coordenadas de latitude/longitude compatíveis com a cidade do CEP selecionado.
+2. **Restrições Reais do Cenário Urbano:**
    * **Centro de Distribuição (Depot Pin Reposicionável):** O usuário pode clicar em qualquer coordenada do mapa para definir o ponto de partida e chegada da van de entregas.
    * **Vias de Mão Única & Penalidade de Conversão:** A matriz de distância dirigida penaliza trajetos contra o fluxo das vias e calcula rotas realistas em formato de grade ortogonal com desvios em esquinas.
    * **Trânsito em Tempo Real com 3 Regimes:** Modela velocidades médias dinâmicas para *Trânsito Fluido* (42 km/h), *Horário de Pico* (28 km/h com vias congestionadas em vermelho/laranja) e *Chuva/Pistas Molhadas* (22 km/h).
    * **Tempo de Parada por Entrega:** Incorpora 5 a 12 minutos por parada para descarga de mercadorias, conferência e coleta de assinaturas.
    * **Teto de Jornada Diária (Turno de 8 Horas):** Calcula a viabilidade do turno do motorista. Se o tempo total (trânsito + paradas) exceder 8 horas, sinaliza automaticamente as entregas excedentes recomendando a alocação de um 2º veículo de apoio.
-2. **Algoritmo Híbrido em Rust (Nearest Neighbor + 2-Opt Local Search):**
+3. **Algoritmo Híbrido em Rust (Nearest Neighbor + 2-Opt Local Search):**
    * Constrói tour guloso inicial ponderado por prioridades (*Normal*, *Alta Prioridade*, *Expresso 2h*).
    * Aplica refinamento local 2-Opt iterativo eliminando cruzamentos de trajetórias e gerando economia típica de **30% a 38% em quilômetros rodados** comparado à ordem sequencial ingênua.
    * Emite estimativas de consumo de combustível (diesel leve) e pegada de carbono ($kg\text{ CO}_2$).
-3. **Simulação Visual com Animação da Van (60 FPS):**
-   * Animação que percorre todos os waypoints pelas ruas da cidade desenhando o avanço em tempo real até o retorno ao depósito.
-
+4. **Simulação Visual com Animação da Van (60 FPS):**
+   * Animação que percorre todos os waypoints pelas ruas reais da cidade desenhando o avanço em tempo real até o retorno ao depósito.
 ```bash
 # Executar os testes automatizados do Otimizador de Rotas Urbanas da Fase 32
 cargo test -p alr-cli --test phase32_city_routing_tests
+```
+
+### Caso 32: Bancada de Decisão CSV em Lote em CPU (Throughput > 50.000 linhas/s)
+Bancada analítica de alta performance inspirada no Workbench do Open-Jev, porém executada **100% nativa em Rust** sem necessidade de GPU pesada ou chamadas de API externas:
+1. **Importação e Parsing RFC 4180:** Permite colar texto multilinhas ou carregar arquivos CSV contendo dezenas ou centenas de registros de clientes, transações ou chamados.
+2. **Classificação Determinística em CPU:** Mapeia categorias e palavras-chave processando cada linha em $< 20$ µs, com throughput superior a **50.000 linhas por segundo** em CPU.
+3. **Exportação de CSV Enriquecido:** Gera e faz download imediato do arquivo CSV com as colunas originais preservadas e as colunas `alr_previsao` e `alr_confianca` anexadas.
+
+### Caso 33: As 5 Recipes Especializadas de Decisão do JEV
+Conjunto de ferramentas analíticas determinísticas em sub-microssegundos superando os modelos 27B do JEV:
+1. **Extração de Quantias Monetárias (`AmountExtractor`):** Normalização de moedas (`BRL`, `USD`, `EUR`) com suporte bidirecional a pontuação brasileira (*R$ 14.400,50*) e internacional (*$14,400.50*).
+2. **Validação de Telefones e WhatsApp (`PhoneValidator`):** Normalização E.164 (`+5511984551234`), identificação de DDDs e nono dígito móvel, com rejeição de sequências fakes.
+3. **Alinhamento Semântico de Schemas (`EntityAligner`):** Mapeamento automático de campos discrepantes entre bancos de dados heterogêneos (`cli_nome` $\leftrightarrow$ `customer_name`, `num_ped` $\leftrightarrow$ `order_id`).
+4. **Verificador de Citações RAG (`CitationChecker`):** Auditoria formal de fidelidade (*Faithfulness*) que detecta alucinações comparando respostas contra documentos canônicos.
+5. **Guardrail de Segurança SQL (`SqlGuardrail`):** Auditoria estática de consultas que bloqueia comandos destrutivos (`DROP`, `DELETE sem WHERE`) e ataques de SQL Injection (`OR 1=1`).
+
+### Caso 34: Protocolo A2A (Agent-to-Agent), Pipelines Multiagente & Cards de Aprovação HitL
+Camada de orquestração multiagente inspirada no AgentScope, operando sobre decisões locais System 1:
+1. **Protocolo A2A Padronizado (`A2AMessage`):** Comunicação estruturada entre agentes heterogêneos (`agent_triage` $\to$ `agent_finance` $\to$ `agent_guardrail`) com chaves de idempotência e carimbos de tempo UTC.
+2. **Cards de Aprovação Humana (*HitL Approval Card*):** Submissão de operações financeiras ou mutações críticas para revisão de supervisor humano com ações de `Aprovar`, `Rejeitar` ou `Modificar`.
+3. **Visualizador de Diff (*DiffPreview*):** Comparação linha por linha de alterações de código ou dados com destaque visual unificado de adições e remoções antes da aplicação.
+
+```bash
+# Executar os testes automatizados da Fase 33 (Workbench, Recipes e A2A)
+cargo test -p alr-cli --test phase33_competitor_advancement_tests
+```
+
+### Caso 35: Ciclo de Aprendizado Universal no Playground (Sugestão Local, Correção Humana e Reuso Determinístico)
+Toda tela do Playground Universal sabe ensinar o runtime, não apenas executá-lo. A promessa central do ALR — *a LLM pode ensinar o agente, mas não precisa controlar permanentemente o agente* — é demonstrável de ponta a ponta em qualquer módulo:
+
+1. **Detecção de Baixa Confiança:** Quando uma inferência retorna confiança abaixo do limiar de 80% (por exemplo, um produto novo classificado em `20%` via *cold start*), a interface sinaliza visualmente o caso e habilita o ciclo de ensino.
+2. **Sugestão Local da Resposta Correta (`POST /api/v1/learning/suggest`):** O próprio runtime propõe a resposta provável, sem qualquer chamada externa. Dois motores locais atuam:
+   * *Reranking de candidatos*: quando a pergunta declara opções, critérios ou categorias, cada candidato é pontuado pelo texto do seu critério (não apenas pelo rótulo) com aderência léxica de radical e similaridade de vetor semântico, com palavras funcionais descartadas para não gerar falso positivo.
+   * *Heurísticas de risco*: para proposições binárias (`noul`), o estado é confrontado com sinais de destruição/irreversibilidade e com a existência declarada de salvaguardas. Ausência de evidência decisiva devolve `null` e escala para julgamento humano, em vez de adivinhar.
+3. **Correção Humana Cristalizada (`POST /api/v1/learning/correct`):** A resposta confirmada é persistida em `data/playground_learning.json` (`LearningLedger`) e, no módulo de e-commerce, também se propaga como regra determinística do `ProductCategorizerEngine`.
+4. **Prova de Reuso (`POST /api/v1/learning/replay`):** O mesmo estado é reexecutado e passa a ser respondido com `100%` de confiança pelo método `crystallized_rule` em poucos microssegundos, com contador de reutilizações — sem novo professor e com custo `$0.0000000`.
+5. **Painel Único em Todas as Telas:** Cada módulo registra sua última requisição (`module`, `state`, `question`, `answer`, `confidence`, `endpoint`, `payload`), de modo que o painel lateral exibe simultaneamente o comando `cURL` reproduzível daquela chamada, o bloco de ensino e o inventário de skills aprendidas (`GET /api/v1/learning/skills`).
+
+```bash
+# Subir o Playground e executar o ciclo completo de aprendizado
+cargo run -p alr-cli -- playground --port 3000
+
+# Sugestão local da resposta correta (zero tokens)
+curl -s -X POST http://localhost:3000/api/v1/learning/suggest \
+  -H "Content-Type: application/json" \
+  -d '{"module":"ecommerce","state":"Adesivo Decorativo Parede Unicórnio Glitter","question":{"custom_categories":["Eletrônicos > Celulares","Casa > Decoração de Parede"]}}'
+
+# Cristalizar a correção humana e comprovar o reuso determinístico
+curl -s -X POST http://localhost:3000/api/v1/learning/correct \
+  -H "Content-Type: application/json" \
+  -d '{"module":"ecommerce","state":"Adesivo Decorativo Parede Unicórnio Glitter","wrong_answer":"Eletrônicos","correct_answer":"Casa > Decoração de Parede","confidence_before":20.0}'
+
+curl -s -X POST http://localhost:3000/api/v1/learning/replay \
+  -H "Content-Type: application/json" \
+  -d '{"module":"ecommerce","state":"Adesivo Decorativo Parede Unicórnio Glitter"}'
+
+# Regressão automatizada do motor de sugestão e da assinatura de estado
+cargo test -p alr-cli --test phase35_playground_learning_cycle_tests
 ```
 ---
 
@@ -1559,7 +1647,12 @@ cargo run -p alr-cli -- playground --port 3000
 ```
 ---
 
-## 📚 Índice de Documentação Técnica
+## 📚 Índice de Documentação Técnica & Central de Conhecimento
+
+<div align="center">
+  <img src="static/playground-tutorials-modern.png" alt="Central de Conhecimento & Tutoriais ALR - UI Moderna e Escaneável" width="100%" />
+  <p><em>Nova Central de Conhecimento e Tutoriais do ALR com Hero Card de métricas, cards categorizados com ícones temáticos, barra de busca rápida em tempo real, comparativo Abordagem Tradicional vs ALR e diagrama do Ciclo Cognitivo em 4 passos.</em></p>
+</div>
 
 * **Auditoria e Certificação:**
   * [`docs/final-certification-report.md`](docs/final-certification-report.md): Relatório oficial de certificação independente.

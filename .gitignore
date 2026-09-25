@@ -5,6 +5,7 @@ Cargo.lock
 *.db-journal
 *.db-wal
 *.db-shm
+data/playground_learning.json
 .env
 .env.local
 node_modules/

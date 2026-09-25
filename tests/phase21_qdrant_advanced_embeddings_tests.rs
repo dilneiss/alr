@@ -154,7 +154,8 @@ async fn test_qdrant_collection_advanced_config_and_scalar_quantization() {
 
     let embedder = HighDimensionalEmbeddingProvider::bge_small_384();
     let vectorizer = Bm25SparseVectorizer::new();
-    let tenant = "tenant_phase21";
+    let tenant_str = format!("tenant_phase21_{}", uuid::Uuid::new_v4().simple());
+    let tenant = tenant_str.as_str();
 
     let content = "Instruções de segurança para cartão clonado e contestação ord_77112.";
     let dense_vec = embedder.compute_vector(content);

@@ -148,6 +148,18 @@ path = "../../tests/phase31_real_engines_playground_tests.rs"
 name = "phase32_city_routing_tests"
 path = "../../tests/phase32_city_routing_tests.rs"
 
+[[test]]
+name = "phase33_competitor_advancement_tests"
+path = "../../tests/phase33_competitor_advancement_tests.rs"
+
+[[test]]
+name = "phase34_jev_and_agentscope_supremacy_tests"
+path = "../../tests/phase34_jev_and_agentscope_supremacy_tests.rs"
+
+[[test]]
+name = "phase35_playground_learning_cycle_tests"
+path = "../../tests/phase35_playground_learning_cycle_tests.rs"
+
 
 [dependencies]
 alr-core = { workspace = true }

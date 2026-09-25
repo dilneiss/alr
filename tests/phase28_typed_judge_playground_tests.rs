@@ -244,3 +244,197 @@ fn test_json_serialization_with_cost_comparison() {
     assert!(json_str.contains("\"jev_cost\": 0.000016128"));
     assert!(json_str.contains("\"cloud_llm_cost\": 0.0025"));
 }
+
+/// 7. TESTE DINÂMICO: TRIAGEM GOOGLE ADS SE ADAPTA DINAMICAMENTE QUANDO O ESTADO É MODIFICADO
+#[tokio::test]
+async fn test_dynamic_search_triage_adapts_to_buyer_vs_researcher_vs_junk() {
+    let engine = JevTypedJudgeEngine::new();
+    let base_preset = JevPlaygroundPreset::search_triage();
+
+    // Cenário A: Usuário altera o termo para intenção de COMPRA
+    let mut req_buyer = base_preset.request.clone();
+    req_buyer.state =
+        "Termo de busca no Google: 'onde comprar licença anual enterprise para minha empresa'"
+            .to_string();
+    let resp_buyer = engine
+        .evaluate(&req_buyer)
+        .expect("Buyer eval must succeed");
+    match resp_buyer.answers.get("search_intent").unwrap() {
+        JevAnswerOutput::Choice {
+            choice,
+            probabilities,
+            confidence,
+        } => {
+            assert_eq!(
+                choice, "buyer",
+                "Deve escolher 'buyer' para busca com intenção de compra, obteve: {}",
+                choice
+            );
+            assert!(*confidence >= 0.60, "Confiança deve ser >= 60%");
+            assert!(
+                probabilities.get("buyer").unwrap_or(&0.0)
+                    > probabilities.get("junk_negative").unwrap_or(&0.0)
+            );
+        }
+        _ => panic!("Expected Choice answer type"),
+    }
+
+    // Cenário B: Usuário altera o termo para TUTORIAL / PESQUISA
+    let mut req_research = base_preset.request.clone();
+    req_research.state =
+        "Termo de busca no Google: 'tutorial e documentação de como funciona a api'".to_string();
+    let resp_research = engine
+        .evaluate(&req_research)
+        .expect("Research eval must succeed");
+    match resp_research.answers.get("search_intent").unwrap() {
+        JevAnswerOutput::Choice {
+            choice,
+            probabilities,
+            ..
+        } => {
+            assert_eq!(
+                choice, "researcher",
+                "Deve escolher 'researcher' para busca informativa, obteve: {}",
+                choice
+            );
+            assert!(
+                probabilities.get("researcher").unwrap_or(&0.0)
+                    > probabilities.get("buyer").unwrap_or(&0.0)
+            );
+        }
+        _ => panic!("Expected Choice answer type"),
+    }
+
+    // Cenário C: Termo de desperdício (PIRATA / CRACK)
+    let mut req_junk = base_preset.request.clone();
+    req_junk.state =
+        "Termo de busca no Google: 'download gratis pirata crack serial key 2026'".to_string();
+    let resp_junk = engine.evaluate(&req_junk).expect("Junk eval must succeed");
+    match resp_junk.answers.get("search_intent").unwrap() {
+        JevAnswerOutput::Choice { choice, .. } => {
+            assert_eq!(
+                choice, "junk_negative",
+                "Deve escolher 'junk_negative' para termos de desperdício"
+            );
+        }
+        _ => panic!("Expected Choice answer type"),
+    }
+}
+
+/// 8. TESTE DINÂMICO: ROTEAMENTO DE SUPORTE SE ADAPTA DINAMICAMENTE QUANDO O ESTADO É MODIFICADO
+#[tokio::test]
+async fn test_dynamic_support_routing_adapts_to_technical_vs_sales_vs_billing() {
+    let engine = JevTypedJudgeEngine::new();
+    let base_preset = JevPlaygroundPreset::support_routing();
+
+    // Cenário A: Falha técnica / Bug / 500
+    let mut req_tech = base_preset.request.clone();
+    req_tech.state =
+        "Nosso cluster caiu, o webhook está retornando código HTTP 500 e erro de timeout interno."
+            .to_string();
+    let resp_tech = engine
+        .evaluate(&req_tech)
+        .expect("Technical eval must succeed");
+    match resp_tech.answers.get("team").unwrap() {
+        JevAnswerOutput::Choice { choice, .. } => {
+            assert_eq!(
+                choice, "technical",
+                "Deve rotear para 'technical' quando houver falhas de sistema"
+            );
+        }
+        _ => panic!("Expected Choice answer type"),
+    }
+
+    // Cenário B: Cotação / Comercial
+    let mut req_sales = base_preset.request.clone();
+    req_sales.state = "Gostaria de saber o preço do plano corporativo para 200 usuários e como agendar uma demonstração.".to_string();
+    let resp_sales = engine
+        .evaluate(&req_sales)
+        .expect("Sales eval must succeed");
+    match resp_sales.answers.get("team").unwrap() {
+        JevAnswerOutput::Choice { choice, .. } => {
+            assert_eq!(
+                choice, "sales",
+                "Deve rotear para 'sales' quando o cliente pedir preços e propostas"
+            );
+        }
+        _ => panic!("Expected Choice answer type"),
+    }
+}
+
+/// 9. TESTE DINÂMICO: QUALIFICAÇÃO DE LEAD SE ADAPTA AO NÍVEL DE INTENÇÃO E PRAZO
+#[tokio::test]
+async fn test_dynamic_lead_qualification_adapts_to_low_vs_high_urgency() {
+    let engine = JevTypedJudgeEngine::new();
+    let base_preset = JevPlaygroundPreset::lead_qualification();
+
+    // Cenário A: Lead frio / curiosidade sem orçamento
+    let mut req_cold = base_preset.request.clone();
+    req_cold.state =
+        "Just browsing the site, no stated need or timeline, no current budget.".to_string();
+    let resp_cold = engine
+        .evaluate(&req_cold)
+        .expect("Cold lead eval must succeed");
+    match resp_cold.answers.get("buying_intent").unwrap() {
+        JevAnswerOutput::Score {
+            score,
+            probabilities,
+            ..
+        } => {
+            assert!(
+                *score <= 1.5,
+                "Lead sem urgência e sem orçamento deve ter score baixo (<= 1.5), obteve: {}",
+                score
+            );
+            assert!(
+                probabilities.get("0").unwrap_or(&0.0) + probabilities.get("1").unwrap_or(&0.0)
+                    >= 0.50
+            );
+        }
+        _ => panic!("Expected Score answer type"),
+    }
+
+    // Cenário B: Lead urgente com prazo rígido
+    let mut req_hot = base_preset.request.clone();
+    req_hot.state =
+        "We have an approved budget and need to transact before our contract expires this Friday."
+            .to_string();
+    let resp_hot = engine
+        .evaluate(&req_hot)
+        .expect("Hot lead eval must succeed");
+    match resp_hot.answers.get("buying_intent").unwrap() {
+        JevAnswerOutput::Score { score, .. } => {
+            assert!(
+                *score >= 2.0,
+                "Lead urgente com orçamento deve ter score alto (>= 2.0), obteve: {}",
+                score
+            );
+        }
+        _ => panic!("Expected Score answer type"),
+    }
+}
+
+/// 10. TESTE DINÂMICO: GUARDRAIL NOUL SE ADAPTA DINAMICAMENTE AO LIMIAR (THRESHOLD) E NATUREZA DA OPERAÇÃO
+#[tokio::test]
+async fn test_dynamic_agent_guardrail_threshold_and_safety_adaptation() {
+    let engine = JevTypedJudgeEngine::new();
+    let base_preset = JevPlaygroundPreset::agent_guardrail();
+
+    // Cenário A: Modifica a ação para leitura com backup
+    let mut req_safe = base_preset.request.clone();
+    req_safe.state = "Task: list active sessions. Proposed tool call: select_users(limit=10). Backup taken: full backup verified, read-only replica.".to_string();
+    let resp_safe = engine
+        .evaluate(&req_safe)
+        .expect("Safe guardrail eval must succeed");
+    match resp_safe.answers.get("safe_to_run").unwrap() {
+        JevAnswerOutput::Noul { noul } => {
+            assert!(
+                *noul >= 0.80,
+                "Operação de leitura com réplica segura deve ter probabilidade >= 80%, obteve: {}",
+                noul
+            );
+        }
+        _ => panic!("Expected Noul answer type"),
+    }
+    assert_eq!(resp_safe.ui_decision.unwrap().status, "execute");
+}

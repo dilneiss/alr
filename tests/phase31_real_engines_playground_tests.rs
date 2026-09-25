@@ -77,8 +77,8 @@ fn test_real_cctv_temporal_difference_and_breach() {
     assert_eq!(res1["toast_dispatched"], true);
 }
 
-#[tokio::test]
-async fn test_real_ecommerce_product_categorizer() {
+#[test]
+fn test_real_ecommerce_product_categorizer() {
     let engines = PlaygroundRealEngines::new();
 
     // 1. Smartphone Apple
@@ -89,7 +89,6 @@ async fn test_real_ecommerce_product_categorizer() {
             Some(8999.0),
             Some("Smartphone top de linha com chip A17 Pro"),
         )
-        .await
         .expect("Categorize phone failed");
 
     assert_eq!(res_phone["success"], true);
@@ -106,7 +105,6 @@ async fn test_real_ecommerce_product_categorizer() {
             Some(799.90),
             Some("Tênis esportivo para corrida"),
         )
-        .await
         .expect("Categorize shoes failed");
 
     assert_eq!(res_shoes["success"], true);
@@ -114,8 +112,8 @@ async fn test_real_ecommerce_product_categorizer() {
     assert!(path_shoes.contains("Calçados") || path_shoes.contains("Tênis"));
 }
 
-#[tokio::test]
-async fn test_real_ecommerce_batch_throughput() {
+#[test]
+fn test_real_ecommerce_batch_throughput() {
     let engines = PlaygroundRealEngines::new();
 
     let mut batch = Vec::new();
@@ -134,13 +132,69 @@ async fn test_real_ecommerce_batch_throughput() {
         }));
     }
 
-    let res = engines
-        .categorize_batch(&batch)
-        .await
-        .expect("Batch failed");
+    let res = engines.categorize_batch(&batch).expect("Batch failed");
     assert_eq!(res["success"], true);
     assert_eq!(res["total_items"], 50);
     assert!(res["throughput_items_per_sec"].as_u64().unwrap_or(0) >= 50);
+}
+
+#[test]
+fn test_ecommerce_correction_crystallizes_for_next_classification() {
+    let engines = PlaygroundRealEngines::new();
+    let title = "Adesivo Decorativo Parede Unicórnio Glitter";
+
+    let before = engines
+        .categorize_product(title, None, Some(12.9), Some("Adesivo removível infantil"))
+        .expect("Initial categorization failed");
+    assert_eq!(before["method"], "llm_teacher_cold_start");
+    assert_eq!(before["confidence"], 20.0);
+
+    let learned = engines
+        .learn_correction(title, "Casa e Decoração > Decoração de Parede")
+        .expect("Correction crystallization failed");
+    assert_eq!(learned["success"], true);
+    assert_eq!(learned["method"], "crystallized_skill");
+
+    let after = engines
+        .categorize_product(title, None, Some(12.9), Some("Adesivo removível infantil"))
+        .expect("Learned categorization failed");
+    assert_eq!(
+        after["category_path"],
+        "Casa e Decoração > Decoração de Parede"
+    );
+    assert_eq!(after["method"], "deterministic_rule");
+    assert_eq!(after["confidence"], 100.0);
+}
+
+#[tokio::test]
+async fn test_custom_categories_return_ranked_top_three_and_final_pick() {
+    let engines = PlaygroundRealEngines::new();
+    let categories = vec![
+        "Eletrônicos > Notebooks".to_string(),
+        "Moda > Calçados".to_string(),
+        "Casa > Móveis".to_string(),
+        "Eletrônicos > Celulares".to_string(),
+    ];
+
+    let result = engines
+        .categorize_with_custom_categories(
+            "Notebook Dell XPS 13",
+            Some("Dell"),
+            Some(7_000.0),
+            Some("Laptop ultrafino Intel Core i7"),
+            &categories,
+        )
+        .await
+        .expect("Custom categorization failed");
+
+    assert_eq!(result["success"], true);
+    assert_eq!(result["category_path"], "Eletrônicos > Notebooks");
+    assert_eq!(result["method"], "semantic_qdrant_retrieval");
+    let top_three = result["custom_candidates"]
+        .as_array()
+        .expect("Top-three candidates missing");
+    assert_eq!(top_three.len(), 3);
+    assert_eq!(top_three[0]["category"], "Eletrônicos > Notebooks");
 }
 
 #[test]

@@ -69,6 +69,10 @@ pub struct DeliveryStop {
     pub address: String,
     pub x: f64, // Coordenada no Canvas (0.0 a 600.0)
     pub y: f64, // Coordenada no Canvas (0.0 a 450.0)
+    #[serde(default)]
+    pub lat: f64,
+    #[serde(default)]
+    pub lng: f64,
     pub package_weight_kg: f64,
     pub stop_duration_mins: u32,
     pub priority: DeliveryPriority,
@@ -82,6 +86,14 @@ pub struct DepotOrigin {
     pub name: String,
     pub x: f64,
     pub y: f64,
+    #[serde(default)]
+    pub lat: f64,
+    #[serde(default)]
+    pub lng: f64,
+    #[serde(default)]
+    pub cep: Option<String>,
+    #[serde(default)]
+    pub address: Option<String>,
     pub initial_heading_deg: f64,
 }
 
@@ -91,6 +103,10 @@ impl Default for DepotOrigin {
             name: "Centro de Distribuição Central (Depot ALR)".to_string(),
             x: 80.0,
             y: 80.0,
+            lat: -23.5614,
+            lng: -46.6565,
+            cep: Some("01310-100".to_string()),
+            address: Some("Av. Paulista, 1000 - Bela Vista, São Paulo/SP".to_string()),
             initial_heading_deg: 90.0,
         }
     }
@@ -113,6 +129,8 @@ pub struct RouteLeg {
     pub priority: String,
     pub is_late: bool,
     pub waypoints: Vec<(f64, f64)>,
+    #[serde(default)]
+    pub lat_lng_waypoints: Vec<(f64, f64)>,
 }
 
 /// Plano Consolidado de Otimização de Rota Urbana
@@ -136,6 +154,12 @@ pub struct CityOptimizationPlan {
     pub depot: DepotOrigin,
     pub itinerary: Vec<RouteLeg>,
     pub route_polyline: Vec<(f64, f64)>,
+    #[serde(default)]
+    pub stops: Vec<DeliveryStop>,
+    #[serde(default)]
+    pub route_lat_lng_polyline: Vec<(f64, f64)>,
+    #[serde(default)]
+    pub cep_info: Option<String>,
 }
 
 /// Parâmetros de Entrada para a Otimização
@@ -148,6 +172,14 @@ pub struct RouteOptimizationParams {
     pub stop_duration_mins: u32,
     pub shift_hours_limit: f64,
     pub algorithm: String, // "hybrid_2opt", "simulated_annealing"
+    #[serde(default)]
+    pub cep: Option<String>,
+    #[serde(default)]
+    pub lat: Option<f64>,
+    #[serde(default)]
+    pub lng: Option<f64>,
+    #[serde(default)]
+    pub address: Option<String>,
 }
 
 impl Default for RouteOptimizationParams {
@@ -160,6 +192,10 @@ impl Default for RouteOptimizationParams {
             stop_duration_mins: 8,
             shift_hours_limit: 8.0,
             algorithm: "hybrid_2opt".to_string(),
+            cep: Some("01310-100".to_string()),
+            lat: Some(-23.5614),
+            lng: Some(-46.6565),
+            address: Some("Av. Paulista, 1000 - São Paulo/SP".to_string()),
         }
     }
 }
@@ -182,31 +218,136 @@ impl CityRouteOptimizer {
         }
     }
 
-    /// Gera 50 pontos de entrega realistas espalhados pela malha urbana da cidade
-    pub fn generate_sample_deliveries(&self, count: usize, stop_mins: u32) -> Vec<DeliveryStop> {
-        let street_names = [
-            "Av. Paulista",
-            "Rua Augusta",
-            "Av. Brigadeiro Faria Lima",
-            "Rua Oscar Freire",
-            "Av. Rebouças",
-            "Rua da Consolação",
-            "Av. Brasil",
-            "Rua Bela Cintra",
-            "Av. Ibirapuera",
-            "Rua Haddock Lobo",
-            "Av. Santo Amaro",
-            "Rua Pamplona",
-            "Av. 23 de Maio",
-            "Rua Teodoro Sampaio",
-            "Av. Berrini",
-            "Rua Domingos de Morais",
-            "Av. Nove de Julho",
-            "Rua Vergueiro",
-            "Av. Pacaembu",
-            "Rua Voluntários da Pátria",
-        ];
+    /// Retorna catálogo de ruas reais de acordo com a cidade/região do CEP
+    pub fn get_city_streets(city_hint: Option<&str>) -> &'static [&'static str] {
+        let hint = city_hint.unwrap_or("").to_lowercase();
+        if hint.contains("rio")
+            || hint.contains("/rj")
+            || hint.contains("200")
+            || hint.contains("220")
+        {
+            &[
+                "Av. Rio Branco",
+                "Av. Atlântica",
+                "Rua Visconde de Pirajá",
+                "Rua Barata Ribeiro",
+                "Av. N. Sra. de Copacabana",
+                "Rua Voluntários da Pátria",
+                "Av. Presidente Vargas",
+                "Rua São Clemente",
+                "Av. das Américas",
+                "Rua Primeiro de Março",
+                "Praia de Botafogo",
+                "Rua Marquês de São Vicente",
+                "Av. Almirante Barroso",
+                "Rua Jardim Botânico",
+                "Av. Rodrigues Alves",
+                "Rua do Lavradio",
+                "Av. Mem de Sá",
+                "Rua Conde de Bonfim",
+                "Av. Maracanã",
+                "Rua Haddock Lobo",
+            ]
+        } else if hint.contains("belo horizonte") || hint.contains("/mg") || hint.contains("301") {
+            &[
+                "Av. Afonso Pena",
+                "Av. do Contorno",
+                "Av. Amazonas",
+                "Rua da Bahia",
+                "Av. Cristóvão Colombo",
+                "Rua dos Guajajaras",
+                "Av. Brasil",
+                "Rua Fernandes Tourinho",
+                "Av. Getúlio Vargas",
+                "Rua Sergipe",
+            ]
+        } else if hint.contains("curitiba") || hint.contains("/pr") || hint.contains("800") {
+            &[
+                "Rua XV de Novembro",
+                "Av. Sete de Setembro",
+                "Av. Batel",
+                "Rua Marechal Deodoro",
+                "Av. Cândido de Abreu",
+                "Rua Comendador Araújo",
+                "Av. Visconde de Guarapuava",
+                "Rua Mateus Leme",
+            ]
+        } else if hint.contains("brasília") || hint.contains("/df") || hint.contains("700") {
+            &[
+                "Eixo Monumental",
+                "W3 Sul",
+                "W3 Norte",
+                "L2 Sul",
+                "L2 Norte",
+                "Setor Comercial Sul",
+                "Setor Bancário Norte",
+                "Asa Sul CLS 104",
+            ]
+        } else if hint.contains("porto alegre") || hint.contains("/rs") || hint.contains("900") {
+            &[
+                "Av. Ipiranga",
+                "Rua dos Andradas",
+                "Av. Borges de Medeiros",
+                "Rua Padre Chagas",
+                "Av. Goethe",
+                "Av. Assis Brasil",
+            ]
+        } else if hint.contains("salvador") || hint.contains("/ba") || hint.contains("400") {
+            &[
+                "Av. Sete de Setembro",
+                "Av. Tancredo Neves",
+                "Rua Chile",
+                "Av. Oceânica",
+                "Largo da Barra",
+                "Av. Centenário",
+            ]
+        } else if hint.contains("recife") || hint.contains("/pe") || hint.contains("500") {
+            &[
+                "Av. Boa Viagem",
+                "Av. Conde da Boa Vista",
+                "Rua da Aurora",
+                "Av. Agamenon Magalhães",
+                "Rua do Bom Jesus",
+                "Av. Domingos Ferreira",
+            ]
+        } else {
+            &[
+                "Av. Paulista",
+                "Rua Augusta",
+                "Av. Brigadeiro Faria Lima",
+                "Rua Oscar Freire",
+                "Av. Rebouças",
+                "Rua da Consolação",
+                "Av. Brasil",
+                "Rua Bela Cintra",
+                "Av. Ibirapuera",
+                "Rua Haddock Lobo",
+                "Av. Santo Amaro",
+                "Rua Pamplona",
+                "Av. 23 de Maio",
+                "Rua Teodoro Sampaio",
+                "Av. Berrini",
+                "Rua Domingos de Morais",
+                "Av. Nove de Julho",
+                "Rua Vergueiro",
+                "Av. Pacaembu",
+                "Rua Voluntários da Pátria",
+            ]
+        }
+    }
 
+    pub fn generate_sample_deliveries(&self, count: usize, stop_mins: u32) -> Vec<DeliveryStop> {
+        self.generate_sample_deliveries_for_city(count, stop_mins, None)
+    }
+
+    /// Gera pontos de entrega realistas espalhados pela malha urbana da cidade correspondente ao CEP
+    pub fn generate_sample_deliveries_for_city(
+        &self,
+        count: usize,
+        stop_mins: u32,
+        city_hint: Option<&str>,
+    ) -> Vec<DeliveryStop> {
+        let street_names = Self::get_city_streets(city_hint);
         let zones = [
             (140.0, 120.0),
             (220.0, 160.0),
@@ -221,7 +362,6 @@ impl CityRouteOptimizer {
             (360.0, 360.0),
             (460.0, 340.0),
         ];
-
         let mut stops = Vec::with_capacity(count);
 
         for i in 0..count {
@@ -254,6 +394,8 @@ impl CityRouteOptimizer {
                 address: format!("{}, {}", street, number),
                 x: (x * 10.0).round() / 10.0,
                 y: (y * 10.0).round() / 10.0,
+                lat: 0.0,
+                lng: 0.0,
                 package_weight_kg: 0.5 + ((i as f64 * 1.8) % 15.0),
                 stop_duration_mins: stop_mins,
                 priority,
@@ -272,15 +414,38 @@ impl CityRouteOptimizer {
     ) -> Result<CityOptimizationPlan> {
         let t0 = Instant::now();
 
+        let (depot_lat, depot_lng) = match (params.lat, params.lng) {
+            (Some(lat), Some(lng)) if lat.abs() > 0.001 || lng.abs() > 0.001 => (lat, lng),
+            _ => (-23.5614, -46.6565), // Padrão: Av. Paulista, São Paulo
+        };
+
         let depot = DepotOrigin {
             name: "Centro de Distribuição (Depot ALR)".to_string(),
             x: params.depot_x,
             y: params.depot_y,
+            lat: depot_lat,
+            lng: depot_lng,
+            cep: params.cep.clone().or_else(|| Some("01310-100".to_string())),
+            address: params
+                .address
+                .clone()
+                .or_else(|| Some("Av. Paulista, 1000 - São Paulo/SP".to_string())),
             initial_heading_deg: 90.0,
         };
 
-        let stops =
-            self.generate_sample_deliveries(params.num_deliveries, params.stop_duration_mins);
+        let city_hint = params.address.as_deref().or(params.cep.as_deref());
+        let mut stops = self.generate_sample_deliveries_for_city(
+            params.num_deliveries,
+            params.stop_duration_mins,
+            city_hint,
+        );
+        // Atribui coordenadas geográficas reais para cada parada ao redor do CEP do Centro de Distribuição
+        for s in &mut stops {
+            let lat_offset = (s.y - depot.y) * 0.00028;
+            let lng_offset = (s.x - depot.x) * 0.00030;
+            s.lat = ((depot_lat + lat_offset) * 100000.0).round() / 100000.0;
+            s.lng = ((depot_lng + lng_offset) * 100000.0).round() / 100000.0;
+        }
 
         let traffic_mult = match params.traffic_regime.as_str() {
             "fluid" => 1.0,
@@ -342,7 +507,9 @@ impl CityRouteOptimizer {
         // 4. Constrói o itinerário detalhado com horários, trânsito e verificação de turno diário
         let mut itinerary = Vec::with_capacity(n);
         let mut route_polyline = Vec::new();
+        let mut route_lat_lng_polyline = Vec::new();
         route_polyline.push((depot.x, depot.y));
+        route_lat_lng_polyline.push((depot.lat, depot.lng));
 
         let mut current_time_mins = 8.0 * 60.0; // Início do turno às 08:00
         let mut total_distance_km = 0.0;
@@ -351,9 +518,10 @@ impl CityRouteOptimizer {
 
         let mut prev_x = depot.x;
         let mut prev_y = depot.y;
+        let mut prev_lat = depot.lat;
+        let mut prev_lng = depot.lng;
         let mut prev_name = depot.name.clone();
         let mut prev_id = 0;
-
         let mut completed_count = 0;
         let shift_limit_mins = params.shift_hours_limit * 60.0;
         let start_time_mins = 8.0 * 60.0;
@@ -386,6 +554,15 @@ impl CityRouteOptimizer {
                 route_polyline.push(*pt);
             }
 
+            let lat_lng_waypoints = vec![
+                (prev_lat, prev_lng),
+                (prev_lat, stop.lng),
+                (stop.lat, stop.lng),
+            ];
+            for pt in &lat_lng_waypoints {
+                route_lat_lng_polyline.push(*pt);
+            }
+
             let traffic_label =
                 if (step % 5 == 0 && traffic_mult > 1.2) || (stop.x > 300.0 && stop.y > 200.0) {
                     TrafficCongestionLevel::Heavy.as_str()
@@ -412,11 +589,14 @@ impl CityRouteOptimizer {
                 priority: stop.priority.as_str().to_string(),
                 is_late,
                 waypoints,
+                lat_lng_waypoints,
             });
 
             current_time_mins = departure_mins;
             prev_x = stop.x;
             prev_y = stop.y;
+            prev_lat = stop.lat;
+            prev_lng = stop.lng;
             prev_name = stop.address.clone();
             prev_id = stop.id;
         }
@@ -429,6 +609,7 @@ impl CityRouteOptimizer {
             (return_dist_km / (self.base_speed_kmh / traffic_mult).max(12.0)) * 60.0;
         total_transit_mins += return_transit;
         route_polyline.push((depot.x, depot.y));
+        route_lat_lng_polyline.push((depot.lat, depot.lng));
 
         let total_journey_mins = total_transit_mins + total_stop_mins;
         let total_journey_hours = total_journey_mins / 60.0;
@@ -472,6 +653,9 @@ impl CityRouteOptimizer {
             depot,
             itinerary,
             route_polyline,
+            stops,
+            route_lat_lng_polyline,
+            cep_info: params.address.clone(),
         })
     }
 

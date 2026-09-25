@@ -38,6 +38,21 @@ pub enum TradingSignal {
     EarlyExit,
 }
 
+/// Decisão de Trading Calibrada em Sub-Microssegundos via JEV System 1 (Alta Inteligência e Confluência)
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct JevTradingDecision {
+    pub signal: TradingSignal,
+    pub probability_buy: f64,
+    pub probability_sell: f64,
+    pub probability_hold: f64,
+    pub confidence: f64,
+    pub market_regime: String,
+    pub confluence_score: usize, // 0 a 4 pilares ativos
+    pub confluence_factors: Vec<String>,
+    pub position_size_multiplier: f64, // 1.0x a 1.50x baseado em Kelly / Confiança Calibrada
+    pub rationale: String,
+    pub latency_micros: u128,
+}
 /// Representação de uma vela (Candle / Tick) de preço
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Candle {
@@ -996,61 +1011,273 @@ impl CryptoTraderEngine {
     }
 
     /// Avaliação de sinal rápida System 1 em sub-microssegundo
-    pub fn evaluate_signal(
+    /// Avaliação inteligente de confluência multidimensional via JEV System 1 (< 15 µs em CPU)
+    pub fn evaluate_intelligent_decision(
         &self,
         indicators: &TechnicalIndicators,
         current_price: f64,
-    ) -> TradingSignal {
-        // 1. Checagem inviolável de Stop-Loss e Take-Profit se houver posição
+    ) -> JevTradingDecision {
+        let t0 = std::time::Instant::now();
+
+        // 1. Checagens obrigatórias de posição existente
         if let Some(pos) = &self.current_position {
             if pos.is_stop_loss_hit(current_price) {
-                return TradingSignal::StopLoss;
+                return JevTradingDecision {
+                    signal: TradingSignal::StopLoss,
+                    probability_buy: 0.0,
+                    probability_sell: 0.99,
+                    probability_hold: 0.01,
+                    confidence: 0.99,
+                    market_regime: "StopLossExecution".to_string(),
+                    confluence_score: 4,
+                    confluence_factors: vec!["STOP_LOSS_PRICE_BREACH".to_string()],
+                    position_size_multiplier: 0.0,
+                    rationale: format!(
+                        "Preço atual ({:.2}) atingiu o Stop-Loss ({:.2})",
+                        current_price, pos.stop_loss
+                    ),
+                    latency_micros: t0.elapsed().as_micros(),
+                };
             }
             if pos.is_take_profit_hit(current_price) {
-                return TradingSignal::TakeProfit;
+                return JevTradingDecision {
+                    signal: TradingSignal::TakeProfit,
+                    probability_buy: 0.0,
+                    probability_sell: 0.99,
+                    probability_hold: 0.01,
+                    confidence: 0.99,
+                    market_regime: "TakeProfitExecution".to_string(),
+                    confluence_score: 4,
+                    confluence_factors: vec!["TAKE_PROFIT_TARGET_REACHED".to_string()],
+                    position_size_multiplier: 0.0,
+                    rationale: format!(
+                        "Preço atual ({:.2}) atingiu o Take-Profit ({:.2})",
+                        current_price, pos.take_profit
+                    ),
+                    latency_micros: t0.elapsed().as_micros(),
+                };
             }
-            // Encerramento em reversão acentuada
+            // Encerramento inteligente em reversão acentuada
             if pos.side == OrderSide::Long
                 && indicators.rsi_14 > 72.0
                 && indicators.ema_9 < indicators.ema_21
             {
-                return TradingSignal::Sell;
+                return JevTradingDecision {
+                    signal: TradingSignal::Sell,
+                    probability_buy: 0.05,
+                    probability_sell: 0.92,
+                    probability_hold: 0.03,
+                    confidence: 0.92,
+                    market_regime: "OverboughtReversal".to_string(),
+                    confluence_score: 3,
+                    confluence_factors: vec!["RSI_OVERBOUGHT".to_string(), "EMA_BEARISH_CROSS".to_string()],
+                    position_size_multiplier: 0.0,
+                    rationale: "Reversão acentuada de sobrecompra com cruzamento de médias a favor de realização".to_string(),
+                    latency_micros: t0.elapsed().as_micros(),
+                };
             }
             if pos.side == OrderSide::Short
                 && indicators.rsi_14 < 28.0
                 && indicators.ema_9 > indicators.ema_21
             {
-                return TradingSignal::Buy;
+                return JevTradingDecision {
+                    signal: TradingSignal::Buy,
+                    probability_buy: 0.92,
+                    probability_sell: 0.05,
+                    probability_hold: 0.03,
+                    confidence: 0.92,
+                    market_regime: "OversoldReversal".to_string(),
+                    confluence_score: 3,
+                    confluence_factors: vec![
+                        "RSI_OVERSOLD".to_string(),
+                        "EMA_BULLISH_CROSS".to_string(),
+                    ],
+                    position_size_multiplier: 0.0,
+                    rationale: "Reversão de sobrevenda com cruzamento de médias favorável"
+                        .to_string(),
+                    latency_micros: t0.elapsed().as_micros(),
+                };
             }
-            return TradingSignal::Hold;
+            return JevTradingDecision {
+                signal: TradingSignal::Hold,
+                probability_buy: 0.10,
+                probability_sell: 0.10,
+                probability_hold: 0.80,
+                confidence: 0.80,
+                market_regime: "PositionActiveMonitoring".to_string(),
+                confluence_score: 2,
+                confluence_factors: vec!["POSITION_MAINTAINED".to_string()],
+                position_size_multiplier: 0.0,
+                rationale: "Posição aberta dentro dos parâmetros nominais de trailing".to_string(),
+                latency_micros: t0.elapsed().as_micros(),
+            };
         }
 
         // 2. Kill switch bloqueia novas compras
         if self.risk_policy.kill_switch_active {
-            return TradingSignal::Hold;
+            return JevTradingDecision {
+                signal: TradingSignal::Hold,
+                probability_buy: 0.0,
+                probability_sell: 0.0,
+                probability_hold: 1.0,
+                confidence: 1.0,
+                market_regime: "KillSwitchBlocked".to_string(),
+                confluence_score: 0,
+                confluence_factors: vec!["KILL_SWITCH_ACTIVE".to_string()],
+                position_size_multiplier: 0.0,
+                rationale: "Kill switch de risco ativado: novas posições bloqueadas".to_string(),
+                latency_micros: t0.elapsed().as_micros(),
+            };
         }
 
-        // 3. Regras de momentum e confluência técnica (incluindo SuperTrend)
+        // 3. Avaliação Multidimensional dos 4 Pilares de Confluência JEV
+        let mut factors = Vec::new();
+        let mut buy_logits = 0.0f64;
+        let mut sell_logits = 0.0f64;
+        let mut hold_logits = 1.0f64;
+
+        // Pilar 1: Tendência Principal (EMA9 x EMA21 + SuperTrend)
         let trend_up = indicators.ema_9 > indicators.ema_21;
         let trend_down = indicators.ema_9 < indicators.ema_21;
-        let macd_bullish = indicators.macd_histogram > 0.0;
-        let macd_bearish = indicators.macd_histogram < 0.0;
         let supertrend_bull = indicators.supertrend_direction >= 0;
         let supertrend_bear = indicators.supertrend_direction < 0;
 
-        if (indicators.rsi_14 < 35.0 || (trend_up && supertrend_bull))
-            && macd_bullish
-            && indicators.rsi_14 < 70.0
-        {
-            TradingSignal::Buy
-        } else if (indicators.rsi_14 > 65.0 || (trend_down && supertrend_bear))
-            && macd_bearish
-            && indicators.rsi_14 > 30.0
-        {
-            TradingSignal::Sell
-        } else {
-            TradingSignal::Hold
+        if trend_up && supertrend_bull {
+            factors.push("TREND_BULLISH_CONFLUENCE (EMA9>EMA21 & SuperTrend Bull)".to_string());
+            buy_logits += 2.5;
+        } else if trend_down && supertrend_bear {
+            factors.push("TREND_BEARISH_CONFLUENCE (EMA9<EMA21 & SuperTrend Bear)".to_string());
+            sell_logits += 2.5;
         }
+
+        // Pilar 2: Momentum & Oscilador (RSI-14 + MACD Histogram)
+        let macd_bullish = indicators.macd_histogram > 0.0;
+        let macd_bearish = indicators.macd_histogram < 0.0;
+
+        if indicators.rsi_14 < 35.0 && macd_bullish {
+            factors.push("MOMENTUM_OVERSOLD_BOUNCE (RSI < 35 & MACD Bullish)".to_string());
+            buy_logits += 2.2;
+        } else if indicators.rsi_14 > 65.0 && macd_bearish {
+            factors.push("MOMENTUM_OVERBOUGHT_DIVERGENCE (RSI > 65 & MACD Bearish)".to_string());
+            sell_logits += 2.2;
+        } else if indicators.rsi_14 >= 35.0 && indicators.rsi_14 <= 68.0 && macd_bullish {
+            factors.push("MOMENTUM_STEADY_EXPANSION (RSI 35-68 & MACD > 0)".to_string());
+            buy_logits += 1.8;
+        }
+
+        // Pilar 3: Volatilidade & Bollinger Bandwidth (Filtro Anti-Squeeze)
+        if indicators.bollinger_bandwidth > 0.035 && current_price > indicators.bollinger_middle {
+            factors
+                .push("VOLATILITY_EXPANSION_UPPER (Bandwidth > 3.5% & Price > Middle)".to_string());
+            buy_logits += 1.5;
+        } else if indicators.bollinger_bandwidth > 0.035
+            && current_price < indicators.bollinger_middle
+        {
+            factors
+                .push("VOLATILITY_EXPANSION_LOWER (Bandwidth > 3.5% & Price < Middle)".to_string());
+            sell_logits += 1.5;
+        } else if indicators.bollinger_bandwidth <= 0.02 {
+            factors.push("SQUEEZE_CONSOLIDATION (Bandwidth <= 2.0%)".to_string());
+            hold_logits += 1.8;
+        }
+
+        // Pilar 4: Volume de Confirmação
+        if let Some(last_candle) = self.candles.last() {
+            let avg_vol: f64 = if self.candles.len() >= 5 {
+                self.candles
+                    .iter()
+                    .rev()
+                    .take(10)
+                    .map(|c| c.volume)
+                    .sum::<f64>()
+                    / 10.0
+            } else {
+                last_candle.volume
+            };
+            if last_candle.volume > avg_vol * 1.15 {
+                factors.push("VOLUME_SURGE_CONFIRMATION (> 115% da média)".to_string());
+                buy_logits += 1.2;
+            }
+        }
+
+        // Normalização Softmax
+        let max_l = buy_logits.max(sell_logits).max(hold_logits);
+        let exp_buy = (buy_logits - max_l).exp();
+        let exp_sell = (sell_logits - max_l).exp();
+        let exp_hold = (hold_logits - max_l).exp();
+        let sum_exp = exp_buy + exp_sell + exp_hold;
+
+        let p_buy = exp_buy / sum_exp;
+        let p_sell = exp_sell / sum_exp;
+        let p_hold = exp_hold / sum_exp;
+
+        let confluence_score = factors.len();
+        let (signal, regime, sizing_mult, rationale) = if p_buy >= 0.70 && confluence_score >= 2 {
+            let mult = if p_buy >= 0.85 && confluence_score >= 3 {
+                1.50
+            } else if p_buy >= 0.78 {
+                1.25
+            } else {
+                1.00
+            };
+            (
+                TradingSignal::Buy,
+                "HighConfluenceBullishTrend",
+                mult,
+                format!(
+                    "Compra inteligente autorizada com confluência {}x e {:.1}% de probabilidade",
+                    confluence_score,
+                    p_buy * 100.0
+                ),
+            )
+        } else if p_sell >= 0.70 && confluence_score >= 2 {
+            (
+                TradingSignal::Sell,
+                "HighConfluenceBearishTrend",
+                1.00,
+                format!(
+                    "Venda/Saída recomendada com confluência {}x e {:.1}% de probabilidade",
+                    confluence_score,
+                    p_sell * 100.0
+                ),
+            )
+        } else {
+            (
+                TradingSignal::Hold,
+                "NeutralOrConsolidation",
+                0.00,
+                format!(
+                    "Aguardando confluência de alta probabilidade (Hold {:.1}%)",
+                    p_hold * 100.0
+                ),
+            )
+        };
+
+        let confidence = p_buy.max(p_sell).max(p_hold);
+
+        JevTradingDecision {
+            signal,
+            probability_buy: (p_buy * 1000.0).round() / 1000.0,
+            probability_sell: (p_sell * 1000.0).round() / 1000.0,
+            probability_hold: (p_hold * 1000.0).round() / 1000.0,
+            confidence: (confidence * 1000.0).round() / 1000.0,
+            market_regime: regime.to_string(),
+            confluence_score,
+            confluence_factors: factors,
+            position_size_multiplier: sizing_mult,
+            rationale,
+            latency_micros: t0.elapsed().as_micros(),
+        }
+    }
+
+    /// Avaliação de sinal rápida System 1 em sub-microssegundo
+    pub fn evaluate_signal(
+        &self,
+        indicators: &TechnicalIndicators,
+        current_price: f64,
+    ) -> TradingSignal {
+        self.evaluate_intelligent_decision(indicators, current_price)
+            .signal
     }
 
     /// Dimensionamento prudente da posição com base no risco percentual fixo
@@ -1072,6 +1299,25 @@ impl CryptoTraderEngine {
         let max_size_qty = self.risk_policy.max_position_size / entry_price;
 
         let final_qty = raw_qty.min(max_affordable_qty).min(max_size_qty);
+        if final_qty < 0.0001 {
+            0.0
+        } else {
+            (final_qty * 10000.0).floor() / 10000.0
+        }
+    }
+
+    /// Dimensionamento dinâmico inteligente (Kelly-inspired) ponderado pela probabilidade do System 1
+    pub fn calculate_intelligent_position_size(
+        &self,
+        entry_price: f64,
+        stop_loss: f64,
+        multiplier: f64,
+    ) -> f64 {
+        let base_qty = self.calculate_position_size(entry_price, stop_loss);
+        let mult = multiplier.clamp(0.5, 1.5);
+        let max_affordable_qty = (self.cash_balance * 0.98) / entry_price;
+        let max_size_qty = self.risk_policy.max_position_size / entry_price;
+        let final_qty = (base_qty * mult).min(max_affordable_qty).min(max_size_qty);
         if final_qty < 0.0001 {
             0.0
         } else {
@@ -1129,16 +1375,21 @@ impl CryptoTraderEngine {
             }
         }
 
-        // 4. Avalia sinal técnico
-        let signal = self.evaluate_signal(&indicators, current_price);
+        // 4. Avalia decisão analítica inteligente JEV System 1
+        let decision = self.evaluate_intelligent_decision(&indicators, current_price);
+        let signal = decision.signal;
 
         match signal {
-            TradingSignal::Buy if self.current_position.is_none() => self.execute_order(
-                TradingAction::Buy,
-                OrderSide::Long,
-                current_price,
-                "SIGNAL_BUY_CONFLUENCE",
-            ),
+            TradingSignal::Buy if self.current_position.is_none() => {
+                let mult = decision.position_size_multiplier;
+                self.execute_order_with_multiplier(
+                    TradingAction::Buy,
+                    OrderSide::Long,
+                    current_price,
+                    &decision.rationale,
+                    mult,
+                )
+            }
             TradingSignal::Sell if self.current_position.is_none() => {
                 // Para simplificação de paper trading, abre posição Long se houver sinal
                 Ok(None)
@@ -1166,6 +1417,18 @@ impl CryptoTraderEngine {
         price: f64,
         reason: &str,
     ) -> Result<Option<TradeExecution>> {
+        self.execute_order_with_multiplier(action, side, price, reason, 1.0)
+    }
+
+    /// Execução de ordem com aplicação de slippage, taxas da exchange e multiplicador inteligente
+    pub fn execute_order_with_multiplier(
+        &mut self,
+        action: TradingAction,
+        side: OrderSide,
+        price: f64,
+        reason: &str,
+        multiplier: f64,
+    ) -> Result<Option<TradeExecution>> {
         let current_dd = self.drawdown_pct(price);
 
         if action == TradingAction::Buy {
@@ -1174,8 +1437,7 @@ impl CryptoTraderEngine {
             // Cálculo dos preços com Stop-Loss e Take-Profit obrigatórios
             let stop_loss = price * 0.98; // 2% de stop protetivo
             let take_profit = price * 1.04; // 4% de alvo de lucro (2:1 R:R)
-            let quantity = self.calculate_position_size(price, stop_loss);
-
+            let quantity = self.calculate_intelligent_position_size(price, stop_loss, multiplier);
             if quantity <= 0.0 {
                 return Ok(None);
             }
