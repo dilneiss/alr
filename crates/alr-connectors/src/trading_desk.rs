@@ -66,6 +66,18 @@ pub struct ClientLogRequest {
     pub message: String,
     pub details: Option<String>,
 }
+
+/// Requisição para configurar teto máximo de dólares por trade
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SetMaxTradeUsdRequest {
+    pub max_usd: f64,
+}
+
+/// Parâmetros de consulta para simulador contrafactual de dimensionamento
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SizingComparisonQuery {
+    pub simulated_max_usd: Option<f64>,
+}
 /// Resposta genérica da API
 #[derive(Debug, Serialize)]
 pub struct ApiResponse {
@@ -216,6 +228,38 @@ pub async fn post_client_log_handler(
     }))
 }
 
+/// Handler para configurar dinamicamente o teto máximo de entrada em dólares por trade
+pub async fn set_max_trade_usd_handler(
+    State(state): State<TradingDeskState>,
+    Json(req): Json<SetMaxTradeUsdRequest>,
+) -> Json<serde_json::Value> {
+    let mut engine = state.engine.write();
+    engine.set_max_trade_allocation_usd(req.max_usd);
+    state.logger.info(
+        "CONFIG",
+        &format!(
+            "Teto máximo por entrada configurado para ${:.2}",
+            req.max_usd
+        ),
+    );
+    Json(serde_json::json!({
+        "success": true,
+        "max_trade_allocation_usd": req.max_usd,
+        "message": format!("Teto máximo de entrada configurado para ${:.2} com sucesso", req.max_usd)
+    }))
+}
+
+/// Handler para cálculo contrafactual de dimensionamento de trades ("What-If Sizing")
+pub async fn get_sizing_comparison_handler(
+    State(state): State<TradingDeskState>,
+    Query(query): Query<SizingComparisonQuery>,
+) -> Json<crate::trading::TradeSizingComparisonReport> {
+    let sim_max = query.simulated_max_usd.unwrap_or(10.0);
+    let engine = state.engine.read();
+    let report = engine.compute_trade_sizing_comparison(sim_max);
+    Json(report)
+}
+
 /// Cria o Router Axum completo com todas as rotas do Trading Desk (usando logger padrão)
 pub fn create_trading_desk_router(
     engine: Arc<parking_lot::RwLock<MultiAssetTraderEngine>>,
@@ -241,6 +285,14 @@ pub fn create_trading_desk_router_with_logger(
         .route("/api/v1/desk/logs", get(get_desk_logs_handler))
         .route("/api/v1/desk/logs/raw", get(get_desk_raw_logs_handler))
         .route("/api/v1/desk/client-log", post(post_client_log_handler))
+        .route(
+            "/api/v1/desk/set-max-trade-usd",
+            post(set_max_trade_usd_handler),
+        )
+        .route(
+            "/api/v1/desk/sizing-comparison",
+            get(get_sizing_comparison_handler),
+        )
         .route(
             "/static/alr-logo.webp",
             get(|| async {

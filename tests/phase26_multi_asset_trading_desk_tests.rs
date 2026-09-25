@@ -16,7 +16,7 @@ use alr_connectors::trading::{
     asset_baseline_price, generate_synthetic_candles, Candle, DeskStatusSnapshot,
     ExchangeSimulationConfig, LlmMarketRegimeAdvisor, MarketRegime, MultiAssetConfig,
     MultiAssetTraderEngine, OrderSide, RiskRationale, SqliteTradingStore, TechnicalIndicators,
-    TradingAction, TradingPosition, DEFAULT_MULTI_ASSET_BASKET,
+    TradeExecution, TradingAction, TradingPosition, DEFAULT_MULTI_ASSET_BASKET,
 };
 use alr_connectors::trading_desk::{
     create_trading_desk_router, AdjustStopsRequest, ClosePositionRequest, EmergencyStopRequest,
@@ -242,6 +242,7 @@ fn test_multi_asset_portfolio_orchestration_and_limits() {
         max_concurrent_positions: 2, // Limite rígido de no máximo 2 posições simultâneas
         max_portfolio_risk_pct: 10.0,
         max_risk_per_trade_pct: 2.0,
+        max_trade_allocation_usd: 100.0,
         exchange_config: ExchangeSimulationConfig::zero_fee(),
         basket: DEFAULT_MULTI_ASSET_BASKET
             .iter()
@@ -485,4 +486,124 @@ async fn test_trading_desk_axum_http_api_endpoints() {
         .await
         .expect("POST reset-strategy must succeed");
     assert_eq!(resp_reset.status(), reqwest::StatusCode::OK);
+
+    // 9. POST /api/v1/desk/set-max-trade-usd -> Atualiza teto máximo por entrada
+    let resp_set_max = client
+        .post(format!("{}/api/v1/desk/set-max-trade-usd", base_url))
+        .json(&serde_json::json!({ "max_usd": 50.0 }))
+        .send()
+        .await
+        .expect("POST set-max-trade-usd must succeed");
+    assert_eq!(resp_set_max.status(), reqwest::StatusCode::OK);
+
+    // 10. GET /api/v1/desk/sizing-comparison -> Simulador contrafactual What-If
+    let resp_sim = client
+        .get(format!(
+            "{}/api/v1/desk/sizing-comparison?simulated_max_usd=10.0",
+            base_url
+        ))
+        .send()
+        .await
+        .expect("GET sizing-comparison must succeed");
+    assert_eq!(resp_sim.status(), reqwest::StatusCode::OK);
+    let sim_report: alr_connectors::trading::TradeSizingComparisonReport =
+        resp_sim.json().await.unwrap();
+    assert_eq!(sim_report.simulated_max_trade_usd, 10.0);
+}
+
+#[test]
+fn test_max_trade_dollar_allocation_enforcement() {
+    let config = MultiAssetConfig {
+        initial_capital: 50000.0,
+        max_trade_allocation_usd: 50.0, // Teto rígido de $50 por trade
+        exchange_config: ExchangeSimulationConfig::zero_fee(),
+        ..Default::default()
+    };
+
+    let mut desk = MultiAssetTraderEngine::new(config);
+    assert_eq!(desk.config.max_trade_allocation_usd, 50.0);
+
+    let btc = desk.engines.get_mut("BTC-USDT").unwrap();
+    // Tenta dimensionar compra a $60,000 com Stop a 2% ($58,800)
+    let qty = btc.calculate_position_size(60000.0, 58800.0);
+    let allocated_usd = qty * 60000.0;
+
+    assert!(
+        allocated_usd <= 50.0,
+        "Allocated amount ${:.2} must not exceed $50.00 ceiling",
+        allocated_usd
+    );
+    assert!(allocated_usd > 0.0, "Must allocate valid non-zero amount");
+
+    // Atualiza dinamicamente o teto para $25.0
+    desk.set_max_trade_allocation_usd(25.0);
+    assert_eq!(desk.config.max_trade_allocation_usd, 25.0);
+
+    let eth = desk.engines.get_mut("ETH-USDT").unwrap();
+    let eth_qty = eth.calculate_position_size(3500.0, 3430.0);
+    let eth_allocated = eth_qty * 3500.0;
+
+    assert!(
+        eth_allocated <= 25.0,
+        "Updated allocation ${:.2} must not exceed $25.00 ceiling",
+        eth_allocated
+    );
+}
+
+#[test]
+fn test_what_if_trade_sizing_comparison_calculation() {
+    let mut desk = MultiAssetTraderEngine::new(MultiAssetConfig::default());
+
+    // Simula 2 trades encerrados:
+    // Trade 1: Custo real $50.00, PnL real +$5.00 (+10% gain)
+    let btc = desk.engines.get_mut("BTC-USDT").unwrap();
+    btc.trade_history.push(TradeExecution {
+        id: "t1".to_string(),
+        timestamp: 1700000000,
+        asset: "BTC-USDT".to_string(),
+        action: TradingAction::ClosePosition,
+        side: OrderSide::Long,
+        price: 55.0,
+        quantity: 1.0,
+        fee: 0.0,
+        slippage: 0.0,
+        realized_pnl: Some(5.0),
+        reason: "PROFIT".to_string(),
+    });
+
+    // Trade 2: Custo real $60.00, PnL real -$3.00 (-5% loss)
+    btc.trade_history.push(TradeExecution {
+        id: "t2".to_string(),
+        timestamp: 1700000100,
+        asset: "BTC-USDT".to_string(),
+        action: TradingAction::ClosePosition,
+        side: OrderSide::Long,
+        price: 57.0,
+        quantity: 1.0,
+        fee: 0.0,
+        slippage: 0.0,
+        realized_pnl: Some(-3.0),
+        reason: "STOP".to_string(),
+    });
+
+    // Executa análise contrafactual com teto de $10.00 por entrada
+    let report = desk.compute_trade_sizing_comparison(10.0);
+
+    assert_eq!(report.total_closed_trades, 2);
+    assert_eq!(report.winning_trades, 1);
+    assert_eq!(report.losing_trades, 1);
+    assert_eq!(report.win_rate_pct, 50.0);
+
+    assert!(report.real_total_invested_usd > 100.0);
+    assert_eq!(report.real_total_pnl_usd, 2.0); // +5 - 3 = +2
+
+    // Simulado:
+    // Com teto de $10:
+    // Trade 1 escala para $10 (10/50 = 0.2) -> PnL simulado = 5 * 0.2 = +$1.00
+    // Trade 2 escala para $10 (10/60 = 0.1667) -> PnL simulado = -3 * 0.1667 = -$0.50
+    // PnL simulado líquido = +$0.50
+    assert_eq!(report.simulated_total_invested_usd, 20.0);
+    assert!((report.simulated_total_pnl_usd - 0.50).abs() < 0.01);
+    assert!(report.capital_reduction_pct > 80.0);
+    assert!(!report.summary_explanation.is_empty());
 }

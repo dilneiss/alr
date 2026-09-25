@@ -36,8 +36,8 @@ pub use trading::{
     ExchangeSimulationConfig, LlmMarketRegimeAdvisor, MacroRegimeReport, MarketRegime,
     MarketSnapshot, MultiAssetConfig, MultiAssetTraderEngine, OrderBook, OrderSide,
     RiskControlPolicy, RiskPolicy, RiskRationale, SqliteTradingStore, TechnicalIndicators,
-    TradeExecution, TradeExecutionReport, TradingAction, TradingPosition, TradingSignal,
-    DEFAULT_MULTI_ASSET_BASKET,
+    TradeExecution, TradeExecutionReport, TradeSizingComparisonReport, TradingAction,
+    TradingPosition, TradingSignal, DEFAULT_MULTI_ASSET_BASKET,
 };
 pub use trading_desk::*;
 pub use trading_logger::*;

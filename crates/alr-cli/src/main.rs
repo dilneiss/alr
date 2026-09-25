@@ -501,6 +501,8 @@ enum Commands {
         exchange: String, // "binance", "bybit", "paper"
         #[arg(long, default_value = "alr_state.db")]
         db_path: String,
+        #[arg(long, default_value_t = 100.0)]
+        max_trade_usd: f64,
         #[arg(long)]
         open_browser: bool,
     },
@@ -1775,8 +1777,17 @@ async fn main() -> Result<()> {
             exchange,
             db_path,
             open_browser,
+            max_trade_usd,
         } => {
-            run_multi_asset_trading_desk(port, capital, &exchange, &db_path, open_browser).await?;
+            run_multi_asset_trading_desk(
+                port,
+                capital,
+                &exchange,
+                &db_path,
+                max_trade_usd,
+                open_browser,
+            )
+            .await?;
         }
         Commands::FinalAcceptance => {
             println!(
@@ -10626,6 +10637,7 @@ async fn run_multi_asset_trading_desk(
     capital: f64,
     exchange: &str,
     db_path: &str,
+    max_trade_usd: f64,
     open_browser: bool,
 ) -> Result<()> {
     println!(
@@ -10648,6 +10660,10 @@ async fn run_multi_asset_trading_desk(
     );
     println!("  • Cesta de Ativos   : 7 Moedas (BTC, ETH, SOL, BNB, XRP, ADA, DOGE)");
     println!("  • Capital Alocado   : ${:.2}", capital);
+    println!(
+        "  • Teto Entrada/Trade: ${:.2} (Ajustável no Web Cockpit)",
+        max_trade_usd
+    );
     let ex_normalized = exchange.trim().to_lowercase();
     let is_binance = ex_normalized == "binance";
     let logger = TradingDeskLogger::new("logs/trading_desk.log");
@@ -10747,6 +10763,7 @@ async fn run_multi_asset_trading_desk(
         max_concurrent_positions: 3,
         max_portfolio_risk_pct: 10.0,
         max_risk_per_trade_pct: 2.0,
+        max_trade_allocation_usd: max_trade_usd,
         exchange_config,
         basket: DEFAULT_MULTI_ASSET_BASKET
             .iter()

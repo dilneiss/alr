@@ -171,19 +171,199 @@
           <span id="metric-realized-pnl" class="mono font-semibold ml-1.5">$0.00</span>
         </div>
       </div>
-      <div class="flex items-center gap-5">
+      <div class="flex items-center gap-4">
+        <div>
+          <span class="text-slate-400">Pico:</span>
+          <span id="metric-peak-val" class="mono font-semibold text-slate-200 ml-1">$0.00</span>
+        </div>
         <div>
           <span class="text-slate-400">Posições Abertas:</span>
           <span id="metric-active-positions" class="mono font-bold text-cyan-400 ml-1.5">0 / 3</span>
         </div>
         <div>
           <span class="text-slate-400">Max Drawdown:</span>
-          <span id="metric-drawdown" class="mono font-bold text-rose-400 ml-1.5">0.00%</span>
+          <span id="metric-drawdown" class="mono font-bold text-rose-400 ml-1.5">-0.00% (-$0.00)</span>
+        </div>
+        <div class="flex items-center gap-1.5 bg-navy-900 border border-navy-700/80 px-2.5 py-1 rounded-lg">
+          <span class="text-slate-400 text-[11px]">Teto/Trade:</span>
+          <span id="metric-max-trade-val" class="mono font-bold text-cyan-300 text-xs">$100.00</span>
+          <button onclick="openSetMaxTradeModal()" class="text-[10px] text-cyan-400 hover:text-cyan-300 underline font-semibold ml-1" title="Ajustar teto máximo em dólar por trade">Ajustar</button>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Top Active Trades Widget (Visão Geral Consolidada de Todos os Trades) -->
+  <section class="max-w-7xl mx-auto px-4 pt-4 w-full">
+    <div class="glass-panel rounded-xl p-3.5 border border-indigo-500/25 bg-gradient-to-b from-navy-900/95 to-navy-950/95 shadow-xl flex flex-col gap-3">
+      
+      <!-- Widget Top Bar: Title + Aggregated PnL Summary -->
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-navy-800 pb-2.5">
+        <div class="flex items-center gap-2.5">
+          <div class="w-2.5 h-2.5 rounded-full bg-cyan-400 pulse-green"></div>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
+            <span>Painel de Trades Ativos (Visão Geral Multi-Ativo)</span>
+            <span id="active-trades-counter-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">0 Ativos</span>
+          </h2>
+        </div>
+
+        <!-- Quick Summary Stats -->
+        <div class="flex items-center gap-4 text-xs font-medium">
+          <div class="flex items-center gap-1.5">
+            <span class="text-slate-400 text-[11px]">Lucro em Aberto:</span>
+            <span id="widget-winning-sum" class="mono font-bold text-emerald-400">+$0.00 (0)</span>
+          </div>
+          <div class="h-3 w-[1px] bg-slate-700"></div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-slate-400 text-[11px]">Prejuízo em Aberto:</span>
+            <span id="widget-losing-sum" class="mono font-bold text-rose-400">-$0.00 (0)</span>
+          </div>
+          <div class="h-3 w-[1px] bg-slate-700"></div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-slate-400 text-[11px]">PnL Líquido Global:</span>
+            <span id="widget-net-pnl" class="mono font-bold text-slate-200">$0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Trades Grid or Empty Placeholder -->
+      <div id="active-trades-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </section>
+
+  <!-- What-If Trade Sizing Simulator Section -->
+  <section class="max-w-7xl mx-auto px-4 pt-3 w-full">
+    <div class="glass-panel rounded-xl p-3.5 border border-purple-500/25 bg-gradient-to-b from-navy-900/90 to-navy-950/95 shadow-xl flex flex-col gap-3">
+      
+      <!-- Simulator Header & Controls -->
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-navy-800 pb-2.5">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-white">
+            Simulador Contrafactual de Dimensionamento ("What-If" Trade Sizing)
+          </h2>
+          <span class="text-[10px] text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-full font-semibold">Comparativo Dinâmico</span>
+        </div>
+
+        <!-- Simulation Input & Preset Buttons -->
+        <div class="flex items-center gap-2 text-xs">
+          <span class="text-slate-400 text-[11px]">E se a entrada máxima fosse:</span>
+          <div class="flex items-center gap-1">
+            <span class="text-slate-500 mono">$</span>
+            <input id="input-sim-max-usd" type="number" step="1" value="10" min="1" max="10000" class="w-20 px-2 py-1 rounded bg-navy-950 border border-navy-700 text-white font-mono text-xs focus:outline-none focus:border-purple-500" onchange="runSizingComparison()" oninput="runSizingComparison()">
+          </div>
+          <!-- Presets -->
+          <div class="flex rounded-lg overflow-hidden border border-navy-700 bg-navy-900 text-[10px] mono">
+            <button onclick="setSimPreset(5)" class="px-2 py-0.5 hover:bg-navy-800 text-slate-300">$5</button>
+            <button onclick="setSimPreset(10)" class="px-2 py-0.5 hover:bg-navy-800 text-purple-300 font-bold bg-purple-950/60" id="btn-preset-10">$10</button>
+            <button onclick="setSimPreset(25)" class="px-2 py-0.5 hover:bg-navy-800 text-slate-300">$25</button>
+            <button onclick="setSimPreset(50)" class="px-2 py-0.5 hover:bg-navy-800 text-slate-300">$50</button>
+            <button onclick="setSimPreset(100)" class="px-2 py-0.5 hover:bg-navy-800 text-slate-300">$100</button>
+          </div>
+          <button onclick="applySimAsActiveTradeLimit()" class="px-2.5 py-1 rounded bg-purple-600 hover:bg-purple-500 text-white font-semibold text-[11px] transition active:scale-95" title="Adotar este valor como teto ativo de negociação na carteira">
+            Adotar como Teto Real
+          </button>
+        </div>
+      </div>
+
+      <!-- 3-Column Comparative Metrics Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+        
+        <!-- Coluna 1: Cenário Real (Alocação Efetiva) -->
+        <div class="p-3 rounded-xl bg-navy-900/90 border border-navy-800 flex flex-col justify-between gap-2">
+          <div class="flex items-center justify-between border-b border-navy-800 pb-1.5">
+            <span class="font-bold text-slate-300 text-xs flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+              Cenário Real (Capital Utilizado)
+            </span>
+            <span id="sim-real-trades-badge" class="text-[10px] mono text-slate-400">0 trades</span>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400 text-[11px]">Total Alocado nas Entradas:</span>
+              <span id="sim-real-total-invested" class="mono font-bold text-white">$0.00</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400 text-[11px]">Média por Entrada Real:</span>
+              <span id="sim-real-avg-cost" class="mono text-slate-300">$0.00</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400 text-[11px]">PnL Real Obtido:</span>
+              <span id="sim-real-total-pnl" class="mono font-bold text-slate-200">$0.00 (0.00%)</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400 text-[11px]">PnL Médio por Trade:</span>
+              <span id="sim-real-avg-pnl" class="mono text-slate-300">$0.00</span>
+            </div>
+            <div class="flex items-center justify-between text-[10px] mono text-slate-500 pt-1 border-t border-navy-800">
+              <span id="sim-real-max-win" class="text-emerald-400">Max Win: +$0.00</span>
+              <span id="sim-real-max-loss" class="text-rose-400">Max Loss: -$0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coluna 2: Cenário Simulado (Com o teto que você definir) -->
+        <div class="p-3 rounded-xl bg-purple-950/20 border border-purple-800/40 flex flex-col justify-between gap-2">
+          <div class="flex items-center justify-between border-b border-purple-900/50 pb-1.5">
+            <span class="font-bold text-purple-300 text-xs flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+              Cenário Simulado (Teto <span id="sim-target-label">$10.00</span>)
+            </span>
+            <span class="text-[10px] mono text-purple-400 font-semibold">What-If</span>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400 text-[11px]">Capital Simulado Investido:</span>
+              <span id="sim-target-total-invested" class="mono font-bold text-white">$0.00</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400 text-[11px]">Média por Entrada Simulada:</span>
+              <span id="sim-target-avg-cost" class="mono text-purple-200">$0.00</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400 text-[11px]">PnL Simulado com Teto:</span>
+              <span id="sim-target-total-pnl" class="mono font-bold text-slate-200">$0.00 (0.00%)</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400 text-[11px]">PnL Médio Simulado:</span>
+              <span id="sim-target-avg-pnl" class="mono text-purple-200">$0.00</span>
+            </div>
+            <div class="flex items-center justify-between text-[10px] mono text-slate-500 pt-1 border-t border-purple-900/40">
+              <span id="sim-target-max-win" class="text-emerald-400">Max Win: +$0.00</span>
+              <span id="sim-target-max-loss" class="text-rose-400">Max Loss: -$0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coluna 3: Diagnóstico / Eficiência de Capital (Delta) -->
+        <div class="p-3 rounded-xl bg-navy-900/90 border border-navy-800 flex flex-col justify-between gap-2">
+          <div class="flex items-center justify-between border-b border-navy-800 pb-1.5">
+            <span class="font-bold text-cyan-300 text-xs flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+              Impacto no Risco e Capital
+            </span>
+            <span id="sim-delta-badge" class="text-[10px] mono px-1.5 py-0.2 rounded font-bold bg-cyan-500/20 text-cyan-300">Delta</span>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400 text-[11px]">Redução de Capital Exposto:</span>
+              <span id="sim-reduction-pct" class="mono font-bold text-emerald-400">0.0% a menos</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400 text-[11px]">Diferença Absoluta no PnL:</span>
+              <span id="sim-pnl-diff" class="mono font-bold text-slate-300">$0.00</span>
+            </div>
+            <div id="sim-explanation-text" class="text-[11px] text-slate-300 leading-relaxed bg-navy-950 p-2 rounded-lg border border-navy-800">
+              Ajuste o valor acima para comparar instantaneamente os resultados reais versus alocações menores.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
   <!-- 7-Currency Ticker Grid -->
   <section class="max-w-7xl mx-auto px-4 pt-4 w-full">
     <div class="text-xs uppercase font-bold tracking-wider text-slate-400 mb-2 flex items-center justify-between">
@@ -489,6 +669,35 @@
   <footer class="border-t border-navy-800 bg-navy-950 py-3 px-4 text-xs text-slate-500 text-center">
     ALR Autonomous Learning Runtime • Multi-Asset Live Quantitative Desk • Binance Spot Testnet (testnet.binance.vision) • SQLite WAL Mode
   </footer>
+
+  <!-- Modal de Configuração do Teto por Entrada -->
+  <dialog id="modal-set-max-trade" class="bg-navy-900 text-white rounded-2xl p-5 border border-navy-700 shadow-2xl backdrop:bg-black/60 max-w-sm w-full">
+    <div class="flex items-center justify-between border-b border-navy-800 pb-3 mb-3">
+      <h3 class="font-bold text-sm text-white">Configurar Teto por Trade</h3>
+      <button onclick="document.getElementById('modal-set-max-trade').close()" class="text-slate-400 hover:text-white">&times;</button>
+    </div>
+    <p class="text-xs text-slate-300 mb-3">
+      Defina o valor financeiro máximo (em USD) que o robô poderá alocar em <strong>uma única entrada</strong>. Ideal para quem possui carteira menor.
+    </p>
+    <div class="mb-3">
+      <label class="text-[10px] uppercase font-bold text-slate-400">Teto Máximo em Dólares ($)</label>
+      <div class="flex items-center gap-1 mt-1">
+        <span class="text-slate-400 mono">$</span>
+        <input id="input-modal-max-trade" type="number" step="5" min="5" placeholder="Ex: 50.00" class="w-full px-3 py-1.5 rounded bg-navy-950 border border-navy-700 text-white font-mono text-sm focus:outline-none focus:border-cyan-500">
+      </div>
+    </div>
+    <div class="flex gap-1.5 mb-4">
+      <button onclick="setModalPreset(10)" class="flex-1 py-1 rounded bg-navy-950 hover:bg-navy-800 text-[11px] mono border border-navy-800">$10</button>
+      <button onclick="setModalPreset(25)" class="flex-1 py-1 rounded bg-navy-950 hover:bg-navy-800 text-[11px] mono border border-navy-800">$25</button>
+      <button onclick="setModalPreset(50)" class="flex-1 py-1 rounded bg-navy-950 hover:bg-navy-800 text-[11px] mono border border-navy-800">$50</button>
+      <button onclick="setModalPreset(100)" class="flex-1 py-1 rounded bg-navy-950 hover:bg-navy-800 text-[11px] mono border border-navy-800">$100</button>
+      <button onclick="setModalPreset(500)" class="flex-1 py-1 rounded bg-navy-950 hover:bg-navy-800 text-[11px] mono border border-navy-800">$500</button>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="document.getElementById('modal-set-max-trade').close()" class="flex-1 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold">Cancelar</button>
+      <button onclick="submitMaxTradeAllocation()" class="flex-1 py-1.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold">Salvar Teto</button>
+    </div>
+  </dialog>
 
   <!-- Application Logic -->
   <script>
@@ -880,8 +1089,28 @@
       relPnlElem.className = `mono font-semibold ml-1.5 ${deskState.realized_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
       document.getElementById('metric-active-positions').textContent = `${deskState.active_positions_count} / ${deskState.max_positions_allowed}`;
-      document.getElementById('metric-drawdown').textContent = `${deskState.max_drawdown_pct.toFixed(2)}%`;
+      
+      // Max Drawdown com exibição do valor máximo negativo em USD e Pico da Carteira
+      const maxDdAmt = deskState.max_drawdown_amount_usd || (deskState.initial_capital * (deskState.max_drawdown_pct / 100.0));
+      const peakVal = deskState.peak_portfolio_value || deskState.initial_capital;
+      const peakElem = document.getElementById('metric-peak-val');
+      if (peakElem) peakElem.textContent = fmtUSD(peakVal);
 
+      const ddElem = document.getElementById('metric-drawdown');
+      if (ddElem) {
+        const ddSign = deskState.max_drawdown_pct > 0 ? '-' : '';
+        ddElem.textContent = `${ddSign}${deskState.max_drawdown_pct.toFixed(2)}% (${ddSign}${fmtUSD(maxDdAmt)})`;
+        ddElem.className = `mono font-bold text-rose-400 ml-1.5`;
+      }
+
+      // Teto Máximo em Dólar por Trade
+      const maxTradeElem = document.getElementById('metric-max-trade-val');
+      if (maxTradeElem && deskState.max_trade_allocation_usd) {
+        maxTradeElem.textContent = fmtUSD(deskState.max_trade_allocation_usd);
+      }
+
+      // Renderiza o Widget de Trades Ativos no Topo
+      renderActiveTradesWidget(deskState);
       const killBadge = document.getElementById('kill-switch-badge');
       if (deskState.kill_switch_active) {
         killBadge.classList.remove('hidden');
@@ -1145,6 +1374,201 @@
       renderCandlestickChart();
     }
 
+    // Renderizador do Widget de Trades Ativos no Topo
+    function renderActiveTradesWidget(state) {
+      const container = document.getElementById('active-trades-container');
+      const counterBadge = document.getElementById('active-trades-counter-badge');
+      const winSumElem = document.getElementById('widget-winning-sum');
+      const loseSumElem = document.getElementById('widget-losing-sum');
+      const netPnlElem = document.getElementById('widget-net-pnl');
+      if (!container) return;
+
+      const activeAssets = (state.assets || []).filter(a => a.has_position && a.position);
+
+      if (counterBadge) counterBadge.textContent = `${activeAssets.length} ${activeAssets.length === 1 ? 'Ativo' : 'Ativos'}`;
+
+      let winSum = 0.0;
+      let winCount = 0;
+      let loseSum = 0.0;
+      let loseCount = 0;
+      let netPnl = 0.0;
+
+      for (const a of activeAssets) {
+        const pnl = a.position.pnl || 0.0;
+        netPnl += pnl;
+        if (pnl >= 0) {
+          winSum += pnl;
+          winCount++;
+        } else {
+          loseSum += pnl;
+          loseCount++;
+        }
+      }
+
+      if (winSumElem) winSumElem.textContent = `+${fmtUSD(winSum)} (${winCount})`;
+      if (loseSumElem) loseSumElem.textContent = `-${fmtUSD(Math.abs(loseSum))} (${loseCount})`;
+      if (netPnlElem) {
+        const sign = netPnl >= 0 ? '+' : '';
+        netPnlElem.textContent = `${sign}${fmtUSD(netPnl)}`;
+        netPnlElem.className = `mono font-bold ${netPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+      }
+
+      if (activeAssets.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-4 px-4 rounded-xl bg-navy-950/80 border border-navy-800 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2.5 text-slate-300">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 pulse-green flex-shrink-0"></span>
+              <span><strong>Nenhum trade aberto no momento</strong> • Capital 100% líquido em caixa (${fmtUSD(state.cash_balance)}). O motor está varrendo os 7 ativos na Binance Spot Testnet com confluência System 1 (&lt; 20µs).</span>
+            </div>
+            <span class="text-[11px] text-cyan-400 font-mono hidden sm:inline-block">Teto: ${state.max_positions_allowed} Posições</span>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = activeAssets.map(a => {
+        const pos = a.position;
+        const isLong = pos.side.toLowerCase() === 'long';
+        const isProfitable = pos.pnl >= 0;
+        const pnlSign = isProfitable ? '+' : '';
+        const pnlPct = pos.entry_price > 0 ? (pos.pnl / (pos.entry_price * pos.quantity)) * 100.0 : 0.0;
+        
+        // Decisão Atual do Motor em tempo real
+        let decisionBadge = '';
+        let decisionDesc = '';
+        if (pos.trailing_stop_pct && pos.highest_price > pos.entry_price * 1.008) {
+          decisionBadge = 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30';
+          decisionDesc = `🛡️ Trailing Stop Ativo (${fmtUSD(pos.stop_loss)})`;
+        } else if (pos.is_take_profit_hit || a.current_price >= pos.take_profit * 0.995) {
+          decisionBadge = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+          decisionDesc = '🎯 Alvo Iminente (Take-Profit)';
+        } else if (pos.adverse_bars_count >= 2 || pos.max_adverse_excursion_pct >= 1.0) {
+          decisionBadge = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+          decisionDesc = '⚠️ Alerta Momentum / MAE';
+        } else if (isProfitable) {
+          decisionBadge = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+          decisionDesc = '🟢 Operação em Lucro (A Favor)';
+        } else {
+          decisionBadge = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+          decisionDesc = '🔴 Em Recuo (Protegido por Stop)';
+        }
+
+        // Cálculo da Barra Visual de Risco / Retorno (Stop-Loss -> Entrada -> Take-Profit)
+        const totalSpan = Math.abs(pos.take_profit - pos.stop_loss) || 1.0;
+        let progressPct = ((a.current_price - pos.stop_loss) / totalSpan) * 100.0;
+        progressPct = Math.max(0, Math.min(100, progressPct));
+
+        const distSLPts = Math.abs(a.current_price - pos.stop_loss);
+        const distSLPct = a.current_price > 0 ? (distSLPts / a.current_price) * 100.0 : 0.0;
+
+        const distTPPts = Math.abs(pos.take_profit - a.current_price);
+        const distTPPct = a.current_price > 0 ? (distTPPts / a.current_price) * 100.0 : 0.0;
+
+        const borderColor = isProfitable ? 'border-emerald-500/40 hover:border-emerald-500' : 'border-rose-500/40 hover:border-rose-500';
+
+        return `
+          <div class="p-3 rounded-xl bg-navy-900/90 border ${borderColor} transition-all shadow-lg flex flex-col justify-between gap-2.5">
+            <!-- Card Header: Asset + Side + Decision -->
+            <div class="flex items-center justify-between gap-2 border-b border-navy-800 pb-2">
+              <div class="flex items-center gap-2">
+                <button onclick="selectAsset('${a.asset}')" class="font-bold text-white mono text-xs hover:text-cyan-400 transition underline underline-offset-2" title="Clique para focar o gráfico neste ativo">
+                  ${a.asset}
+                </button>
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${isLong ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}">
+                  ${pos.side}
+                </span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${decisionBadge}">
+                ${decisionDesc}
+              </span>
+            </div>
+
+            <!-- Price & Large Floating PnL Display -->
+            <div class="flex items-end justify-between gap-3">
+              <div>
+                <div class="text-[10px] uppercase text-slate-400">Entrada ➔ Atual</div>
+                <div class="mono text-xs font-semibold text-slate-300">
+                  ${fmtUSD(pos.entry_price)} <span class="text-slate-500">➔</span> <span class="text-white font-bold">${fmtUSD(a.current_price)}</span>
+                </div>
+                <div class="text-[10px] text-slate-400 mt-0.5">
+                  Qtd: <span class="mono text-slate-300">${pos.quantity.toFixed(4)}</span> │ MAE: <span class="mono text-rose-400">${(pos.max_adverse_excursion_pct || 0).toFixed(2)}%</span>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-[10px] uppercase text-slate-400">Lucro / Prejuízo</div>
+                <div class="mono text-sm font-bold ${isProfitable ? 'text-emerald-400' : 'text-rose-400'}">
+                  ${pnlSign}${fmtUSD(pos.pnl)}
+                </div>
+                <div class="mono text-[11px] font-semibold ${isProfitable ? 'text-emerald-400' : 'text-rose-400'}">
+                  ${pnlSign}${pnlPct.toFixed(2)}%
+                </div>
+              </div>
+            </div>
+
+            <!-- Visual Risk/Reward Progress Bar (Termômetro Visual R:R) -->
+            <div class="flex flex-col gap-1 pt-1">
+              <div class="flex items-center justify-between text-[10px] mono text-slate-400">
+                <span class="text-rose-400">SL: -${fmtPts(distSLPts)} (-${distSLPct.toFixed(2)}%)</span>
+                <span class="text-slate-500">R:R 1:2.0</span>
+                <span class="text-emerald-400">TP: +${fmtPts(distTPPts)} (+${distTPPct.toFixed(2)}%)</span>
+              </div>
+              <div class="w-full h-2 rounded-full bg-navy-950 overflow-hidden border border-navy-800 relative">
+                <div class="h-full rounded-full transition-all duration-500 ${isProfitable ? 'bg-gradient-to-r from-amber-500 to-emerald-400' : 'bg-gradient-to-r from-rose-500 to-amber-500'}" style="width: ${progressPct}%;"></div>
+              </div>
+            </div>
+
+            <!-- 1-Click Card Actions -->
+            <div class="flex gap-2 pt-1 border-t border-navy-800">
+              <button onclick="closeActiveTrade('${a.asset}')" class="flex-1 py-1.5 rounded bg-rose-600/90 hover:bg-rose-500 text-white font-semibold text-[11px] transition shadow flex items-center justify-center gap-1 active:scale-95" title="Fechar trade deste ativo imediatamente a mercado">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                Zerar a Mercado
+              </button>
+              <button onclick="lockBreakEvenTrade('${a.asset}', ${pos.entry_price})" class="py-1.5 px-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-[11px] transition border border-slate-700 active:scale-95" title="Mover Stop para o preço de entrada (0 a 0)">
+                Travar 0 a 0
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function closeActiveTrade(asset) {
+      if (!confirm(`Deseja realmente zerar a mercado o trade ativo em ${asset}?`)) return;
+      try {
+        const data = await safeFetchJson('/api/v1/desk/close-position', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ asset, reason: 'WIDGET_1CLICK_CLOSE' })
+        });
+        if (data.success) {
+          showToast(`✓ Trade em ${asset} zerado a mercado com sucesso!`, 'success');
+          await pollDeskStatus();
+          await pollLogs();
+        } else {
+          showToast(`Aviso: ${data.message}`, 'info');
+        }
+      } catch (err) {
+        showToast('Erro ao zerar trade: ' + err.message, 'error');
+      }
+    }
+
+    async function lockBreakEvenTrade(asset, entryPrice) {
+      try {
+        const data = await safeFetchJson('/api/v1/desk/adjust-stops', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ asset, stop_loss: entryPrice })
+        });
+        if (data.success) {
+          showToast(`✓ Stop-Loss de ${asset} movido para o 0 a 0 (${fmtUSD(entryPrice)})!`, 'success');
+          await pollDeskStatus();
+          await pollLogs();
+        }
+      } catch (err) {
+        showToast('Erro ao travar no 0 a 0: ' + err.message, 'error');
+      }
+    }
+
     // 1-Click Operations
     async function triggerEmergencyStop() {
       if (!confirm('Deseja realmente acionar o PÂNICO / ZERAR TODAS as posições imediatamente e ativar o Kill Switch?')) {
@@ -1253,13 +1677,133 @@
     // Auto-resize canvas on window resize
     window.addEventListener('resize', renderCandlestickChart);
 
+    // Funções do Simulador Contrafactual de Dimensionamento ("What-If Sizing")
+    let currentSimMaxUsd = 10;
+
+    async function runSizingComparison() {
+      const input = document.getElementById('input-sim-max-usd');
+      const val = parseFloat(input?.value) || 10;
+      currentSimMaxUsd = val;
+
+      const labelElem = document.getElementById('sim-target-label');
+      if (labelElem) labelElem.textContent = fmtUSD(val);
+
+      try {
+        const report = await safeFetchJson(`/api/v1/desk/sizing-comparison?simulated_max_usd=${val}`);
+        renderSizingReport(report);
+      } catch (err) {
+        console.warn('Sizing comparison fetch failed:', err);
+      }
+    }
+
+    function setSimPreset(val) {
+      const input = document.getElementById('input-sim-max-usd');
+      if (input) input.value = val;
+      runSizingComparison();
+    }
+
+    async function applySimAsActiveTradeLimit() {
+      const val = currentSimMaxUsd;
+      if (!confirm(`Deseja realmente adotar $${val.toFixed(2)} como teto máximo de entrada por trade na carteira ativa?`)) return;
+      try {
+        const data = await safeFetchJson('/api/v1/desk/set-max-trade-usd', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ max_usd: val })
+        });
+        if (data.success) {
+          showToast(`✓ Teto de entrada por trade configurado para ${fmtUSD(val)} com sucesso!`, 'success');
+          await pollDeskStatus();
+          await pollLogs();
+        }
+      } catch (err) {
+        showToast('Erro ao atualizar teto: ' + err.message, 'error');
+      }
+    }
+
+    function renderSizingReport(r) {
+      if (!r) return;
+      
+      document.getElementById('sim-real-trades-badge').textContent = `${r.total_closed_trades} trades`;
+      document.getElementById('sim-real-total-invested').textContent = fmtUSD(r.real_total_invested_usd);
+      document.getElementById('sim-real-avg-cost').textContent = fmtUSD(r.real_avg_trade_cost_usd);
+      
+      const realPnlSign = r.real_total_pnl_usd >= 0 ? '+' : '';
+      document.getElementById('sim-real-total-pnl').textContent = `${realPnlSign}${fmtUSD(r.real_total_pnl_usd)} (${realPnlSign}${r.real_total_pnl_pct.toFixed(2)}%)`;
+      document.getElementById('sim-real-total-pnl').className = `mono font-bold ${r.real_total_pnl_usd >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+      
+      document.getElementById('sim-real-avg-pnl').textContent = `${realPnlSign}${fmtUSD(r.real_avg_pnl_per_trade_usd)}`;
+      document.getElementById('sim-real-max-win').textContent = `Max Win: +${fmtUSD(r.real_max_win_usd)}`;
+      document.getElementById('sim-real-max-loss').textContent = `Max Loss: -${fmtUSD(Math.abs(r.real_max_loss_usd))}`;
+
+      // Simulado
+      document.getElementById('sim-target-total-invested').textContent = fmtUSD(r.simulated_total_invested_usd);
+      document.getElementById('sim-target-avg-cost').textContent = fmtUSD(r.simulated_avg_trade_cost_usd);
+      
+      const simPnlSign = r.simulated_total_pnl_usd >= 0 ? '+' : '';
+      document.getElementById('sim-target-total-pnl').textContent = `${simPnlSign}${fmtUSD(r.simulated_total_pnl_usd)} (${simPnlSign}${r.simulated_total_pnl_pct.toFixed(2)}%)`;
+      document.getElementById('sim-target-total-pnl').className = `mono font-bold ${r.simulated_total_pnl_usd >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+      
+      document.getElementById('sim-target-avg-pnl').textContent = `${simPnlSign}${fmtUSD(r.simulated_avg_pnl_per_trade_usd)}`;
+      document.getElementById('sim-target-max-win').textContent = `Max Win: +${fmtUSD(r.simulated_max_win_usd)}`;
+      document.getElementById('sim-target-max-loss').textContent = `Max Loss: -${fmtUSD(Math.abs(r.simulated_max_loss_usd))}`;
+
+      // Delta
+      document.getElementById('sim-reduction-pct').textContent = `${r.capital_reduction_pct.toFixed(1)}% a menos`;
+      const diffSign = r.pnl_difference_usd >= 0 ? '+' : '';
+      document.getElementById('sim-pnl-diff').textContent = `${diffSign}${fmtUSD(r.pnl_difference_usd)}`;
+      document.getElementById('sim-pnl-diff').className = `mono font-bold ${r.pnl_difference_usd >= 0 ? 'text-emerald-400' : 'text-amber-400'}`;
+      document.getElementById('sim-explanation-text').textContent = r.summary_explanation;
+    }
+
+    // Modal de Teto por Entrada
+    function openSetMaxTradeModal() {
+      const modal = document.getElementById('modal-set-max-trade');
+      const input = document.getElementById('input-modal-max-trade');
+      if (input && deskState?.max_trade_allocation_usd) {
+        input.value = deskState.max_trade_allocation_usd;
+      }
+      if (modal) modal.showModal();
+    }
+
+    function setModalPreset(val) {
+      const input = document.getElementById('input-modal-max-trade');
+      if (input) input.value = val;
+    }
+
+    async function submitMaxTradeAllocation() {
+      const input = document.getElementById('input-modal-max-trade');
+      const val = parseFloat(input?.value);
+      if (isNaN(val) || val <= 0) {
+        showToast('Informe um valor válido em dólares para o teto.', 'error');
+        return;
+      }
+      try {
+        const data = await safeFetchJson('/api/v1/desk/set-max-trade-usd', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ max_usd: val })
+        });
+        if (data.success) {
+          showToast(`✓ Teto de entrada por trade configurado para ${fmtUSD(val)} com sucesso!`, 'success');
+          document.getElementById('modal-set-max-trade').close();
+          await pollDeskStatus();
+          await pollLogs();
+          runSizingComparison();
+        }
+      } catch (err) {
+        showToast('Erro ao atualizar teto: ' + err.message, 'error');
+      }
+    }
     // Initialization
     window.addEventListener('DOMContentLoaded', () => {
       fetchCandles(selectedAsset);
       pollDeskStatus();
       pollLogs();
+      runSizingComparison();
       setInterval(pollDeskStatus, 1200); // 1.2-second live polling
       setInterval(pollLogs, 2500);       // 2.5-second live log polling
+      setInterval(runSizingComparison, 5000); // 5-second sizing comparison refresh
     });
   </script>
 </body>

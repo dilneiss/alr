@@ -70,28 +70,46 @@ cargo run -p alr-cli -- quickstart
 | [`static/alr_cockpit.html`](static/alr_cockpit.html) | 📊 Cockpit Web | Painel de observabilidade de alta performance: SIMD, WASM sandbox e telemetria | `cargo run -p alr-cli -- cockpit` |
 | [`ALR Playground Oficial`](http://localhost:3000) | ⚗️ Web Interativa | Centro Principal de Testes e Decisões Tipadas (100% PT-BR, Linha do Tempo & HUD) | `cargo run -p alr-cli -- playground` |
 
-### ⚗️ Playground Interativo do ALR: O Centro Principal de Testes e Decisões
+### ⚗️ Playground Universal do ALR: O Centro Principal de Testes e Simulações
 
-O **Playground do ALR** é o ambiente oficial para experimentar, validar e auditar todas as decisões do runtime em tempo real. Ele combina a velocidade da inferência local em Rust (sub-milissegundo), custo zero de tokens e a transparência da linha de raciocínio visual:
+O **Playground do ALR** é o ambiente oficial unificado para experimentar, validar e auditar **tudo o que o ecossistema ALR oferece**. Ele vai muito além de uma simples API: reúne decisões tipadas em sub-milissegundos, uma **Arena com 8 Jogos Autônomos interativos em Canvas**, suítes completas de Marketing Ops, Segurança e Trading com custo zero de tokens:
 
 <div align="center">
   <img src="static/playground-execution.png" alt="Playground Oficial ALR - Execução e Linha de Raciocínio" width="100%">
-  <p><em>Figura 1: Playground do ALR em execução com a Linha do Tempo Vertical de Raciocínio (Pipeline de Decisão em Rust), HUD de economia comparativa e barras de probabilidade calibradas.</em></p>
+  <p><em>Figura 1: Playground do ALR em execução com a Linha do Tempo Vertical de Raciocínio (Pipeline DAG), HUD de economia comparativa e barras de probabilidade calibradas.</em></p>
 </div>
 
-#### 🌟 Destaques da Tela do Playground:
-1. **100% em Português:** Interface inteiramente traduzida com clareza nos formulários, métricas e recomendações de código.
-2. **Linha do Tempo Vertical de Raciocínio (Estilo Canva / Figma):** Pipeline conectado contínuo com marcadores circulares numerados (`01. Estado de Entrada`, `02. Analisador Semântico`, `03. Escudo de Risco`, `04. Juiz Calibrado`, `05. Portal de Decisão`) e explicações completas legíveis sem corte.
-3. **HUD de Economia e Comparativo de Custos:** Contadores de tokens entrada/saída com comparação transparente: **ALR $0.0000000 (100% Gratuito Local)** vs JEV $0.0000161 (163x mais caro) vs Cloud LLM $0.0025000 (155x vs JEV).
-4. **Rubrica Dinâmica com Níveis Customizáveis:** Adição e remoção de níveis (`+ Adicionar Nível`, `×`) com cálculo dinâmico da pontuação esperada.
-5. **Catálogo Completo no Dropdown `⚡ Mais Casos (7)`:** Acesso imediato a 10 cenários organizados por áreas (Decisões Centrais, Marketing Ops & SEO, Segurança & Risco, Trading).
-6. **Integração Pronta via API cURL:** Modal com comando cURL oficial para automações e microsserviços externos.
+<div align="center">
+  <img src="static/playground-games.png" alt="Arena de Jogos Autônomos no Playground ALR" width="100%">
+  <p><em>Figura 2: Arena de Jogos Autônomos interativa com 8 jogos (Snake, Dino Runner, Pong 2D, Cards/Blackjack, Bomberman, FPS 3D, Worms e Tetris) rodando em Canvas com telemetria System 1 ao vivo (&lt; 4.0 µs).</em></p>
+</div>
+
+<div align="center">
+  <img src="static/playground-marketing.png" alt="Catálogo de Módulos Operacionais ALR" width="100%">
+  <p><em>Figura 3: Catálogo completo de módulos operacionais (Marketing Ops, Segurança & Risco, Trading Quantitativo e WhatsApp Desk) testáveis com 1 clique.</em></p>
+</div>
+
+#### 🌟 Os 6 Módulos Operacionais Disponíveis no Playground:
+1. **⚗️ Decisões Tipadas (System 1):** Avaliação de probabilidades calibradas com Linha do Tempo Vertical de Raciocínio (Estilo Canva/Figma), formulário dinâmico, edição de JSON e HUD de economia ($0.00 vs $0.000016 vs $0.0025).
+2. **🎮 Arena de Jogos (8 Jogos do ALR):** Simulações em Canvas de alta performance com IA autônoma e controles manuais:
+   * 🐍 **Snake Autônomo:** Cycle Safety Shield, Q-Learning e vetor de probabilidades de direção (`CIMA`, `BAIXO`, `ESQUERDA`, `DIREITA`).
+   * 🦖 **Chrome Dino Runner:** Salto com física parabólica, gravidade contínua e esquiva de cactos.
+   * 🏓 **Pong 2D:** Interceptação inteligente de raquete e rebatidas dinâmicas.
+   * 🃏 **Cards / Blackjack:** Cálculo em tempo real da probabilidade de estouro (*Bust Probability*) e decisão Stand/Hit.
+   * 💣 **Bomberman:** Fuga de explosão em cruz via busca em largura (BFS) e pavio animado.
+   * 🎯 **FPS 3D Raycasting:** Mira suave, alvos em profundidade 3D e cálculo de recuo.
+   * 🐛 **Worms Balístico:** Canhão balístico com vento dinâmico, ângulo e trajetória parabólica com crateras.
+   * 🧱 **Tetris Autônomo:** Rotação e encaixe de tetraminós para limpeza de linhas.
+3. **📈 Marketing Ops & SEO:** As 9 tarefas do JEV Catalog (Triagem Google Ads, Tagging Meta Ads, Aderência Landing Page, Link Interno, Canibalização 301, Thin-Page Gate, etc.).
+4. **🛡️ Segurança, Risco & Visão:** Vigilância CCTV com tripwire de intrusão, detector de erros de tela HTTP 500, detecção de novidade extrema OOD e parada de emergência (Kill Switch).
+5. **💰 Trading Quantitativo:** Monitoramento multi-ativo da Binance Spot Testnet, cálculo de indicadores técnicos locais e confluência de sinais.
+6. **💬 Atendimento Omnichannel & WhatsApp:** Central de atendimento nos 20 nichos, análise de sentimento com detecção de litígio/PROCON e triagem de e-mails.
 
 ```bash
-# Iniciar o Playground interativo localmente
+# Iniciar o Playground Universal localmente (porta padrão 3000)
 cargo run -p alr-cli -- playground --port 3000
 
-# Validar os testes oficiais no terminal
+# Validar os testes automatizados do Playground no terminal
 cargo run -p alr-cli -- playground-test
 ```
 ---
@@ -1014,7 +1032,7 @@ cargo run -p alr-cli -- binance-testnet --symbol BTCUSDT --limit 30
 cargo run -p alr-cli -- trader-live --exchange binance --symbol BTCUSDT --poll-interval 3
 
 # 42. ALR Multi-Asset Live Quantitative Trading Desk & Interactive Web Cockpit (7 Moedas)
-cargo run -p alr-cli -- trading-desk --port 3800 --capital 50000
+cargo run -p alr-cli -- trading-desk --port 3800 --capital 50000 --max-trade-usd 100
 
 # 43. TypeSafe JEV-1.13 Interactive Web Playground (OpenRouter Replica)
 cargo run -p alr-cli -- playground --port 3000
@@ -1022,7 +1040,7 @@ cargo run -p alr-cli -- playground --port 3000
 # 44. Executar os 3 Testes Oficiais do Playground no Terminal (100% de Sucesso e Validacao)
 cargo run -p alr-cli -- playground-test
 
-# 45. Executar a Suite Completa de Testes Automatizados (336 Testes em 82 Suites)
+# 45. Executar a Suíte Completa de Testes Automatizados (338 Testes em 82 Suítes)
 cargo test --workspace
 ```
 
@@ -1345,14 +1363,16 @@ O `LlmMarketRegimeAdvisor` avalia periodicamente o consenso de indicadores dos 7
 
 ### 5. Web Trading Desk Interativo (`static/trading_desk.html` e Axum)
 
+* **Widget de Trades Ativos no Topo:** Painel consolidado em tempo real com contador de ativos em custódia, soma de lucro em aberto, soma de prejuízo em aberto, PnL líquido global, badges de decisão System 1 (`🛡️ Trailing Ativo`, `🎯 Alvo Iminente`, `⚠️ Alerta Momentum`) e termômetro visual de progresso Risco/Retorno ($R:R$ Bar) com botões rápidos de 1 clique ("Zerar a Mercado" e "Travar 0 a 0").
+* **Teto Máximo Configurável por Entrada (`max_trade_allocation_usd`):** Controle rigoroso de alocação máxima em dólares por trade (ex: $\$10$, $\$25$, $\$50$, $\$100$, etc.), permitindo que usuários com bancas menores operem sem risco de sobre-alocação de capital (`--max-trade-usd <VALOR>` ou via modal de ajuste instantâneo no Cockpit).
+* **Simulador Contrafactual de Dimensionamento ("What-If" Sizing Analysis):** Ferramenta analítica que recalcula instantaneamente todo o histórico de ordens: *"Se em vez do valor real eu tivesse limitado cada entrada a $\$10,00$, quanto teria ganho ou perdido?"*, exibindo lado a lado Capital Real vs Simulado, PnL Real vs Simulado, Redução de Risco (%) e eficiência relativa.
+* **Exibição do Max Drawdown com Valor Máximo Negativo ($):** Mostra o pico histórico e o recuo máximo da carteira em percentual e valor monetário absoluto (ex: `Max Drawdown: -1.85% (-$925.00)`).
 * **Gráfico Canvas 60 FPS:** Renderização fluida de velas verdes/vermelhas com wicks, médias móveis sobrepostas (EMA 9 ciano, EMA 21 âmbar, Bollinger violeta) e linhas pontilhadas de Entrada (azul), Stop-Loss (vermelho) e Take-Profit (verde) com badges de distância em tempo real.
-* **Grid das 7 Moedas:** Cards interativos para alternar o gráfico e o cockpit entre BTC, ETH, SOL, BNB, XRP, ADA e DOGE em 1 clique.
-* **Cockpit com Explicações de Risco:** Cards detalhados com distâncias em pontos/percentual e a justificativa técnica explicada de cada Stop.
-* **Ações em 1 Clique:** Botão "Zerar a Mercado", "Travar no 0 a 0 (Break-even)", "Ajustar Stops Manualmente" e botão de **Pânico Global (Kill Switch)** para zerar todas as posições em emergência.
+* **Central de Logs & Diagnóstico em Arquivo (`logs/trading_desk.log`):** Gravação persistente e terminal integrado na interface web para depuração em tempo real com botão para baixar o arquivo `.log` completo.
 
 ```bash
-# Iniciar a Mesa de Operações Multi-Ativo
-cargo run -p alr-cli -- trading-desk --port 3800 --capital 50000
+# Iniciar a Mesa de Operações Multi-Ativo com Teto de $50 por Trade
+cargo run -p alr-cli -- trading-desk --port 3800 --capital 50000 --max-trade-usd 50
 
 # Abrir o Cockpit via Script Automatizado (com Google Chrome)
 node scripts/launch_trading_desk.js

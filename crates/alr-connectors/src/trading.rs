@@ -1926,10 +1926,10 @@ pub struct MultiAssetConfig {
     pub max_concurrent_positions: usize,
     pub max_portfolio_risk_pct: f64,
     pub max_risk_per_trade_pct: f64,
+    pub max_trade_allocation_usd: f64,
     pub exchange_config: ExchangeSimulationConfig,
     pub basket: Vec<String>,
 }
-
 impl Default for MultiAssetConfig {
     fn default() -> Self {
         Self {
@@ -1937,6 +1937,7 @@ impl Default for MultiAssetConfig {
             max_concurrent_positions: 3,
             max_portfolio_risk_pct: 10.0,
             max_risk_per_trade_pct: 2.0,
+            max_trade_allocation_usd: 100.0,
             exchange_config: ExchangeSimulationConfig::zero_fee(),
             basket: DEFAULT_MULTI_ASSET_BASKET
                 .iter()
@@ -1979,14 +1980,43 @@ pub struct DeskStatusSnapshot {
     pub total_unrealized_pnl_pct: f64,
     pub realized_pnl: f64,
     pub max_drawdown_pct: f64,
+    pub max_drawdown_amount_usd: f64,
+    pub peak_portfolio_value: f64,
     pub active_positions_count: usize,
     pub max_positions_allowed: usize,
+    pub max_trade_allocation_usd: f64,
     pub kill_switch_active: bool,
     pub macro_regime: MacroRegimeReport,
     pub assets: Vec<AssetDeskStatus>,
     pub recent_executions: Vec<TradeExecution>,
 }
 
+/// Relatório analítico comparativo contrafactual de dimensionamento de trades ("What-If" Analysis)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TradeSizingComparisonReport {
+    pub simulated_max_trade_usd: f64,
+    pub total_closed_trades: usize,
+    pub winning_trades: usize,
+    pub losing_trades: usize,
+    pub win_rate_pct: f64,
+    pub real_total_invested_usd: f64,
+    pub real_total_pnl_usd: f64,
+    pub real_total_pnl_pct: f64,
+    pub real_avg_trade_cost_usd: f64,
+    pub real_avg_pnl_per_trade_usd: f64,
+    pub real_max_win_usd: f64,
+    pub real_max_loss_usd: f64,
+    pub simulated_total_invested_usd: f64,
+    pub simulated_total_pnl_usd: f64,
+    pub simulated_total_pnl_pct: f64,
+    pub simulated_avg_trade_cost_usd: f64,
+    pub simulated_avg_pnl_per_trade_usd: f64,
+    pub simulated_max_win_usd: f64,
+    pub simulated_max_loss_usd: f64,
+    pub pnl_difference_usd: f64,
+    pub capital_reduction_pct: f64,
+    pub summary_explanation: String,
+}
 /// Motor de Execução e Orquestração Multi-Ativo
 pub struct MultiAssetTraderEngine {
     pub config: MultiAssetConfig,
@@ -1998,6 +2028,7 @@ pub struct MultiAssetTraderEngine {
     pub kill_switch_active: bool,
     pub peak_portfolio_value: f64,
     pub max_drawdown_seen: f64,
+    pub max_drawdown_amount_usd: f64,
     pub realized_pnl: f64,
     pub executions_log: Vec<TradeExecution>,
 }
@@ -2015,7 +2046,11 @@ impl MultiAssetTraderEngine {
                 stop_loss_required: true,
                 daily_loss_limit: config.initial_capital * 0.05,
                 kill_switch_active: false,
-                max_position_size: config.initial_capital * 0.25,
+                max_position_size: if config.max_trade_allocation_usd > 0.0 {
+                    config.max_trade_allocation_usd
+                } else {
+                    config.initial_capital * 0.25
+                },
                 daily_loss_current: 0.0,
             };
             let eng = CryptoTraderEngine::new(
@@ -2038,6 +2073,7 @@ impl MultiAssetTraderEngine {
             kill_switch_active: false,
             peak_portfolio_value: initial_cap,
             max_drawdown_seen: 0.0,
+            max_drawdown_amount_usd: 0.0,
             realized_pnl: 0.0,
             executions_log: Vec::new(),
         }
@@ -2217,8 +2253,12 @@ impl MultiAssetTraderEngine {
             self.peak_portfolio_value = cur_val;
         }
         let dd = self.drawdown_pct();
+        let dd_usd = (self.peak_portfolio_value - cur_val).max(0.0);
         if dd > self.max_drawdown_seen {
             self.max_drawdown_seen = dd;
+        }
+        if dd_usd > self.max_drawdown_amount_usd {
+            self.max_drawdown_amount_usd = dd_usd;
         }
         if dd >= self.config.max_portfolio_risk_pct {
             self.kill_switch_active = true;
@@ -2423,12 +2463,178 @@ impl MultiAssetTraderEngine {
             total_unrealized_pnl_pct: total_unrealized_pct,
             realized_pnl: self.realized_pnl,
             max_drawdown_pct: self.max_drawdown_seen,
+            max_drawdown_amount_usd: self.max_drawdown_amount_usd,
+            peak_portfolio_value: self.peak_portfolio_value,
             active_positions_count: self.active_positions_count(),
             max_positions_allowed: self.config.max_concurrent_positions,
+            max_trade_allocation_usd: self.config.max_trade_allocation_usd,
             kill_switch_active: self.kill_switch_active,
             macro_regime,
             assets: asset_statuses,
             recent_executions,
+        }
+    }
+
+    /// Configura dinamicamente o teto máximo de entrada em dólares por trade
+    pub fn set_max_trade_allocation_usd(&mut self, max_usd: f64) {
+        let max_usd = max_usd.max(1.0);
+        self.config.max_trade_allocation_usd = max_usd;
+        for eng in self.engines.values_mut() {
+            eng.risk_policy.max_position_size = max_usd;
+        }
+    }
+
+    /// Análise Contrafactual de Dimensionamento ("What-If Sizing"):
+    /// Calcula quanto teria ganho ou perdido caso a alocação máxima por trade fosse limitada a `simulated_max_usd`
+    pub fn compute_trade_sizing_comparison(
+        &self,
+        simulated_max_usd: f64,
+    ) -> TradeSizingComparisonReport {
+        let simulated_max_usd = simulated_max_usd.max(1.0);
+        let mut closed_trades: Vec<(f64, f64)> = Vec::new(); // (entry_cost, pnl)
+
+        for eng in self.engines.values() {
+            for trade in &eng.trade_history {
+                if let Some(pnl) = trade.realized_pnl {
+                    let cost = ((trade.price * trade.quantity) - pnl)
+                        .max(trade.price * trade.quantity * 0.5)
+                        .max(1.0);
+                    closed_trades.push((cost, pnl));
+                }
+            }
+        }
+
+        if closed_trades.is_empty() {
+            for trade in &self.executions_log {
+                if let Some(pnl) = trade.realized_pnl {
+                    let cost = ((trade.price * trade.quantity) - pnl)
+                        .max(trade.price * trade.quantity * 0.5)
+                        .max(1.0);
+                    closed_trades.push((cost, pnl));
+                }
+            }
+        }
+
+        let total_closed = closed_trades.len();
+        if total_closed == 0 {
+            return TradeSizingComparisonReport {
+                simulated_max_trade_usd: simulated_max_usd,
+                total_closed_trades: 0,
+                winning_trades: 0,
+                losing_trades: 0,
+                win_rate_pct: 0.0,
+                real_total_invested_usd: 0.0,
+                real_total_pnl_usd: 0.0,
+                real_total_pnl_pct: 0.0,
+                real_avg_trade_cost_usd: 0.0,
+                real_avg_pnl_per_trade_usd: 0.0,
+                real_max_win_usd: 0.0,
+                real_max_loss_usd: 0.0,
+                simulated_total_invested_usd: 0.0,
+                simulated_total_pnl_usd: 0.0,
+                simulated_total_pnl_pct: 0.0,
+                simulated_avg_trade_cost_usd: 0.0,
+                simulated_avg_pnl_per_trade_usd: 0.0,
+                simulated_max_win_usd: 0.0,
+                simulated_max_loss_usd: 0.0,
+                pnl_difference_usd: 0.0,
+                capital_reduction_pct: 0.0,
+                summary_explanation:
+                    "Nenhum trade encerrado ainda para cálculo de comparação contrafactual."
+                        .to_string(),
+            };
+        }
+
+        let mut real_total_invested = 0.0;
+        let mut real_total_pnl = 0.0;
+        let mut real_max_win: f64 = 0.0;
+        let mut real_max_loss: f64 = 0.0;
+        let mut winning_trades = 0;
+
+        let mut sim_total_invested = 0.0;
+        let mut sim_total_pnl = 0.0;
+        let mut sim_max_win: f64 = 0.0;
+        let mut sim_max_loss: f64 = 0.0;
+
+        for (real_cost, real_pnl) in &closed_trades {
+            real_total_invested += real_cost;
+            real_total_pnl += real_pnl;
+            if *real_pnl > 0.0 {
+                winning_trades += 1;
+                real_max_win = real_max_win.max(*real_pnl);
+            } else {
+                real_max_loss = real_max_loss.min(*real_pnl);
+            }
+
+            // Simulação proporcional contrafactual
+            let sim_cost = real_cost.min(simulated_max_usd);
+            let scale = sim_cost / real_cost.max(0.01);
+            let sim_pnl = real_pnl * scale;
+
+            sim_total_invested += sim_cost;
+            sim_total_pnl += sim_pnl;
+            if sim_pnl > 0.0 {
+                sim_max_win = sim_max_win.max(sim_pnl);
+            } else {
+                sim_max_loss = sim_max_loss.min(sim_pnl);
+            }
+        }
+
+        let losing_trades = total_closed.saturating_sub(winning_trades);
+        let win_rate_pct = (winning_trades as f64 / total_closed as f64) * 100.0;
+
+        let real_total_pnl_pct = if real_total_invested > 0.0 {
+            (real_total_pnl / real_total_invested) * 100.0
+        } else {
+            0.0
+        };
+        let sim_total_pnl_pct = if sim_total_invested > 0.0 {
+            (sim_total_pnl / sim_total_invested) * 100.0
+        } else {
+            0.0
+        };
+
+        let real_avg_cost = real_total_invested / total_closed as f64;
+        let sim_avg_cost = sim_total_invested / total_closed as f64;
+
+        let real_avg_pnl = real_total_pnl / total_closed as f64;
+        let sim_avg_pnl = sim_total_pnl / total_closed as f64;
+
+        let pnl_diff = sim_total_pnl - real_total_pnl;
+        let cap_reduc = if real_total_invested > 0.0 {
+            ((real_total_invested - sim_total_invested) / real_total_invested * 100.0).max(0.0)
+        } else {
+            0.0
+        };
+
+        let summary = format!(
+            "Com teto de ${:.2} por entrada (vs ${:.2} médio real): capital total exposto reduzido em {:.1}%. PnL simulado seria ${:.2} ({:+.2}%) vs ${:.2} ({:+.2}%) real.",
+            simulated_max_usd, real_avg_cost, cap_reduc, sim_total_pnl, sim_total_pnl_pct, real_total_pnl, real_total_pnl_pct
+        );
+
+        TradeSizingComparisonReport {
+            simulated_max_trade_usd: simulated_max_usd,
+            total_closed_trades: total_closed,
+            winning_trades,
+            losing_trades,
+            win_rate_pct,
+            real_total_invested_usd: real_total_invested,
+            real_total_pnl_usd: real_total_pnl,
+            real_total_pnl_pct,
+            real_avg_trade_cost_usd: real_avg_cost,
+            real_avg_pnl_per_trade_usd: real_avg_pnl,
+            real_max_win_usd: real_max_win,
+            real_max_loss_usd: real_max_loss,
+            simulated_total_invested_usd: sim_total_invested,
+            simulated_total_pnl_usd: sim_total_pnl,
+            simulated_total_pnl_pct: sim_total_pnl_pct,
+            simulated_avg_trade_cost_usd: sim_avg_cost,
+            simulated_avg_pnl_per_trade_usd: sim_avg_pnl,
+            simulated_max_win_usd: sim_max_win,
+            simulated_max_loss_usd: sim_max_loss,
+            pnl_difference_usd: pnl_diff,
+            capital_reduction_pct: cap_reduc,
+            summary_explanation: summary,
         }
     }
 }
