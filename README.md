@@ -2,7 +2,7 @@
 
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B%20%7C%201.98.1-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-green.svg)](LICENSE)
-[![Testes](https://img.shields.io/badge/Testes-294%2F294%20Passando-brightgreen.svg)]()
+[![Testes](https://img.shields.io/badge/Testes-303%2F303%20Passando-brightgreen.svg)]()
 [![Taxa de Autonomia](https://img.shields.io/badge/Autonomia%20Local-98.8%25-orange.svg)]()
 [![Evasão de Loop](https://img.shields.io/badge/Evas%C3%A3o%20de%20Loop-Ativa-brightgreen.svg)](docs/training-new-tasks.md)
 [![Status de Liberação](https://img.shields.io/badge/Certifica%C3%A7%C3%A3o%20de%20Release-Certificado%20com%20Limita%C3%A7%C3%B5es-yellow.svg)](docs/final-certification-report.md)
@@ -39,6 +39,7 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
 22. **Vigilância por Câmera & Notificações Desktop (CCTV em CPU < 1 ms, Tripwire e Alertas do Windows)**
 23. **Memória Vetorial Avançada no Qdrant (Embeddings 384d/1536d, BM25 Esparso, Quantização int8 e Busca Híbrida RRF)**
 24. **Suíte JEV de Marketing Ops, SEO e Otimização de Anúncios (9 Tarefas Nativas em Rust, $0.00 e Latência em Microssegundos)**
+25. **Trading Quantitativo, Robô de Criptomoedas e Bolsa (CryptoTraderEngine, Indicadores Locais, Stop-Loss Inviolável, Simulação de Exchanges e Trailing Stop)**
 
 
 ## ⚡ Quickstart em 3 Minutos: Do Zero ao Agente Operacional
@@ -75,7 +76,7 @@ cargo run -p alr-cli -- quickstart
 5. [Premissa Central](#-premissa-central)
 4. [Princípios Arquiteturais](#-princípios-arquiteturais)
 5. [O Que o Sistema Faz?](#-o-que-o-sistema-faz)
-6. [Casos de Uso Detalhados (Fases 1 a 24)](#-casos-de-uso-detalhados)
+6. [Casos de Uso Detalhados (Fases 1 a 25)](#-casos-de-uso-detalhados)
    * [Caso 1: Controle Dinâmico em Jogos (Snake)](#caso-1-controle-dinâmico-em-jogos-snake)
    * [Caso 2: Atendimento com Memória Semântica (Customer Support)](#caso-2-atendimento-com-memória-semântica-customer-support)
    * [Caso 3: Automação Web Real no Navegador (Chromium CDP)](#caso-3-automação-web-real-no-navegador-chromium-cdp)
@@ -100,6 +101,7 @@ cargo run -p alr-cli -- quickstart
    * [Caso 22: Vigilância por Câmera de Segurança (CCTV) e Notificações Desktop](#caso-22-vigilância-por-câmera-de-segurança-cctv-e-notificações-desktop)
    * [Caso 23: Memória Semântica Vetorial de Alta Fidelidade no Qdrant](#caso-23-memória-semântica-vetorial-de-alta-fidelidade-no-qdrant)
    * [Caso 24: Suíte de Marketing Ops, SEO e Anúncios de Alta Performance (JEV Suite)](#caso-24-suíte-de-marketing-ops-seo-e-anúncios-de-alta-performance-jev-suite)
+   * [Caso 25: Trading Quantitativo, Robô de Criptomoedas e Bolsa (CryptoTraderEngine)](#caso-25-trading-quantitativo-robô-de-criptomoedas-e-bolsa-cryptotraderengine)
 7. [Detector Universal de Loops & Evasão](#-detector-universal-de-loops--evasão)
 8. [Treinamento de Novas Tarefas (Guia & CLI)](#-treinamento-de-novas-tarefas-guia--cli)
 9. [Memória Semântica Vetorial no Qdrant: Geração de Embeddings & Recuperação Autônoma](#-memória-semântica-vetorial-no-qdrant-geração-de-embeddings--recuperação-autônoma)
@@ -565,6 +567,21 @@ cargo run -p alr-cli -- thin-gate --url "https://empresa.com/post" --words 1500
 cargo run -p alr-cli -- citation-check --brand "ALR" --query "Melhor plataforma de automação em Rust"
 cargo run -p alr-cli -- competitor-cited --brand "ALR" --competitors "Semrush,Ahrefs,Moz"
 cargo run -p alr-cli -- terms-gap --query "calculadora de roi para whatsapp"
+```
+
+### Caso 25: Trading Quantitativo, Robô de Criptomoedas e Bolsa (CryptoTraderEngine)
+Infraestrutura completa de alta frequência e baixa latência para execução quantitativa e robô de trading de criptomoedas e ativos da bolsa, operando em sub-microssegundo (< 20 µs) em CPU, zero tokens consumidos e $0.00 de custo:
+1. **Indicadores Técnicos Locais em Rust:** Cálculo vetorial determinístico de SMA-20, EMA-9, EMA-21, RSI-14 (Wilder), MACD com linha de sinal e histograma, e volatilidade ATR-14.
+2. **Motor de Inferência System 1:** Geração de sinais em tempo real baseados em confluência técnica (cruzamento de médias móveis, momentum de histograma e zonas de sobrecompra/sobrevenda no RSI).
+3. **Salvaguardas Rígidas de Risco (*Hard Risk Limits*):** Dimensionamento prudente de posição (risco percentual fixo), Stop-Loss obrigatório e inviolável, Take-Profit e Trailing Stop móvel automático.
+4. **Bloqueio Atômico por Drawdown & Kill Switch:** Interrupção imediata de novas compras quando o drawdown acumulado do patrimônio atinge o teto de segurança configurado (ex: 5.0%) ou perda diária limite.
+5. **Simulação de Exchanges:** Modelagem realista de taxas de corretagem (maker/taker) e *slippage* dinâmico para Binance Spot, Bybit Derivativos e B3 Brasil Bolsa Balcão.
+6. **Integração com ApprovalGateway:** Roteamento de ordens que excedem o teto de capital para autorização humana (*Human-in-the-Loop*).
+7. **RL EnvironmentAdapter (`TradingEnvironment`):** Implementação padronizada do trait do ALR com vetor de estado financeiro normalizado, ações discretas (Buy, Sell, Hold, Close) e cálculo de recompensa por Sharpe Ratio e PnL realizado.
+
+```bash
+# Simulação completa no terminal com gráfico de preços em ASCII, indicadores e extrato de PnL
+cargo run -p alr-cli -- trader-demo --asset BTC-USDT --candles 50
 ```
 
 ---

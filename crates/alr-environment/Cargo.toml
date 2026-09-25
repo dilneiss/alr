@@ -9,6 +9,7 @@ license.workspace = true
 alr-core = { workspace = true }
 alr-world = { workspace = true }
 alr-spatial = { workspace = true }
+alr-connectors = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 uuid = { workspace = true }

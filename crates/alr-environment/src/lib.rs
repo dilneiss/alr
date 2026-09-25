@@ -1,5 +1,7 @@
 pub mod real_3d;
 pub use real_3d::{ExternalGameAdapter, Real3DRenderedLab};
+pub mod trading_env;
+pub use trading_env::TradingEnvironment;
 
 use alr_world::{ContinuousAction, Vec3, WorldState};
 use anyhow::Result;

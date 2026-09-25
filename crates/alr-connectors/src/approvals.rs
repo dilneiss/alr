@@ -123,4 +123,15 @@ impl ApprovalGateway {
             .cloned()
             .collect()
     }
+
+    pub fn is_action_approved(&self, action_name: &str) -> bool {
+        self.requests
+            .read()
+            .values()
+            .any(|r| r.action_name == action_name && r.status == ApprovalStatus::Approved)
+    }
+
+    pub fn list_all(&self) -> Vec<ApprovalRequest> {
+        self.requests.read().values().cloned().collect()
+    }
 }

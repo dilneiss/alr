@@ -8,6 +8,9 @@ use alr_agent::{
     SupervisorTask, SupportAgent, SupportDatabase, SupportIntent,
 };
 use alr_browser::{BrowserDriver, BrowserTarget, ChromiumCdpDriver, WebAppVersion};
+use alr_connectors::trading::{
+    generate_synthetic_candles, Candle, CryptoTraderEngine, ExchangeSimulationConfig, RiskPolicy,
+};
 use alr_connectors::{
     ApprovalGateway, ConnectorAction, ConnectorCapability, ConnectorContext, ConnectorRiskLevel,
     EventStore, ExternalConnector, ExternalServiceProvider, HelpdeskSaaSConnector, TaskQueue,
@@ -418,6 +421,14 @@ enum Commands {
     TermsGap {
         #[arg(short, long, default_value = "calculadora de roi para whatsapp")]
         query: String,
+    },
+    /// Quantitative Crypto and Financial Trading Desk Simulation
+    #[command(name = "trader-demo")]
+    TraderDemo {
+        #[arg(long, default_value = "BTC-USDT")]
+        asset: String,
+        #[arg(long, default_value_t = 50)]
+        candles: usize,
     },
 }
 
@@ -1631,6 +1642,9 @@ async fn main() -> Result<()> {
         }
         Commands::TermsGap { query } => {
             run_terms_gap(&query)?;
+        }
+        Commands::TraderDemo { asset, candles } => {
+            run_trader_demo(&asset, candles).await?;
         }
         Commands::FinalAcceptance => {
             println!(
@@ -8852,5 +8866,284 @@ fn run_terms_gap(query: &str) -> Result<()> {
             .bold()
             .blue()
     );
+    Ok(())
+}
+fn render_ascii_chart(candles: &[Candle], height: usize) {
+    if candles.is_empty() {
+        return;
+    }
+    let closes: Vec<f64> = candles.iter().map(|c| c.close).collect();
+    let min = closes.iter().cloned().fold(f64::INFINITY, f64::min);
+    let max = closes.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+    let range = (max - min).max(1.0);
+
+    println!(
+        "{}",
+        "  GRAFICO DE PRECOS EM ASCII (Historico de Fechamentos):"
+            .bold()
+            .cyan()
+    );
+    for row in (0..=height).rev() {
+        let level = min + (range * (row as f64 / height as f64));
+        print!("  ${:>8.2} │ ", level);
+        for &price in &closes {
+            let normalized = ((price - min) / range * height as f64).round() as usize;
+            if normalized == row {
+                print!("{}", "•".green().bold());
+            } else {
+                print!(" ");
+            }
+        }
+        println!();
+    }
+    print!("            └─");
+    for _ in 0..closes.len() {
+        print!("─");
+    }
+    println!(" ({} velas/candles)\n", closes.len());
+}
+
+async fn run_trader_demo(asset: &str, num_candles: usize) -> Result<()> {
+    let base_price = if asset.contains("BTC") {
+        64000.0
+    } else if asset.contains("ETH") {
+        3400.0
+    } else {
+        120.0
+    };
+
+    let candles = generate_synthetic_candles(42, num_candles, base_price);
+
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "   ALR AUTONOMOUS QUANTITATIVE CRYPTO & FINANCIAL TRADER DESK     "
+            .bold()
+            .cyan()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!("  • Ativo / Par         : {}", asset.bold().yellow());
+    println!("  • Capital Inicial     : $10,000.00 USDT");
+    println!("  • Salvaguarda de Risco: Risco Máx 2.0%/trade | Drawdown Máx 5.0% | Trailing 1.5%");
+    println!("  • Exchange Simulada   : Binance Spot (Taker 0.05% | Slippage 0.01%)");
+    println!("  • Modelo de Decisão   : System 1 Confluência Vetorial (Sub-microssegundo)");
+    println!(
+        "{}",
+        "------------------------------------------------------------------".blue()
+    );
+    println!();
+
+    // Renderiza gráfico ASCII
+    render_ascii_chart(&candles, 8);
+
+    let mut engine = CryptoTraderEngine::new(
+        asset,
+        10000.0,
+        RiskPolicy::default(),
+        ExchangeSimulationConfig::binance(),
+    );
+
+    println!(
+        "{}",
+        "  LOG DE EXECUCAO EM TEMPO REAL (EVENT-DRIVEN STREAM):"
+            .bold()
+            .cyan()
+    );
+
+    let mut total_latency_nanos: u128 = 0;
+    let mut processed_ticks: usize = 0;
+
+    for (idx, candle) in candles.into_iter().enumerate() {
+        let start = std::time::Instant::now();
+        let trade_opt = engine.on_candle(candle)?;
+        let elapsed = start.elapsed();
+        total_latency_nanos += elapsed.as_nanos();
+        processed_ticks += 1;
+
+        if let Some(exec) = trade_opt {
+            match exec.action {
+                alr_connectors::trading::TradingAction::Buy => {
+                    println!(
+                        "  {} [COMPRA]   Tick #{:<3} │ Preço: ${:<9.2} │ Qtd: {:<7.4} │ Fee: ${:<5.2} │ {}",
+                        "▲".green().bold(),
+                        idx + 1,
+                        exec.price,
+                        exec.quantity,
+                        exec.fee,
+                        exec.reason.cyan()
+                    );
+                }
+                alr_connectors::trading::TradingAction::ClosePosition
+                | alr_connectors::trading::TradingAction::Sell => {
+                    let pnl = exec.realized_pnl.unwrap_or(0.0);
+                    let pnl_str = if pnl >= 0.0 {
+                        format!("+$<{:.2}>", pnl).green().bold()
+                    } else {
+                        format!("-$<{:.2}>", pnl.abs()).red().bold()
+                    };
+                    let icon = if pnl >= 0.0 { "✓" } else { "✗" };
+                    println!(
+                        "  {} [FECHAMENTO] Tick #{:<3} │ Preço: ${:<9.2} │ PnL: {:<12} │ Fee: ${:<5.2} │ {}",
+                        icon.yellow().bold(),
+                        idx + 1,
+                        exec.price,
+                        pnl_str,
+                        exec.fee,
+                        exec.reason.magenta()
+                    );
+                }
+                _ => {}
+            }
+        }
+    }
+    // Se restar posição em aberto no término das velas, liquida para apuração contábil
+    if engine.current_position.is_some() {
+        let last_price = engine.candles.last().map(|c| c.close).unwrap_or(base_price);
+        if let Ok(Some(exec)) = engine.close_current_position(last_price, "ENCERRAMENTO_SESSAO") {
+            let pnl = exec.realized_pnl.unwrap_or(0.0);
+            let pnl_str = if pnl >= 0.0 {
+                format!("+${:.2}", pnl).green().bold()
+            } else {
+                format!("-${:.2}", pnl.abs()).red().bold()
+            };
+            println!(
+                "  {} [FECHAMENTO] Sessão Final │ Preço: ${:<9.2} │ PnL: {:<12} │ Fee: ${:<5.2} │ {}",
+                "✓".yellow().bold(),
+                exec.price,
+                pnl_str,
+                exec.fee,
+                exec.reason.magenta()
+            );
+        }
+    }
+
+    println!();
+    // Indicadores Técnicos Finais
+    if let Some(ind) = engine.compute_indicators() {
+        let ema_trend = if ind.ema_9 > ind.ema_21 {
+            "BULLISH (EMA9 > EMA21)".green()
+        } else {
+            "BEARISH (EMA9 < EMA21)".red()
+        };
+        let rsi_label = if ind.rsi_14 < 30.0 {
+            "SOBREVENDIDO (Oportunidade de Compra)".green()
+        } else if ind.rsi_14 > 70.0 {
+            "SOBRECOMPRADO (Risco de Venda)".red()
+        } else {
+            "NEUTRO (Zona de Acumulação)".yellow()
+        };
+
+        println!(
+            "{}",
+            "------------------------------------------------------------------".blue()
+        );
+        println!(
+            "{}",
+            "  PAINEL DE INDICADORES TECNICOS ATUAIS:".bold().cyan()
+        );
+        println!("  • RSI-14 Periodos   : {:.2} [{}]", ind.rsi_14, rsi_label);
+        println!(
+            "  • EMA-9 vs EMA-21   : ${:.2} vs ${:.2} [{}]",
+            ind.ema_9, ind.ema_21, ema_trend
+        );
+        println!("  • SMA-20 (Tendência): ${:.2}", ind.sma_20);
+        println!(
+            "  • MACD              : Line: {:+.2} │ Signal: {:+.2} │ Histograma: {:+.2}",
+            ind.macd, ind.macd_signal, ind.macd_histogram
+        );
+        println!("  • Volatilidade (ATR): ${:.2}", ind.volatility_atr);
+    }
+
+    // Relatório Consolidado de Performance
+    let report = engine.generate_report();
+    let avg_latency_micros = if processed_ticks > 0 {
+        (total_latency_nanos as f64 / processed_ticks as f64) / 1000.0
+    } else {
+        0.0
+    };
+
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "{}",
+        "         EXTRATO CONSOLIDADO DE PERFORMANCE & RISCO               "
+            .bold()
+            .green()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+    println!(
+        "  • Total de Operações : {}",
+        report.total_trades.to_string().bold()
+    );
+    println!(
+        "  • Operações Vencedoras: {} ({:.1}%)",
+        report.winning_trades.to_string().green(),
+        report.win_rate
+    );
+    println!(
+        "  • Operações Perdedoras: {}",
+        report.losing_trades.to_string().red()
+    );
+    println!(
+        "  • Capital Final       : ${:.2} USDT",
+        report.final_capital
+    );
+    let pnl_pct = (report.total_pnl / 10000.0) * 100.0;
+    let pnl_color = if report.total_pnl > 0.0001 {
+        format!("+${:.2} (+{:.2}%)", report.total_pnl, pnl_pct)
+            .green()
+            .bold()
+    } else if report.total_pnl < -0.0001 {
+        format!("-${:.2} ({:.2}%)", report.total_pnl.abs(), pnl_pct)
+            .red()
+            .bold()
+    } else {
+        "$0.00 (0.00%)".white().bold()
+    };
+    println!("  • Lucro Líquido (PnL) : {}", pnl_color);
+    println!("  • Fator de Lucro      : {:.2}", report.profit_factor);
+    println!("  • Índice Sharpe       : {:.2}", report.sharpe_ratio);
+    println!(
+        "  • Drawdown Máximo     : {:.2}% (Limite Seguro: 5.00%)",
+        report.max_drawdown
+    );
+    println!(
+        "  • Latência Média CPU  : {:.2} µs/tick (Meta < 20 µs - Custo: $0.00)",
+        avg_latency_micros
+    );
+    let status_guard = if engine.risk_policy.kill_switch_active {
+        "INTERROMPIDO POR SEGURANCA (KILL-SWITCH ATIVO)"
+            .red()
+            .bold()
+    } else {
+        "100% SEGURO (DENTRO DOS LIMITES DE RISCO)".green().bold()
+    };
+    println!("  • Status do Guardião  : {}", status_guard);
+    println!(
+        "{}",
+        "=================================================================="
+            .bold()
+            .blue()
+    );
+
     Ok(())
 }

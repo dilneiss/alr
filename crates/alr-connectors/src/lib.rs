@@ -6,6 +6,7 @@ pub mod resilience;
 pub mod rest;
 pub mod secrets;
 pub mod tasks;
+pub mod trading;
 pub mod webhooks;
 
 pub use approvals::{ApprovalGateway, ApprovalRequest, ApprovalStatus};
@@ -25,4 +26,9 @@ pub use secrets::{
     SecretStore, SecretValue,
 };
 pub use tasks::{AgentCheckpoint, AgentTask, TaskPriority, TaskQueue, TaskStatus};
+pub use trading::{
+    generate_synthetic_candles, Candle, CandleTick, CryptoTraderEngine, ExchangeSimulationConfig,
+    OrderBook, OrderSide, RiskControlPolicy, RiskPolicy, TechnicalIndicators, TradeExecution,
+    TradeExecutionReport, TradingAction, TradingPosition, TradingSignal,
+};
 pub use webhooks::{EventStore, InboundWebhookEvent, WebhookValidator};
