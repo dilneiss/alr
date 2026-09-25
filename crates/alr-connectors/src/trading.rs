@@ -1071,6 +1071,58 @@ pub fn generate_synthetic_candles(seed: u64, count: usize, base_price: f64) -> V
     candles
 }
 
+/// Instantâneo consolidado de mercado em tempo real para loops contínuos de negociação
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct MarketSnapshot {
+    pub symbol: String,
+    pub price: f64,
+    pub bid: f64,
+    pub ask: f64,
+    pub spread: f64,
+    pub timestamp: i64,
+    pub candles: Vec<Candle>,
+    pub indicators: Option<TechnicalIndicators>,
+}
+
+/// Gerador determinístico de snapshot de mercado para simulação de Paper Trading contínuo
+pub fn generate_paper_market_snapshot(
+    symbol: &str,
+    step: usize,
+    base_price: f64,
+    history_len: usize,
+) -> MarketSnapshot {
+    let count = history_len.max(30);
+    let mut candles = generate_synthetic_candles(100 + (step as u64 % 1000), count, base_price);
+    let factor = 1.0 + (((step as f64 * 0.4).sin() * 0.012) + ((step as f64 * 0.9).cos() * 0.008));
+    let price = (base_price * factor * 100.0).round() / 100.0;
+    let now_ts = (1_700_000_000i64 + (step as i64 * 3)) * 1000;
+    if let Some(last) = candles.last_mut() {
+        last.timestamp = now_ts;
+        last.close = price;
+        if price > last.high {
+            last.high = price;
+        }
+        if price < last.low {
+            last.low = price;
+        }
+    }
+    let spread = (price * 0.00015 * 1000.0).round() / 1000.0;
+    let bid = price - (spread / 2.0);
+    let ask = price + (spread / 2.0);
+    let indicators = TechnicalIndicators::calculate(&candles).ok();
+
+    MarketSnapshot {
+        symbol: symbol.to_uppercase(),
+        price,
+        bid,
+        ask,
+        spread,
+        timestamp: now_ts,
+        candles,
+        indicators,
+    }
+}
+
 // ============================================================================
 // CONECTOR OFICIAL BYBIT TESTNET V5 (REST API & MARKET DATA)
 // ============================================================================
@@ -1756,6 +1808,55 @@ impl BybitTestnetConnector {
 
         Ok("Filled".to_string())
     }
+
+    /// Consulta instantânea consolidada para o ciclo de trading contínuo
+    pub async fn poll_market_snapshot(
+        &self,
+        category: &str,
+        symbol: &str,
+        interval: &str,
+        limit: usize,
+    ) -> Result<MarketSnapshot> {
+        let ticker = self.get_tickers(category, symbol).await?;
+        let price = ticker.last_price;
+        let bid = ticker.bid_price;
+        let ask = ticker.ask_price;
+        let spread = ticker.spread;
+        let mut candles = self
+            .get_kline(category, symbol, interval, limit)
+            .await
+            .unwrap_or_else(|_| generate_synthetic_candles(42, limit, price));
+
+        let now_ts = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as i64;
+
+        if let Some(last) = candles.last_mut() {
+            last.close = price;
+            if price > last.high {
+                last.high = price;
+            }
+            if price < last.low {
+                last.low = price;
+            }
+        } else {
+            candles.push(Candle::new(now_ts, price, price, price, price, 10.0));
+        }
+
+        let indicators = TechnicalIndicators::calculate(&candles).ok();
+
+        Ok(MarketSnapshot {
+            symbol: symbol.to_uppercase(),
+            price,
+            bid,
+            ask,
+            spread,
+            timestamp: now_ts,
+            candles,
+            indicators,
+        })
+    }
 }
 
 /// Converte a resposta JSON do endpoint `/v5/market/kline` da Bybit V5 em `Vec<Candle>` do ALR.
@@ -2311,6 +2412,55 @@ impl BinanceTestnetConnector {
         }
 
         Ok(true)
+    }
+
+    /// Consulta instantânea consolidada para o ciclo de trading contínuo
+    pub async fn poll_market_snapshot(
+        &self,
+        symbol: &str,
+        interval: &str,
+        limit: usize,
+    ) -> Result<MarketSnapshot> {
+        let price = self.get_price(symbol).await?;
+        let (bid, ask) = self
+            .get_book_ticker(symbol)
+            .await
+            .unwrap_or((price * 0.9998, price * 1.0002));
+        let spread = (ask - bid).abs();
+        let mut candles = self
+            .get_klines(symbol, interval, limit)
+            .await
+            .unwrap_or_else(|_| generate_synthetic_candles(42, limit, price));
+
+        let now_ts = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as i64;
+
+        if let Some(last) = candles.last_mut() {
+            last.close = price;
+            if price > last.high {
+                last.high = price;
+            }
+            if price < last.low {
+                last.low = price;
+            }
+        } else {
+            candles.push(Candle::new(now_ts, price, price, price, price, 10.0));
+        }
+
+        let indicators = TechnicalIndicators::calculate(&candles).ok();
+
+        Ok(MarketSnapshot {
+            symbol: symbol.to_uppercase(),
+            price,
+            bid,
+            ask,
+            spread,
+            timestamp: now_ts,
+            candles,
+            indicators,
+        })
     }
 }
 

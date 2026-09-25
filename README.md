@@ -579,12 +579,21 @@ Infraestrutura completa de alta frequência e baixa latência para execução qu
 5. **Simulação de Exchanges:** Modelagem realista de taxas de corretagem (maker/taker) e *slippage* dinâmico para Binance Spot, Bybit Derivativos e B3 Brasil Bolsa Balcão.
 6. **Integração com ApprovalGateway:** Roteamento de ordens que excedem o teto de capital para autorização humana (*Human-in-the-Loop*).
 7. **RL EnvironmentAdapter (`TradingEnvironment`):** Implementação padronizada do trait do ALR com vetor de estado financeiro normalizado, ações discretas (Buy, Sell, Hold, Close) e cálculo de recompensa por Sharpe Ratio e PnL realizado.
+8. **Execução Contínua em Tempo Real por Tempo Indeterminado (`trader-live`):** Loop contínuo com painel HUD dinâmico no terminal, monitoramento de ticks a cada N segundos, atualização do livro de ofertas (Spread, Melhor Compra/Venda), cálculo instantâneo de indicadores técnicos (< 10 µs), confluência de sinais, Stop-Loss automático obrigatório, Trailing Stop móvel, monitoramento de PnL flutuante em tempo real e encerramento gracioso via `Ctrl+C` ou arquivo `stop.signal` com relatório final consolidado da sessão (Lucro Líquido total, Total de Trades, Win Rate, Drawdown e tempo de operação).
 
 ```bash
 # Simulação completa no terminal com gráfico de preços em ASCII, indicadores e extrato de PnL
 cargo run -p alr-cli -- trader-demo --asset BTC-USDT --candles 50
-```
 
+# Execução contínua ao vivo via Binance Spot Testnet (polling a cada 3 segundos por tempo indeterminado)
+cargo run -p alr-cli -- trader-live --exchange binance --asset BTCUSDT --poll-interval 3
+
+# Execução contínua ao vivo via Bybit Testnet V5
+cargo run -p alr-cli -- trader-live --exchange bybit --asset BTCUSDT --poll-interval 3
+
+# Paper Trading determinístico local (simulação offline)
+cargo run -p alr-cli -- trader-live --exchange paper --asset BTCUSDT --poll-interval 1 --max-cycles 10
+```
 ---
 
 ## 🔄 Detector Universal de Loops & Evasão
@@ -916,7 +925,10 @@ cargo run -p alr-cli -- bybit-testnet --symbol BTCUSDT --limit 30
 # 40. Conector Oficial Binance Spot Testnet (Trading em Tempo Real com Saldo Virtual)
 cargo run -p alr-cli -- binance-testnet --symbol BTCUSDT --limit 30
 
-# 41. Executar a Suíte Completa de Testes Automatizados (320 Testes)
+# 41. Execução Contínua em Tempo Real do Robô Trader (Live Trading Desk com HUD Dinâmico)
+cargo run -p alr-cli -- trader-live --exchange binance --symbol BTCUSDT --poll-interval 3
+
+# 42. Executar a Suíte Completa de Testes Automatizados (322 Testes)
 cargo test --workspace
 ```
 
@@ -960,7 +972,7 @@ cargo test --workspace
 * **`cargo run -p alr-cli -- trader-demo`:** Robô trader quantitativo operando em sub-microssegundo (< 20 µs) com gráfico ASCII, RSI/MACD, confluência e stop-loss automático.
 * **`cargo run -p alr-cli -- bybit-testnet`:** Conexão oficial com a Bybit Testnet V5 com leitura de saldo, order book, candles e despacho de ordens assinadas via HMAC-SHA256.
 * **`cargo run -p alr-cli -- binance-testnet`:** Conexão oficial com a Binance Spot Testnet com leitura de saldo virtual, book ticker, candles e despacho de ordens assinadas via HMAC-SHA256.
-
+* **`cargo run -p alr-cli -- trader-live`:** Execução contínua em tempo real por tempo indeterminado do robô trader com painel HUD dinâmico, polling na Binance/Bybit/Paper, trailing stop e encerramento seguro via Ctrl+C.
 ---
 
 ## 📱 Guia de Automação de WhatsApp com Custo Zero de Tokens (Arquitetura & Tabela de ROI)

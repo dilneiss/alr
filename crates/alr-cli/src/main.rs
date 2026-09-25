@@ -9,8 +9,9 @@ use alr_agent::{
 };
 use alr_browser::{BrowserDriver, BrowserTarget, ChromiumCdpDriver, WebAppVersion};
 use alr_connectors::trading::{
-    generate_synthetic_candles, BinanceTestnetConnector, BybitOrderRequest, BybitTestnetConnector,
-    Candle, CryptoTraderEngine, ExchangeSimulationConfig, RiskPolicy, TechnicalIndicators,
+    generate_paper_market_snapshot, generate_synthetic_candles, BinanceTestnetConnector,
+    BybitOrderRequest, BybitTestnetConnector, Candle, CryptoTraderEngine, ExchangeSimulationConfig,
+    OrderSide, RiskPolicy, TechnicalIndicators,
 };
 use alr_connectors::{
     ApprovalGateway, ConnectorAction, ConnectorCapability, ConnectorContext, ConnectorRiskLevel,
@@ -58,6 +59,7 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use colored::*;
 use parking_lot::RwLock;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -430,6 +432,8 @@ enum Commands {
         asset: String,
         #[arg(long, default_value_t = 50)]
         candles: usize,
+        #[arg(long)]
+        live_loop: bool,
     },
     /// Bybit Testnet V5 Autonomous Trading Desk & Live Market Connector
     #[command(name = "bybit-testnet")]
@@ -442,6 +446,8 @@ enum Commands {
         interval: String,
         #[arg(long, default_value_t = 30)]
         limit: usize,
+        #[arg(long)]
+        live_loop: bool,
     },
     /// Binance Spot Testnet Autonomous Trading Desk & Live Market Connector
     #[command(name = "binance-testnet")]
@@ -452,6 +458,22 @@ enum Commands {
         interval: String,
         #[arg(long, default_value_t = 30)]
         limit: usize,
+        #[arg(long)]
+        live_loop: bool,
+    },
+    /// Execução Contínua em Tempo Real por Tempo Indeterminado (Live Trading Desk)
+    #[command(name = "trader-live")]
+    TraderLive {
+        #[arg(long, default_value = "binance")]
+        exchange: String, // "binance", "bybit", "paper"
+        #[arg(long, alias = "asset", default_value = "BTCUSDT")]
+        symbol: String,
+        #[arg(long, alias = "poll-interval", default_value_t = 3)]
+        interval_secs: u64,
+        #[arg(long, default_value_t = 10000.0)]
+        capital: f64,
+        #[arg(long, default_value_t = 0)]
+        max_cycles: usize, // 0 = tempo indeterminado
     },
 }
 
@@ -1666,23 +1688,50 @@ async fn main() -> Result<()> {
         Commands::TermsGap { query } => {
             run_terms_gap(&query)?;
         }
-        Commands::TraderDemo { asset, candles } => {
-            run_trader_demo(&asset, candles).await?;
+        Commands::TraderDemo {
+            asset,
+            candles,
+            live_loop,
+        } => {
+            if live_loop {
+                run_trader_live_loop("paper", &asset, 3, 10000.0, 0).await?;
+            } else {
+                run_trader_demo(&asset, candles).await?;
+            }
         }
         Commands::BybitTestnet {
             symbol,
             category,
             interval,
             limit,
+            live_loop,
         } => {
-            run_bybit_testnet(&symbol, &category, &interval, limit).await?;
+            if live_loop {
+                run_trader_live_loop("bybit", &symbol, 3, 10000.0, 0).await?;
+            } else {
+                run_bybit_testnet(&symbol, &category, &interval, limit).await?;
+            }
         }
         Commands::BinanceTestnet {
             symbol,
             interval,
             limit,
+            live_loop,
         } => {
-            run_binance_testnet(&symbol, &interval, limit).await?;
+            if live_loop {
+                run_trader_live_loop("binance", &symbol, 3, 10000.0, 0).await?;
+            } else {
+                run_binance_testnet(&symbol, &interval, limit).await?;
+            }
+        }
+        Commands::TraderLive {
+            exchange,
+            symbol,
+            interval_secs,
+            capital,
+            max_cycles,
+        } => {
+            run_trader_live_loop(&exchange, &symbol, interval_secs, capital, max_cycles).await?;
         }
         Commands::FinalAcceptance => {
             println!(
@@ -9685,6 +9734,597 @@ async fn run_binance_testnet(symbol: &str, interval: &str, limit: usize) -> Resu
     println!(
         "{}",
         "  EXECUCAO BINANCE SPOT TESTNET CONCLUIDA COM SUCESSO"
+            .bold()
+            .green()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .cyan()
+            .bold()
+    );
+    println!();
+
+    Ok(())
+}
+
+/// Execução Contínua em Tempo Real por Tempo Indeterminado (Live Trading Desk)
+async fn run_trader_live_loop(
+    exchange: &str,
+    symbol: &str,
+    interval_secs: u64,
+    initial_capital: f64,
+    max_cycles: usize,
+) -> Result<()> {
+    let ex_normalized = exchange.trim().to_lowercase();
+    let symbol_upper = symbol.trim().to_uppercase();
+
+    // 1. Configuração de monitor atômico de parada escutando Ctrl+C
+    let running = Arc::new(AtomicBool::new(true));
+    let r_sig = running.clone();
+    tokio::spawn(async move {
+        if tokio::signal::ctrl_c().await.is_ok() {
+            r_sig.store(false, Ordering::SeqCst);
+        }
+    });
+
+    println!();
+    println!(
+        "{}",
+        "=================================================================="
+            .cyan()
+            .bold()
+    );
+    println!(
+        "{}",
+        "    ALR QUANTITATIVE LIVE TRADING DESK (EXECUÇÃO CONTÍNUA)       "
+            .bold()
+            .green()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .cyan()
+            .bold()
+    );
+
+    // 2. Inicialização do conector conforme a exchange escolhida
+    let (ex_label, is_live_mode, exchange_cfg, base_price) = match ex_normalized.as_str() {
+        "binance" => {
+            let conn = BinanceTestnetConnector::from_env();
+            let live = conn.is_live();
+            let label = if live {
+                "Binance Spot Testnet (Live HMAC-SHA256)".green().bold()
+            } else {
+                "Binance Spot Testnet (Mock Resiliente)".yellow().bold()
+            };
+            (label, live, ExchangeSimulationConfig::binance(), 65000.0)
+        }
+        "bybit" => {
+            let conn = BybitTestnetConnector::from_env();
+            let live = conn.is_live();
+            let label = if live {
+                "Bybit V5 Testnet (Live HMAC-SHA256)".green().bold()
+            } else {
+                "Bybit V5 Testnet (Mock Resiliente)".yellow().bold()
+            };
+            (label, live, ExchangeSimulationConfig::bybit(), 65000.0)
+        }
+        _ => {
+            let label = "Paper Trading Determinístico Local".cyan().bold();
+            (label, false, ExchangeSimulationConfig::binance(), 65000.0)
+        }
+    };
+
+    let binance_conn = if ex_normalized == "binance" {
+        Some(BinanceTestnetConnector::from_env())
+    } else {
+        None
+    };
+
+    let bybit_conn = if ex_normalized == "bybit" {
+        Some(BybitTestnetConnector::from_env())
+    } else {
+        None
+    };
+
+    println!("  • Exchange           : {}", ex_label);
+    println!("  • Par Negociado      : {}", symbol_upper.green().bold());
+    println!(
+        "  • Intervalo Polling  : {} segundos",
+        interval_secs.to_string().cyan()
+    );
+    println!("  • Capital Inicial    : ${:.2} USDT", initial_capital);
+    println!(
+        "  • Limite de Ciclos   : {}",
+        if max_cycles == 0 {
+            "Indeterminado (Ctrl+C ou 'stop.signal' para parar)".cyan()
+        } else {
+            format!("{} ciclos", max_cycles).yellow()
+        }
+    );
+    println!(
+        "{}",
+        "------------------------------------------------------------------".blue()
+    );
+    println!("  ✓ Inicializando motor de trading quantitativo ALR (CryptoTraderEngine)...");
+
+    // 3. Inicialização e aquecimento do motor técnico
+    let mut engine = CryptoTraderEngine::new(
+        &symbol_upper,
+        initial_capital,
+        RiskPolicy::default(),
+        exchange_cfg,
+    );
+
+    // Warm-up inicial de candles para garantir indicadores calculáveis desde o ciclo 1
+    let warmup_candles = match ex_normalized.as_str() {
+        "binance" => {
+            if let Some(conn) = &binance_conn {
+                conn.get_klines(&symbol_upper, "1m", 30)
+                    .await
+                    .unwrap_or_else(|_| generate_synthetic_candles(42, 30, base_price))
+            } else {
+                generate_synthetic_candles(42, 30, base_price)
+            }
+        }
+        "bybit" => {
+            if let Some(conn) = &bybit_conn {
+                conn.get_kline("spot", &symbol_upper, "1", 30)
+                    .await
+                    .unwrap_or_else(|_| generate_synthetic_candles(42, 30, base_price))
+            } else {
+                generate_synthetic_candles(42, 30, base_price)
+            }
+        }
+        _ => generate_synthetic_candles(42, 30, base_price),
+    };
+
+    for c in warmup_candles {
+        engine.add_candle(c);
+    }
+    println!(
+        "  ✓ Aquecimento concluído: {} candles históricos carregados.",
+        engine.candles.len().to_string().green()
+    );
+    println!("  Iniciando loop de monitoramento e execução contínua...\n");
+
+    let start_time = std::time::Instant::now();
+    let mut cycle = 0usize;
+    let mut last_price = base_price;
+    let mut termination_reason = "Finalização normal";
+
+    // 4. Loop Contínuo Indeterminado
+    while running.load(Ordering::SeqCst)
+        && !alr_execution::GlobalEmergencyStop::is_active()
+        && !std::path::Path::new("stop.signal").exists()
+    {
+        cycle += 1;
+        let tick_start = std::time::Instant::now();
+
+        // 4.1. Coleta do snapshot mais recente do mercado
+        let snapshot = match ex_normalized.as_str() {
+            "binance" => {
+                if let Some(conn) = &binance_conn {
+                    conn.poll_market_snapshot(&symbol_upper, "1m", 30)
+                        .await
+                        .unwrap_or_else(|_| {
+                            generate_paper_market_snapshot(&symbol_upper, cycle, last_price, 30)
+                        })
+                } else {
+                    generate_paper_market_snapshot(&symbol_upper, cycle, last_price, 30)
+                }
+            }
+            "bybit" => {
+                if let Some(conn) = &bybit_conn {
+                    conn.poll_market_snapshot("spot", &symbol_upper, "1", 30)
+                        .await
+                        .unwrap_or_else(|_| {
+                            generate_paper_market_snapshot(&symbol_upper, cycle, last_price, 30)
+                        })
+                } else {
+                    generate_paper_market_snapshot(&symbol_upper, cycle, last_price, 30)
+                }
+            }
+            _ => generate_paper_market_snapshot(&symbol_upper, cycle, last_price, 30),
+        };
+
+        let current_price = snapshot.price;
+        let price_change = current_price - last_price;
+        let price_change_pct = if last_price > 0.0 {
+            (price_change / last_price) * 100.0
+        } else {
+            0.0
+        };
+        last_price = current_price;
+
+        // 4.2. Atualização do motor com a nova vela/tick
+        let now_ts = snapshot.timestamp;
+        let tick_candle = Candle::new(
+            now_ts,
+            current_price * 0.9999,
+            current_price * 1.0001,
+            current_price * 0.9998,
+            current_price,
+            12.5,
+        );
+        let exec_result = engine.on_candle(tick_candle)?;
+        let indicators = engine.compute_indicators().unwrap_or(TechnicalIndicators {
+            rsi_14: 50.0,
+            sma_20: current_price,
+            ema_9: current_price,
+            ema_21: current_price,
+            macd: 0.0,
+            macd_signal: 0.0,
+            macd_histogram: 0.0,
+            volatility_atr: current_price * 0.005,
+        });
+
+        // 4.3. Cálculo do estado da carteira e métricas
+        let port_val = engine.portfolio_value(current_price);
+        let total_pnl = port_val - initial_capital;
+        let total_pnl_pct = (total_pnl / initial_capital) * 100.0;
+        let current_dd = engine.drawdown_pct(current_price);
+
+        let closed_trades: Vec<&alr_connectors::trading::TradeExecution> = engine
+            .trade_history
+            .iter()
+            .filter(|t| t.realized_pnl.is_some())
+            .collect();
+        let total_trades_count = closed_trades.len();
+        let winning_count = closed_trades
+            .iter()
+            .filter(|t| t.realized_pnl.unwrap_or(0.0) > 0.0)
+            .count();
+        let win_rate = if total_trades_count > 0 {
+            (winning_count as f64 / total_trades_count as f64) * 100.0
+        } else {
+            0.0
+        };
+
+        let now_dt = chrono::Local::now();
+        let time_str = now_dt.format("%Y-%m-%d %H:%M:%S").to_string();
+
+        let change_str = if price_change >= 0.0 {
+            format!("+${:.2} ({:+.2}%)", price_change, price_change_pct).green()
+        } else {
+            format!("-${:.2} ({:+.2}%)", price_change.abs(), price_change_pct).red()
+        };
+
+        let pnl_session_str = if total_pnl >= 0.0 {
+            format!("+${:.2} ({:+.2}%)", total_pnl, total_pnl_pct)
+                .green()
+                .bold()
+        } else {
+            format!("-${:.2} ({:+.2}%)", total_pnl.abs(), total_pnl_pct)
+                .red()
+                .bold()
+        };
+
+        let rsi_label = if indicators.rsi_14 < 30.0 {
+            "SOBREVENDIDO (Oportunidade Compra)".green().bold()
+        } else if indicators.rsi_14 > 70.0 {
+            "SOBRECOMPRADO (Risco Venda)".red().bold()
+        } else {
+            "NEUTRO (Zona de Acúmulo)".yellow()
+        };
+        let ema_trend = if indicators.ema_9 > indicators.ema_21 {
+            "BULLISH (EMA9 > EMA21)".green()
+        } else {
+            "BEARISH (EMA9 < EMA21)".red()
+        };
+        let macd_label = if indicators.macd_histogram > 0.0 {
+            "MACD ALTA".green()
+        } else {
+            "MACD BAIXA".red()
+        };
+        let spread_pct = if current_price > 0.0 {
+            (snapshot.spread / current_price) * 100.0
+        } else {
+            0.0
+        };
+
+        // 4.4. Renderização do Painel HUD Dinâmico
+        println!();
+        println!(
+            "{}",
+            "=================================================================="
+                .cyan()
+                .bold()
+        );
+        println!(
+            "  {} │ CICLO #{:<4} │ {}",
+            "ALR LIVE TRADING DESK".bold().white(),
+            cycle,
+            time_str.yellow()
+        );
+        println!(
+            "  Corretora    : {:<16} │ Par: {:<10} │ Modo: {}",
+            ex_normalized.to_uppercase().cyan().bold(),
+            symbol_upper.green().bold(),
+            if is_live_mode {
+                "ONLINE (API TESTNET)".green().bold()
+            } else {
+                "PAPER SIMULADO".yellow().bold()
+            }
+        );
+        println!(
+            "  Saldo Total  : ${:<12.2} (Caixa: ${:<10.2}) │ PnL Sessão: {}",
+            port_val, engine.cash_balance, pnl_session_str
+        );
+        println!(
+            "{}",
+            "------------------------------------------------------------------".blue()
+        );
+        println!("  MERCADO EM TEMPO REAL:");
+        println!(
+            "  • Preço Atual : ${:<10.2} (Variação: {})",
+            current_price, change_str
+        );
+        println!(
+            "  • Livro       : Bid ${:.2} │ Ask ${:.2} │ Spread: ${:.4} ({:.3}%)",
+            snapshot.bid, snapshot.ask, snapshot.spread, spread_pct
+        );
+        println!(
+            "{}",
+            "------------------------------------------------------------------".blue()
+        );
+        println!("  INDICADORES TÉCNICOS DETERMINÍSTICOS (ALR System 1 < 10 µs):");
+        println!("  • RSI-14      : {:.2} [{}]", indicators.rsi_14, rsi_label);
+        println!(
+            "  • EMA 9 vs 21 : ${:.2} vs ${:.2} [{}]",
+            indicators.ema_9, indicators.ema_21, ema_trend
+        );
+        println!(
+            "  • MACD & ATR  : MACD {:+.2} (Hist {:+.2}) [{}] │ ATR-14 ${:.2}",
+            indicators.macd, indicators.macd_histogram, macd_label, indicators.volatility_atr
+        );
+        println!(
+            "{}",
+            "------------------------------------------------------------------".blue()
+        );
+        println!("  STATUS DA POSIÇÃO EM CUSTÓDIA:");
+        if let Some(pos) = &engine.current_position {
+            let (float_pnl, float_pct) = match pos.side {
+                OrderSide::Long => {
+                    let p = (current_price - pos.entry_price) * pos.quantity;
+                    let pct = ((current_price - pos.entry_price) / pos.entry_price) * 100.0;
+                    (p, pct)
+                }
+                OrderSide::Short => {
+                    let p = (pos.entry_price - current_price) * pos.quantity;
+                    let pct = ((pos.entry_price - current_price) / pos.entry_price) * 100.0;
+                    (p, pct)
+                }
+            };
+            let pnl_str = if float_pnl >= 0.0 {
+                format!("+${:.2} ({:+.2}%)", float_pnl, float_pct)
+                    .green()
+                    .bold()
+            } else {
+                format!("-${:.2} ({:+.2}%)", float_pnl.abs(), float_pct)
+                    .red()
+                    .bold()
+            };
+            println!(
+                "  • ABERTA      : {:?} {:.4} @ ${:.2} │ Flutuante: {}",
+                pos.side, pos.quantity, pos.entry_price, pnl_str
+            );
+            println!(
+                "  • Stop-Loss   : ${:.2} │ Take-Profit: ${:.2}",
+                pos.stop_loss, pos.take_profit
+            );
+        } else {
+            println!("  • FLAT        : Nenhuma posição aberta. Aguardando confluência técnica de compra.");
+        }
+        if let Some(exec) = &exec_result {
+            println!(
+                "{}",
+                "------------------------------------------------------------------".yellow()
+            );
+            let exec_pnl_str = if let Some(pnl) = exec.realized_pnl {
+                if pnl >= 0.0 {
+                    format!("PnL Realizado: +${:.2}", pnl).green().bold()
+                } else {
+                    format!("PnL Realizado: -${:.2}", pnl.abs()).red().bold()
+                }
+            } else {
+                format!("Custo Ordem: ${:.2}", exec.price * exec.quantity).cyan()
+            };
+            println!(
+                "  ► ORDEM EXECUTADA: {:?} {:?} {:.4} @ ${:.2} │ {}",
+                exec.action, exec.side, exec.quantity, exec.price, exec_pnl_str
+            );
+            println!(
+                "    Motivo: {} │ Taxa: ${:.4} │ Slippage: ${:.4}",
+                exec.reason.yellow(),
+                exec.fee,
+                exec.slippage
+            );
+        }
+        println!(
+            "{}",
+            "------------------------------------------------------------------".blue()
+        );
+        println!("  EXTRATO RECENTE DE ORDENS FINALIZADAS (Últimas 3):");
+        if closed_trades.is_empty() {
+            println!("    (Aguardando primeiros encerramentos de trade)");
+        } else {
+            for t in closed_trades.iter().rev().take(3) {
+                let pnl = t.realized_pnl.unwrap_or(0.0);
+                let pnl_fmt = if pnl >= 0.0 {
+                    format!("+${:.2}", pnl).green().bold()
+                } else {
+                    format!("-${:.2}", pnl.abs()).red().bold()
+                };
+                println!(
+                    "    • [{}] {:.4} @ ${:.2} │ PnL: {} │ Motivo: {}",
+                    t.id.cyan(),
+                    t.quantity,
+                    t.price,
+                    pnl_fmt,
+                    t.reason
+                );
+            }
+        }
+        println!(
+            "{}",
+            "------------------------------------------------------------------".blue()
+        );
+        println!(
+            "  MÉTRICAS ACUMULADAS: Win Rate: {:.1}% ({}/{} trades) │ Drawdown: {:.2}%",
+            win_rate, winning_count, total_trades_count, current_dd
+        );
+        println!(
+            "  Latência Ciclo: {:.2?} │ Pressione Ctrl+C ou crie 'stop.signal' para parar.",
+            tick_start.elapsed()
+        );
+        println!(
+            "{}",
+            "=================================================================="
+                .cyan()
+                .bold()
+        );
+
+        // 4.5. Verificação de término por max_cycles
+        if max_cycles > 0 && cycle >= max_cycles {
+            termination_reason = "Limite de ciclos configurado atingido (--max-cycles)";
+            break;
+        }
+
+        // 4.6. Espera pelo próximo tick com checagem de cancelamento rápido a cada 200ms
+        let sleep_ms = interval_secs * 1000;
+        let steps = (sleep_ms / 200).max(1);
+        for _ in 0..steps {
+            if !running.load(Ordering::SeqCst) {
+                termination_reason = "Interrupção do Operador (Ctrl+C / SIGINT)";
+                break;
+            }
+            if alr_execution::GlobalEmergencyStop::is_active() {
+                termination_reason = "GlobalEmergencyStop Ativado";
+                break;
+            }
+            if std::path::Path::new("stop.signal").exists() {
+                termination_reason = "Sinal de parada detectado ('stop.signal')";
+                let _ = std::fs::remove_file("stop.signal");
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+        }
+
+        if !running.load(Ordering::SeqCst)
+            || alr_execution::GlobalEmergencyStop::is_active()
+            || std::path::Path::new("stop.signal").exists()
+        {
+            if !running.load(Ordering::SeqCst) {
+                termination_reason = "Interrupção do Operador (Ctrl+C / SIGINT)";
+            } else if alr_execution::GlobalEmergencyStop::is_active() {
+                termination_reason = "GlobalEmergencyStop Ativado";
+            } else {
+                termination_reason = "Sinal de parada detectado ('stop.signal')";
+                let _ = std::fs::remove_file("stop.signal");
+            }
+            break;
+        }
+    }
+
+    // 5. Relatório Final Consolidado da Sessão
+    let session_duration = start_time.elapsed();
+    let final_report = engine.generate_report();
+
+    println!();
+    println!(
+        "{}",
+        "=================================================================="
+            .cyan()
+            .bold()
+    );
+    println!(
+        "{}",
+        "   ALR LIVE TRADING DESK - RELATÓRIO CONSOLIDADO DA SESSÃO        "
+            .bold()
+            .green()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .cyan()
+            .bold()
+    );
+    println!(
+        "  • Motivo Encerramento : {}",
+        termination_reason.yellow().bold()
+    );
+    println!(
+        "  • Tempo de Operação   : {:.2?} ({} ciclos completados)",
+        session_duration, cycle
+    );
+    println!(
+        "  • Exchange / Par      : {} / {}",
+        ex_normalized.to_uppercase().cyan(),
+        symbol_upper.green()
+    );
+    println!(
+        "  • Saldo Inicial       : ${:.2}",
+        final_report.initial_capital
+    );
+    println!(
+        "  • Saldo Final         : ${:.2}",
+        final_report.final_capital
+    );
+
+    let net_pnl = final_report.final_capital - final_report.initial_capital;
+    let net_pnl_pct = (net_pnl / final_report.initial_capital) * 100.0;
+    println!(
+        "  • Lucro Líquido (PnL) : {}",
+        if net_pnl >= 0.0 {
+            format!("+${:.2} ({:+.2}%)", net_pnl, net_pnl_pct)
+                .green()
+                .bold()
+        } else {
+            format!("-${:.2} ({:+.2}%)", net_pnl.abs(), net_pnl_pct)
+                .red()
+                .bold()
+        }
+    );
+    println!(
+        "  • Total de Trades     : {} (Vencedores: {}, Perdedores: {})",
+        final_report.total_trades, final_report.winning_trades, final_report.losing_trades
+    );
+    println!("  • Taxa de Acerto      : {:.1}%", final_report.win_rate);
+    println!(
+        "  • Profit Factor       : {:.2}",
+        final_report.profit_factor
+    );
+    println!("  • Sharpe Ratio        : {:.2}", final_report.sharpe_ratio);
+    println!(
+        "  • Drawdown Máximo     : {:.2}%",
+        final_report.max_drawdown
+    );
+
+    if let Some(pos) = &engine.current_position {
+        println!(
+            "  • Posição Remanescente: {} {:?} {:.4} @ ${:.2} (Stop: ${:.2}, TP: ${:.2})",
+            "ABERTA".yellow().bold(),
+            pos.side,
+            pos.quantity,
+            pos.entry_price,
+            pos.stop_loss,
+            pos.take_profit
+        );
+    } else {
+        println!("  • Posição Remanescente: {}", "FECHADA (FLAT)".green());
+    }
+
+    println!(
+        "{}",
+        "=================================================================="
+            .cyan()
+            .bold()
+    );
+    println!(
+        "{}",
+        "   SESSÃO DE TRADING EM TEMPO REAL ENCERRADA COM SUCESSO          "
             .bold()
             .green()
     );

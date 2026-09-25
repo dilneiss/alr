@@ -12,8 +12,9 @@
 //! 8. Confluência técnica de indicadores (RSI, EMA, MACD, ATR) e motor `CryptoTraderEngine`.
 
 use alr_connectors::trading::{
-    parse_binance_kline_response, BinanceOrderResponse, BinanceTestnetConnector,
-    CryptoTraderEngine, ExchangeSimulationConfig, RiskPolicy, TechnicalIndicators,
+    generate_paper_market_snapshot, parse_binance_kline_response, BinanceOrderResponse,
+    BinanceTestnetConnector, CryptoTraderEngine, ExchangeSimulationConfig, MarketSnapshot,
+    RiskPolicy, TechnicalIndicators,
 };
 use hmac::{Hmac, Mac};
 use sha2::Sha256;
@@ -337,4 +338,44 @@ fn test_binance_order_response_serialization() {
     assert_eq!(resp, deserialized);
     assert_eq!(deserialized.order_id, 987654321);
     assert_eq!(deserialized.price, 3500.50);
+}
+
+/// 10. Teste do MarketSnapshot consolidado e polling na Binance Testnet
+#[tokio::test]
+async fn test_binance_poll_market_snapshot() {
+    let connector = BinanceTestnetConnector::mock();
+    let snapshot: MarketSnapshot = connector
+        .poll_market_snapshot("BTCUSDT", "15m", 30)
+        .await
+        .expect("Falha ao consultar snapshot de mercado consolidado");
+
+    assert_eq!(snapshot.symbol, "BTCUSDT");
+    assert!(snapshot.price > 0.0);
+    assert!(snapshot.bid > 0.0);
+    assert!(snapshot.ask >= snapshot.bid);
+    assert!(snapshot.spread >= 0.0);
+    assert!(!snapshot.candles.is_empty());
+    assert!(snapshot.indicators.is_some());
+
+    let ind = snapshot.indicators.unwrap();
+    assert!(ind.rsi_14 >= 0.0 && ind.rsi_14 <= 100.0);
+    assert!(ind.sma_20 > 0.0);
+    assert!(ind.ema_9 > 0.0);
+    assert!(ind.ema_21 > 0.0);
+}
+
+/// 11. Teste do gerador determinístico de Paper Market Snapshot
+#[test]
+fn test_generate_paper_market_snapshot() {
+    let snap1 = generate_paper_market_snapshot("BTCUSDT", 1, 65000.0, 30);
+    let snap2 = generate_paper_market_snapshot("BTCUSDT", 2, 65000.0, 30);
+
+    assert_eq!(snap1.symbol, "BTCUSDT");
+    assert_eq!(snap2.symbol, "BTCUSDT");
+    assert!(snap1.price > 60000.0 && snap1.price < 70000.0);
+    assert!(snap2.price > 60000.0 && snap2.price < 70000.0);
+    assert!(snap1.spread > 0.0);
+    assert!(snap1.bid < snap1.ask);
+    assert_eq!(snap1.candles.len(), 30);
+    assert!(snap1.indicators.is_some());
 }
