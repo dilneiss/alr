@@ -2,7 +2,7 @@
 
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B%20%7C%201.98.1-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-green.svg)](LICENSE)
-[![Testes](https://img.shields.io/badge/Testes-303%2F303%20Passando-brightgreen.svg)]()
+[![Testes](https://img.shields.io/badge/Testes-311%2F311%20Passando-brightgreen.svg)]()
 [![Taxa de Autonomia](https://img.shields.io/badge/Autonomia%20Local-98.8%25-orange.svg)]()
 [![Evasão de Loop](https://img.shields.io/badge/Evas%C3%A3o%20de%20Loop-Ativa-brightgreen.svg)](docs/training-new-tasks.md)
 [![Status de Liberação](https://img.shields.io/badge/Certifica%C3%A7%C3%A3o%20de%20Release-Certificado%20com%20Limita%C3%A7%C3%B5es-yellow.svg)](docs/final-certification-report.md)
@@ -40,6 +40,7 @@ O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos cons
 23. **Memória Vetorial Avançada no Qdrant (Embeddings 384d/1536d, BM25 Esparso, Quantização int8 e Busca Híbrida RRF)**
 24. **Suíte JEV de Marketing Ops, SEO e Otimização de Anúncios (9 Tarefas Nativas em Rust, $0.00 e Latência em Microssegundos)**
 25. **Trading Quantitativo, Robô de Criptomoedas e Bolsa (CryptoTraderEngine, Indicadores Locais, Stop-Loss Inviolável, Simulação de Exchanges e Trailing Stop)**
+26. **Conector Oficial Bybit Testnet V5 (Assinatura HMAC-SHA256, Order Book, Saldo Virtual e Despacho de Ordens)**
 
 
 ## ⚡ Quickstart em 3 Minutos: Do Zero ao Agente Operacional
@@ -906,7 +907,13 @@ cargo run -p alr-cli -- cctv-demo
 # 37. Benchmark de Embeddings de Alta Fidelidade (384d/1536d) e Quantização Escalar no Qdrant
 cargo run -p alr-cli -- qdrant-benchmark --dimensions 384
 
-# 38. Executar a Suíte Completa de Testes Automatizados (284 Testes)
+# 38. Robô Trader Quantitativo com Gráfico ASCII e Indicadores Locais
+cargo run -p alr-cli -- trader-demo --asset BTC-USDT --candles 50
+
+# 39. Conector Oficial Bybit Testnet V5 (Trading em Tempo Real com Saldo Virtual)
+cargo run -p alr-cli -- bybit-testnet --symbol BTCUSDT --limit 30
+
+# 40. Executar a Suíte Completa de Testes Automatizados (311 Testes)
 cargo test --workspace
 ```
 
@@ -947,6 +954,8 @@ cargo test --workspace
 * **`cargo run -p alr-cli -- web-demo`:** Demonstração completa de automação web autônoma (navegação, busca, espera, extração e comparação de preços mais barato vs mais caro com relatório de itens).
 * **`cargo run -p alr-cli -- cctv-demo`:** Monitoramento de vídeo em janela (diferença temporal, detecção de pessoas/veículos, tripwire de invasão e notificação nativa do Windows Toast com alerta sonoro).
 * **`cargo run -p alr-cli -- qdrant-benchmark`:** Benchmark de alta fidelidade semântica (Hit@1 91.7%, Hit@3 100%, MRR 0.958), quantização escalar int8 (redução de 75% em RAM) e busca híbrida Densa + BM25 com fusão RRF.
+* **`cargo run -p alr-cli -- trader-demo`:** Robô trader quantitativo operando em sub-microssegundo (< 20 µs) com gráfico ASCII, RSI/MACD, confluência e stop-loss automático.
+* **`cargo run -p alr-cli -- bybit-testnet`:** Conexão oficial com a Bybit Testnet V5 com leitura de saldo, order book, candles e despacho de ordens assinadas via HMAC-SHA256.
 
 ---
 
@@ -1088,7 +1097,7 @@ O ALR foi construído para responder afirmativamente e comprovar na prática tr�
 
 | Gate | Requisito Formal | Status Auditado |
 | :--- | :--- | :--- |
-| **Gate 1 — Regressão** | Fases 1 a 22 operam continuamente sem quebras | **COMPROVADO** (284/284 testes aprovados) |
+| **Gate 1 — Regressão** | Fases 1 a 23 operam continuamente sem quebras | **COMPROVADO** (311/311 testes aprovados) |
 | **Gate 2 — Segurança** | Zero violações de isolamento e zero vazamentos | **COMPROVADO** (Invariantes ativas) |
 | **Gate 3 — Integridade** | Rejeição de falso sucesso sem mutação real de estado | **COMPROVADO** (`FalseSuccessValidator`) |
 | **Gate 4 — Recuperação** | Recuperação determinística de agente preso | **COMPROVADO** (`StuckDetector` e replanejador) |
@@ -1111,7 +1120,7 @@ O ALR foi construído para responder afirmativamente e comprovar na prática tr�
 =============================================================
  Status: FINALMENTE CERTIFICADO COM LIMITAÇÕES
  Workspace: 22 Crates (Workspace Cargo em Rust)
- Suíte de Testes: 284 Testes (100% Passando, 0 Regressões)
+ Suíte de Testes: 311 Testes (100% Passando, 0 Regressões)
  Código Inseguro: 0 Linhas de "unsafe" Descontrolado
  Autonomia Local Global: 98.8%
 =============================================================

@@ -114,6 +114,10 @@ path = "../../tests/phase22_marketing_ops_jev_suite_tests.rs"
 name = "phase23_crypto_trader_tests"
 path = "../../tests/phase23_crypto_trader_tests.rs"
 
+[[test]]
+name = "phase24_bybit_testnet_tests"
+path = "../../tests/phase24_bybit_testnet_tests.rs"
+
 [dependencies]
 alr-core = { workspace = true }
 alr-memory = { workspace = true }

@@ -27,8 +27,10 @@ pub use secrets::{
 };
 pub use tasks::{AgentCheckpoint, AgentTask, TaskPriority, TaskQueue, TaskStatus};
 pub use trading::{
-    generate_synthetic_candles, Candle, CandleTick, CryptoTraderEngine, ExchangeSimulationConfig,
-    OrderBook, OrderSide, RiskControlPolicy, RiskPolicy, TechnicalIndicators, TradeExecution,
-    TradeExecutionReport, TradingAction, TradingPosition, TradingSignal,
+    generate_synthetic_candles, parse_bybit_kline_response, BybitOrderRequest, BybitOrderResponse,
+    BybitTestnetConnector, BybitTicker, Candle, CandleTick, CryptoTraderEngine,
+    ExchangeSimulationConfig, OrderBook, OrderSide, RiskControlPolicy, RiskPolicy,
+    TechnicalIndicators, TradeExecution, TradeExecutionReport, TradingAction, TradingPosition,
+    TradingSignal,
 };
 pub use webhooks::{EventStore, InboundWebhookEvent, WebhookValidator};

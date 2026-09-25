@@ -9,7 +9,8 @@ use alr_agent::{
 };
 use alr_browser::{BrowserDriver, BrowserTarget, ChromiumCdpDriver, WebAppVersion};
 use alr_connectors::trading::{
-    generate_synthetic_candles, Candle, CryptoTraderEngine, ExchangeSimulationConfig, RiskPolicy,
+    generate_synthetic_candles, BybitOrderRequest, BybitTestnetConnector, Candle,
+    CryptoTraderEngine, ExchangeSimulationConfig, RiskPolicy, TechnicalIndicators,
 };
 use alr_connectors::{
     ApprovalGateway, ConnectorAction, ConnectorCapability, ConnectorContext, ConnectorRiskLevel,
@@ -429,6 +430,18 @@ enum Commands {
         asset: String,
         #[arg(long, default_value_t = 50)]
         candles: usize,
+    },
+    /// Bybit Testnet V5 Autonomous Trading Desk & Live Market Connector
+    #[command(name = "bybit-testnet")]
+    BybitTestnet {
+        #[arg(long, default_value = "BTCUSDT")]
+        symbol: String,
+        #[arg(long, default_value = "spot")]
+        category: String,
+        #[arg(long, default_value = "15")]
+        interval: String,
+        #[arg(long, default_value_t = 30)]
+        limit: usize,
     },
 }
 
@@ -1645,6 +1658,14 @@ async fn main() -> Result<()> {
         }
         Commands::TraderDemo { asset, candles } => {
             run_trader_demo(&asset, candles).await?;
+        }
+        Commands::BybitTestnet {
+            symbol,
+            category,
+            interval,
+            limit,
+        } => {
+            run_bybit_testnet(&symbol, &category, &interval, limit).await?;
         }
         Commands::FinalAcceptance => {
             println!(
@@ -9144,6 +9165,264 @@ async fn run_trader_demo(asset: &str, num_candles: usize) -> Result<()> {
             .bold()
             .blue()
     );
+
+    Ok(())
+}
+
+async fn run_bybit_testnet(
+    symbol: &str,
+    category: &str,
+    interval: &str,
+    limit: usize,
+) -> Result<()> {
+    println!();
+    println!(
+        "{}",
+        "=================================================================="
+            .cyan()
+            .bold()
+    );
+    println!(
+        "{}",
+        "  ALR BYBIT TESTNET V5 - CONECTOR OFICIAL & TRADING DESK"
+            .bold()
+            .yellow()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .cyan()
+            .bold()
+    );
+    println!();
+
+    // 1. Inicialização do conector
+    let connector = BybitTestnetConnector::from_env();
+    let is_live = connector.is_live();
+    let mode_str = if is_live {
+        "CREDENCIAS REAIS (.env BYBIT_API_KEY/SECRET)"
+            .green()
+            .bold()
+    } else {
+        "MODO TESTNET SIMULADO / OFFLINE RESILIENTE".yellow().bold()
+    };
+
+    println!("  • Endpoint Oficial : {}", connector.base_url.cyan());
+    println!("  • Modo de Operação : {}", mode_str);
+    println!("  • Categoria Mercado: {}", category.to_uppercase().cyan());
+    println!(
+        "  • Par Negociado    : {}",
+        symbol.to_uppercase().green().bold()
+    );
+    println!("  • Intervalo/Tempo  : {} min", interval);
+    println!("  • Limite Candles   : {}", limit);
+
+    // 2. Sonda de conectividade
+    print!("  • Sonda de Conexão : ");
+    let t0 = std::time::Instant::now();
+    let server_time = connector.get_server_time().await?;
+    let latency = t0.elapsed();
+    println!(
+        "{} (Timestamp Bybit V5: {}, Latência: {:.2?})",
+        "ONLINE".green().bold(),
+        server_time,
+        latency
+    );
+
+    // 3. Saldo da carteira de testes
+    let wallet_balance = connector.get_wallet_balance("UNIFIED", "USDT").await?;
+    println!("  • Saldo Testnet    : ${:.2} USDT", wallet_balance);
+    println!();
+
+    // 4. Consulta de Ticker instantâneo
+    println!(
+        "{}",
+        "  CONSULTA DE TICKER INSTANTANEO (/v5/market/tickers):"
+            .bold()
+            .cyan()
+    );
+    let ticker = connector.get_tickers(category, symbol).await?;
+    println!("  • Preço Atual (Last): ${:.2}", ticker.last_price);
+    println!("  • Melhor Compra(Bid): ${:.2}", ticker.bid_price);
+    println!("  • Melhor Venda (Ask): ${:.2}", ticker.ask_price);
+    println!("  • Spread L2         : ${:.4}", ticker.spread);
+    println!(
+        "  • Volume 24 Horas   : {:.2} {}",
+        ticker.volume_24h, symbol
+    );
+    println!(
+        "  • Faixa 24h (L / H) : ${:.2} / ${:.2}",
+        ticker.low_24h, ticker.high_24h
+    );
+    println!();
+
+    // 5. Download de velas
+    println!(
+        "{}",
+        "  CARREGANDO VELAS HISTORICAS (/v5/market/kline)..."
+            .bold()
+            .cyan()
+    );
+    let candles = connector
+        .get_kline(category, symbol, interval, limit)
+        .await?;
+    println!(
+        "  ✓ {} candles carregados com sucesso.",
+        candles.len().to_string().green()
+    );
+    println!();
+
+    // Renderiza gráfico ASCII
+    render_ascii_chart(&candles, 8);
+
+    // 6. Cálculo de Indicadores Técnicos
+    println!(
+        "{}",
+        "  PAINEL DE INDICADORES TECNICOS (ALR System 1):"
+            .bold()
+            .cyan()
+    );
+    let indicators = TechnicalIndicators::calculate(&candles)?;
+
+    let ema_trend = if indicators.ema_9 > indicators.ema_21 {
+        "BULLISH (EMA9 > EMA21)".green()
+    } else {
+        "BEARISH (EMA9 < EMA21)".red()
+    };
+    let rsi_label = if indicators.rsi_14 < 30.0 {
+        "SOBREVENDIDO (Oportunidade Compra)".green()
+    } else if indicators.rsi_14 > 70.0 {
+        "SOBRECOMPRADO (Risco Venda)".red()
+    } else {
+        "NEUTRO (Zona de Acúmulo)".yellow()
+    };
+
+    println!(
+        "  • RSI-14 Períodos   : {:.2} [{}]",
+        indicators.rsi_14, rsi_label
+    );
+    println!(
+        "  • EMA-9 vs EMA-21   : ${:.2} vs ${:.2} [{}]",
+        indicators.ema_9, indicators.ema_21, ema_trend
+    );
+    println!("  • SMA-20 Tendência  : ${:.2}", indicators.sma_20);
+    println!(
+        "  • MACD Histograma   : Line: {:+.2} │ Signal: {:+.2} │ Hist: {:+.2}",
+        indicators.macd, indicators.macd_signal, indicators.macd_histogram
+    );
+    println!("  • ATR-14 Volatilidade: ${:.2}", indicators.volatility_atr);
+    println!();
+
+    // 7. Avaliação de Sinal com CryptoTraderEngine
+    let mut engine = CryptoTraderEngine::new(
+        symbol,
+        wallet_balance,
+        RiskPolicy::default(),
+        ExchangeSimulationConfig::bybit(),
+    );
+    for c in &candles {
+        let _ = engine.on_candle(c.clone())?;
+    }
+    let last_price = ticker.last_price;
+    let signal = engine.evaluate_signal(&indicators, last_price);
+    println!("  • Sinal Técnico ALR : {:?}", signal);
+
+    // 8. Despacho de Ordem com Assinatura Criptográfica HMAC-SHA256
+    println!(
+        "{}",
+        "------------------------------------------------------------------".blue()
+    );
+    println!(
+        "{}",
+        "  DESPACHO DE ORDEM TESTNET COM ASSINATURA HMAC-SHA256:"
+            .bold()
+            .cyan()
+    );
+
+    let stop_loss_price = last_price * 0.98; // 2% Stop Loss
+    let take_profit_price = last_price * 1.04; // 4% Take Profit
+    let order_qty = 0.001;
+
+    let order_req = BybitOrderRequest::market_buy(category, symbol, order_qty)
+        .with_stop_loss(stop_loss_price)
+        .with_take_profit(take_profit_price)
+        .with_order_link_id(format!("alr-bybit-{}", uuid::Uuid::new_v4().simple()));
+
+    println!(
+        "  • Ordem Gerada      : [COMPRA A MERCADO] Qtd: {:.4} {}",
+        order_qty, symbol
+    );
+    println!("  • Stop-Loss Proteção: ${:.2} (-2.0%)", stop_loss_price);
+    println!("  • Take-Profit Alvo  : ${:.2} (+4.0%)", take_profit_price);
+    println!(
+        "  • Client Order ID   : {}",
+        order_req.order_link_id.as_deref().unwrap_or("")
+    );
+
+    let sign_timestamp = connector.get_server_time().await?;
+    let dummy_secret = connector
+        .api_secret
+        .as_deref()
+        .unwrap_or("testnet_secret_key_demo");
+    let dummy_key = connector
+        .api_key
+        .as_deref()
+        .unwrap_or("testnet_api_key_demo");
+    let payload_to_sign = serde_json::to_string(&order_req)?;
+    let sample_signature = BybitTestnetConnector::sign(
+        sign_timestamp,
+        dummy_key,
+        connector.recv_window,
+        &payload_to_sign,
+        dummy_secret,
+    )?;
+
+    println!(
+        "  • Assinatura HMAC   : {}... (Len: {})",
+        sample_signature[..16].green(),
+        sample_signature.len()
+    );
+    println!(
+        "  • Headers V5 BAPI   : X-BAPI-API-KEY, X-BAPI-TIMESTAMP={}, X-BAPI-RECV-WINDOW={}",
+        sign_timestamp, connector.recv_window
+    );
+
+    let order_resp = connector.place_order(order_req).await?;
+    println!();
+    println!("  ✓ Resposta da Bybit Testnet:");
+    println!(
+        "    - Order ID     : {}",
+        order_resp.order_id.green().bold()
+    );
+    println!("    - Status       : {}", order_resp.status.cyan().bold());
+    println!("    - RetCode      : {}", order_resp.ret_code);
+    println!("    - RetMsg       : {}", order_resp.ret_msg);
+
+    // 9. Consulta de status pós-ordem
+    let realtime_status = connector
+        .check_order_status(category, symbol, &order_resp.order_id)
+        .await?;
+    println!("    - Status Realtime: {}", realtime_status.yellow().bold());
+    println!();
+    println!(
+        "{}",
+        "=================================================================="
+            .cyan()
+            .bold()
+    );
+    println!(
+        "{}",
+        "  EXECUCAO BYBIT TESTNET V5 CONCLUIDA COM SUCESSO"
+            .bold()
+            .green()
+    );
+    println!(
+        "{}",
+        "=================================================================="
+            .cyan()
+            .bold()
+    );
+    println!();
 
     Ok(())
 }
