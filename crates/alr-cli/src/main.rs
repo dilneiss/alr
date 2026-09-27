@@ -13,7 +13,7 @@ use alr_connectors::trading::{
     asset_baseline_price, generate_paper_market_snapshot, generate_synthetic_candles,
     BinanceTestnetConnector, BybitOrderRequest, BybitTestnetConnector, Candle, CryptoTraderEngine,
     ExchangeSimulationConfig, MultiAssetConfig, MultiAssetTraderEngine, OrderSide, RiskPolicy,
-    SqliteTradingStore, TechnicalIndicators, DEFAULT_MULTI_ASSET_BASKET,
+    SqliteTradingStore, TechnicalIndicators, TradingAction, DEFAULT_MULTI_ASSET_BASKET,
 };
 use alr_connectors::trading_desk::run_trading_desk_server_with_logger;
 use alr_connectors::trading_logger::TradingDeskLogger;
@@ -10896,9 +10896,18 @@ async fn run_multi_asset_trading_desk(
                 if let Ok(Some(trade)) = exec_opt {
                     if let Some(ref conn) = binance_conn_clone {
                         if conn.is_live() {
-                            let side_str = match trade.side {
-                                OrderSide::Long => "BUY",
-                                OrderSide::Short => "SELL",
+                            let side_str = match trade.action {
+                                TradingAction::Buy => match trade.side {
+                                    OrderSide::Long => "BUY",
+                                    OrderSide::Short => "SELL",
+                                },
+                                TradingAction::ClosePosition
+                                | TradingAction::Sell
+                                | TradingAction::PartialClose => match trade.side {
+                                    OrderSide::Long => "SELL",
+                                    OrderSide::Short => "BUY",
+                                },
+                                _ => "SELL",
                             };
                             let formatted_qty = BinanceTestnetConnector::format_binance_quantity(
                                 &symbol_clean,

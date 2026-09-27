@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALR Voz - Navegador por Voz Autônomo</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <div class="panel-container">
+    <!-- Header com Logo Oficial ALR -->
+    <header class="panel-header">
+      <div class="header-title-wrap">
+        <img src="icons/alr-logo.png" alt="ALR Logo" class="header-alr-logo">
+        <span class="status-indicator-dot" id="header-status-dot"></span>
+        <h1 class="header-title">ALR Navegador por Voz</h1>
+      </div>
+      <button class="icon-btn-settings" id="btn-open-settings" title="Configurações">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Botão Principal de Microfone (Ouvir / Parar) -->
+    <div class="mic-button-wrapper">
+      <button class="main-mic-btn idle" id="btn-toggle-mic">
+        <svg class="mic-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+          <line x1="12" y1="19" x2="12" y2="23"></line>
+          <line x1="8" y1="23" x2="16" y2="23"></line>
+        </svg>
+        <span id="mic-btn-label">Ouvir</span>
+      </button>
+    </div>
+
+    <!-- Área de Transcrição ao Vivo -->
+    <div class="transcript-box" id="transcript-container">
+      <div class="transcript-bubbles-list" id="transcript-bubbles">
+        <div class="transcript-bubble interim" id="current-live-bubble">
+          Clique em "Ouvir" e fale um comando (ex: "abre o YouTube", "pesquisa bolo de cenoura")...
+        </div>
+      </div>
+    </div>
+
+    <!-- Painel de Métricas (Dashboard) -->
+    <div class="metrics-panel">
+      <!-- Linha 1: Modelo -->
+      <div class="metrics-row-model">
+        <span class="metric-label">Modelo</span>
+        <span class="metric-model-val" id="val-model-name">alr-systemone-native-v1</span>
+      </div>
+
+      <!-- Linha 2: Última decisão, p50, Chamadas -->
+      <div class="metrics-grid-3col">
+        <div class="metric-col">
+          <span class="metric-label">Última decisão</span>
+          <span class="metric-val" id="val-last-decision">-</span>
+        </div>
+        <div class="metric-col">
+          <span class="metric-label">p50</span>
+          <span class="metric-val" id="val-p50">-</span>
+        </div>
+        <div class="metric-col">
+          <span class="metric-label">Chamadas</span>
+          <span class="metric-val" id="val-calls-count">0</span>
+          <span class="metric-sub-note" id="val-canceled-calls">0 canceladas por fala nova</span>
+        </div>
+      </div>
+
+      <!-- Linha 3: Ações, Custo acumulado -->
+      <div class="metrics-grid-2col">
+        <div class="metric-col">
+          <span class="metric-label">Ações</span>
+          <span class="metric-val" id="val-actions-count">0</span>
+        </div>
+        <div class="metric-col">
+          <span class="metric-label">Modo</span>
+          <span class="metric-val text-green" id="val-mode-status">100% Local (CPU)</span>
+      </div>
+    </div>
+
+    <!-- Card de Decisão do ALR -->
+    <div class="decision-card state-waiting" id="decision-card">
+      <div class="decision-card-header">
+        <span class="decision-title">Decisão do ALR</span>
+        <span class="decision-time-badge" id="decision-time-badge"></span>
+      </div>
+
+      <!-- Título de Status Grande (AGUARDANDO ou AGIU) -->
+      <div class="decision-status-title" id="decision-status-title">AGUARDANDO</div>
+
+      <!-- Descrição da Ação Executada -->
+      <div class="decision-action-desc" id="decision-action-desc">Nenhuma fala analisada ainda.</div>
+
+      <!-- Fala em Andamento Citada -->
+      <div class="decision-speech-quote" id="decision-speech-quote" style="display: none;"></div>
+
+      <!-- Seção de Barras de Probabilidade Calibrada de Intenção -->
+      <div class="intention-bars-wrapper" id="intention-bars-section" style="display: none;">
+        <div class="intention-header-label">Intenção</div>
+        <div class="intention-bars-list" id="intention-bars-list">
+          <!-- Gerado dinamicamente com barras horizontais -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Log de Ações Executadas (Histórico Transparente) -->
+    <div class="actions-log-section">
+      <div class="log-section-header">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-size: 11px; font-weight: 700; color: #ffffff; text-transform: uppercase;">📋 Histórico de Ações</span>
+          <span class="log-count-chip" id="log-count-chip">0</span>
+        </div>
+        <button class="btn-clear-log" id="btn-clear-log" title="Limpar histórico de ações">Limpar</button>
+      </div>
+
+      <div class="actions-log-scroll" id="actions-log-list">
+        <!-- Itens de log renderizados dinamicamente -->
+        <div class="log-empty-msg" id="log-empty-msg">Nenhuma ação realizada nesta sessão. Fale um comando para iniciar.</div>
+      </div>
+    </div>
+
+    <!-- Modal de Configurações -->
+    <div class="settings-modal" id="settings-modal" style="display: none;">
+      <div class="settings-card">
+        <div class="settings-header">
+          <h3>Configurações do ALR Voz</h3>
+          <button class="close-modal-btn" id="btn-close-settings">&times;</button>
+        </div>
+        <div class="settings-body">
+          <div class="setting-field">
+            <label for="cfg-backend-url">URL do Servidor ALR:</label>
+            <input type="text" id="cfg-backend-url" class="setting-input" value="http://localhost:3000">
+            <span class="setting-hint">Endpoint do runtime em Rust na porta 3000.</span>
+          </div>
+
+          <div class="setting-field">
+            <label for="cfg-language">Idioma de Reconhecimento:</label>
+            <select id="cfg-language" class="setting-select">
+              <option value="pt-BR" selected>Português (Brasil)</option>
+              <option value="en-US">English (US)</option>
+              <option value="es-ES">Español</option>
+            </select>
+          </div>
+
+          <div class="setting-field">
+            <label for="cfg-threshold">Limiar de Confiança Mínimo:</label>
+            <input type="range" id="cfg-threshold" min="50" max="95" value="75" class="setting-range">
+            <span class="setting-range-val" id="cfg-threshold-val">75%</span>
+          </div>
+
+          <div class="setting-field">
+            <label for="cfg-model-alias">Nome do Modelo no HUD:</label>
+            <input type="text" id="cfg-model-alias" class="setting-input" value="alr-systemone-native-v1">
+          </div>
+        </div>
+        <div class="settings-footer">
+          <button class="btn-save-settings" id="btn-save-settings">Salvar Configurações</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>

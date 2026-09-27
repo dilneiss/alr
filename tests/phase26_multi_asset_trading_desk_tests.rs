@@ -569,6 +569,7 @@ fn test_what_if_trade_sizing_comparison_calculation() {
         slippage: 0.0,
         realized_pnl: Some(5.0),
         reason: "PROFIT".to_string(),
+        indicator_snapshot: None,
     });
 
     // Trade 2: Custo real $60.00, PnL real -$3.00 (-5% loss)
@@ -584,6 +585,7 @@ fn test_what_if_trade_sizing_comparison_calculation() {
         slippage: 0.0,
         realized_pnl: Some(-3.0),
         reason: "STOP".to_string(),
+        indicator_snapshot: None,
     });
 
     // Executa análise contrafactual com teto de $10.00 por entrada

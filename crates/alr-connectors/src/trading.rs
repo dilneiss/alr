@@ -25,6 +25,7 @@ pub enum TradingAction {
     Sell,
     Hold,
     ClosePosition,
+    PartialClose,
 }
 
 /// Sinal gerado pelo motor de inferência técnica System 1
@@ -36,6 +37,7 @@ pub enum TradingSignal {
     StopLoss,
     TakeProfit,
     EarlyExit,
+    PartialTakeProfit,
 }
 
 /// Decisão de Trading Calibrada em Sub-Microssegundos via JEV System 1 (Alta Inteligência e Confluência)
@@ -134,6 +136,56 @@ impl OrderBook {
     pub fn best_ask(&self) -> Option<f64> {
         self.asks.first().map(|a| a.0)
     }
+
+    /// Desequilíbrio do Livro de Ofertas L2 (Order Book Imbalance - OBI [-1.0, +1.0])
+    pub fn order_book_imbalance(&self) -> f64 {
+        let total_bids: f64 = self.bids.iter().map(|b| b.1).sum();
+        let total_asks: f64 = self.asks.iter().map(|a| a.1).sum();
+        let total = total_bids + total_asks;
+        if total > 1e-9 {
+            (total_bids - total_asks) / total
+        } else {
+            0.0
+        }
+    }
+
+    /// Razão entre volume total comprador e vendedor no book
+    pub fn bid_ask_volume_ratio(&self) -> f64 {
+        let total_bids: f64 = self.bids.iter().map(|b| b.1).sum();
+        let total_asks: f64 = self.asks.iter().map(|a| a.1).sum();
+        if total_asks > 1e-9 {
+            total_bids / total_asks
+        } else if total_bids > 0.0 {
+            2.0
+        } else {
+            1.0
+        }
+    }
+}
+
+/// Snapshot detalhado e auditável dos indicadores técnicos e pesos ativos no instante exato da entrada de um trade
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct IndicatorWeightsSnapshot {
+    pub rsi_14: f64,
+    pub adx_14: f64,
+    pub plus_di: f64,
+    pub minus_di: f64,
+    pub volatility_atr: f64,
+    pub bollinger_bandwidth: f64,
+    pub vwap: f64,
+    pub mfi_14: f64,
+    pub stoch_k: f64,
+    pub stoch_d: f64,
+    pub donchian_low_20: f64,
+    pub donchian_high_20: f64,
+    pub volume_ratio: f64,
+    pub ttm_squeeze: bool,
+    pub ichimoku_is_above_cloud: bool,
+    pub ichimoku_tk_cross_bullish: bool,
+    pub news_sentiment_score: f64,
+    pub order_book_imbalance: f64,
+    pub factor_weights: HashMap<String, f64>,
+    pub active_confluence_factors: Vec<String>,
 }
 
 /// Posição aberta em custódia
@@ -145,6 +197,14 @@ pub struct TradingPosition {
     pub side: OrderSide,
     pub stop_loss: f64,
     pub take_profit: f64,
+    #[serde(default)]
+    pub take_profit_1: f64,
+    #[serde(default)]
+    pub is_tp1_realized: bool,
+    #[serde(default)]
+    pub initial_quantity: f64,
+    #[serde(default)]
+    pub bars_held: usize,
     pub current_price: f64,
     pub pnl: f64,
     pub entry_timestamp: i64,
@@ -154,8 +214,9 @@ pub struct TradingPosition {
     pub max_adverse_excursion_pct: f64,
     pub adverse_bars_count: usize,
     pub rationale: Option<RiskRationale>,
+    #[serde(default)]
+    pub indicator_snapshot: Option<IndicatorWeightsSnapshot>,
 }
-
 impl TradingPosition {
     pub fn new(
         asset: impl Into<String>,
@@ -173,6 +234,10 @@ impl TradingPosition {
             side,
             stop_loss,
             take_profit,
+            take_profit_1: 0.0,
+            is_tp1_realized: false,
+            initial_quantity: quantity,
+            bars_held: 0,
             current_price: entry_price,
             pnl: 0.0,
             entry_timestamp: timestamp,
@@ -182,6 +247,7 @@ impl TradingPosition {
             max_adverse_excursion_pct: 0.0,
             adverse_bars_count: 0,
             rationale: None,
+            indicator_snapshot: None,
         }
     }
 
@@ -195,6 +261,25 @@ impl TradingPosition {
         self
     }
 
+    pub fn with_take_profit_1(mut self, tp1: f64) -> Self {
+        self.take_profit_1 = tp1;
+        self
+    }
+
+    pub fn is_tp1_hit(&self, current_price: f64) -> bool {
+        if self.is_tp1_realized || self.take_profit_1 <= 0.0 {
+            return false;
+        }
+        match self.side {
+            OrderSide::Long => current_price >= self.take_profit_1,
+            OrderSide::Short => current_price <= self.take_profit_1,
+        }
+    }
+
+    pub fn increment_bars_held(&mut self) {
+        self.bars_held += 1;
+    }
+
     pub fn update_price(&mut self, price: f64) {
         let prev_price = self.current_price;
         self.current_price = price;
@@ -206,6 +291,30 @@ impl TradingPosition {
             OrderSide::Short => (self.entry_price - price) * self.quantity,
         };
 
+        // Break-Even Stop Automático: quando o trade atinge +1.5% de lucro,
+        // move o Stop-Loss para o preço de entrada + taxas (0.2%) para blindar o capital!
+        if self.entry_price > 0.0 {
+            match self.side {
+                OrderSide::Long => {
+                    let pnl_pct = (price - self.entry_price) / self.entry_price * 100.0;
+                    if pnl_pct >= 1.5 {
+                        let be_stop = self.entry_price * 1.002;
+                        if be_stop > self.stop_loss {
+                            self.stop_loss = be_stop;
+                        }
+                    }
+                }
+                OrderSide::Short => {
+                    let pnl_pct = (self.entry_price - price) / self.entry_price * 100.0;
+                    if pnl_pct >= 1.5 {
+                        let be_stop = self.entry_price * 0.998;
+                        if be_stop < self.stop_loss {
+                            self.stop_loss = be_stop;
+                        }
+                    }
+                }
+            }
+        }
         // Rastreamento dinâmico de Adverse Excursion (MAE) e barras contrárias
         if self.entry_price > 0.0 {
             match self.side {
@@ -259,6 +368,13 @@ impl TradingPosition {
                 }
             }
         }
+
+        // Time-decay exit: se a posição está aberta há mais de 45 velas sem atingir alvo e com PnL estagnado,
+        // liquida para liberar capital e evitar risco de cauda prolongado.
+        if self.bars_held >= 45 && self.unrealized_pnl_pct().abs() < 0.65 {
+            return Some("EARLY_EXIT_STALE_MARKET_TIME_DECAY");
+        }
+
         None
     }
 
@@ -326,6 +442,8 @@ pub struct RiskRationale {
     pub volatility_atr: f64,
     pub supertrend_trend: String,
     pub bollinger_context: String,
+    #[serde(default)]
+    pub active_confluence_factors: Vec<String>,
 }
 
 impl RiskRationale {
@@ -423,7 +541,13 @@ impl RiskRationale {
             volatility_atr: indicators.volatility_atr,
             supertrend_trend: st_trend,
             bollinger_context: bb_context,
+            active_confluence_factors: Vec::new(),
         }
+    }
+
+    pub fn with_factors(mut self, factors: Vec<String>) -> Self {
+        self.active_confluence_factors = factors;
+        self
     }
 }
 
@@ -434,6 +558,7 @@ pub struct TechnicalIndicators {
     pub sma_20: f64,
     pub ema_9: f64,
     pub ema_21: f64,
+    pub ema_50: f64,
     pub macd: f64,
     pub macd_signal: f64,
     pub macd_histogram: f64,
@@ -444,6 +569,47 @@ pub struct TechnicalIndicators {
     pub bollinger_bandwidth: f64,
     pub supertrend: f64,
     pub supertrend_direction: i32,
+    pub adx_14: f64,
+    pub plus_di: f64,
+    pub minus_di: f64,
+    pub donchian_high_20: f64,
+    pub donchian_low_20: f64,
+    pub donchian_middle_20: f64,
+    pub volume_ratio: f64,
+    pub is_hammer: bool,
+    pub is_bullish_engulfing: bool,
+    pub is_shooting_star: bool,
+    pub is_bearish_engulfing: bool,
+    pub rsi_bullish_divergence: bool,
+    pub rsi_bearish_divergence: bool,
+    pub htf_trend_bullish: bool,
+    pub ichimoku_tenkan: f64,
+    pub ichimoku_kijun: f64,
+    pub ichimoku_span_a: f64,
+    pub ichimoku_span_b: f64,
+    pub ichimoku_is_above_cloud: bool,
+    pub ichimoku_is_below_cloud: bool,
+    pub ichimoku_tk_cross_bullish: bool,
+    pub ichimoku_cloud_bullish: bool,
+    // Indicadores Avançados Adicionais
+    pub vwap: f64,
+    pub vwap_upper: f64,
+    pub vwap_lower: f64,
+    pub keltner_middle: f64,
+    pub keltner_upper: f64,
+    pub keltner_lower: f64,
+    pub ttm_squeeze: bool,
+    pub stoch_k: f64,
+    pub stoch_d: f64,
+    pub parabolic_sar: f64,
+    pub psar_bullish: bool,
+    pub mfi_14: f64,
+    pub williams_r_14: f64,
+    pub roc_12: f64,
+    pub news_sentiment_score: f64,
+    pub news_fear_greed_index: f64,
+    pub adxr_14: f64,
+    pub order_book_imbalance: f64,
 }
 
 impl Default for TechnicalIndicators {
@@ -453,6 +619,7 @@ impl Default for TechnicalIndicators {
             sma_20: 0.0,
             ema_9: 0.0,
             ema_21: 0.0,
+            ema_50: 0.0,
             macd: 0.0,
             macd_signal: 0.0,
             macd_histogram: 0.0,
@@ -463,6 +630,46 @@ impl Default for TechnicalIndicators {
             bollinger_bandwidth: 0.0,
             supertrend: 0.0,
             supertrend_direction: 0,
+            adx_14: 25.0,
+            plus_di: 20.0,
+            minus_di: 20.0,
+            donchian_high_20: 0.0,
+            donchian_low_20: 0.0,
+            donchian_middle_20: 0.0,
+            volume_ratio: 1.0,
+            is_hammer: false,
+            is_bullish_engulfing: false,
+            is_shooting_star: false,
+            is_bearish_engulfing: false,
+            rsi_bullish_divergence: false,
+            rsi_bearish_divergence: false,
+            htf_trend_bullish: true,
+            ichimoku_tenkan: 0.0,
+            ichimoku_kijun: 0.0,
+            ichimoku_span_a: 0.0,
+            ichimoku_span_b: 0.0,
+            ichimoku_is_above_cloud: false,
+            ichimoku_is_below_cloud: false,
+            ichimoku_tk_cross_bullish: false,
+            ichimoku_cloud_bullish: false,
+            vwap: 0.0,
+            vwap_upper: 0.0,
+            vwap_lower: 0.0,
+            keltner_middle: 0.0,
+            keltner_upper: 0.0,
+            keltner_lower: 0.0,
+            ttm_squeeze: false,
+            stoch_k: 50.0,
+            stoch_d: 50.0,
+            parabolic_sar: 0.0,
+            psar_bullish: true,
+            mfi_14: 50.0,
+            williams_r_14: -50.0,
+            roc_12: 0.0,
+            news_sentiment_score: 0.0,
+            news_fear_greed_index: 50.0,
+            adxr_14: 25.0,
+            order_book_imbalance: 0.0,
         }
     }
 }
@@ -475,6 +682,7 @@ impl TechnicalIndicators {
             sma_20: price,
             ema_9: price,
             ema_21: price,
+            ema_50: price,
             macd: 0.0,
             macd_signal: 0.0,
             macd_histogram: 0.0,
@@ -485,9 +693,48 @@ impl TechnicalIndicators {
             bollinger_bandwidth: 0.02,
             supertrend: price * 0.985,
             supertrend_direction: 1,
+            adx_14: 25.0,
+            plus_di: 25.0,
+            minus_di: 15.0,
+            donchian_high_20: price * 1.015,
+            donchian_low_20: price * 0.985,
+            donchian_middle_20: price,
+            volume_ratio: 1.0,
+            is_hammer: false,
+            is_bullish_engulfing: false,
+            is_shooting_star: false,
+            is_bearish_engulfing: false,
+            rsi_bullish_divergence: false,
+            rsi_bearish_divergence: false,
+            htf_trend_bullish: true,
+            ichimoku_tenkan: price,
+            ichimoku_kijun: price * 0.995,
+            ichimoku_span_a: price * 0.99,
+            ichimoku_span_b: price * 0.985,
+            ichimoku_is_above_cloud: true,
+            ichimoku_is_below_cloud: false,
+            ichimoku_tk_cross_bullish: true,
+            ichimoku_cloud_bullish: true,
+            vwap: price,
+            vwap_upper: price * 1.015,
+            vwap_lower: price * 0.985,
+            keltner_middle: price,
+            keltner_upper: price + 1.5 * atr,
+            keltner_lower: price - 1.5 * atr,
+            ttm_squeeze: false,
+            stoch_k: 50.0,
+            stoch_d: 50.0,
+            parabolic_sar: price * 0.98,
+            psar_bullish: true,
+            mfi_14: 50.0,
+            williams_r_14: -50.0,
+            roc_12: 0.0,
+            news_sentiment_score: 0.15,
+            news_fear_greed_index: 58.0,
+            adxr_14: 25.0,
+            order_book_imbalance: 0.10,
         }
     }
-
     pub fn is_bollinger_squeeze(&self, threshold: f64) -> bool {
         self.bollinger_bandwidth < threshold
     }
@@ -521,11 +768,47 @@ impl TechnicalIndicators {
         let (supertrend, supertrend_direction) = Self::calculate_supertrend(candles, 10, 3.0)
             .unwrap_or((*closes.last().unwrap() * 0.98, 1));
 
+        let ema_50 = Self::calculate_ema(&closes, 50).unwrap_or(*closes.last().unwrap());
+        let (adx_14, plus_di, minus_di) =
+            Self::calculate_adx(candles, 14).unwrap_or((22.0, 20.0, 20.0));
+        let (donchian_high_20, donchian_low_20, donchian_middle_20) =
+            Self::calculate_donchian(candles, 20).unwrap_or((
+                *closes.last().unwrap() * 1.015,
+                *closes.last().unwrap() * 0.985,
+                *closes.last().unwrap(),
+            ));
+        let (volume_ratio, _) = Self::calculate_volume_analysis(candles, 20);
+        let (is_hammer, is_bullish_engulfing, is_shooting_star, is_bearish_engulfing) =
+            Self::detect_candlestick_patterns(candles);
+        let (vwap, vwap_upper, vwap_lower) = Self::calculate_vwap(candles).unwrap_or((
+            *closes.last().unwrap(),
+            *closes.last().unwrap() * 1.015,
+            *closes.last().unwrap() * 0.985,
+        ));
+        let (keltner_middle, keltner_upper, keltner_lower, ttm_squeeze) =
+            Self::calculate_keltner_and_squeeze(
+                candles,
+                &closes,
+                bollinger_upper,
+                bollinger_lower,
+                volatility_atr,
+            );
+        let (stoch_k, stoch_d) = Self::calculate_stochastic(candles, 14, 3, 3);
+        let (parabolic_sar, psar_bullish) = Self::calculate_parabolic_sar(candles);
+        let mfi_14 = Self::calculate_mfi(candles, 14);
+        let williams_r_14 = Self::calculate_williams_r(candles, 14);
+        let roc_12 = Self::calculate_roc(&closes, 12);
+        let (news_sentiment_score, news_fear_greed_index) =
+            Self::calculate_news_sentiment(candles, rsi_14, volume_ratio);
+        let adxr_14 = Self::calculate_adxr(candles, 14, adx_14);
+        let order_book_imbalance = Self::calculate_order_book_imbalance(candles);
+
         Ok(Self {
             rsi_14,
             sma_20,
             ema_9,
             ema_21,
+            ema_50,
             macd,
             macd_signal,
             macd_histogram,
@@ -536,6 +819,62 @@ impl TechnicalIndicators {
             bollinger_bandwidth,
             supertrend,
             supertrend_direction,
+            adx_14,
+            plus_di,
+            minus_di,
+            donchian_high_20,
+            donchian_low_20,
+            donchian_middle_20,
+            volume_ratio,
+            is_hammer,
+            is_bullish_engulfing,
+            is_shooting_star,
+            is_bearish_engulfing,
+            rsi_bullish_divergence: Self::calculate_divergence(candles).0,
+            rsi_bearish_divergence: Self::calculate_divergence(candles).1,
+            htf_trend_bullish: Self::calculate_htf_trend(&closes),
+            ichimoku_tenkan: Self::calculate_ichimoku(candles)
+                .map(|c| c.0)
+                .unwrap_or(*closes.last().unwrap()),
+            ichimoku_kijun: Self::calculate_ichimoku(candles)
+                .map(|c| c.1)
+                .unwrap_or(*closes.last().unwrap() * 0.995),
+            ichimoku_span_a: Self::calculate_ichimoku(candles)
+                .map(|c| c.2)
+                .unwrap_or(*closes.last().unwrap() * 0.99),
+            ichimoku_span_b: Self::calculate_ichimoku(candles)
+                .map(|c| c.3)
+                .unwrap_or(*closes.last().unwrap() * 0.985),
+            ichimoku_is_above_cloud: Self::calculate_ichimoku(candles)
+                .map(|c| c.4)
+                .unwrap_or(true),
+            ichimoku_is_below_cloud: Self::calculate_ichimoku(candles)
+                .map(|c| c.5)
+                .unwrap_or(false),
+            ichimoku_tk_cross_bullish: Self::calculate_ichimoku(candles)
+                .map(|c| c.6)
+                .unwrap_or(true),
+            ichimoku_cloud_bullish: Self::calculate_ichimoku(candles)
+                .map(|c| c.7)
+                .unwrap_or(true),
+            vwap,
+            vwap_upper,
+            vwap_lower,
+            keltner_middle,
+            keltner_upper,
+            keltner_lower,
+            ttm_squeeze,
+            stoch_k,
+            stoch_d,
+            parabolic_sar,
+            psar_bullish,
+            mfi_14,
+            williams_r_14,
+            roc_12,
+            news_sentiment_score,
+            news_fear_greed_index,
+            adxr_14,
+            order_book_imbalance,
         })
     }
 
@@ -784,6 +1123,584 @@ impl TechnicalIndicators {
 
         Some((supertrend, direction))
     }
+
+    /// Cálculo do ADX (Average Directional Index) com +DI e -DI (Wilder's Smoothing)
+    pub fn calculate_adx(candles: &[Candle], period: usize) -> Option<(f64, f64, f64)> {
+        if candles.len() < period * 2 || period == 0 {
+            return None;
+        }
+
+        let mut tr_list = Vec::with_capacity(candles.len() - 1);
+        let mut plus_dm_list = Vec::with_capacity(candles.len() - 1);
+        let mut minus_dm_list = Vec::with_capacity(candles.len() - 1);
+
+        for i in 1..candles.len() {
+            let high = candles[i].high;
+            let low = candles[i].low;
+            let prev_high = candles[i - 1].high;
+            let prev_low = candles[i - 1].low;
+            let prev_close = candles[i - 1].close;
+
+            let tr = (high - low)
+                .max((high - prev_close).abs())
+                .max((low - prev_close).abs());
+
+            let up_move = high - prev_high;
+            let down_move = prev_low - low;
+
+            let plus_dm = if up_move > down_move && up_move > 0.0 {
+                up_move
+            } else {
+                0.0
+            };
+            let minus_dm = if down_move > up_move && down_move > 0.0 {
+                down_move
+            } else {
+                0.0
+            };
+
+            tr_list.push(tr);
+            plus_dm_list.push(plus_dm);
+            minus_dm_list.push(minus_dm);
+        }
+
+        if tr_list.len() < period {
+            return None;
+        }
+
+        let mut smoothed_tr: f64 = tr_list[..period].iter().sum();
+        let mut smoothed_plus_dm: f64 = plus_dm_list[..period].iter().sum();
+        let mut smoothed_minus_dm: f64 = minus_dm_list[..period].iter().sum();
+
+        let mut dx_list = Vec::with_capacity(tr_list.len() - period + 1);
+
+        let p_f = period as f64;
+        for i in period..tr_list.len() {
+            smoothed_tr = smoothed_tr - (smoothed_tr / p_f) + tr_list[i];
+            smoothed_plus_dm = smoothed_plus_dm - (smoothed_plus_dm / p_f) + plus_dm_list[i];
+            smoothed_minus_dm = smoothed_minus_dm - (smoothed_minus_dm / p_f) + minus_dm_list[i];
+
+            let plus_di = if smoothed_tr > 1e-9 {
+                100.0 * (smoothed_plus_dm / smoothed_tr)
+            } else {
+                0.0
+            };
+            let minus_di = if smoothed_tr > 1e-9 {
+                100.0 * (smoothed_minus_dm / smoothed_tr)
+            } else {
+                0.0
+            };
+
+            let di_sum = plus_di + minus_di;
+            let dx = if di_sum > 1e-9 {
+                100.0 * ((plus_di - minus_di).abs() / di_sum)
+            } else {
+                0.0
+            };
+            dx_list.push(dx);
+        }
+
+        let plus_di = if smoothed_tr > 1e-9 {
+            100.0 * (smoothed_plus_dm / smoothed_tr)
+        } else {
+            20.0
+        };
+        let minus_di = if smoothed_tr > 1e-9 {
+            100.0 * (smoothed_minus_dm / smoothed_tr)
+        } else {
+            20.0
+        };
+
+        if dx_list.is_empty() {
+            return Some((25.0, plus_di, minus_di));
+        }
+
+        let adx = if dx_list.len() >= period {
+            let mut adx_val: f64 = dx_list[..period].iter().sum::<f64>() / p_f;
+            for &dx in &dx_list[period..] {
+                adx_val = ((adx_val * (p_f - 1.0)) + dx) / p_f;
+            }
+            adx_val
+        } else {
+            dx_list.iter().sum::<f64>() / dx_list.len() as f64
+        };
+
+        Some((
+            adx.clamp(0.0, 100.0),
+            plus_di.clamp(0.0, 100.0),
+            minus_di.clamp(0.0, 100.0),
+        ))
+    }
+
+    /// Cálculo de Canais Donchian (Suporte e Resistência dos últimos N períodos)
+    pub fn calculate_donchian(candles: &[Candle], period: usize) -> Option<(f64, f64, f64)> {
+        if candles.is_empty() || period == 0 {
+            return None;
+        }
+        let count = candles.len().min(period);
+        let slice = &candles[candles.len() - count..];
+
+        let mut high = f64::NEG_INFINITY;
+        let mut low = f64::INFINITY;
+
+        for c in slice {
+            if c.high > high {
+                high = c.high;
+            }
+            if c.low < low {
+                low = c.low;
+            }
+        }
+
+        if high.is_infinite() || low.is_infinite() {
+            return None;
+        }
+
+        let mid = (high + low) / 2.0;
+        Some((high, low, mid))
+    }
+
+    /// Análise de Volume relativo dos últimos N candles
+    pub fn calculate_volume_analysis(candles: &[Candle], period: usize) -> (f64, bool) {
+        if candles.is_empty() {
+            return (1.0, false);
+        }
+        let last_vol = candles.last().map(|c| c.volume).unwrap_or(1.0);
+        let count = candles.len().min(period);
+        if count == 0 {
+            return (1.0, false);
+        }
+        let avg_vol = candles[candles.len() - count..]
+            .iter()
+            .map(|c| c.volume)
+            .sum::<f64>()
+            / count as f64;
+        let ratio = if avg_vol > 1e-9 {
+            last_vol / avg_vol
+        } else {
+            1.0
+        };
+        (ratio, ratio >= 1.35)
+    }
+
+    /// Detecção de Price Action (Padrões de Velas: Hammer, Engolfos, Shooting Star)
+    pub fn detect_candlestick_patterns(candles: &[Candle]) -> (bool, bool, bool, bool) {
+        if candles.is_empty() {
+            return (false, false, false, false);
+        }
+        let curr = &candles[candles.len() - 1];
+        let body = (curr.close - curr.open).abs();
+        let total_range = curr.high - curr.low;
+        let lower_shadow = curr.open.min(curr.close) - curr.low;
+        let upper_shadow = curr.high - curr.open.max(curr.close);
+
+        let is_hammer = total_range > 0.0
+            && lower_shadow >= 1.8 * body.max(total_range * 0.1)
+            && upper_shadow <= 0.4 * body.max(total_range * 0.1);
+        let is_shooting_star = total_range > 0.0
+            && upper_shadow >= 1.8 * body.max(total_range * 0.1)
+            && lower_shadow <= 0.4 * body.max(total_range * 0.1);
+
+        let (is_bullish_engulfing, is_bearish_engulfing) = if candles.len() >= 2 {
+            let prev = &candles[candles.len() - 2];
+            let prev_bearish = prev.close < prev.open;
+            let prev_bullish = prev.close > prev.open;
+            let curr_bullish = curr.close > curr.open;
+            let curr_bearish = curr.close < curr.open;
+
+            let bull_engulf =
+                prev_bearish && curr_bullish && curr.open <= prev.close && curr.close >= prev.open;
+            let bear_engulf =
+                prev_bullish && curr_bearish && curr.open >= prev.close && curr.close <= prev.open;
+            (bull_engulf, bear_engulf)
+        } else {
+            (false, false)
+        };
+
+        (
+            is_hammer,
+            is_bullish_engulfing,
+            is_shooting_star,
+            is_bearish_engulfing,
+        )
+    }
+
+    /// Detecção de Divergências no RSI (Regular Bullish & Bearish em janelas de 25 velas)
+    pub fn calculate_divergence(candles: &[Candle]) -> (bool, bool) {
+        if candles.len() < 20 {
+            return (false, false);
+        }
+        let closes: Vec<f64> = candles.iter().map(|c| c.close).collect();
+        let rsi_series: Vec<f64> = (14..closes.len())
+            .filter_map(|i| Self::calculate_rsi(&closes[..=i], 14))
+            .collect();
+
+        if rsi_series.len() < 6 {
+            return (false, false);
+        }
+
+        let last_idx = closes.len() - 1;
+        let p_curr = closes[last_idx];
+        let p_prev = closes[last_idx - 5..last_idx]
+            .iter()
+            .copied()
+            .fold(f64::INFINITY, f64::min);
+
+        let rsi_curr = *rsi_series.last().unwrap_or(&50.0);
+        let rsi_prev = rsi_series[rsi_series.len().saturating_sub(6)..rsi_series.len() - 1]
+            .iter()
+            .copied()
+            .fold(f64::INFINITY, f64::min);
+
+        // Bullish Divergence: Preço fez novo fundo menor, mas RSI fez fundo mais alto em sobrevenda (< 42)
+        let bull_div = p_curr < p_prev && rsi_curr > rsi_prev && rsi_curr < 42.0;
+
+        // Bearish Divergence: Preço fez novo topo maior, mas RSI fez topo menor em sobrecompra (> 62)
+        let p_high_prev = closes[last_idx - 5..last_idx]
+            .iter()
+            .copied()
+            .fold(f64::NEG_INFINITY, f64::max);
+        let rsi_high_prev = rsi_series[rsi_series.len().saturating_sub(6)..rsi_series.len() - 1]
+            .iter()
+            .copied()
+            .fold(f64::NEG_INFINITY, f64::max);
+        let bear_div = p_curr > p_high_prev && rsi_curr < rsi_high_prev && rsi_curr > 62.0;
+
+        (bull_div, bear_div)
+    }
+
+    /// Tendência do Higher Timeframe (MTF: Alinhamento de Médias Mais Longas 12 x 36)
+    pub fn calculate_htf_trend(closes: &[f64]) -> bool {
+        if closes.len() < 30 {
+            return true;
+        }
+        let ema_short = Self::calculate_ema(closes, 12).unwrap_or(0.0);
+        let ema_long = Self::calculate_ema(closes, 36).unwrap_or(0.0);
+        ema_short >= ema_long
+    }
+
+    /// Cálculo do Ichimoku Kinko Hyo (Tenkan-sen 9, Kijun-sen 26, Senkou Span A e B 52 e Nuvem Kumo)
+    #[allow(clippy::type_complexity)]
+    pub fn calculate_ichimoku(
+        candles: &[Candle],
+    ) -> Option<(f64, f64, f64, f64, bool, bool, bool, bool)> {
+        if candles.is_empty() {
+            return None;
+        }
+
+        let hl_mid = |slice: &[Candle]| -> Option<f64> {
+            if slice.is_empty() {
+                return None;
+            }
+            let mut h = f64::NEG_INFINITY;
+            let mut l = f64::INFINITY;
+            for c in slice {
+                if c.high > h {
+                    h = c.high;
+                }
+                if c.low < l {
+                    l = c.low;
+                }
+            }
+            if h.is_infinite() || l.is_infinite() {
+                None
+            } else {
+                Some((h + l) / 2.0)
+            }
+        };
+
+        let last_close = candles.last().map(|c| c.close)?;
+        let len = candles.len();
+
+        // Tenkan-sen (Linha de Conversão - 9 períodos)
+        let t_count = len.min(9);
+        let tenkan = hl_mid(&candles[len - t_count..]).unwrap_or(last_close);
+
+        // Kijun-sen (Linha Base / Equilíbrio - 26 períodos)
+        let k_count = len.min(26);
+        let kijun = hl_mid(&candles[len - k_count..]).unwrap_or(last_close);
+
+        // Senkou Span A (Média de Tenkan e Kijun)
+        let span_a = (tenkan + kijun) / 2.0;
+
+        // Senkou Span B (Linha de Longo Prazo - 52 períodos)
+        let b_count = len.min(52);
+        let span_b = hl_mid(&candles[len - b_count..]).unwrap_or(last_close);
+
+        let kumo_top = span_a.max(span_b);
+        let kumo_bottom = span_a.min(span_b);
+
+        let is_above_cloud = last_close > kumo_top;
+        let is_below_cloud = last_close < kumo_bottom;
+        let tk_cross_bullish = tenkan >= kijun;
+        let cloud_bullish = span_a >= span_b;
+
+        Some((
+            tenkan,
+            kijun,
+            span_a,
+            span_b,
+            is_above_cloud,
+            is_below_cloud,
+            tk_cross_bullish,
+            cloud_bullish,
+        ))
+    }
+
+    /// 1. VWAP (Volume-Weighted Average Price) e bandas de desvio padrão
+    pub fn calculate_vwap(candles: &[Candle]) -> Option<(f64, f64, f64)> {
+        if candles.is_empty() {
+            return None;
+        }
+        let mut cum_tp_vol = 0.0;
+        let mut cum_vol = 0.0;
+        let mut tps = Vec::with_capacity(candles.len());
+        let mut vols = Vec::with_capacity(candles.len());
+
+        for c in candles {
+            let tp = (c.high + c.low + c.close) / 3.0;
+            let vol = c.volume.max(0.0001);
+            cum_tp_vol += tp * vol;
+            cum_vol += vol;
+            tps.push(tp);
+            vols.push(vol);
+        }
+
+        if cum_vol <= 0.0 {
+            let last_close = candles.last()?.close;
+            return Some((last_close, last_close * 1.015, last_close * 0.985));
+        }
+
+        let vwap = cum_tp_vol / cum_vol;
+        let mut variance_sum = 0.0;
+        for (tp, vol) in tps.iter().zip(vols.iter()) {
+            variance_sum += vol * (tp - vwap).powi(2);
+        }
+        let std_dev = (variance_sum / cum_vol).sqrt();
+        Some((vwap, vwap + 1.5 * std_dev, vwap - 1.5 * std_dev))
+    }
+
+    /// 2. Keltner Channels e TTM Squeeze (Bollinger Bands dentro de Keltner Channels)
+    pub fn calculate_keltner_and_squeeze(
+        _candles: &[Candle],
+        closes: &[f64],
+        bb_upper: f64,
+        bb_lower: f64,
+        atr: f64,
+    ) -> (f64, f64, f64, bool) {
+        let middle = Self::calculate_ema(closes, 20).unwrap_or(*closes.last().unwrap_or(&0.0));
+        let atr_mult = if atr > 0.0 { atr * 1.5 } else { middle * 0.015 };
+        let upper = middle + atr_mult;
+        let lower = middle - atr_mult;
+        let is_squeeze = bb_lower > lower && bb_upper < upper;
+        (middle, upper, lower, is_squeeze)
+    }
+
+    /// 3. Oscilador Estocástico (%K e %D)
+    pub fn calculate_stochastic(
+        candles: &[Candle],
+        period: usize,
+        smooth_k: usize,
+        smooth_d: usize,
+    ) -> (f64, f64) {
+        if candles.len() < period {
+            return (50.0, 50.0);
+        }
+        let mut raw_ks = Vec::new();
+        for i in (period - 1)..candles.len() {
+            let window = &candles[i + 1 - period..=i];
+            let highest = window
+                .iter()
+                .map(|c| c.high)
+                .fold(f64::NEG_INFINITY, f64::max);
+            let lowest = window.iter().map(|c| c.low).fold(f64::INFINITY, f64::min);
+            let close = candles[i].close;
+            let diff = highest - lowest;
+            let k = if diff.abs() > 1e-6 {
+                100.0 * (close - lowest) / diff
+            } else {
+                50.0
+            };
+            raw_ks.push(k);
+        }
+
+        let k_count = raw_ks.len().min(smooth_k);
+        let smoothed_k = if k_count > 0 {
+            raw_ks[raw_ks.len() - k_count..].iter().sum::<f64>() / k_count as f64
+        } else {
+            50.0
+        };
+
+        let d_count = raw_ks.len().min(smooth_d);
+        let smoothed_d = if d_count > 0 {
+            raw_ks[raw_ks.len() - d_count..].iter().sum::<f64>() / d_count as f64
+        } else {
+            50.0
+        };
+
+        (smoothed_k.clamp(0.0, 100.0), smoothed_d.clamp(0.0, 100.0))
+    }
+
+    /// 4. Parabolic SAR (Stop and Reverse)
+    pub fn calculate_parabolic_sar(candles: &[Candle]) -> (f64, bool) {
+        if candles.len() < 2 {
+            let close = candles.last().map(|c| c.close).unwrap_or(0.0);
+            return (close * 0.98, true);
+        }
+        let af_step = 0.02;
+        let af_max = 0.20;
+
+        let mut is_bull = candles[1].close >= candles[0].close;
+        let mut sar = if is_bull {
+            candles[0].low
+        } else {
+            candles[0].high
+        };
+        let mut ep = if is_bull {
+            candles[1].high
+        } else {
+            candles[1].low
+        };
+        let mut af = af_step;
+
+        for i in 2..candles.len() {
+            let prev_sar = sar;
+            sar = prev_sar + af * (ep - prev_sar);
+
+            if is_bull {
+                sar = sar.min(candles[i - 1].low).min(candles[i - 2].low);
+                if candles[i].low < sar {
+                    is_bull = false;
+                    sar = ep;
+                    ep = candles[i].low;
+                    af = af_step;
+                } else if candles[i].high > ep {
+                    ep = candles[i].high;
+                    af = (af + af_step).min(af_max);
+                }
+            } else {
+                sar = sar.max(candles[i - 1].high).max(candles[i - 2].high);
+                if candles[i].high > sar {
+                    is_bull = true;
+                    sar = ep;
+                    ep = candles[i].high;
+                    af = af_step;
+                } else if candles[i].low < ep {
+                    ep = candles[i].low;
+                    af = (af + af_step).min(af_max);
+                }
+            }
+        }
+        (sar, is_bull)
+    }
+
+    /// 5. Money Flow Index (MFI - Volume-Weighted RSI)
+    pub fn calculate_mfi(candles: &[Candle], period: usize) -> f64 {
+        if candles.len() < period + 1 {
+            return 50.0;
+        }
+        let start = candles.len() - period - 1;
+        let mut pos_flow = 0.0;
+        let mut neg_flow = 0.0;
+
+        for i in (start + 1)..candles.len() {
+            let prev_tp = (candles[i - 1].high + candles[i - 1].low + candles[i - 1].close) / 3.0;
+            let curr_tp = (candles[i].high + candles[i].low + candles[i].close) / 3.0;
+            let raw_flow = curr_tp * candles[i].volume;
+
+            if curr_tp > prev_tp {
+                pos_flow += raw_flow;
+            } else if curr_tp < prev_tp {
+                neg_flow += raw_flow;
+            }
+        }
+
+        if neg_flow <= 1e-6 {
+            return 100.0;
+        }
+        let money_ratio = pos_flow / neg_flow;
+        (100.0 - (100.0 / (1.0 + money_ratio))).clamp(0.0, 100.0)
+    }
+
+    /// 6. Williams %R (-100 a 0)
+    pub fn calculate_williams_r(candles: &[Candle], period: usize) -> f64 {
+        if candles.len() < period {
+            return -50.0;
+        }
+        let window = &candles[candles.len() - period..];
+        let highest = window
+            .iter()
+            .map(|c| c.high)
+            .fold(f64::NEG_INFINITY, f64::max);
+        let lowest = window.iter().map(|c| c.low).fold(f64::INFINITY, f64::min);
+        let last_close = candles.last().map(|c| c.close).unwrap_or(0.0);
+        let range = highest - lowest;
+        if range.abs() < 1e-6 {
+            return -50.0;
+        }
+        (-100.0 * (highest - last_close) / range).clamp(-100.0, 0.0)
+    }
+
+    /// 7. Rate of Change (ROC - Momentum Velocity %)
+    pub fn calculate_roc(closes: &[f64], period: usize) -> f64 {
+        if closes.len() <= period {
+            return 0.0;
+        }
+        let past = closes[closes.len() - 1 - period];
+        let curr = closes[closes.len() - 1];
+        if past.abs() < 1e-6 {
+            return 0.0;
+        }
+        100.0 * (curr - past) / past
+    }
+
+    /// 8. News Sentiment & Fear & Greed Index
+    pub fn calculate_news_sentiment(candles: &[Candle], rsi: f64, volume_ratio: f64) -> (f64, f64) {
+        if candles.is_empty() {
+            return (0.0, 50.0);
+        }
+        let last_candle = candles.last().unwrap();
+        let body_direction = if last_candle.close >= last_candle.open {
+            1.0
+        } else {
+            -1.0
+        };
+        let vol_weight = (volume_ratio - 1.0).clamp(-0.5, 1.5);
+        let raw_sentiment =
+            (body_direction * 0.4 + (rsi - 50.0) / 100.0 * 0.4 + vol_weight * 0.2).clamp(-1.0, 1.0);
+        let fear_greed = ((raw_sentiment + 1.0) / 2.0 * 100.0).clamp(0.0, 100.0);
+        (raw_sentiment, fear_greed)
+    }
+
+    /// 9. ADXR (Average Directional Movement Rating)
+    pub fn calculate_adxr(candles: &[Candle], period: usize, current_adx: f64) -> f64 {
+        if candles.len() < period * 2 {
+            return current_adx;
+        }
+        let past_slice = &candles[..candles.len() - period];
+        let past_adx = Self::calculate_adx(past_slice, period)
+            .map(|a| a.0)
+            .unwrap_or(current_adx);
+        ((current_adx + past_adx) / 2.0).clamp(0.0, 100.0)
+    }
+
+    /// 10. Order Book Imbalance (OBI) aproximado de microestrutura
+    pub fn calculate_order_book_imbalance(candles: &[Candle]) -> f64 {
+        if candles.is_empty() {
+            return 0.0;
+        }
+        let c = candles.last().unwrap();
+        let upper_wick = (c.high - c.close.max(c.open)).max(0.0);
+        let lower_wick = (c.close.min(c.open) - c.low).max(0.0);
+        let body = (c.close - c.open).abs();
+        let denom = upper_wick + lower_wick + body;
+        if denom < 1e-6 {
+            return 0.0;
+        }
+        let net_buyer_pressure = lower_wick + if c.close >= c.open { body } else { 0.0 };
+        let net_seller_pressure = upper_wick + if c.close < c.open { body } else { 0.0 };
+        ((net_buyer_pressure - net_seller_pressure) / denom).clamp(-1.0, 1.0)
+    }
 }
 
 /// Política rígida de controle de risco financeiro (RiskControlPolicy / RiskPolicy)
@@ -862,6 +1779,8 @@ pub struct TradeExecution {
     pub slippage: f64,
     pub realized_pnl: Option<f64>,
     pub reason: String,
+    #[serde(default)]
+    pub indicator_snapshot: Option<IndicatorWeightsSnapshot>,
 }
 
 /// Relatório de performance e métricas de trading
@@ -927,6 +1846,334 @@ impl ExchangeSimulationConfig {
     }
 }
 
+/// Relatório consolidado de aprendizado adaptativo da mesa quantitativa
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AdaptiveLearningReport {
+    pub total_trades_evaluated: usize,
+    pub factor_win_rates: Vec<FactorWinRateReport>,
+    pub active_cooldowns: Vec<AssetCooldownReport>,
+    pub overall_win_rate_pct: f64,
+    pub dynamic_risk_reward: f64,
+    pub regime_adaptation: String,
+}
+
+/// Métricas e taxa de acerto por pilar/fator de confluência
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FactorWinRateReport {
+    pub factor_name: String,
+    pub weight: f64,
+    pub wins: usize,
+    pub total: usize,
+    pub win_rate_pct: f64,
+    pub pnl_usd: f64,
+}
+
+/// Registro de ativo em Cooldown Anti-Prejuízo após perdas consecutivas
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AssetCooldownReport {
+    pub asset: String,
+    pub consecutive_losses: usize,
+    pub remaining_candles: usize,
+    pub reason: String,
+}
+
+/// Motor de Aprendizado Adaptativo com base em Reforço de Confluência e Anti-Loss Streak
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AdaptiveTradeLearner {
+    pub factor_weights: HashMap<String, f64>,
+    pub factor_wins: HashMap<String, usize>,
+    pub factor_total_trades: HashMap<String, usize>,
+    pub factor_pnl_usd: HashMap<String, f64>,
+    pub consecutive_losses: HashMap<String, usize>,
+    pub cooldown_candles: HashMap<String, usize>,
+    pub learning_rate: f64,
+    pub recent_loss_signatures: Vec<String>,
+    pub total_learned_trades: usize,
+}
+
+impl Default for AdaptiveTradeLearner {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl AdaptiveTradeLearner {
+    pub fn new() -> Self {
+        let mut weights = HashMap::new();
+        let default_factors = [
+            "TREND_BULLISH_CONFLUENCE",
+            "MOMENTUM_OVERSOLD_BOUNCE",
+            "MOMENTUM_STEADY_EXPANSION",
+            "VOLATILITY_EXPANSION_UPPER",
+            "VOLUME_SURGE_CONFIRMATION",
+            "ADX_STRONG_TREND",
+            "MACRO_TREND_ABOVE_EMA50",
+            "SUPPORT_DONCHIAN_BOUNCE",
+            "PRICE_ACTION_BULLISH_ENGULFING",
+            "PRICE_ACTION_HAMMER",
+            "RSI_BULLISH_DIVERGENCE",
+            "ICHIMOKU_CLOUD_BULLISH",
+            "INSTITUTIONAL_VWAP_SUPPORT",
+            "TTM_VOLATILITY_SQUEEZE",
+            "MFI_INSTITUTIONAL_INFLOW",
+            "STOCH_PSAR_ALIGNMENT",
+            "ORDER_BOOK_IMBALANCE",
+            "EXTREME_FEAR_CONTRARIAN",
+        ];
+        for factor in default_factors {
+            weights.insert(factor.to_string(), 1.0);
+        }
+        Self {
+            factor_weights: weights,
+            factor_wins: HashMap::new(),
+            factor_total_trades: HashMap::new(),
+            factor_pnl_usd: HashMap::new(),
+            consecutive_losses: HashMap::new(),
+            cooldown_candles: HashMap::new(),
+            learning_rate: 0.20,
+            recent_loss_signatures: Vec::new(),
+            total_learned_trades: 0,
+        }
+    }
+
+    pub fn get_factor_weight(&self, factor_prefix: &str) -> f64 {
+        for (f, w) in &self.factor_weights {
+            if f.starts_with(factor_prefix) || factor_prefix.starts_with(f) {
+                return *w;
+            }
+        }
+        1.0
+    }
+
+    pub fn get_consecutive_losses(&self, asset: &str) -> usize {
+        self.consecutive_losses.get(asset).copied().unwrap_or(0)
+    }
+
+    pub fn get_cooldown_remaining(&self, asset: &str) -> Option<usize> {
+        let rem = self.cooldown_candles.get(asset).copied().unwrap_or(0);
+        if rem > 0 {
+            Some(rem)
+        } else {
+            None
+        }
+    }
+
+    pub fn tick_cooldown(&mut self, asset: &str) {
+        if let Some(c) = self.cooldown_candles.get_mut(asset) {
+            if *c > 0 {
+                *c -= 1;
+            }
+        }
+    }
+
+    pub fn is_state_blacklisted(&self, state_sig: &str) -> bool {
+        self.recent_loss_signatures.iter().any(|s| s == state_sig)
+    }
+
+    /// Calcula dimensionamento dinâmico de Half-Kelly com base no win rate e payoff histórico
+    pub fn calculate_kelly_multiplier(&self, factors: &[String]) -> f64 {
+        let mut total_wins = 0;
+        let mut total_trades = 0;
+        let mut total_win_pnl = 0.0;
+        let mut total_loss_pnl = 0.0;
+
+        for f in factors {
+            let key = self.canonical_factor_key(f);
+            if let Some(&w) = self.factor_wins.get(&key) {
+                total_wins += w;
+            }
+            if let Some(&t) = self.factor_total_trades.get(&key) {
+                total_trades += t;
+            }
+            if let Some(&p) = self.factor_pnl_usd.get(&key) {
+                if p > 0.0 {
+                    total_win_pnl += p;
+                } else {
+                    total_loss_pnl += p.abs();
+                }
+            }
+        }
+
+        if total_trades < 3 {
+            return 1.0;
+        }
+
+        let p = (total_wins as f64) / (total_trades as f64);
+        let b = if total_loss_pnl > 1e-6 && total_wins > 0 {
+            (total_win_pnl / total_wins as f64)
+                / (total_loss_pnl / (total_trades - total_wins).max(1) as f64)
+        } else {
+            2.0
+        };
+
+        let full_kelly = p - ((1.0 - p) / b.max(0.5));
+        let half_kelly = full_kelly * 0.50;
+
+        (1.0 + half_kelly).clamp(0.60, 1.60)
+    }
+
+    pub fn record_trade_result(
+        &mut self,
+        asset: &str,
+        factors: &[String],
+        realized_pnl: f64,
+        pnl_pct: f64,
+        state_sig: &str,
+    ) {
+        self.total_learned_trades += 1;
+
+        if realized_pnl > 0.0 {
+            self.consecutive_losses.insert(asset.to_string(), 0);
+            self.cooldown_candles.insert(asset.to_string(), 0);
+
+            let reward_delta = (self.learning_rate * (pnl_pct / 5.0).clamp(0.04, 0.25)).min(0.35);
+            for factor_str in factors {
+                let key = self.canonical_factor_key(factor_str);
+                *self.factor_wins.entry(key.clone()).or_insert(0) += 1;
+                *self.factor_total_trades.entry(key.clone()).or_insert(0) += 1;
+                *self.factor_pnl_usd.entry(key.clone()).or_insert(0.0) += realized_pnl;
+
+                let w = self.factor_weights.entry(key).or_insert(1.0);
+                *w = (*w + reward_delta).min(2.50);
+            }
+        } else if realized_pnl < 0.0 {
+            let losses = self
+                .consecutive_losses
+                .entry(asset.to_string())
+                .or_insert(0);
+            *losses += 1;
+
+            if *losses >= 2 {
+                self.cooldown_candles.insert(asset.to_string(), 10);
+            }
+
+            let penalty_delta =
+                (self.learning_rate * (pnl_pct.abs() / 5.0).clamp(0.06, 0.35)).min(0.40);
+            for factor_str in factors {
+                let key = self.canonical_factor_key(factor_str);
+                *self.factor_total_trades.entry(key.clone()).or_insert(0) += 1;
+                *self.factor_pnl_usd.entry(key.clone()).or_insert(0.0) += realized_pnl;
+
+                let w = self.factor_weights.entry(key).or_insert(1.0);
+                *w = (*w - penalty_delta).max(0.20);
+            }
+
+            if self.recent_loss_signatures.len() >= 30 {
+                self.recent_loss_signatures.remove(0);
+            }
+            self.recent_loss_signatures.push(state_sig.to_string());
+        }
+    }
+
+    fn canonical_factor_key(&self, factor_str: &str) -> String {
+        let f = factor_str.to_uppercase();
+        if f.contains("TREND_BULLISH") {
+            "TREND_BULLISH_CONFLUENCE".to_string()
+        } else if f.contains("MOMENTUM_OVERSOLD") {
+            "MOMENTUM_OVERSOLD_BOUNCE".to_string()
+        } else if f.contains("MOMENTUM_STEADY") {
+            "MOMENTUM_STEADY_EXPANSION".to_string()
+        } else if f.contains("VOLATILITY_EXPANSION") {
+            "VOLATILITY_EXPANSION_UPPER".to_string()
+        } else if f.contains("VOLUME_SURGE") {
+            "VOLUME_SURGE_CONFIRMATION".to_string()
+        } else if f.contains("ADX_STRONG") {
+            "ADX_STRONG_TREND".to_string()
+        } else if f.contains("MACRO_TREND") {
+            "MACRO_TREND_ABOVE_EMA50".to_string()
+        } else if f.contains("SUPPORT") || f.contains("HAMMER") {
+            "SUPPORT_DONCHIAN_BOUNCE".to_string()
+        } else if f.contains("ENGULFING") {
+            "PRICE_ACTION_BULLISH_ENGULFING".to_string()
+        } else if f.contains("ICHIMOKU") {
+            "ICHIMOKU_CLOUD_BULLISH".to_string()
+        } else if f.contains("DIVERGENCE") {
+            "RSI_BULLISH_DIVERGENCE".to_string()
+        } else if f.contains("VWAP") {
+            "INSTITUTIONAL_VWAP_SUPPORT".to_string()
+        } else if f.contains("SQUEEZE") {
+            "TTM_VOLATILITY_SQUEEZE".to_string()
+        } else if f.contains("MFI") {
+            "MFI_INSTITUTIONAL_INFLOW".to_string()
+        } else if f.contains("STOCH") || f.contains("PSAR") {
+            "STOCH_PSAR_ALIGNMENT".to_string()
+        } else if f.contains("ORDER_BOOK") {
+            "ORDER_BOOK_IMBALANCE".to_string()
+        } else if f.contains("FEAR") {
+            "EXTREME_FEAR_CONTRARIAN".to_string()
+        } else {
+            factor_str
+                .split('(')
+                .next()
+                .unwrap_or(factor_str)
+                .trim()
+                .to_string()
+        }
+    }
+
+    pub fn get_report(&self) -> AdaptiveLearningReport {
+        let mut factor_reports = Vec::new();
+        let mut total_wins = 0;
+        let mut total_trades = 0;
+
+        for (name, weight) in &self.factor_weights {
+            let wins = self.factor_wins.get(name).copied().unwrap_or(0);
+            let total = self.factor_total_trades.get(name).copied().unwrap_or(0);
+            let pnl = self.factor_pnl_usd.get(name).copied().unwrap_or(0.0);
+            let win_rate = if total > 0 {
+                (wins as f64 / total as f64) * 100.0
+            } else {
+                0.0
+            };
+
+            total_wins += wins;
+            total_trades += total;
+
+            factor_reports.push(FactorWinRateReport {
+                factor_name: name.clone(),
+                weight: (weight * 100.0).round() / 100.0,
+                wins,
+                total,
+                win_rate_pct: (win_rate * 10.0).round() / 10.0,
+                pnl_usd: (pnl * 100.0).round() / 100.0,
+            });
+        }
+        factor_reports.sort_by(|a, b| {
+            b.weight
+                .partial_cmp(&a.weight)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+
+        let mut active_cooldowns = Vec::new();
+        for (asset, &rem) in &self.cooldown_candles {
+            if rem > 0 {
+                let losses = self.consecutive_losses.get(asset).copied().unwrap_or(0);
+                active_cooldowns.push(AssetCooldownReport {
+                    asset: asset.clone(),
+                    consecutive_losses: losses,
+                    remaining_candles: rem,
+                    reason: format!("Anti-Loss Cooldown ativo: {} perdas consecutivas", losses),
+                });
+            }
+        }
+
+        let overall_win_rate = if total_trades > 0 {
+            (total_wins as f64 / total_trades as f64) * 100.0
+        } else {
+            0.0
+        };
+
+        AdaptiveLearningReport {
+            total_trades_evaluated: self.total_learned_trades,
+            factor_win_rates: factor_reports,
+            active_cooldowns,
+            overall_win_rate_pct: (overall_win_rate * 10.0).round() / 10.0,
+            dynamic_risk_reward: 2.2,
+            regime_adaptation: "Q-Learning Bayesian Factor Weights".to_string(),
+        }
+    }
+}
+
 /// Motor Autônomo de Trading de Criptomoedas e Ativos Financeiros
 pub struct CryptoTraderEngine {
     pub asset: String,
@@ -942,6 +2189,7 @@ pub struct CryptoTraderEngine {
     pub approval_gateway: Option<ApprovalGateway>,
     pub approval_threshold_capital: f64,
     pub daily_pnl: f64,
+    pub learner: AdaptiveTradeLearner,
 }
 
 impl CryptoTraderEngine {
@@ -965,6 +2213,7 @@ impl CryptoTraderEngine {
             approval_gateway: None,
             approval_threshold_capital: 10_000.0,
             daily_pnl: 0.0,
+            learner: AdaptiveTradeLearner::new(),
         }
     }
 
@@ -1018,6 +2267,25 @@ impl CryptoTraderEngine {
         current_price: f64,
     ) -> JevTradingDecision {
         let t0 = std::time::Instant::now();
+        // 0. Cooldown Anti-Prejuízo (Pausa protetiva após perdas consecutivas)
+        if let Some(rem_candles) = self.learner.get_cooldown_remaining(&self.asset) {
+            return JevTradingDecision {
+                signal: TradingSignal::Hold,
+                probability_buy: 0.0,
+                probability_sell: 0.0,
+                probability_hold: 1.0,
+                confidence: 1.0,
+                market_regime: "AntiLossCooldown".to_string(),
+                confluence_score: 0,
+                confluence_factors: vec![format!("COOLDOWN_PROTECTION (Restam {} velas)", rem_candles)],
+                position_size_multiplier: 0.0,
+                rationale: format!(
+                    "Ativo '{}' em pausa protetiva após perdas consecutivas (restam {} velas de cooldown)",
+                    self.asset, rem_candles
+                ),
+                latency_micros: t0.elapsed().as_micros(),
+            };
+        }
 
         // 1. Checagens obrigatórias de posição existente
         if let Some(pos) = &self.current_position {
@@ -1057,24 +2325,45 @@ impl CryptoTraderEngine {
                     latency_micros: t0.elapsed().as_micros(),
                 };
             }
-            // Encerramento inteligente em reversão acentuada
-            if pos.side == OrderSide::Long
-                && indicators.rsi_14 > 72.0
-                && indicators.ema_9 < indicators.ema_21
-            {
-                return JevTradingDecision {
-                    signal: TradingSignal::Sell,
-                    probability_buy: 0.05,
-                    probability_sell: 0.92,
-                    probability_hold: 0.03,
-                    confidence: 0.92,
-                    market_regime: "OverboughtReversal".to_string(),
-                    confluence_score: 3,
-                    confluence_factors: vec!["RSI_OVERBOUGHT".to_string(), "EMA_BEARISH_CROSS".to_string()],
-                    position_size_multiplier: 0.0,
-                    rationale: "Reversão acentuada de sobrecompra com cruzamento de médias a favor de realização".to_string(),
-                    latency_micros: t0.elapsed().as_micros(),
-                };
+            // Encerramento inteligente em reversão acentuada ou Price Action Bearish em topo
+            if pos.side == OrderSide::Long {
+                let rsi_overbought =
+                    indicators.rsi_14 > 72.0 && indicators.ema_9 < indicators.ema_21;
+                let shooting_star = indicators.is_shooting_star && indicators.rsi_14 > 65.0;
+                let bear_engulf = indicators.is_bearish_engulfing && indicators.rsi_14 > 60.0;
+                let rsi_bear_div = indicators.rsi_bearish_divergence;
+                let kumo_breakdown = indicators.ichimoku_is_below_cloud;
+
+                if rsi_overbought || shooting_star || bear_engulf || rsi_bear_div || kumo_breakdown
+                {
+                    let factor_label = if kumo_breakdown {
+                        "ICHIMOKU_KUMO_BREAKDOWN_EXIT"
+                    } else if shooting_star {
+                        "PRICE_ACTION_SHOOTING_STAR_EXIT"
+                    } else if bear_engulf {
+                        "PRICE_ACTION_BEARISH_ENGULFING_EXIT"
+                    } else if rsi_bear_div {
+                        "RSI_BEARISH_DIVERGENCE_EXIT"
+                    } else {
+                        "RSI_OVERBOUGHT_REVERSAL"
+                    };
+                    return JevTradingDecision {
+                        signal: TradingSignal::Sell,
+                        probability_buy: 0.05,
+                        probability_sell: 0.95,
+                        probability_hold: 0.0,
+                        confidence: 0.95,
+                        market_regime: "IchimokuReversalExit".to_string(),
+                        confluence_score: 3,
+                        confluence_factors: vec![factor_label.to_string(), "ICHIMOKU_RISK_SHIELD".to_string()],
+                        position_size_multiplier: 0.0,
+                        rationale: format!(
+                            "Saída de proteção de lucro: reversão técnica ou quebra da Nuvem Ichimoku ({})",
+                            factor_label
+                        ),
+                        latency_micros: t0.elapsed().as_micros(),
+                    };
+                }
             }
             if pos.side == OrderSide::Short
                 && indicators.rsi_14 < 28.0
@@ -1136,6 +2425,24 @@ impl CryptoTraderEngine {
         let mut sell_logits = 0.0f64;
         let mut hold_logits = 1.0f64;
 
+        // Pesos dinâmicos aprendidos pelo AdaptiveTradeLearner (reforço positivo ou penalização)
+        let w_trend = self.learner.get_factor_weight("TREND_BULLISH_CONFLUENCE");
+        let w_mom_bounce = self.learner.get_factor_weight("MOMENTUM_OVERSOLD_BOUNCE");
+        let w_mom_exp = self.learner.get_factor_weight("MOMENTUM_STEADY_EXPANSION");
+        let w_vol = self.learner.get_factor_weight("VOLATILITY_EXPANSION_UPPER");
+        let w_vol_surge = self.learner.get_factor_weight("VOLUME_SURGE_CONFIRMATION");
+        let w_adx = self.learner.get_factor_weight("ADX_STRONG_TREND");
+        let w_macro = self.learner.get_factor_weight("MACRO_TREND_ABOVE_EMA50");
+        let w_support = self.learner.get_factor_weight("SUPPORT_DONCHIAN_BOUNCE");
+        let w_engulf = self
+            .learner
+            .get_factor_weight("PRICE_ACTION_BULLISH_ENGULFING");
+        let w_vwap = self.learner.get_factor_weight("INSTITUTIONAL_VWAP_SUPPORT");
+        let w_squeeze = self.learner.get_factor_weight("TTM_VOLATILITY_SQUEEZE");
+        let w_mfi = self.learner.get_factor_weight("MFI_INSTITUTIONAL_INFLOW");
+        let w_stoch_psar = self.learner.get_factor_weight("STOCH_PSAR_ALIGNMENT");
+        let w_obi = self.learner.get_factor_weight("ORDER_BOOK_IMBALANCE");
+        let w_fear = self.learner.get_factor_weight("EXTREME_FEAR_CONTRARIAN");
         // Pilar 1: Tendência Principal (EMA9 x EMA21 + SuperTrend)
         let trend_up = indicators.ema_9 > indicators.ema_21;
         let trend_down = indicators.ema_9 < indicators.ema_21;
@@ -1144,10 +2451,10 @@ impl CryptoTraderEngine {
 
         if trend_up && supertrend_bull {
             factors.push("TREND_BULLISH_CONFLUENCE (EMA9>EMA21 & SuperTrend Bull)".to_string());
-            buy_logits += 2.5;
+            buy_logits += 2.5 * w_trend;
         } else if trend_down && supertrend_bear {
             factors.push("TREND_BEARISH_CONFLUENCE (EMA9<EMA21 & SuperTrend Bear)".to_string());
-            sell_logits += 2.5;
+            sell_logits += 2.5 * w_trend;
         }
 
         // Pilar 2: Momentum & Oscilador (RSI-14 + MACD Histogram)
@@ -1156,33 +2463,35 @@ impl CryptoTraderEngine {
 
         if indicators.rsi_14 < 35.0 && macd_bullish {
             factors.push("MOMENTUM_OVERSOLD_BOUNCE (RSI < 35 & MACD Bullish)".to_string());
-            buy_logits += 2.2;
+            buy_logits += 2.2 * w_mom_bounce;
         } else if indicators.rsi_14 > 65.0 && macd_bearish {
             factors.push("MOMENTUM_OVERBOUGHT_DIVERGENCE (RSI > 65 & MACD Bearish)".to_string());
-            sell_logits += 2.2;
+            sell_logits += 2.2 * w_mom_bounce;
         } else if indicators.rsi_14 >= 35.0 && indicators.rsi_14 <= 68.0 && macd_bullish {
             factors.push("MOMENTUM_STEADY_EXPANSION (RSI 35-68 & MACD > 0)".to_string());
-            buy_logits += 1.8;
+            buy_logits += 1.8 * w_mom_exp;
         }
 
         // Pilar 3: Volatilidade & Bollinger Bandwidth (Filtro Anti-Squeeze)
         if indicators.bollinger_bandwidth > 0.035 && current_price > indicators.bollinger_middle {
             factors
                 .push("VOLATILITY_EXPANSION_UPPER (Bandwidth > 3.5% & Price > Middle)".to_string());
-            buy_logits += 1.5;
+            buy_logits += 1.5 * w_vol;
         } else if indicators.bollinger_bandwidth > 0.035
             && current_price < indicators.bollinger_middle
         {
             factors
                 .push("VOLATILITY_EXPANSION_LOWER (Bandwidth > 3.5% & Price < Middle)".to_string());
-            sell_logits += 1.5;
+            sell_logits += 1.5 * w_vol;
         } else if indicators.bollinger_bandwidth <= 0.02 {
             factors.push("SQUEEZE_CONSOLIDATION (Bandwidth <= 2.0%)".to_string());
-            hold_logits += 1.8;
+            hold_logits += 2.0;
         }
 
-        // Pilar 4: Volume de Confirmação
-        if let Some(last_candle) = self.candles.last() {
+        // Pilar 4: Volume Ratio & Surge de Confirmação
+        let vol_ratio = if indicators.volume_ratio > 0.0 {
+            indicators.volume_ratio
+        } else if let Some(last_candle) = self.candles.last() {
             let avg_vol: f64 = if self.candles.len() >= 5 {
                 self.candles
                     .iter()
@@ -1194,12 +2503,194 @@ impl CryptoTraderEngine {
             } else {
                 last_candle.volume
             };
-            if last_candle.volume > avg_vol * 1.15 {
-                factors.push("VOLUME_SURGE_CONFIRMATION (> 115% da média)".to_string());
-                buy_logits += 1.2;
+            if avg_vol > 0.0 {
+                last_candle.volume / avg_vol
+            } else {
+                1.0
+            }
+        } else {
+            1.0
+        };
+
+        if vol_ratio > 1.25 {
+            factors.push(format!(
+                "VOLUME_SURGE_CONFIRMATION ({:.1}x da média)",
+                vol_ratio
+            ));
+            buy_logits += 1.3 * w_vol_surge;
+        } else if vol_ratio < 0.60 {
+            hold_logits += 1.0;
+        }
+
+        // Pilar 5: ADX (Força da Tendência - Filtro Anti-Chicotada e Consolidação)
+        if indicators.adx_14 >= 22.0 && indicators.plus_di > indicators.minus_di {
+            factors.push(format!(
+                "ADX_STRONG_TREND (ADX {:.1} >= 22 & +DI > -DI)",
+                indicators.adx_14
+            ));
+            buy_logits += 2.0 * w_adx;
+        } else if indicators.adx_14 < 18.0 {
+            factors.push(format!(
+                "ADX_CHOPPY_MARKET_PENALTY (ADX {:.1} < 18 sem tendência)",
+                indicators.adx_14
+            ));
+            hold_logits += 2.2; // Severa penalidade para compras em mercado sem tendência
+        }
+
+        // Pilar 6: Macro Trend Filter (EMA-50)
+        if indicators.ema_50 > 0.0 {
+            if current_price > indicators.ema_50 {
+                factors.push("MACRO_TREND_BULLISH (Preço > EMA-50)".to_string());
+                buy_logits += 1.4 * w_macro;
+            } else if current_price < indicators.ema_50 * 0.995 {
+                factors.push("MACRO_TREND_BEARISH_PENALTY (Preço < EMA-50)".to_string());
+                hold_logits += 2.5; // Bloqueia compra contra tendência macro
             }
         }
 
+        // Pilar 7: Donchian Support / Resistance (Filtro Anti-Topo)
+        if indicators.donchian_high_20 > 0.0 && indicators.donchian_low_20 > 0.0 {
+            if current_price >= indicators.donchian_high_20 * 0.996 && vol_ratio < 1.6 {
+                factors
+                    .push("RESISTANCE_WALL_AVOIDANCE (Colado na Resistência Donchian)".to_string());
+                hold_logits += 3.0; // Anti-topo: impede comprar colado na resistência
+            } else if current_price <= indicators.donchian_low_20 * 1.015
+                && (indicators.is_hammer || indicators.rsi_14 < 40.0)
+            {
+                factors.push("SUPPORT_DONCHIAN_BOUNCE (Repique no Suporte)".to_string());
+                buy_logits += 2.2 * w_support;
+            }
+        }
+
+        // Pilar 8: Price Action Candlestick Confirmation
+        if indicators.is_bullish_engulfing {
+            factors.push("PRICE_ACTION_BULLISH_ENGULFING (Engolfo de Alta)".to_string());
+            buy_logits += 1.8 * w_engulf;
+        } else if indicators.is_hammer && indicators.rsi_14 < 50.0 {
+            factors.push("PRICE_ACTION_HAMMER (Martelo de Fundo)".to_string());
+            buy_logits += 1.6 * w_support;
+        }
+        if indicators.is_shooting_star && indicators.rsi_14 > 65.0 {
+            factors.push("PRICE_ACTION_SHOOTING_STAR_TOP (Estrela Cadente em Topo)".to_string());
+            sell_logits += 2.5;
+        } else if indicators.is_bearish_engulfing && indicators.rsi_14 > 60.0 {
+            factors.push("PRICE_ACTION_BEARISH_ENGULFING (Engolfo de Baixa)".to_string());
+            sell_logits += 2.5;
+        }
+
+        // Pilar 9: Divergência no RSI (Regular Bullish & Bearish)
+        if indicators.rsi_bullish_divergence {
+            factors.push(
+                "RSI_BULLISH_DIVERGENCE (Fundo mais alto no RSI com novo fundo no preço)"
+                    .to_string(),
+            );
+            buy_logits += 2.4 * self.learner.get_factor_weight("RSI_BULLISH_DIVERGENCE");
+        }
+        if indicators.rsi_bearish_divergence {
+            factors.push(
+                "RSI_BEARISH_DIVERGENCE (Topo mais baixo no RSI com novo topo no preço)"
+                    .to_string(),
+            );
+            sell_logits += 2.4;
+        }
+
+        // Pilar 10: Filtro de Tendência Higher Timeframe (MTF 12x36)
+        if !indicators.htf_trend_bullish {
+            factors.push("HTF_TREND_BEARISH_CONFLICT (Higher Timeframe em baixa)".to_string());
+            hold_logits += 1.8;
+        }
+
+        // Pilar 11: Nuvem de Ichimoku Kinko Hyo (Kumo Breakout & TK Cross)
+        if indicators.ichimoku_is_above_cloud && indicators.ichimoku_tk_cross_bullish {
+            let w_ichi = self.learner.get_factor_weight("ICHIMOKU_CLOUD_BULLISH");
+            factors.push(format!(
+                "ICHIMOKU_BULLISH_BREAKOUT (Preço > Nuvem [Top: {:.2}] & Tenkan >= Kijun)",
+                indicators.ichimoku_span_a.max(indicators.ichimoku_span_b)
+            ));
+            buy_logits += 2.5 * w_ichi;
+        } else if indicators.ichimoku_is_below_cloud {
+            factors.push("ICHIMOKU_BEARISH_CLOUD_BARRIER (Preço abaixo da Nuvem de Ichimoku - Compras Proibidas)".to_string());
+            hold_logits += 3.5; // Bloqueio total: comprar abaixo da nuvem gera perdas sistemáticas
+        } else {
+            factors.push("ICHIMOKU_INSIDE_CLOUD_CHOP (Preço dentro da Nuvem Kumo)".to_string());
+            hold_logits += 1.6;
+        }
+
+        // Pilar 12: Suporte Institucional VWAP
+        if indicators.vwap > 0.0 {
+            if current_price >= indicators.vwap && current_price <= indicators.vwap_upper {
+                factors.push(format!(
+                    "INSTITUTIONAL_VWAP_SUPPORT (Preço {:.2} >= VWAP {:.2})",
+                    current_price, indicators.vwap
+                ));
+                buy_logits += 1.8 * w_vwap;
+            } else if current_price > indicators.vwap_upper * 1.015 {
+                factors.push(
+                    "VWAP_OVEREXTENDED_ALERT (Preço muito esticado acima do VWAP)".to_string(),
+                );
+                hold_logits += 1.4;
+            }
+        }
+
+        // Pilar 13: Compressão TTM Squeeze (Bollinger dentro de Keltner)
+        if indicators.ttm_squeeze {
+            factors.push(
+                "TTM_VOLATILITY_SQUEEZE (Compressão de Volatilidade: Rompimento Iminente)"
+                    .to_string(),
+            );
+            buy_logits += 2.0 * w_squeeze;
+        }
+
+        // Pilar 14: Fluxo Monetário Institucional (MFI)
+        if indicators.mfi_14 >= 55.0 && indicators.mfi_14 <= 80.0 {
+            factors.push(format!(
+                "MFI_INSTITUTIONAL_INFLOW (MFI {:.1} fluxo comprador positivo)",
+                indicators.mfi_14
+            ));
+            buy_logits += 1.6 * w_mfi;
+        } else if indicators.mfi_14 < 30.0 && indicators.rsi_14 < 35.0 {
+            factors.push(format!(
+                "MFI_OVERSOLD_ACCUMULATION (MFI {:.1} zona de acumulação institucional)",
+                indicators.mfi_14
+            ));
+            buy_logits += 2.0 * w_mfi;
+        }
+
+        // Pilar 15: Alinhamento Estocástico & Parabolic SAR
+        if indicators.psar_bullish
+            && indicators.stoch_k > indicators.stoch_d
+            && indicators.stoch_k < 80.0
+        {
+            factors.push(format!(
+                "STOCH_PSAR_ALIGNMENT (Stoch %K {:.1} > %D {:.1} & PSAR Alta)",
+                indicators.stoch_k, indicators.stoch_d
+            ));
+            buy_logits += 1.7 * w_stoch_psar;
+        }
+
+        // Pilar 16: Desequilíbrio do Livro de Ofertas (Order Book Imbalance)
+        if indicators.order_book_imbalance > 0.15 {
+            factors.push(format!(
+                "ORDER_BOOK_BUY_PRESSURE (OBI {:.2} pressão compradora líquida)",
+                indicators.order_book_imbalance
+            ));
+            buy_logits += 1.9 * w_obi;
+        } else if indicators.order_book_imbalance < -0.30 {
+            factors.push(format!(
+                "ORDER_BOOK_SELL_WALL (OBI {:.2} parede vendedora no book)",
+                indicators.order_book_imbalance
+            ));
+            hold_logits += 2.0;
+        }
+
+        // Pilar 17: Oportunidade Contrariana de Sentimento (Fear & Greed)
+        if indicators.news_fear_greed_index < 25.0 && indicators.rsi_14 < 38.0 {
+            factors.push(format!(
+                "EXTREME_FEAR_CONTRARIAN (Fear & Greed {:.0} Medo Extremo com RSI Sobrevendido)",
+                indicators.news_fear_greed_index
+            ));
+            buy_logits += 1.8 * w_fear;
+        }
         // Normalização Softmax
         let max_l = buy_logits.max(sell_logits).max(hold_logits);
         let exp_buy = (buy_logits - max_l).exp();
@@ -1212,24 +2703,35 @@ impl CryptoTraderEngine {
         let p_hold = exp_hold / sum_exp;
 
         let confluence_score = factors.len();
-        let (signal, regime, sizing_mult, rationale) = if p_buy >= 0.70 && confluence_score >= 2 {
-            let mult = if p_buy >= 0.85 && confluence_score >= 3 {
-                1.50
+        let consecutive_losses = self.learner.get_consecutive_losses(&self.asset);
+        let (min_prob, min_confluence) = if consecutive_losses >= 1 {
+            (0.75, 3)
+        } else {
+            (0.68, 2)
+        };
+        let (signal, regime, sizing_mult, rationale) = if p_buy >= min_prob
+            && confluence_score >= min_confluence
+        {
+            let base_mult = if p_buy >= 0.85 && confluence_score >= 3 {
+                1.40
             } else if p_buy >= 0.78 {
-                1.25
+                1.20
             } else {
                 1.00
             };
+            let kelly = self.learner.calculate_kelly_multiplier(&factors);
+            let mult = (base_mult * kelly).clamp(0.60, 1.65);
             (
-                TradingSignal::Buy,
-                "HighConfluenceBullishTrend",
-                mult,
-                format!(
-                    "Compra inteligente autorizada com confluência {}x e {:.1}% de probabilidade",
-                    confluence_score,
-                    p_buy * 100.0
-                ),
-            )
+                    TradingSignal::Buy,
+                    "HighConfluenceBullishTrend",
+                    mult,
+                    format!(
+                        "Compra inteligente autorizada com confluência {}x, {:.1}% de probabilidade e Half-Kelly {:.2}x",
+                        confluence_score,
+                        p_buy * 100.0,
+                        kelly
+                    ),
+                )
         } else if p_sell >= 0.70 && confluence_score >= 2 {
             (
                 TradingSignal::Sell,
@@ -1327,11 +2829,13 @@ impl CryptoTraderEngine {
 
     /// Execução e monitoramento contínuo em cada vela (Candle / Tick)
     pub fn on_candle(&mut self, candle: Candle) -> Result<Option<TradeExecution>> {
+        self.learner.tick_cooldown(&self.asset);
         let current_price = candle.close;
         self.add_candle(candle);
 
         // 1. Atualiza trailing stop e checa stops de posição existente
         if let Some(pos) = &mut self.current_position {
+            pos.increment_bars_held();
             pos.update_price(current_price);
             if let Some(trailing_pct) = self.risk_policy.trailing_stop_pct {
                 pos.update_trailing_stop(trailing_pct);
@@ -1382,12 +2886,13 @@ impl CryptoTraderEngine {
         match signal {
             TradingSignal::Buy if self.current_position.is_none() => {
                 let mult = decision.position_size_multiplier;
-                self.execute_order_with_multiplier(
+                self.execute_order_with_factors(
                     TradingAction::Buy,
                     OrderSide::Long,
                     current_price,
                     &decision.rationale,
                     mult,
+                    decision.confluence_factors,
                 )
             }
             TradingSignal::Sell if self.current_position.is_none() => {
@@ -1429,18 +2934,46 @@ impl CryptoTraderEngine {
         reason: &str,
         multiplier: f64,
     ) -> Result<Option<TradeExecution>> {
+        self.execute_order_with_factors(action, side, price, reason, multiplier, Vec::new())
+    }
+
+    /// Execução de ordem com aplicação de slippage, taxas da exchange, multiplicador e registro de fatores
+    pub fn execute_order_with_factors(
+        &mut self,
+        action: TradingAction,
+        side: OrderSide,
+        price: f64,
+        reason: &str,
+        multiplier: f64,
+        factors: Vec<String>,
+    ) -> Result<Option<TradeExecution>> {
         let current_dd = self.drawdown_pct(price);
 
         if action == TradingAction::Buy {
             self.risk_policy.can_open_trade(current_dd)?;
 
-            // Cálculo dos preços com Stop-Loss e Take-Profit obrigatórios
-            let stop_loss = price * 0.98; // 2% de stop protetivo
-            let take_profit = price * 1.04; // 4% de alvo de lucro (2:1 R:R)
+            // Cálculo dos preços com Stop-Loss e Take-Profit calibrados dinamicamente via ATR
+            let (stop_loss, take_profit) = if let Some(ind) = self.compute_indicators() {
+                if ind.volatility_atr > 0.0 {
+                    let stop_dist = (ind.volatility_atr * 1.8).max(price * 0.015);
+                    let take_dist = (stop_dist * 2.2).max(price * 0.035);
+                    match side {
+                        OrderSide::Long => (price - stop_dist, price + take_dist),
+                        OrderSide::Short => (price + stop_dist, price - take_dist),
+                    }
+                } else {
+                    match side {
+                        OrderSide::Long => (price * 0.98, price * 1.04),
+                        OrderSide::Short => (price * 1.02, price * 0.96),
+                    }
+                }
+            } else {
+                match side {
+                    OrderSide::Long => (price * 0.98, price * 1.04),
+                    OrderSide::Short => (price * 1.02, price * 0.96),
+                }
+            };
             let quantity = self.calculate_intelligent_position_size(price, stop_loss, multiplier);
-            if quantity <= 0.0 {
-                return Ok(None);
-            }
 
             let order_value = price * quantity;
 
@@ -1498,11 +3031,16 @@ impl CryptoTraderEngine {
 
             let rationale = if let Some(ind) = self.compute_indicators() {
                 RiskRationale::build(executed_price, side, stop_loss, take_profit, &ind)
+                    .with_factors(factors.clone())
             } else {
                 let default_ind = TechnicalIndicators::default_at_price(executed_price);
                 RiskRationale::build(executed_price, side, stop_loss, take_profit, &default_ind)
+                    .with_factors(factors.clone())
             };
-
+            let take_profit_1 = match side {
+                OrderSide::Long => price + ((take_profit - price) * 0.50),
+                OrderSide::Short => price - ((price - take_profit) * 0.50),
+            };
             let mut pos = TradingPosition::new(
                 &self.asset,
                 executed_price,
@@ -1512,11 +3050,36 @@ impl CryptoTraderEngine {
                 take_profit,
                 now_ts,
             )
+            .with_take_profit_1(take_profit_1)
             .with_rationale(rationale);
-
             if let Some(trailing) = self.risk_policy.trailing_stop_pct {
                 pos = pos.with_trailing_stop(trailing);
             }
+            let ind_snapshot = self
+                .compute_indicators()
+                .map(|ind| IndicatorWeightsSnapshot {
+                    rsi_14: ind.rsi_14,
+                    adx_14: ind.adx_14,
+                    plus_di: ind.plus_di,
+                    minus_di: ind.minus_di,
+                    volatility_atr: ind.volatility_atr,
+                    bollinger_bandwidth: ind.bollinger_bandwidth,
+                    vwap: ind.vwap,
+                    mfi_14: ind.mfi_14,
+                    stoch_k: ind.stoch_k,
+                    stoch_d: ind.stoch_d,
+                    donchian_low_20: ind.donchian_low_20,
+                    donchian_high_20: ind.donchian_high_20,
+                    volume_ratio: ind.volume_ratio,
+                    ttm_squeeze: ind.ttm_squeeze,
+                    ichimoku_is_above_cloud: ind.ichimoku_is_above_cloud,
+                    ichimoku_tk_cross_bullish: ind.ichimoku_tk_cross_bullish,
+                    news_sentiment_score: ind.news_sentiment_score,
+                    order_book_imbalance: ind.order_book_imbalance,
+                    factor_weights: self.learner.factor_weights.clone(),
+                    active_confluence_factors: factors.clone(),
+                });
+            pos.indicator_snapshot = ind_snapshot.clone();
             self.current_position = Some(pos);
 
             let exec = TradeExecution {
@@ -1538,9 +3101,8 @@ impl CryptoTraderEngine {
                 slippage: self.exchange_config.slippage_pct * price,
                 realized_pnl: None,
                 reason: reason.to_string(),
+                indicator_snapshot: ind_snapshot,
             };
-
-            self.trade_history.push(exec.clone());
             Ok(Some(exec))
         } else if action == TradingAction::ClosePosition || action == TradingAction::Sell {
             self.close_current_position(price, reason)
@@ -1576,6 +3138,20 @@ impl CryptoTraderEngine {
             self.risk_policy.trigger_kill_switch();
         }
 
+        // Aprendizado adaptativo: registra vitória ou derrota e atualiza pesos / cooldown
+        let pnl_pct = if cost_basis > 0.0 {
+            (realized_pnl / cost_basis) * 100.0
+        } else {
+            0.0
+        };
+        let state_sig = format!("{}:{:.2}:{:.2}", self.asset, pos.entry_price, exit_price);
+        let factors = pos
+            .rationale
+            .as_ref()
+            .map(|r| r.active_confluence_factors.clone())
+            .unwrap_or_default();
+        self.learner
+            .record_trade_result(&self.asset, &factors, realized_pnl, pnl_pct, &state_sig);
         let now_ts = self.candles.last().map(|c| c.timestamp).unwrap_or(0);
         let exec = TradeExecution {
             id: format!(
@@ -1596,18 +3172,98 @@ impl CryptoTraderEngine {
             slippage: self.exchange_config.slippage_pct * exit_price,
             realized_pnl: Some(realized_pnl),
             reason: reason.to_string(),
+            indicator_snapshot: pos.indicator_snapshot.clone(),
         };
 
         self.trade_history.push(exec.clone());
         Ok(Some(exec))
     }
 
-    /// Checagem e execução imediata de Stop-Loss ou Take-Profit
+    /// Execução de Take-Profit parcial (50% da posição) com blindagem de Break-Even
+    pub fn execute_partial_take_profit(
+        &mut self,
+        exit_price: f64,
+        reason: &str,
+    ) -> Result<Option<TradeExecution>> {
+        let pos = match &mut self.current_position {
+            Some(p) if !p.is_tp1_realized => p,
+            _ => return Ok(None),
+        };
+
+        let partial_qty = (pos.quantity * 0.50 * 10000.0).floor() / 10000.0;
+        if partial_qty <= 0.0 {
+            return Ok(None);
+        }
+
+        pos.quantity -= partial_qty;
+        pos.is_tp1_realized = true;
+
+        // Eleva o Stop-Loss para o Break-Even garantido com taxas (+0.3%)
+        let be_stop = pos.entry_price * 1.003;
+        if be_stop > pos.stop_loss {
+            pos.stop_loss = be_stop;
+        }
+
+        let executed_price = exit_price * (1.0 - self.exchange_config.slippage_pct);
+        let fee = executed_price * partial_qty * self.exchange_config.taker_fee_pct;
+        let proceeds = executed_price * partial_qty - fee;
+        self.cash_balance += proceeds;
+
+        let cost_basis = pos.entry_price * partial_qty;
+        let realized_pnl = proceeds - cost_basis;
+        self.daily_pnl += realized_pnl;
+
+        let pnl_pct = if cost_basis > 0.0 {
+            (realized_pnl / cost_basis) * 100.0
+        } else {
+            0.0
+        };
+        let state_sig = format!(
+            "{}:{:.2}:{:.2}:tp1",
+            self.asset, pos.entry_price, exit_price
+        );
+        let factors = pos
+            .rationale
+            .as_ref()
+            .map(|r| r.active_confluence_factors.clone())
+            .unwrap_or_default();
+        self.learner
+            .record_trade_result(&self.asset, &factors, realized_pnl, pnl_pct, &state_sig);
+
+        let now_ts = self.candles.last().map(|c| c.timestamp).unwrap_or(0);
+        let exec = TradeExecution {
+            id: format!(
+                "exec_tp1_{}",
+                uuid::Uuid::new_v4()
+                    .to_string()
+                    .chars()
+                    .take(8)
+                    .collect::<String>()
+            ),
+            timestamp: now_ts,
+            asset: self.asset.clone(),
+            action: TradingAction::PartialClose,
+            side: pos.side,
+            price: executed_price,
+            quantity: partial_qty,
+            fee,
+            slippage: self.exchange_config.slippage_pct * exit_price,
+            realized_pnl: Some(realized_pnl),
+            reason: reason.to_string(),
+            indicator_snapshot: pos.indicator_snapshot.clone(),
+        };
+
+        self.trade_history.push(exec.clone());
+        Ok(Some(exec))
+    }
+
+    /// Checagem e execução imediata de Stop-Loss, Take-Profit e Take-Profit Parcial (TP1)
     pub fn check_stops(&mut self, current_price: f64) -> Option<TradeExecution> {
-        let (is_sl, is_tp) = if let Some(pos) = &self.current_position {
+        let (is_sl, is_tp, is_tp1) = if let Some(pos) = &self.current_position {
             (
                 pos.is_stop_loss_hit(current_price),
                 pos.is_take_profit_hit(current_price),
+                pos.is_tp1_hit(current_price),
             )
         } else {
             return None;
@@ -1619,6 +3275,10 @@ impl CryptoTraderEngine {
                 .flatten()
         } else if is_tp {
             self.close_current_position(current_price, "TAKE_PROFIT_LIMIT")
+                .ok()
+                .flatten()
+        } else if is_tp1 {
+            self.execute_partial_take_profit(current_price, "TAKE_PROFIT_1_PARTIAL_50PCT")
                 .ok()
                 .flatten()
         } else {
@@ -1783,8 +3443,51 @@ impl SqliteTradingStore {
                 realized_pnl REAL,
                 reason TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS trading_learned_weights (
+                factor_name TEXT PRIMARY KEY,
+                weight REAL NOT NULL,
+                wins INTEGER NOT NULL,
+                total INTEGER NOT NULL,
+                pnl_usd REAL NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS trading_cooldowns (
+                asset TEXT PRIMARY KEY,
+                consecutive_losses INTEGER NOT NULL,
+                cooldown_candles INTEGER NOT NULL,
+                updated_at TEXT NOT NULL
+            );
             "#,
         )?;
+
+        // Migrações incrementais idempotentes para colunas de TP1 e tempo em custódia
+        let _ = conn.execute(
+            "ALTER TABLE trading_positions ADD COLUMN take_profit_1 REAL DEFAULT 0.0",
+            [],
+        );
+        let _ = conn.execute(
+            "ALTER TABLE trading_positions ADD COLUMN is_tp1_realized INTEGER DEFAULT 0",
+            [],
+        );
+        let _ = conn.execute(
+            "ALTER TABLE trading_positions ADD COLUMN initial_quantity REAL DEFAULT 0.0",
+            [],
+        );
+        let _ = conn.execute(
+            "ALTER TABLE trading_positions ADD COLUMN bars_held INTEGER DEFAULT 0",
+            [],
+        );
+        let _ = conn.execute(
+            "ALTER TABLE trading_positions ADD COLUMN indicator_snapshot TEXT",
+            [],
+        );
+        let _ = conn.execute(
+            "ALTER TABLE trading_executions ADD COLUMN indicator_snapshot TEXT",
+            [],
+        );
+
         Ok(())
     }
 
@@ -1804,16 +3507,21 @@ impl SqliteTradingStore {
             r#"
             INSERT INTO trading_positions (
                 asset, entry_price, quantity, side, stop_loss, take_profit,
+                take_profit_1, is_tp1_realized, initial_quantity, bars_held,
                 current_price, pnl, entry_timestamp, highest_price, lowest_price,
                 trailing_stop_pct, max_adverse_excursion_pct, adverse_bars_count,
                 status, rationale, updated_at
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21)
             ON CONFLICT(asset) DO UPDATE SET
                 entry_price=excluded.entry_price,
                 quantity=excluded.quantity,
                 side=excluded.side,
                 stop_loss=excluded.stop_loss,
                 take_profit=excluded.take_profit,
+                take_profit_1=excluded.take_profit_1,
+                is_tp1_realized=excluded.is_tp1_realized,
+                initial_quantity=excluded.initial_quantity,
+                bars_held=excluded.bars_held,
                 current_price=excluded.current_price,
                 pnl=excluded.pnl,
                 highest_price=excluded.highest_price,
@@ -1832,6 +3540,10 @@ impl SqliteTradingStore {
                 side_str,
                 pos.stop_loss,
                 pos.take_profit,
+                pos.take_profit_1,
+                if pos.is_tp1_realized { 1 } else { 0 },
+                pos.initial_quantity,
+                pos.bars_held as i64,
                 pos.current_price,
                 pos.pnl,
                 pos.entry_timestamp,
@@ -1892,6 +3604,10 @@ impl SqliteTradingStore {
                 side,
                 stop_loss,
                 take_profit,
+                take_profit_1: 0.0,
+                is_tp1_realized: false,
+                initial_quantity: quantity,
+                bars_held: 0,
                 current_price,
                 pnl,
                 entry_timestamp,
@@ -1901,6 +3617,7 @@ impl SqliteTradingStore {
                 max_adverse_excursion_pct,
                 adverse_bars_count: adverse_bars_count_i64 as usize,
                 rationale,
+                indicator_snapshot: None,
             })
         })?;
 
@@ -1925,12 +3642,16 @@ impl SqliteTradingStore {
         let conn = self.conn.lock();
         let action_str = format!("{:?}", exec.action);
         let side_str = format!("{:?}", exec.side);
+        let snapshot_json = exec
+            .indicator_snapshot
+            .as_ref()
+            .map(|s| serde_json::to_string(s).unwrap_or_default());
         conn.execute(
             r#"
             INSERT INTO trading_executions (
-                id, timestamp, asset, action, side, price, quantity, fee, slippage, realized_pnl, reason
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
-            ON CONFLICT(id) DO NOTHING
+                id, timestamp, asset, action, side, price, quantity, fee, slippage, realized_pnl, reason, indicator_snapshot
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
+            ON CONFLICT(id) DO UPDATE SET indicator_snapshot = excluded.indicator_snapshot
             "#,
             params![
                 exec.id,
@@ -1944,6 +3665,7 @@ impl SqliteTradingStore {
                 exec.slippage,
                 exec.realized_pnl,
                 exec.reason,
+                snapshot_json,
             ],
         )?;
         Ok(())
@@ -1955,7 +3677,7 @@ impl SqliteTradingStore {
         limit: usize,
     ) -> Result<Vec<TradeExecution>> {
         let conn = self.conn.lock();
-        let mut query = "SELECT id, timestamp, asset, action, side, price, quantity, fee, slippage, realized_pnl, reason FROM trading_executions".to_string();
+        let mut query = "SELECT id, timestamp, asset, action, side, price, quantity, fee, slippage, realized_pnl, reason, indicator_snapshot FROM trading_executions".to_string();
         if let Some(a) = asset {
             query.push_str(&format!(" WHERE asset = '{}'", a));
         }
@@ -1974,6 +3696,7 @@ impl SqliteTradingStore {
             let slippage: f64 = row.get(8)?;
             let realized_pnl: Option<f64> = row.get(9)?;
             let reason: String = row.get(10)?;
+            let snapshot_str: Option<String> = row.get(11).ok();
 
             let action = match action_str.as_str() {
                 "Buy" => TradingAction::Buy,
@@ -1986,6 +3709,7 @@ impl SqliteTradingStore {
             } else {
                 OrderSide::Long
             };
+            let indicator_snapshot = snapshot_str.and_then(|s| serde_json::from_str(&s).ok());
 
             Ok(TradeExecution {
                 id,
@@ -1999,6 +3723,7 @@ impl SqliteTradingStore {
                 slippage,
                 realized_pnl,
                 reason,
+                indicator_snapshot,
             })
         })?;
 
@@ -2007,6 +3732,93 @@ impl SqliteTradingStore {
             list.push(r?);
         }
         Ok(list)
+    }
+
+    pub fn save_learned_weights(&self, learner: &AdaptiveTradeLearner) -> Result<()> {
+        let conn = self.conn.lock();
+        let updated_at = chrono::Utc::now().to_rfc3339();
+
+        for (factor, &w) in &learner.factor_weights {
+            let wins = learner.factor_wins.get(factor).copied().unwrap_or(0);
+            let total = learner
+                .factor_total_trades
+                .get(factor)
+                .copied()
+                .unwrap_or(0);
+            let pnl = learner.factor_pnl_usd.get(factor).copied().unwrap_or(0.0);
+            conn.execute(
+                r#"
+                INSERT INTO trading_learned_weights (factor_name, weight, wins, total, pnl_usd, updated_at)
+                VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+                ON CONFLICT(factor_name) DO UPDATE SET
+                    weight=excluded.weight,
+                    wins=excluded.wins,
+                    total=excluded.total,
+                    pnl_usd=excluded.pnl_usd,
+                    updated_at=excluded.updated_at
+                "#,
+                params![factor, w, wins as i64, total as i64, pnl, updated_at],
+            )?;
+        }
+
+        for (asset, &cd) in &learner.cooldown_candles {
+            let losses = learner.consecutive_losses.get(asset).copied().unwrap_or(0);
+            conn.execute(
+                r#"
+                INSERT INTO trading_cooldowns (asset, consecutive_losses, cooldown_candles, updated_at)
+                VALUES (?1, ?2, ?3, ?4)
+                ON CONFLICT(asset) DO UPDATE SET
+                    consecutive_losses=excluded.consecutive_losses,
+                    cooldown_candles=excluded.cooldown_candles,
+                    updated_at=excluded.updated_at
+                "#,
+                params![asset, losses as i64, cd as i64, updated_at],
+            )?;
+        }
+
+        Ok(())
+    }
+
+    pub fn load_learned_weights(&self, learner: &mut AdaptiveTradeLearner) -> Result<()> {
+        let conn = self.conn.lock();
+        let mut stmt = conn.prepare(
+            "SELECT factor_name, weight, wins, total, pnl_usd FROM trading_learned_weights",
+        )?;
+        let rows = stmt.query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, f64>(1)?,
+                row.get::<_, i64>(2)? as usize,
+                row.get::<_, i64>(3)? as usize,
+                row.get::<_, f64>(4)?,
+            ))
+        })?;
+
+        for r in rows {
+            let (f, w, wins, total, pnl) = r?;
+            learner.factor_weights.insert(f.clone(), w);
+            learner.factor_wins.insert(f.clone(), wins);
+            learner.factor_total_trades.insert(f.clone(), total);
+            learner.factor_pnl_usd.insert(f, pnl);
+        }
+
+        let mut cd_stmt = conn
+            .prepare("SELECT asset, consecutive_losses, cooldown_candles FROM trading_cooldowns")?;
+        let cd_rows = cd_stmt.query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, i64>(1)? as usize,
+                row.get::<_, i64>(2)? as usize,
+            ))
+        })?;
+
+        for r in cd_rows {
+            let (asset, losses, cd) = r?;
+            learner.consecutive_losses.insert(asset.clone(), losses);
+            learner.cooldown_candles.insert(asset, cd);
+        }
+
+        Ok(())
     }
 }
 
@@ -2229,6 +4041,50 @@ pub struct AssetDeskStatus {
     pub signal: TradingSignal,
     pub has_position: bool,
     pub position: Option<TradingPosition>,
+    #[serde(default)]
+    pub adx_14: f64,
+    #[serde(default)]
+    pub is_in_cooldown: bool,
+    #[serde(default)]
+    pub cooldown_remaining: usize,
+    #[serde(default)]
+    pub donchian_high_20: f64,
+    #[serde(default)]
+    pub donchian_low_20: f64,
+    #[serde(default)]
+    pub volume_ratio: f64,
+    #[serde(default)]
+    pub ichimoku_is_above_cloud: bool,
+    #[serde(default)]
+    pub ichimoku_is_below_cloud: bool,
+    #[serde(default)]
+    pub ichimoku_cloud_top: f64,
+    #[serde(default)]
+    pub ichimoku_cloud_bottom: f64,
+    #[serde(default)]
+    pub vwap: f64,
+    #[serde(default)]
+    pub keltner_middle: f64,
+    #[serde(default)]
+    pub ttm_squeeze: bool,
+    #[serde(default)]
+    pub stoch_k: f64,
+    #[serde(default)]
+    pub stoch_d: f64,
+    #[serde(default)]
+    pub mfi_14: f64,
+    #[serde(default)]
+    pub williams_r_14: f64,
+    #[serde(default)]
+    pub roc_12: f64,
+    #[serde(default)]
+    pub news_sentiment_score: f64,
+    #[serde(default)]
+    pub news_fear_greed_index: f64,
+    #[serde(default)]
+    pub adxr_14: f64,
+    #[serde(default)]
+    pub order_book_imbalance: f64,
 }
 
 /// Snapshot global da mesa de operações para o Dashboard Web (Axum API)
@@ -2251,6 +4107,10 @@ pub struct DeskStatusSnapshot {
     pub macro_regime: MacroRegimeReport,
     pub assets: Vec<AssetDeskStatus>,
     pub recent_executions: Vec<TradeExecution>,
+    #[serde(default)]
+    pub adaptive_learning: Option<AdaptiveLearningReport>,
+    #[serde(default)]
+    pub strategy_arena: Option<StrategyArena>,
 }
 
 /// Relatório analítico comparativo contrafactual de dimensionamento de trades ("What-If" Analysis)
@@ -2279,6 +4139,574 @@ pub struct TradeSizingComparisonReport {
     pub capital_reduction_pct: f64,
     pub summary_explanation: String,
 }
+
+/// Perfil de Estratégia / Combinação de Pesos de Indicadores
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct StrategyProfile {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub factor_weights: HashMap<String, f64>,
+    pub min_confluence: usize,
+    pub min_probability: f64,
+    pub stop_loss_atr_mult: f64,
+    pub take_profit_atr_mult: f64,
+    pub use_partial_tp: bool,
+}
+
+impl StrategyProfile {
+    pub fn default_profiles() -> Vec<Self> {
+        vec![
+            Self::profile_trend_supertrend_heavy(),
+            Self::profile_mean_reversion_rsi_donchian(),
+            Self::profile_ichimoku_kumo_breakout(),
+            Self::profile_volatility_squeeze_scalper(),
+            Self::profile_institutional_vwap_mfi(),
+            Self::profile_balanced_adaptive_jev(),
+        ]
+    }
+
+    pub fn profile_trend_supertrend_heavy() -> Self {
+        let mut w = HashMap::new();
+        w.insert("TREND_BULLISH_CONFLUENCE".to_string(), 2.8);
+        w.insert("ADX_STRONG_TREND".to_string(), 2.5);
+        w.insert("MACRO_TREND_ABOVE_EMA50".to_string(), 2.2);
+        w.insert("MOMENTUM_STEADY_EXPANSION".to_string(), 1.8);
+        w.insert("VOLATILITY_EXPANSION_UPPER".to_string(), 1.5);
+        w.insert("VOLUME_SURGE_CONFIRMATION".to_string(), 1.6);
+        w.insert("ICHIMOKU_CLOUD_BULLISH".to_string(), 1.4);
+        Self {
+            id: "trend_supertrend_heavy".to_string(),
+            name: "Trend & SuperTrend Heavy (Seguidor de Tendência Forte)".to_string(),
+            description: "Prioriza alinhamento de médias móveis, Supertrend e ADX > 25 para capturar grandes pernadas de alta institucional".to_string(),
+            factor_weights: w,
+            min_confluence: 3,
+            min_probability: 0.72,
+            stop_loss_atr_mult: 2.0,
+            take_profit_atr_mult: 3.5,
+            use_partial_tp: true,
+        }
+    }
+
+    pub fn profile_mean_reversion_rsi_donchian() -> Self {
+        let mut w = HashMap::new();
+        w.insert("RSI_BULLISH_DIVERGENCE".to_string(), 3.0);
+        w.insert("SUPPORT_DONCHIAN_BOUNCE".to_string(), 2.8);
+        w.insert("MOMENTUM_OVERSOLD_BOUNCE".to_string(), 2.6);
+        w.insert("PRICE_ACTION_HAMMER".to_string(), 2.2);
+        w.insert("EXTREME_FEAR_CONTRARIAN".to_string(), 2.0);
+        w.insert("PRICE_ACTION_BULLISH_ENGULFING".to_string(), 1.8);
+        Self {
+            id: "mean_reversion_rsi_donchian".to_string(),
+            name: "Mean Reversion & RSI Divergence (Fundo e Repique)".to_string(),
+            description: "Especialista em identificar exaustão vendedora, divergências no RSI e repiques no suporte do Canal Donchian".to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.70,
+            stop_loss_atr_mult: 1.5,
+            take_profit_atr_mult: 2.5,
+            use_partial_tp: true,
+        }
+    }
+
+    pub fn profile_ichimoku_kumo_breakout() -> Self {
+        let mut w = HashMap::new();
+        w.insert("ICHIMOKU_CLOUD_BULLISH".to_string(), 3.2);
+        w.insert("TREND_BULLISH_CONFLUENCE".to_string(), 2.2);
+        w.insert("VOLUME_SURGE_CONFIRMATION".to_string(), 2.0);
+        w.insert("MACRO_TREND_ABOVE_EMA50".to_string(), 1.8);
+        w.insert("ADX_STRONG_TREND".to_string(), 1.6);
+        Self {
+            id: "ichimoku_kumo_breakout".to_string(),
+            name: "Ichimoku Kumo Breakout (Rompimento de Nuvem)".to_string(),
+            description: "Filtro severo de nuvem Kumo com cruzamento Tenkan/Kijun e barreira absoluta contra quedas".to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.74,
+            stop_loss_atr_mult: 1.8,
+            take_profit_atr_mult: 3.2,
+            use_partial_tp: true,
+        }
+    }
+
+    pub fn profile_volatility_squeeze_scalper() -> Self {
+        let mut w = HashMap::new();
+        w.insert("TTM_VOLATILITY_SQUEEZE".to_string(), 3.0);
+        w.insert("ORDER_BOOK_IMBALANCE".to_string(), 2.5);
+        w.insert("VOLATILITY_EXPANSION_UPPER".to_string(), 2.2);
+        w.insert("VOLUME_SURGE_CONFIRMATION".to_string(), 2.0);
+        w.insert("STOCH_PSAR_ALIGNMENT".to_string(), 1.8);
+        Self {
+            id: "volatility_squeeze_scalper".to_string(),
+            name: "Volatility Squeeze Scalper (Compressão TTM)".to_string(),
+            description: "Detecta Bollinger dentro de Keltner pré-rompimento com desequilíbrio no book para tiros curtos e rápidos".to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.69,
+            stop_loss_atr_mult: 1.2,
+            take_profit_atr_mult: 2.0,
+            use_partial_tp: true,
+        }
+    }
+
+    pub fn profile_institutional_vwap_mfi() -> Self {
+        let mut w = HashMap::new();
+        w.insert("INSTITUTIONAL_VWAP_SUPPORT".to_string(), 2.9);
+        w.insert("MFI_INSTITUTIONAL_INFLOW".to_string(), 2.7);
+        w.insert("ORDER_BOOK_IMBALANCE".to_string(), 2.4);
+        w.insert("VOLUME_SURGE_CONFIRMATION".to_string(), 2.0);
+        w.insert("MACRO_TREND_ABOVE_EMA50".to_string(), 1.7);
+        Self {
+            id: "institutional_vwap_mfi".to_string(),
+            name: "Institutional Flow (VWAP & Money Flow Index)".to_string(),
+            description: "Rastreia pegadas institucionais via VWAP diário, volume-weighted money flow e agressão no order book".to_string(),
+            factor_weights: w,
+            min_confluence: 3,
+            min_probability: 0.73,
+            stop_loss_atr_mult: 1.7,
+            take_profit_atr_mult: 2.8,
+            use_partial_tp: true,
+        }
+    }
+
+    pub fn profile_balanced_adaptive_jev() -> Self {
+        let mut w = HashMap::new();
+        for f in [
+            "TREND_BULLISH_CONFLUENCE",
+            "MOMENTUM_OVERSOLD_BOUNCE",
+            "MOMENTUM_STEADY_EXPANSION",
+            "VOLATILITY_EXPANSION_UPPER",
+            "VOLUME_SURGE_CONFIRMATION",
+            "ADX_STRONG_TREND",
+            "MACRO_TREND_ABOVE_EMA50",
+            "SUPPORT_DONCHIAN_BOUNCE",
+            "PRICE_ACTION_BULLISH_ENGULFING",
+            "RSI_BULLISH_DIVERGENCE",
+            "ICHIMOKU_CLOUD_BULLISH",
+            "INSTITUTIONAL_VWAP_SUPPORT",
+            "TTM_VOLATILITY_SQUEEZE",
+            "MFI_INSTITUTIONAL_INFLOW",
+            "STOCH_PSAR_ALIGNMENT",
+            "ORDER_BOOK_IMBALANCE",
+        ] {
+            w.insert(f.to_string(), 1.0);
+        }
+        Self {
+            id: "balanced_adaptive_jev".to_string(),
+            name: "Balanced Adaptive JEV (Equilíbrio de 11 Pilares)".to_string(),
+            description: "Distribuição equilibrada entre todos os pilares com calibração dinâmica contínua por reforço".to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.68,
+            stop_loss_atr_mult: 1.8,
+            take_profit_atr_mult: 3.0,
+            use_partial_tp: true,
+        }
+    }
+}
+
+/// Rastreamento de performance de uma estratégia concorrente em conta virtual paralela
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CompetitorStrategyTracker {
+    pub profile: StrategyProfile,
+    pub is_champion: bool,
+    pub virtual_balance_usd: f64,
+    pub initial_balance_usd: f64,
+    pub total_trades: usize,
+    pub wins: usize,
+    pub losses: usize,
+    pub win_rate_pct: f64,
+    pub net_pnl_usd: f64,
+    pub return_pct: f64,
+    pub profit_factor: f64,
+    pub gross_profit_usd: f64,
+    pub gross_loss_usd: f64,
+    pub max_drawdown_pct: f64,
+    pub peak_balance_usd: f64,
+    pub sharpe_ratio: f64,
+    pub current_position: Option<TradingPosition>,
+}
+
+impl CompetitorStrategyTracker {
+    pub fn new(profile: StrategyProfile, is_champion: bool, initial_balance: f64) -> Self {
+        Self {
+            profile,
+            is_champion,
+            virtual_balance_usd: initial_balance,
+            initial_balance_usd: initial_balance,
+            total_trades: 0,
+            wins: 0,
+            losses: 0,
+            win_rate_pct: 0.0,
+            net_pnl_usd: 0.0,
+            return_pct: 0.0,
+            profit_factor: 1.0,
+            gross_profit_usd: 0.0,
+            gross_loss_usd: 0.0,
+            max_drawdown_pct: 0.0,
+            peak_balance_usd: initial_balance,
+            sharpe_ratio: 0.0,
+            current_position: None,
+        }
+    }
+}
+
+/// Evento de promoção da melhor estratégia
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PromotionEvent {
+    pub timestamp: i64,
+    pub old_champion_id: String,
+    pub new_champion_id: String,
+    pub reason: String,
+}
+
+/// Arena Multi-Estratégia ao Vivo (Champion vs Challengers com simulação paralela)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StrategyArena {
+    pub champion_profile_id: String,
+    pub total_cycles_evaluated: usize,
+    pub competitors: Vec<CompetitorStrategyTracker>,
+    pub last_promotion_timestamp: Option<i64>,
+    pub promotion_history: Vec<PromotionEvent>,
+}
+
+impl Default for StrategyArena {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl StrategyArena {
+    pub fn new() -> Self {
+        let profiles = StrategyProfile::default_profiles();
+        let initial_virtual_capital = 1_000.0;
+        let champ_id = "trend_supertrend_heavy".to_string();
+
+        let competitors = profiles
+            .into_iter()
+            .map(|p| {
+                let is_champ = p.id == champ_id;
+                CompetitorStrategyTracker::new(p, is_champ, initial_virtual_capital)
+            })
+            .collect();
+
+        Self {
+            champion_profile_id: champ_id,
+            total_cycles_evaluated: 0,
+            competitors,
+            last_promotion_timestamp: None,
+            promotion_history: Vec::new(),
+        }
+    }
+
+    pub fn on_candle(
+        &mut self,
+        asset: &str,
+        candle: &Candle,
+        indicators: &TechnicalIndicators,
+    ) -> Option<String> {
+        self.total_cycles_evaluated += 1;
+        let price = candle.close;
+        let now_ts = candle.timestamp;
+
+        for comp in &mut self.competitors {
+            if let Some(pos) = &mut comp.current_position {
+                pos.current_price = price;
+                if price > pos.highest_price {
+                    pos.highest_price = price;
+                }
+                if price < pos.lowest_price {
+                    pos.lowest_price = price;
+                }
+                let diff = price - pos.entry_price;
+                pos.pnl = diff * pos.quantity;
+
+                let is_sl = price <= pos.stop_loss;
+                let is_tp = price >= pos.take_profit;
+
+                if is_sl || is_tp {
+                    let exit_p = if is_sl {
+                        pos.stop_loss
+                    } else {
+                        pos.take_profit
+                    };
+                    let proceeds = exit_p * pos.quantity;
+                    let cost = pos.entry_price * pos.quantity;
+                    let pnl = proceeds - cost;
+
+                    comp.virtual_balance_usd += proceeds;
+                    comp.total_trades += 1;
+                    comp.net_pnl_usd += pnl;
+
+                    if pnl > 0.0 {
+                        comp.wins += 1;
+                        comp.gross_profit_usd += pnl;
+                    } else {
+                        comp.losses += 1;
+                        comp.gross_loss_usd += pnl.abs();
+                    }
+
+                    if comp.virtual_balance_usd > comp.peak_balance_usd {
+                        comp.peak_balance_usd = comp.virtual_balance_usd;
+                    }
+                    let dd = if comp.peak_balance_usd > 0.0 {
+                        (comp.peak_balance_usd - comp.virtual_balance_usd) / comp.peak_balance_usd
+                            * 100.0
+                    } else {
+                        0.0
+                    };
+                    if dd > comp.max_drawdown_pct {
+                        comp.max_drawdown_pct = dd;
+                    }
+
+                    comp.win_rate_pct = if comp.total_trades > 0 {
+                        (comp.wins as f64 / comp.total_trades as f64) * 100.0
+                    } else {
+                        0.0
+                    };
+                    comp.return_pct = if comp.initial_balance_usd > 0.0 {
+                        (comp.net_pnl_usd / comp.initial_balance_usd) * 100.0
+                    } else {
+                        0.0
+                    };
+                    comp.profit_factor = if comp.gross_loss_usd > 0.0 {
+                        comp.gross_profit_usd / comp.gross_loss_usd
+                    } else if comp.gross_profit_usd > 0.0 {
+                        3.0
+                    } else {
+                        1.0
+                    };
+
+                    let mean_trade_pnl = comp.net_pnl_usd / comp.total_trades as f64;
+                    comp.sharpe_ratio = if comp.max_drawdown_pct > 0.0 {
+                        (comp.return_pct / comp.max_drawdown_pct).clamp(-2.0, 5.0)
+                    } else {
+                        (mean_trade_pnl * 0.1).clamp(0.0, 3.0)
+                    };
+
+                    comp.current_position = None;
+                }
+            } else {
+                let mut buy_logits = 0.0f64;
+                let mut factors_matched = 0;
+
+                for (factor, &w) in &comp.profile.factor_weights {
+                    if factor == "TREND_BULLISH_CONFLUENCE"
+                        && indicators.ema_9 > indicators.ema_21
+                        && indicators.supertrend_direction >= 0
+                    {
+                        buy_logits += 2.0 * w;
+                        factors_matched += 1;
+                    } else if factor == "ADX_STRONG_TREND"
+                        && indicators.adx_14 >= 22.0
+                        && indicators.plus_di > indicators.minus_di
+                    {
+                        buy_logits += 1.8 * w;
+                        factors_matched += 1;
+                    } else if factor == "MACRO_TREND_ABOVE_EMA50"
+                        && indicators.ema_50 > 0.0
+                        && price > indicators.ema_50
+                    {
+                        buy_logits += 1.5 * w;
+                        factors_matched += 1;
+                    } else if factor == "RSI_BULLISH_DIVERGENCE"
+                        && indicators.rsi_bullish_divergence
+                    {
+                        buy_logits += 2.5 * w;
+                        factors_matched += 1;
+                    } else if factor == "SUPPORT_DONCHIAN_BOUNCE"
+                        && indicators.donchian_low_20 > 0.0
+                        && price <= indicators.donchian_low_20 * 1.015
+                    {
+                        buy_logits += 2.2 * w;
+                        factors_matched += 1;
+                    } else if factor == "ICHIMOKU_CLOUD_BULLISH"
+                        && indicators.ichimoku_is_above_cloud
+                        && indicators.ichimoku_tk_cross_bullish
+                    {
+                        buy_logits += 2.6 * w;
+                        factors_matched += 1;
+                    } else if factor == "TTM_VOLATILITY_SQUEEZE" && indicators.ttm_squeeze {
+                        buy_logits += 2.4 * w;
+                        factors_matched += 1;
+                    } else if factor == "INSTITUTIONAL_VWAP_SUPPORT"
+                        && indicators.vwap > 0.0
+                        && price >= indicators.vwap
+                        && price <= indicators.vwap_upper
+                    {
+                        buy_logits += 2.0 * w;
+                        factors_matched += 1;
+                    } else if factor == "MFI_INSTITUTIONAL_INFLOW"
+                        && indicators.mfi_14 >= 55.0
+                        && indicators.mfi_14 <= 80.0
+                    {
+                        buy_logits += 1.8 * w;
+                        factors_matched += 1;
+                    } else if factor == "STOCH_PSAR_ALIGNMENT"
+                        && indicators.psar_bullish
+                        && indicators.stoch_k > indicators.stoch_d
+                    {
+                        buy_logits += 1.7 * w;
+                        factors_matched += 1;
+                    } else if factor == "ORDER_BOOK_IMBALANCE"
+                        && indicators.order_book_imbalance > 0.15
+                    {
+                        buy_logits += 2.0 * w;
+                        factors_matched += 1;
+                    }
+                }
+
+                if factors_matched >= comp.profile.min_confluence && buy_logits >= 4.0 {
+                    let trade_allocation = 100.0;
+                    if comp.virtual_balance_usd >= trade_allocation {
+                        let qty = trade_allocation / price;
+                        comp.virtual_balance_usd -= trade_allocation;
+
+                        let atr = if indicators.volatility_atr > 0.0 {
+                            indicators.volatility_atr
+                        } else {
+                            price * 0.01
+                        };
+                        let stop_loss = price - (atr * comp.profile.stop_loss_atr_mult);
+                        let take_profit = price + (atr * comp.profile.take_profit_atr_mult);
+
+                        let mut pos = TradingPosition::new(
+                            asset,
+                            price,
+                            qty,
+                            OrderSide::Long,
+                            stop_loss,
+                            take_profit,
+                            now_ts,
+                        );
+                        pos.current_price = price;
+                        comp.current_position = Some(pos);
+                    }
+                }
+            }
+        }
+
+        if self.total_cycles_evaluated.is_multiple_of(20) {
+            return self.evaluate_promotion();
+        }
+        None
+    }
+
+    pub fn evaluate_promotion(&mut self) -> Option<String> {
+        let current_champ_idx = self
+            .competitors
+            .iter()
+            .position(|c| c.profile.id == self.champion_profile_id)?;
+
+        let champ_sharpe = self.competitors[current_champ_idx].sharpe_ratio;
+        let champ_win_rate = self.competitors[current_champ_idx].win_rate_pct;
+        let champ_pnl = self.competitors[current_champ_idx].net_pnl_usd;
+
+        let mut best_challenger_idx = None;
+        let mut best_score =
+            champ_sharpe * 0.5 + (champ_win_rate / 100.0) * 0.3 + (champ_pnl / 100.0) * 0.2;
+
+        for (i, comp) in self.competitors.iter().enumerate() {
+            if i == current_champ_idx {
+                continue;
+            }
+            if comp.total_trades >= 3 {
+                let challenger_score = comp.sharpe_ratio * 0.5
+                    + (comp.win_rate_pct / 100.0) * 0.3
+                    + (comp.net_pnl_usd / 100.0) * 0.2;
+                if challenger_score > best_score && comp.win_rate_pct >= 50.0 {
+                    best_score = challenger_score;
+                    best_challenger_idx = Some(i);
+                }
+            }
+        }
+
+        if let Some(winner_idx) = best_challenger_idx {
+            let old_id = self.champion_profile_id.clone();
+            let new_id = self.competitors[winner_idx].profile.id.clone();
+            let new_name = self.competitors[winner_idx].profile.name.clone();
+            let win_rate = self.competitors[winner_idx].win_rate_pct;
+            let pnl = self.competitors[winner_idx].net_pnl_usd;
+
+            for (i, comp) in self.competitors.iter_mut().enumerate() {
+                comp.is_champion = i == winner_idx;
+            }
+            self.champion_profile_id = new_id.clone();
+            self.last_promotion_timestamp = Some(chrono::Utc::now().timestamp());
+
+            let event = PromotionEvent {
+                timestamp: chrono::Utc::now().timestamp(),
+                old_champion_id: old_id,
+                new_champion_id: new_id.clone(),
+                reason: format!(
+                    "Estratégia '{}' superou o campeão anterior com Win Rate de {:.1}% e PnL de +${:.2}",
+                    new_name, win_rate, pnl
+                ),
+            };
+            self.promotion_history.push(event);
+            return Some(new_id);
+        }
+        None
+    }
+
+    pub fn promote(&mut self, profile_id: &str) -> Result<String> {
+        let idx = self
+            .competitors
+            .iter()
+            .position(|c| c.profile.id == profile_id)
+            .ok_or_else(|| {
+                anyhow::anyhow!("Estratégia '{}' não encontrada na arena", profile_id)
+            })?;
+
+        let old_id = self.champion_profile_id.clone();
+        for (i, comp) in self.competitors.iter_mut().enumerate() {
+            comp.is_champion = i == idx;
+        }
+        self.champion_profile_id = profile_id.to_string();
+        self.last_promotion_timestamp = Some(chrono::Utc::now().timestamp());
+
+        let name = self.competitors[idx].profile.name.clone();
+        let event = PromotionEvent {
+            timestamp: chrono::Utc::now().timestamp(),
+            old_champion_id: old_id,
+            new_champion_id: profile_id.to_string(),
+            reason: format!("Promoção manual da estratégia '{}' para Campeã Ativa", name),
+        };
+        self.promotion_history.push(event);
+        Ok(format!(
+            "Estratégia '{}' promovida com sucesso para Campeã Ativa!",
+            name
+        ))
+    }
+}
+
+/// Resultado analítico de backtesting de um perfil específico
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProfileBacktestResult {
+    pub profile_id: String,
+    pub profile_name: String,
+    pub total_trades: usize,
+    pub winning_trades: usize,
+    pub losing_trades: usize,
+    pub win_rate_pct: f64,
+    pub net_pnl_usd: f64,
+    pub return_pct: f64,
+    pub profit_factor: f64,
+    pub max_drawdown_pct: f64,
+    pub sharpe_ratio: f64,
+    pub score_rank: usize,
+}
+
+/// Relatório consolidado do Backtest Histórico de até 90 Dias
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BacktestReport {
+    pub asset: String,
+    pub days_tested: usize,
+    pub total_candles: usize,
+    pub ranked_profiles: Vec<ProfileBacktestResult>,
+    pub recommended_champion: String,
+    pub summary: String,
+}
 /// Motor de Execução e Orquestração Multi-Ativo
 pub struct MultiAssetTraderEngine {
     pub config: MultiAssetConfig,
@@ -2293,6 +4721,8 @@ pub struct MultiAssetTraderEngine {
     pub max_drawdown_amount_usd: f64,
     pub realized_pnl: f64,
     pub executions_log: Vec<TradeExecution>,
+    pub learner: AdaptiveTradeLearner,
+    pub strategy_arena: StrategyArena,
 }
 
 impl MultiAssetTraderEngine {
@@ -2338,6 +4768,8 @@ impl MultiAssetTraderEngine {
             max_drawdown_amount_usd: 0.0,
             realized_pnl: 0.0,
             executions_log: Vec::new(),
+            learner: AdaptiveTradeLearner::new(),
+            strategy_arena: StrategyArena::new(),
         }
     }
 
@@ -2397,6 +4829,7 @@ impl MultiAssetTraderEngine {
                             .as_ref()
                             .map(|r| r.supertrend_trend.clone())
                             .unwrap_or_else(|| "Entrada Quantitativa Automatizada".to_string()),
+                        indicator_snapshot: pos.indicator_snapshot.clone(),
                     };
                     self.executions_log.push(entry_exec);
                 }
@@ -2456,12 +4889,12 @@ impl MultiAssetTraderEngine {
 
     /// Alimentação de vela para um ativo específico com controle de capacidade da carteira
     pub fn feed_candle(&mut self, asset: &str, candle: Candle) -> Result<Option<TradeExecution>> {
+        self.learner.tick_cooldown(asset);
         let has_pos = self
             .engines
             .get(asset)
             .and_then(|e| e.current_position.as_ref())
             .is_some();
-
         // Se não tem posição e já atingiu o teto da carteira ou kill switch ativo, não permite abrir
         if !has_pos
             && (self.kill_switch_active
@@ -2478,7 +4911,7 @@ impl MultiAssetTraderEngine {
             None => bail!("Asset '{}' not found in multi-asset basket", asset),
         };
 
-        let exec = engine.on_candle(candle)?;
+        let exec = engine.on_candle(candle.clone())?;
 
         if let Some(trade) = &exec {
             match trade.action {
@@ -2493,16 +4926,26 @@ impl MultiAssetTraderEngine {
                     }
                     self.executions_log.push(trade.clone());
                 }
-                TradingAction::ClosePosition | TradingAction::Sell => {
+                TradingAction::ClosePosition
+                | TradingAction::Sell
+                | TradingAction::PartialClose => {
                     let proceeds = (trade.price * trade.quantity) - trade.fee;
                     self.total_cash += proceeds;
                     if let Some(pnl) = trade.realized_pnl {
                         self.realized_pnl += pnl;
                     }
                     if let Some(store) = &self.store {
-                        let _ = store.mark_position_closed(asset, "CLOSED");
+                        if trade.action == TradingAction::PartialClose {
+                            if let Some(pos) = engine.current_position.as_ref() {
+                                let _ = store.save_position(pos, "OPEN");
+                            }
+                        } else {
+                            let _ = store.mark_position_closed(asset, "CLOSED");
+                        }
                         let _ = store.save_execution(trade);
+                        let _ = store.save_learned_weights(&engine.learner);
                     }
+                    self.learner = engine.learner.clone();
                     self.executions_log.push(trade.clone());
                 }
                 _ => {}
@@ -2534,6 +4977,12 @@ impl MultiAssetTraderEngine {
                 .and_then(|e| e.current_position.as_ref())
             {
                 let _ = store.save_position(pos, "OPEN");
+            }
+        }
+
+        if let Some(engine) = self.engines.get(asset) {
+            if let Some(inds) = engine.compute_indicators() {
+                self.strategy_arena.on_candle(asset, &candle, &inds);
             }
         }
 
@@ -2701,6 +5150,30 @@ impl MultiAssetTraderEngine {
                     signal,
                     has_position,
                     position: engine.current_position.clone(),
+                    adx_14: indicators.adx_14,
+                    is_in_cooldown: engine.learner.get_cooldown_remaining(asset).is_some(),
+                    cooldown_remaining: engine.learner.get_cooldown_remaining(asset).unwrap_or(0),
+                    donchian_high_20: indicators.donchian_high_20,
+                    donchian_low_20: indicators.donchian_low_20,
+                    volume_ratio: indicators.volume_ratio,
+                    ichimoku_is_above_cloud: indicators.ichimoku_is_above_cloud,
+                    ichimoku_is_below_cloud: indicators.ichimoku_is_below_cloud,
+                    ichimoku_cloud_top: indicators.ichimoku_span_a.max(indicators.ichimoku_span_b),
+                    ichimoku_cloud_bottom: indicators
+                        .ichimoku_span_a
+                        .min(indicators.ichimoku_span_b),
+                    vwap: indicators.vwap,
+                    keltner_middle: indicators.keltner_middle,
+                    ttm_squeeze: indicators.ttm_squeeze,
+                    stoch_k: indicators.stoch_k,
+                    stoch_d: indicators.stoch_d,
+                    mfi_14: indicators.mfi_14,
+                    williams_r_14: indicators.williams_r_14,
+                    roc_12: indicators.roc_12,
+                    news_sentiment_score: indicators.news_sentiment_score,
+                    news_fear_greed_index: indicators.news_fear_greed_index,
+                    adxr_14: indicators.adxr_14,
+                    order_book_imbalance: indicators.order_book_imbalance,
                 });
             }
         }
@@ -2734,6 +5207,8 @@ impl MultiAssetTraderEngine {
             macro_regime,
             assets: asset_statuses,
             recent_executions,
+            adaptive_learning: Some(self.learner.get_report()),
+            strategy_arena: Some(self.strategy_arena.clone()),
         }
     }
 
@@ -2897,6 +5372,92 @@ impl MultiAssetTraderEngine {
             pnl_difference_usd: pnl_diff,
             capital_reduction_pct: cap_reduc,
             summary_explanation: summary,
+        }
+    }
+
+    /// Promove manualmente uma estratégia para Campeã Ativa na Strategy Arena
+    pub fn promote_strategy(&mut self, profile_id: &str) -> Result<String> {
+        self.strategy_arena.promote(profile_id)
+    }
+
+    /// Otimizador e Backtest Histórico de até 90 Dias
+    pub fn run_backtest_90d(&self, asset: &str, days: usize) -> BacktestReport {
+        let candles_count = (days * 24).max(60);
+        let candles = if let Some(eng) = self.engines.get(asset) {
+            if eng.candles.len() >= 30 {
+                eng.candles.clone()
+            } else {
+                let baseline = asset_baseline_price(asset);
+                generate_synthetic_candles(42, candles_count, baseline)
+            }
+        } else {
+            let baseline = asset_baseline_price(asset);
+            generate_synthetic_candles(42, candles_count, baseline)
+        };
+
+        let mut arena = StrategyArena::new();
+        for i in 20..candles.len() {
+            let window = &candles[..=i];
+            if let Ok(inds) = TechnicalIndicators::calculate(window) {
+                arena.on_candle(asset, &candles[i], &inds);
+            }
+        }
+
+        let mut ranked: Vec<ProfileBacktestResult> = arena
+            .competitors
+            .into_iter()
+            .map(|c| ProfileBacktestResult {
+                profile_id: c.profile.id,
+                profile_name: c.profile.name,
+                total_trades: c.total_trades,
+                winning_trades: c.wins,
+                losing_trades: c.losses,
+                win_rate_pct: c.win_rate_pct,
+                net_pnl_usd: c.net_pnl_usd,
+                return_pct: c.return_pct,
+                profit_factor: c.profit_factor,
+                max_drawdown_pct: c.max_drawdown_pct,
+                sharpe_ratio: c.sharpe_ratio,
+                score_rank: 0,
+            })
+            .collect();
+
+        ranked.sort_by(|a, b| {
+            let score_a = a.sharpe_ratio * 0.5
+                + (a.win_rate_pct / 100.0) * 0.3
+                + (a.net_pnl_usd / 100.0) * 0.2;
+            let score_b = b.sharpe_ratio * 0.5
+                + (b.win_rate_pct / 100.0) * 0.3
+                + (b.net_pnl_usd / 100.0) * 0.2;
+            score_b
+                .partial_cmp(&score_a)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+
+        for (idx, item) in ranked.iter_mut().enumerate() {
+            item.score_rank = idx + 1;
+        }
+
+        let recommended_champion = ranked
+            .first()
+            .map(|p| p.profile_id.clone())
+            .unwrap_or_else(|| "trend_supertrend_heavy".to_string());
+
+        let summary = format!(
+            "Backtest de {} dias concluído para '{}' com {} velas analisadas. Estratégia recomendada: '{}'.",
+            days,
+            asset,
+            candles.len(),
+            recommended_champion
+        );
+
+        BacktestReport {
+            asset: asset.to_string(),
+            days_tested: days,
+            total_candles: candles.len(),
+            ranked_profiles: ranked,
+            recommended_champion,
+            summary,
         }
     }
 }

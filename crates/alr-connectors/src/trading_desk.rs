@@ -9,9 +9,14 @@
 //! - POST /api/v1/desk/emergency-stop -> Pânico / Kill switch global para zerar toda a carteira
 //! - POST /api/v1/desk/reset-strategy -> Reativação da estratégia pós-emergência
 //! - POST /api/v1/desk/adjust-stops   -> Ajuste manual de Stop-Loss e Take-Profit com recálculo de rationale
+//! - GET  /api/v1/desk/strategy-arena -> Estado da Arena Multiestratégia (Campeão vs Desafiantes)
+//! - POST /api/v1/desk/run-backtest-90d -> Otimizador e Backtest Histórico de até 90 dias
+//! - POST /api/v1/desk/promote-strategy -> Promoção manual de estratégia desafiante para campeã
+//! - GET  /api/v1/desk/trade-snapshot -> Snapshot detalhado de indicadores no momento do trade
 
 use crate::trading::{
-    generate_synthetic_candles, Candle, DeskStatusSnapshot, MultiAssetTraderEngine,
+    generate_synthetic_candles, BacktestReport, Candle, DeskStatusSnapshot,
+    IndicatorWeightsSnapshot, MultiAssetTraderEngine, StrategyArena,
 };
 use anyhow::Result;
 use axum::{
@@ -78,8 +83,28 @@ pub struct SetMaxTradeUsdRequest {
 pub struct SizingComparisonQuery {
     pub simulated_max_usd: Option<f64>,
 }
+
+/// Requisição para execução do Otimizador e Backtest Histórico de até 90 dias
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RunBacktestRequest {
+    pub asset: Option<String>,
+    pub days: Option<usize>,
+}
+
+/// Requisição para promoção manual de uma estratégia campeã na Arena
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PromoteStrategyRequest {
+    pub profile_id: String,
+}
+
+/// Parâmetros de consulta para recuperar o snapshot de indicadores de um trade
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TradeSnapshotQuery {
+    pub id: String,
+}
+
 /// Resposta genérica da API
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ApiResponse {
     pub success: bool,
     pub message: String,
@@ -260,6 +285,64 @@ pub async fn get_sizing_comparison_handler(
     Json(report)
 }
 
+/// Handler para consultar o estado atual da Arena Multiestratégia (Campeão vs Desafiantes)
+pub async fn get_strategy_arena_handler(
+    State(state): State<TradingDeskState>,
+) -> Json<StrategyArena> {
+    Json(state.engine.read().strategy_arena.clone())
+}
+
+/// Handler para execução do Otimizador e Backtest Histórico de até 90 Dias
+pub async fn run_backtest_90d_handler(
+    State(state): State<TradingDeskState>,
+    Json(req): Json<RunBacktestRequest>,
+) -> Json<BacktestReport> {
+    let engine = state.engine.read();
+    let asset = req.asset.unwrap_or_else(|| "BTC-USDT".to_string());
+    let days = req.days.unwrap_or(90);
+    let report = engine.run_backtest_90d(&asset, days);
+    Json(report)
+}
+
+/// Handler para promover uma estratégia desafiante a campeã ativa na Arena
+pub async fn promote_strategy_handler(
+    State(state): State<TradingDeskState>,
+    Json(req): Json<PromoteStrategyRequest>,
+) -> Json<ApiResponse> {
+    let mut engine = state.engine.write();
+    match engine.promote_strategy(&req.profile_id) {
+        Ok(msg) => Json(ApiResponse {
+            success: true,
+            message: msg,
+        }),
+        Err(e) => Json(ApiResponse {
+            success: false,
+            message: e.to_string(),
+        }),
+    }
+}
+
+/// Handler para recuperar o snapshot de pesos e indicadores no momento da execução do trade
+pub async fn get_trade_snapshot_handler(
+    State(state): State<TradingDeskState>,
+    Query(query): Query<TradeSnapshotQuery>,
+) -> Json<Option<IndicatorWeightsSnapshot>> {
+    let engine = state.engine.read();
+    let trade = engine
+        .executions_log
+        .iter()
+        .find(|t| t.id == query.id)
+        .cloned()
+        .or_else(|| {
+            engine
+                .store
+                .as_ref()
+                .and_then(|s| s.load_executions(None, 200).ok())
+                .and_then(|execs| execs.into_iter().find(|t| t.id == query.id))
+        });
+    Json(trade.and_then(|t| t.indicator_snapshot))
+}
+
 /// Cria o Router Axum completo com todas as rotas do Trading Desk (usando logger padrão)
 pub fn create_trading_desk_router(
     engine: Arc<parking_lot::RwLock<MultiAssetTraderEngine>>,
@@ -292,6 +375,22 @@ pub fn create_trading_desk_router_with_logger(
         .route(
             "/api/v1/desk/sizing-comparison",
             get(get_sizing_comparison_handler),
+        )
+        .route(
+            "/api/v1/desk/strategy-arena",
+            get(get_strategy_arena_handler),
+        )
+        .route(
+            "/api/v1/desk/run-backtest-90d",
+            post(run_backtest_90d_handler),
+        )
+        .route(
+            "/api/v1/desk/promote-strategy",
+            post(promote_strategy_handler),
+        )
+        .route(
+            "/api/v1/desk/trade-snapshot",
+            get(get_trade_snapshot_handler),
         )
         .route(
             "/static/alr-logo.webp",

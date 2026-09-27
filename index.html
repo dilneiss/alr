@@ -1,0 +1,2109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALR Copiloto de Call de Vendas | TypeSafe Jev System 1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090a0f;
+      --bg-panel: #11131c;
+      --bg-card: #181b28;
+      --bg-hover: #1e2233;
+      --border: #262a3d;
+      --border-glow: rgba(99, 102, 241, 0.3);
+      --text: #f1f3fa;
+      --text-muted: #8b92ab;
+      --text-dim: #545b77;
+      
+      --accent-orange: #f97316;
+      --accent-orange-glow: rgba(249, 115, 22, 0.25);
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --accent-emerald-glow: rgba(16, 185, 129, 0.2);
+      --accent-violet: #8b5cf6;
+      --accent-rose: #f43f5e;
+      
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* =========================================================================
+       1. Topbar & Call Phase Tracker
+       ========================================================================= */
+    header {
+      background: rgba(17, 19, 28, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .topbar {
+      max-width: 1680px;
+      margin: 0 auto;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #f97316 0%, #ec4899 50%, #8b5cf6 100%);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+      color: #fff;
+      box-shadow: 0 4px 16px var(--accent-orange-glow);
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-badge {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(249, 115, 22, 0.15);
+      color: var(--accent-orange);
+      border: 1px solid rgba(249, 115, 22, 0.3);
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-emerald);
+      box-shadow: 0 0 10px var(--accent-emerald);
+      animation: pulse-dot 2s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.7; }
+    }
+
+    /* Actions in Header */
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .toggle-autolearn-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #c084fc;
+      background: rgba(168, 85, 247, 0.12);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      padding: 7px 12px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s;
+    }
+    .toggle-autolearn-label:hover {
+      background: rgba(168, 85, 247, 0.2);
+    }
+    .toggle-autolearn-label input {
+      accent-color: var(--accent-violet);
+      cursor: pointer;
+    }
+
+
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 9px 16px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-hover);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-primary-listen {
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      color: #fff;
+      border: none;
+      padding: 10px 22px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 18px rgba(249, 115, 22, 0.35);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn-primary-listen:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(249, 115, 22, 0.45);
+    }
+
+    .btn-primary-listen.listening {
+      background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+      box-shadow: 0 4px 20px rgba(225, 29, 72, 0.4);
+      animation: pulse-recording 1.8s infinite;
+    }
+
+    @keyframes pulse-recording {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.4); }
+      50% { box-shadow: 0 0 0 10px rgba(225, 29, 72, 0); }
+    }
+
+    /* Phase Progress Strip */
+    .phase-strip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 24px;
+      background: rgba(12, 14, 21, 0.9);
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      overflow-x: auto;
+    }
+
+    .phase-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      background: transparent;
+      border: 1px solid transparent;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .phase-step-num {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-family: var(--font-mono);
+    }
+
+    .phase-step.active {
+      color: #fff;
+      background: rgba(249, 115, 22, 0.15);
+      border-color: rgba(249, 115, 22, 0.4);
+      box-shadow: 0 0 16px rgba(249, 115, 22, 0.2);
+    }
+
+    .phase-step.active .phase-step-num {
+      background: var(--accent-orange);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .phase-arrow {
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+
+    /* =========================================================================
+       2. Main 3-Column Studio Layout
+       ========================================================================= */
+    main {
+      flex: 1;
+      max-width: 1680px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 290px 1fr 290px;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    @media (max-width: 1200px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Transcription Slim Columns */
+    .stream-column {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: calc(100vh - 210px);
+      min-height: 520px;
+    }
+
+    .column-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(24, 27, 40, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .column-title {
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .channel-badge {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .badge-seller {
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+
+    .badge-customer {
+      background: rgba(244, 63, 94, 0.15);
+      color: var(--accent-rose);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+    }
+
+    /* Audio Meter Bar */
+    .audio-meter {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .audio-meter-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent-emerald);
+      transition: width 0.08s ease;
+    }
+
+    .stream-feed {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scroll-behavior: smooth;
+    }
+
+    .speech-bubble {
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      line-height: 1.5;
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .speech-bubble.interim {
+      border-style: dashed;
+      color: var(--text-muted);
+      background: rgba(24, 27, 40, 0.4);
+    }
+
+    .speech-time {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .empty-state {
+      margin: auto;
+      text-align: center;
+      padding: 24px;
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+
+    .empty-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+      opacity: 0.6;
+    }
+
+    /* =========================================================================
+       3. Center Battlecard Hero Section
+       ========================================================================= */
+    .center-stage {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-height: 520px;
+    }
+
+    /* Hero Objection Card */
+    .hero-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .hero-card.has-objection {
+      border-color: rgba(249, 115, 22, 0.5);
+      background: linear-gradient(180deg, rgba(30, 24, 20, 0.9) 0%, rgba(17, 19, 28, 0.95) 100%);
+      box-shadow: 0 16px 48px rgba(249, 115, 22, 0.2);
+    }
+
+    .hero-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .hero-card-tag {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(249, 115, 22, 0.15);
+      color: var(--accent-orange);
+      border: 1px solid rgba(249, 115, 22, 0.35);
+    }
+
+    .hero-card-metrics {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    .metric-chip {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+    }
+
+    .metric-chip.confidence-high {
+      border-color: rgba(16, 185, 129, 0.4);
+      color: var(--accent-emerald);
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .metric-chip.speed {
+      color: var(--accent-cyan);
+    }
+
+    /* Main Big Title */
+    .hero-card-title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      color: #fff;
+    }
+
+    .hero-card-title span {
+      color: var(--accent-orange);
+    }
+
+    /* Detected Customer Phrase Trigger */
+    .hero-trigger-box {
+      background: rgba(0, 0, 0, 0.3);
+      border-left: 3px solid var(--accent-rose);
+      padding: 10px 14px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 13px;
+      color: #fca5a5;
+      font-style: italic;
+    }
+
+    .hero-trigger-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-style: normal;
+      margin-bottom: 2px;
+      display: block;
+    }
+
+    /* Seller Argument Box */
+    .hero-argument-box {
+      background: rgba(24, 27, 40, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      position: relative;
+    }
+
+    .hero-argument-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .hero-argument-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent-emerald);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hero-argument-text {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #f8fafc;
+      font-weight: 500;
+      white-space: pre-line;
+    }
+
+    /* Actions in Card */
+    .hero-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-top: 4px;
+    }
+
+    .btn-copy {
+      background: var(--accent-emerald);
+      color: #022c22;
+      border: none;
+      padding: 10px 20px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-copy:hover {
+      background: #34d399;
+      transform: translateY(-1px);
+    }
+
+    .btn-dismiss {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-dismiss:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+    }
+
+    /* Waiting / Idle Card State */
+    .hero-idle {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .hero-idle-radar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 2px dashed rgba(249, 115, 22, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: var(--accent-orange);
+      animation: rotate-radar 12s linear infinite;
+    }
+
+    @keyframes rotate-radar {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .hero-idle-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .hero-idle-desc {
+      font-size: 13px;
+      max-width: 440px;
+      line-height: 1.5;
+      color: var(--text-dim);
+    }
+
+    /* Objection History Strip */
+    .history-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+    }
+
+    .history-header {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .history-list {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .history-chip {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 8px 14px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .history-chip:hover {
+      border-color: var(--accent-orange);
+      background: var(--bg-hover);
+    }
+
+    .history-chip-time {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .history-chip-name {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .history-chip-badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-emerald);
+      font-family: var(--font-mono);
+    }
+
+    /* Simulation & Fast Test Toolbar */
+    .test-toolbar {
+      background: rgba(17, 19, 28, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: var(--radius-lg);
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .test-toolbar-header {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .test-chips {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-test-chip {
+      background: var(--bg-card);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-test-chip:hover {
+      color: #fff;
+      border-color: rgba(249, 115, 22, 0.5);
+      background: rgba(249, 115, 22, 0.1);
+    }
+
+    .test-input-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .test-input {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    .test-input:focus {
+      outline: none;
+      border-color: var(--accent-orange);
+    }
+
+    .btn-test-submit {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-test-submit:hover {
+      background: var(--bg-hover);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* =========================================================================
+       4. Footer Telemetry HUD
+       ========================================================================= */
+    footer {
+      background: rgba(17, 19, 28, 0.95);
+      border-top: 1px solid var(--border);
+      padding: 12px 24px;
+      margin-top: auto;
+    }
+
+    .hud-grid {
+      max-width: 1680px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .hud-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hud-item strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .hud-val-latency {
+      color: var(--accent-cyan);
+    }
+
+    .hud-val-cost {
+      color: var(--accent-emerald);
+      font-weight: 700;
+    }
+
+    /* =========================================================================
+       5. Modal / Drawer "Minhas Objeções"
+       ========================================================================= */
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .drawer-overlay.open {
+      display: flex;
+    }
+
+    .drawer-content {
+      width: 100%;
+      max-width: 640px;
+      height: 100vh;
+      background: var(--bg-panel);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
+    }
+
+    .drawer-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .drawer-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .btn-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .btn-close:hover {
+      color: #fff;
+    }
+
+    .drawer-body {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .objection-form {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .form-input, .form-textarea {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--text);
+      font-family: inherit;
+    }
+
+    .form-textarea {
+      min-height: 90px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .form-input:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent-orange);
+    }
+
+    .objection-list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .objection-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .objection-item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .objection-item-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent-orange);
+    }
+
+    .objection-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-icon {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .btn-icon:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-icon.delete:hover {
+      color: var(--accent-rose);
+      border-color: var(--accent-rose);
+    }
+
+    .objection-item-triggers {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .objection-item-argument {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #cbd5e1;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 60px;
+      right: 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--accent-emerald);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =======================================================================
+       1. Topbar & Call Phase Tracker
+       ======================================================================= -->
+  <header>
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-logo">⚡</div>
+        <div>
+          <div class="brand-title">
+            ALR Copiloto de Call de Vendas
+            <span class="brand-badge">System 1 Nativo</span>
+          </div>
+          <div class="status-indicator">
+            <span class="status-dot"></span>
+            <span id="backend-status-text">Conectado ao ALR (Porta 3000)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <label class="toggle-autolearn-label" title="Quando o cliente trouxer uma objeção inédita, o Professor LLM formula e memoriza a resposta na hora">
+          <input type="checkbox" id="toggle-autolearn" checked>
+          <span>🧠 Auto-Aprender com LLM</span>
+        </label>
+        <button class="btn-secondary" id="btn-open-objections">
+          📋 Minhas Objeções (<span id="objection-count-badge">7</span>)
+        </button>
+        <button class="btn-primary-listen" id="btn-toggle-listen">
+          <span id="listen-icon">🎙️</span>
+          <span id="listen-text">Começar a ouvir</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Barra de Fase da Call -->
+    <div class="phase-strip">
+      <div class="phase-step active" id="phase-abertura">
+        <span class="phase-step-num">1</span>
+        <span>Abertura</span>
+      </div>
+      <span class="phase-arrow">→</span>
+      <div class="phase-step" id="phase-diagnostico_de_dor">
+        <span class="phase-step-num">2</span>
+        <span>Diagnóstico de Dor</span>
+      </div>
+      <span class="phase-arrow">→</span>
+      <div class="phase-step" id="phase-apresentacao">
+        <span class="phase-step-num">3</span>
+        <span>Apresentação</span>
+      </div>
+      <span class="phase-arrow">→</span>
+      <div class="phase-step" id="phase-objecao">
+        <span class="phase-step-num">4</span>
+        <span>Objeção</span>
+      </div>
+      <span class="phase-arrow">→</span>
+      <div class="phase-step" id="phase-fechamento">
+        <span class="phase-step-num">5</span>
+        <span>Fechamento</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- =======================================================================
+       2. Main 3-Column Studio Layout
+       ======================================================================= -->
+  <main>
+    <!-- Coluna Esquerda: Você (Vendedor) -->
+    <section class="stream-column" aria-label="Transcrição do Vendedor">
+      <div class="column-header">
+        <div class="column-title">
+          <span>🎙️ Você (Vendedor)</span>
+        </div>
+        <span class="channel-badge badge-seller">Canal 1: Mic</span>
+      </div>
+      <div class="audio-meter">
+        <div class="audio-meter-fill" id="meter-seller"></div>
+      </div>
+      <div class="stream-feed" id="feed-seller">
+        <div class="empty-state">
+          <div class="empty-icon">🎧</div>
+          <p>Aguardando áudio do microfone do vendedor...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Coluna Central: Card Grande de Quebra de Objeção -->
+    <section class="center-stage">
+      
+      <!-- Card Central Dinâmico -->
+      <div class="hero-card" id="hero-card">
+        <!-- Estado Ocioso (Aguardando Objeção) -->
+        <div class="hero-idle" id="hero-idle-state">
+          <div class="hero-idle-radar">🎯</div>
+          <div class="hero-idle-title">Escutando call de vendas...</div>
+          <p class="hero-idle-desc">
+            Assim que o cliente soltar uma objeção no Google Meet, o ALR classificará a intenção em <strong>sub-milissegundo</strong> e o card de combate aparecerá aqui na hora com o seu argumento.
+          </p>
+        </div>
+
+        <!-- Estado Ativo (Objeção Detectada) -->
+        <div id="hero-active-state" style="display: none; flex-direction: column; gap: 18px;">
+          <div class="hero-card-header">
+            <div class="hero-card-tag">
+              ⚡ Quebrar objeção: <span id="hero-obj-name">Tá caro</span>
+            </div>
+            <div class="hero-card-metrics">
+              <span class="metric-chip confidence-high" id="hero-confidence">
+                🎯 98% confiança
+              </span>
+              <span class="metric-chip speed" id="hero-latency">
+                ⚡ 12 ms
+              </span>
+            </div>
+          </div>
+
+          <div class="hero-trigger-box">
+            <span class="hero-trigger-label">Fala do Cliente Detectada:</span>
+            <span id="hero-trigger-text">"Cinco mil reais tá muito caro pro meu orçamento agora."</span>
+          </div>
+
+          <div class="hero-argument-box">
+            <div class="hero-argument-header">
+              <span class="hero-argument-label">🛡️ Seu Argumento Pronto:</span>
+            </div>
+            <div class="hero-argument-text" id="hero-argument-text">
+              O agente de IA não é custo, é um vendedor 24/7 sem encargos trabalhistas. Com 2 vendas a mais no mês ele já se paga sozinho.
+            </div>
+          </div>
+
+          <div class="hero-card-actions">
+            <button class="btn-copy" id="btn-copy-argument">
+              📋 Copiar Argumento
+            </button>
+            <button class="btn-dismiss" id="btn-dismiss-card">
+              ✓ Marcar como Superada
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Histórico Discreto de Objeções Anteriores -->
+      <div class="history-card">
+        <div class="history-header">
+          <span>🕒 Objeções Anteriores Nesta Call</span>
+          <span id="history-count">0 registradas</span>
+        </div>
+        <div class="history-list" id="history-list">
+          <span style="font-size: 12px; color: var(--text-dim);">Nenhuma objeção anterior na reunião.</span>
+        </div>
+      </div>
+
+      <!-- Barra de Simulação Rápida / Teste Manual sem Meet -->
+      <div class="test-toolbar">
+        <div class="test-toolbar-header">
+          <span>🧪 Simular Fala do Cliente (1-Clique para Testar ou Gravar Tela):</span>
+        </div>
+        <div class="test-chips">
+          <button class="btn-test-chip" data-test="Achei cinco mil reais muito caro pro meu orçamento agora.">💸 Tá caro</button>
+          <button class="btn-test-chip" data-test="Tenho uma oficina pequena, será que funciona pro meu nicho?">🔧 Funciona pra mim?</button>
+          <button class="btn-test-chip" data-test="Gostei muito, mas agora estamos em reforma, não é o momento.">⏳ Não é o momento</button>
+          <button class="btn-test-chip" data-test="Gostei bastante, mas preciso falar com meu sócio antes.">👥 Falar com sócio</button>
+          <button class="btn-test-chip" data-test="Ano passado contratei outra ferramenta e não funcionou nada.">⚠️ Já tentei e deu errado</button>
+          <button class="btn-test-chip" data-test="Deixa eu pensar com calma e te dou um retorno semana que vem.">🤔 Vou pensar</button>
+          <button class="btn-test-chip" data-test="Tenho medo do robô alucinar e falar besteira com meu cliente.">🔒 Não confio</button>
+          <button class="btn-test-chip" data-test="Perfeito, adorei a proposta! Onde eu assino o contrato?">✅ Fechamento OK</button>
+        </div>
+        <div class="test-input-row">
+          <input type="text" class="test-input" id="test-custom-input" placeholder="Ou digite qualquer fala real do cliente para testar...">
+          <button class="btn-test-submit" id="btn-test-submit">Testar Fala</button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Coluna Direita: Cliente (Meet) -->
+    <section class="stream-column" aria-label="Transcrição do Cliente">
+      <div class="column-header">
+        <div class="column-title">
+          <span>👤 Cliente (Google Meet)</span>
+        </div>
+        <span class="channel-badge badge-customer">Canal 2: Meet Tab</span>
+      </div>
+      <div class="audio-meter">
+        <div class="audio-meter-fill" id="meter-customer"></div>
+      </div>
+      <div class="stream-feed" id="feed-customer">
+        <div class="empty-state">
+          <div class="empty-icon">🎧</div>
+          <p>Aguardando fala do cliente na aba do Google Meet...</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- =======================================================================
+       3. Footer Telemetry HUD
+       ======================================================================= -->
+  <footer>
+    <div class="hud-grid">
+      <div class="hud-item">
+        <span>⚡ Latência Média p50:</span>
+        <strong class="hud-val-latency" id="hud-avg-latency">0.00 ms</strong>
+      </div>
+      <div class="hud-item">
+        <span>🎯 Decisões Avaliadas:</span>
+        <strong id="hud-total-decisions">0</strong>
+      </div>
+      <div class="hud-item">
+        <span>🛡️ Objeções Quebradas:</span>
+        <strong id="hud-objections-count">0</strong>
+      </div>
+      <div class="hud-item">
+        <span>💰 Custo Acumulado:</span>
+        <strong class="hud-val-cost" id="hud-total-cost">$0.00 (Zero Tokens)</strong>
+      </div>
+      <div class="hud-item">
+        <span>🧠 Motor Ativo:</span>
+        <strong>alr-systemone-native-v1</strong>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =======================================================================
+       4. Modal / Drawer "Minhas Objeções"
+       ======================================================================= -->
+  <div class="drawer-overlay" id="drawer-objections">
+    <div class="drawer-content">
+      <div class="drawer-header">
+        <div class="drawer-title">📋 Gerenciar Minhas Objeções</div>
+        <button class="btn-close" id="btn-close-drawer">✕</button>
+      </div>
+
+      <div class="drawer-body">
+        <!-- Formulário para Criar / Editar -->
+        <div class="objection-form">
+          <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">
+            <span id="form-mode-title">Adicionar Nova Objeção</span>
+          </div>
+          <input type="hidden" id="form-obj-id" value="">
+
+          <div class="form-group">
+            <label class="form-label" for="form-obj-name">Nome da Objeção (Ex: "Tá caro"):</label>
+            <input type="text" class="form-input" id="form-obj-name" placeholder="Ex: Tá caro">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="form-obj-triggers">Como ela soa / Gatilhos na fala do cliente:</label>
+            <input type="text" class="form-input" id="form-obj-triggers" placeholder="Ex: preço alto, valor salgado, não cabe no orçamento, sem dinheiro">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="form-obj-argument">Seu Argumento de Quebra / Rebatida:</label>
+            <textarea class="form-textarea" id="form-obj-argument" placeholder="Escreva o texto exato do seu argumento para falar na call..."></textarea>
+          </div>
+
+          <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button class="btn-secondary" id="btn-cancel-edit" style="display: none;">Cancelar</button>
+            <button class="btn-primary-listen" id="btn-save-objection" style="padding: 8px 18px; font-size: 13px;">
+              💾 Salvar Objeção
+            </button>
+          </div>
+        </div>
+
+        <div class="objection-list-header">
+          <span style="font-size: 13px; font-weight: 700;">Objeções Ativas</span>
+          <button class="btn-icon" id="btn-reset-defaults" style="font-size: 11px;">Restaurar 7 Padrões</button>
+        </div>
+
+        <div id="objections-list-container" style="display: flex; flex-direction: column; gap: 12px;">
+          <!-- Itens renderizados via JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast de Notificação -->
+  <div class="toast" id="toast">
+    <span>📋</span>
+    <span id="toast-message">Argumento copiado com sucesso!</span>
+  </div>
+
+  <!-- =======================================================================
+       5. Lógica da Aplicação (JS Puro, Zero Frameworks)
+       ======================================================================= -->
+  <script>
+    // As 7 Objeções Canônicas para venda de Agente de IA para PME
+    const DEFAULT_OBJECTIONS = [
+      {
+        id: 'ta_caro',
+        name: 'Tá caro',
+        triggers: 'tá caro, preço alto, orçamento estourado, sem dinheiro, valor elevado, salgado, não cabe no bolso, pesado',
+        argument: 'Entendo perfeitamente! Mas deixa eu te perguntar: quanto custa perder 3 ou 4 clientes por dia que mandam mensagem no WhatsApp fora do horário ou esperam 20 minutos? O agente não é custo, é um vendedor 24/7 sem encargos trabalhistas. Com 2 vendas a mais no mês ele já se paga sozinho. Vamos olhar o retorno que ele gera antes do custo?'
+      },
+      {
+        id: 'sera_que_funciona_pra_mim',
+        name: 'Será que funciona pra mim',
+        triggers: 'será que funciona pra mim, meu nicho, empresa pequena, oficina mecânica, comércio, específico, complexo, será que dá certo',
+        argument: 'Essa é uma preocupação muito justa! A grande vantagem do nosso agente é que ele não usa respostas genéricas: ele é treinado especificamente nas regras, tabela de preços e catálogo da sua empresa. O cliente nem percebe que é IA — parece um atendente veterano da sua equipe. Posso te mostrar agora uma simulação com 3 perguntas reais do seu nicho?'
+      },
+      {
+        id: 'nao_e_o_momento',
+        name: 'Não é o momento',
+        triggers: 'não é o momento, agora não, ano que vem, depois, mês que vem, correria, sem tempo agora, prioridade outra',
+        argument: 'Eu entendo que o momento parece corrido. Mas justamente por você estar sem tempo é que você mais precisa: você e sua equipe estão gastando 2 a 3 horas por dia respondendo as mesmas perguntas repetidas no WhatsApp. A gente implementa tudo para você em 30 minutos e amanhã o robô já tira essa sobrecarga das suas costas. Por que esperar mais 6 meses perdendo vendas?'
+      },
+      {
+        id: 'preciso_falar_com_meu_socio',
+        name: 'Preciso falar com meu sócio',
+        triggers: 'preciso falar com meu sócio, sócia, esposa, marido, diretoria, alinhar, conselho, aprovar com equipe, decidir junto',
+        argument: 'Com certeza, decisões estratégicas precisam ser alinhadas! Para te ajudar a apresentar isso sem ter que reexplicar tudo do zero, qual é a prioridade que o seu sócio costuma focar mais: redução de custo com equipe ou aumento de faturamento? Posso te mandar um vídeo de 2 minutos demonstrando o agente respondendo para você encaminhar no WhatsApp dele agora mesmo?'
+      },
+      {
+        id: 'ja_tentei_e_nao_deu_certo',
+        name: 'Já tentei e não deu certo',
+        triggers: 'já tentei e não deu certo, outra empresa, deu errado, frustrado, outra agência, perdi dinheiro, dinheiro jogado fora, não funcionou, chatbot antigo burro',
+        argument: 'Eu imagino a sua frustração, e você tem toda razão de ficar com o pé atrás: a maioria das ferramentas antigas eram chatbots de botões travados que irritavam os clientes. A nossa tecnologia é um agente cognitivo que entende linguagem natural e tem travas de segurança rígidas para nunca inventar nada. Tanto confiamos que colocamos para rodar em teste na sua operação antes de qualquer contrato.'
+      },
+      {
+        id: 'vou_pensar',
+        name: 'Vou pensar',
+        triggers: 'vou pensar, analisar com calma, te dou um retorno, semana que vem, digerir proposta, avaliar depois, me manda por email',
+        argument: 'Pensar faz todo sentido para tomar uma boa decisão! Mas normalmente quando alguém me diz que vai pensar, é por um de dois motivos: ou a solução não fez sentido pro seu momento, ou ficou alguma dúvida sobre preço ou funcionamento que eu não esclareci bem. Sendo bem sincero comigo, qual dos dois é o seu caso? O que ainda está te deixando em dúvida?'
+      },
+      {
+        id: 'nao_confio',
+        name: 'Não confio',
+        triggers: 'não confio, inteligência artificial alucina, medo de errar com cliente, vai inventar preço, queimar minha marca, robô burro',
+        argument: 'Esse é o receio número 1 de qualquer empresário sério, e eu compartilho dele! Por isso nosso agente possui arquitetura com barreiras de compliance rigorosas: ele só responde com base nos documentos que você aprovar. Se o cliente fizer uma pergunta fora do escopo, ele não chuta nem inventa nada: transfere para humano na hora e notifica você no WhatsApp.'
+      }
+    ];
+
+    // Estado da Aplicação
+    const state = {
+      isListening: false,
+      sellerStream: null,
+      meetStream: null,
+      sellerRecognition: null,
+      customerRecognition: null,
+      sellerAudioContext: null,
+      customerAudioContext: null,
+      
+      objections: [],
+      history: [],
+      
+      // Métricas
+      totalDecisions: 0,
+      totalLatencyMs: 0,
+      objectionsOvercome: 0,
+      lastActiveCardId: null,
+      
+      // Controle de Cancelamento / Debounce
+      pendingRequestId: 0,
+      partialTimeoutId: null,
+      conversationBuffer: []
+    };
+
+    // Inicialização
+    function init() {
+      loadSavedObjections();
+      bindEvents();
+      checkBackendHealth();
+    }
+
+    // Carrega objeções do localStorage ou padrão
+    function loadSavedObjections() {
+      const saved = localStorage.getItem('alr_sales_objections');
+      if (saved) {
+        try {
+          state.objections = JSON.parse(saved);
+        } catch (_) {
+          state.objections = [...DEFAULT_OBJECTIONS];
+        }
+      } else {
+        state.objections = [...DEFAULT_OBJECTIONS];
+        saveObjections();
+      }
+      renderObjectionsList();
+    }
+
+    function saveObjections() {
+      localStorage.setItem('alr_sales_objections', JSON.stringify(state.objections));
+      renderObjectionsList();
+    }
+
+    function renderObjectionsList() {
+      const container = document.getElementById('objections-list-container');
+      const badge = document.getElementById('objection-count-badge');
+      badge.textContent = state.objections.length;
+
+      container.innerHTML = state.objections.map(obj => `
+        <div class="objection-item" data-id="${obj.id}">
+          <div class="objection-item-header">
+            <span class="objection-item-name">${escapeHtml(obj.name)}</span>
+            <div class="objection-item-actions">
+              <button class="btn-icon" onclick="editObjection('${obj.id}')">Editar</button>
+              <button class="btn-icon delete" onclick="deleteObjection('${obj.id}')">Excluir</button>
+            </div>
+          </div>
+          <div class="objection-item-triggers">Gatilhos: "${escapeHtml(obj.triggers)}"</div>
+          <div class="objection-item-argument">${escapeHtml(obj.argument)}</div>
+        </div>
+      `).join('');
+    }
+
+    // Healthcheck com o Backend ALR via /api/health
+    async function checkBackendHealth() {
+      const el = document.getElementById('backend-status-text');
+      try {
+        const resp = await fetch('/api/health');
+        if (resp.ok) {
+          const data = await resp.json();
+          el.textContent = `Conectado ao ALR (${data.alr_api_url})`;
+        } else {
+          el.textContent = 'Aviso: Backend ALR não respondeu 200';
+        }
+      } catch (err) {
+        el.textContent = 'Aguardando inicialização do servidor local...';
+      }
+    }
+
+    // =========================================================================
+    // 2. Ouvido: Captura de Áudio e Web Speech API Dual Channel em pt-BR
+    // =========================================================================
+    async function toggleListening() {
+      if (state.isListening) {
+        stopListening();
+      } else {
+        await startListening();
+      }
+    }
+
+    async function startListening() {
+      const btn = document.getElementById('btn-toggle-listen');
+      const icon = document.getElementById('listen-icon');
+      const text = document.getElementById('listen-text');
+
+      try {
+        // 1. Canal 1: Microfone do Vendedor
+        state.sellerStream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true }
+        });
+        setupAudioMeter(state.sellerStream, 'meter-seller', 'sellerAudioContext');
+
+        // 2. Canal 2: Áudio da Aba do Google Meet (Compartilhamento de Aba com Áudio)
+        // No Chrome, getDisplayMedia com audio: true captura a trilha de som da aba do Meet
+        try {
+          state.meetStream = await navigator.mediaDevices.getDisplayMedia({
+            video: true,
+            audio: { echoCancellation: false, noiseSuppression: false }
+          });
+          setupAudioMeter(state.meetStream, 'meter-customer', 'customerAudioContext');
+        } catch (displayErr) {
+          console.warn('[AUDIO] getDisplayMedia Meet não selecionado ou cancelado:', displayErr.message);
+          showToast('Dica: Para ouvir o cliente do Meet, compartilhe a aba do Google Meet com áudio.');
+        }
+
+        // 3. Inicializa Web Speech API nos dois canais
+        initSpeechRecognition();
+
+        state.isListening = true;
+        btn.classList.add('listening');
+        icon.textContent = '⏹️';
+        text.textContent = 'Ouvindo call...';
+        showToast('🎙️ Copiloto ouvindo microfone e aba da reunião!');
+      } catch (err) {
+        console.error('Falha ao iniciar escuta de áudio:', err);
+        showToast(`Erro ao acessar áudio: ${err.message}`);
+      }
+    }
+
+    function stopListening() {
+      const btn = document.getElementById('btn-toggle-listen');
+      const icon = document.getElementById('listen-icon');
+      const text = document.getElementById('listen-text');
+
+      if (state.sellerStream) {
+        state.sellerStream.getTracks().forEach(t => t.stop());
+        state.sellerStream = null;
+      }
+      if (state.meetStream) {
+        state.meetStream.getTracks().forEach(t => t.stop());
+        state.meetStream = null;
+      }
+      if (state.sellerRecognition) {
+        try { state.sellerRecognition.stop(); } catch (_) {}
+      }
+      if (state.customerRecognition) {
+        try { state.customerRecognition.stop(); } catch (_) {}
+      }
+
+      state.isListening = false;
+      btn.classList.remove('listening');
+      icon.textContent = '🎙️';
+      text.textContent = 'Começar a ouvir';
+      document.getElementById('meter-seller').style.width = '0%';
+      document.getElementById('meter-customer').style.width = '0%';
+      showToast('Ouvido pausado.');
+    }
+
+    // Inicialização da Web Speech API para os dois canais
+    function initSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        showToast('Seu navegador não suporta Web Speech API. Use o Google Chrome.');
+        return;
+      }
+
+      // Reconhecimento do Vendedor
+      state.sellerRecognition = new SpeechRecognition();
+      state.sellerRecognition.lang = 'pt-BR';
+      state.sellerRecognition.continuous = true;
+      state.sellerRecognition.interimResults = true;
+
+      state.sellerRecognition.onresult = (event) => {
+        let interimText = '';
+        let finalText = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalText += transcript;
+          } else {
+            interimText += transcript;
+          }
+        }
+        if (finalText) {
+          addSpeechBubble('seller', finalText, false);
+          recordConversation('Você', finalText);
+        } else if (interimText) {
+          addSpeechBubble('seller', interimText, true);
+        }
+      };
+
+      state.sellerRecognition.onerror = (e) => {
+        if (e.error !== 'no-speech') console.warn('[SPEECH SELLER ERROR]', e.error);
+      };
+
+      state.sellerRecognition.onend = () => {
+        if (state.isListening) {
+          try { state.sellerRecognition.start(); } catch (_) {}
+        }
+      };
+
+      // Reconhecimento do Cliente (Meet)
+      state.customerRecognition = new SpeechRecognition();
+      state.customerRecognition.lang = 'pt-BR';
+      state.customerRecognition.continuous = true;
+      state.customerRecognition.interimResults = true;
+
+      state.customerRecognition.onresult = (event) => {
+        let interimText = '';
+        let finalText = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalText += transcript;
+          } else {
+            interimText += transcript;
+          }
+        }
+
+        if (finalText) {
+          addSpeechBubble('customer', finalText, false);
+          recordConversation('Cliente', finalText);
+          handleCustomerSpeech(finalText, false);
+        } else if (interimText) {
+          addSpeechBubble('customer', interimText, true);
+          // Em pausa curta, já pergunta ao ALR com texto parcial
+          handleCustomerSpeech(interimText, true);
+        }
+      };
+
+      state.customerRecognition.onerror = (e) => {
+        if (e.error !== 'no-speech') console.warn('[SPEECH CUSTOMER ERROR]', e.error);
+      };
+
+      state.customerRecognition.onend = () => {
+        if (state.isListening) {
+          try { state.customerRecognition.start(); } catch (_) {}
+        }
+      };
+
+      // Inicia os dois canais passando as trilhas
+      try {
+        const sellerTrack = state.sellerStream ? state.sellerStream.getAudioTracks()[0] : null;
+        if (sellerTrack) state.sellerRecognition.start(sellerTrack);
+        else state.sellerRecognition.start();
+      } catch (_) {
+        try { state.sellerRecognition.start(); } catch (_) {}
+      }
+
+      try {
+        const meetTrack = state.meetStream ? state.meetStream.getAudioTracks()[0] : null;
+        if (meetTrack) state.customerRecognition.start(meetTrack);
+        else state.customerRecognition.start();
+      } catch (_) {
+        try { state.customerRecognition.start(); } catch (_) {}
+      }
+    }
+
+    // VU Meter via Web Audio API AnalyserNode
+    function setupAudioMeter(mediaStream, meterId, ctxKey) {
+      try {
+        const audioTracks = mediaStream.getAudioTracks();
+        if (!audioTracks.length) return;
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        state[ctxKey] = audioCtx;
+        const src = audioCtx.createMediaStreamSource(mediaStream);
+        const analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 64;
+        src.connect(analyser);
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        const meterEl = document.getElementById(meterId);
+
+        function updateMeter() {
+          if (!state.isListening) {
+            meterEl.style.width = '0%';
+            return;
+          }
+          analyser.getByteFrequencyData(dataArray);
+          let sum = 0;
+          for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+          const avg = sum / dataArray.length;
+          const pct = Math.min(100, Math.round((avg / 128) * 100));
+          meterEl.style.width = `${pct}%`;
+          requestAnimationFrame(updateMeter);
+        }
+        updateMeter();
+      } catch (err) {
+        console.warn('[VU METER] Falha ao configurar medidor:', err);
+      }
+    }
+
+    // =========================================================================
+    // 3. Decisão: Chamada ao ALR System 1 com 4 Perguntas em Paralelo
+    // =========================================================================
+    function handleCustomerSpeech(speechText, isPartial) {
+      if (!speechText || speechText.trim().length < 4) return;
+
+      // Se for parcial, cancela o timeout anterior e aplica debounce de 450ms
+      if (isPartial) {
+        if (state.partialTimeoutId) clearTimeout(state.partialTimeoutId);
+        state.partialTimeoutId = setTimeout(() => {
+          dispatchAlrDecision(speechText, true);
+        }, 450);
+        return;
+      }
+
+      // Se for fala finalizada, cancela chamada parcial pendente e dispara imediatamente
+      if (state.partialTimeoutId) {
+        clearTimeout(state.partialTimeoutId);
+        state.partialTimeoutId = null;
+      }
+      dispatchAlrDecision(speechText, false);
+    }
+
+    async function dispatchAlrDecision(spokenText, isPartial) {
+      const requestId = ++state.pendingRequestId;
+      const t0 = performance.now();
+
+      // Monta os critérios com base nas objeções ativas salvas pelo vendedor
+      const criteriaObj = {};
+      for (const obj of state.objections) {
+        criteriaObj[obj.id] = `${obj.name}, ${obj.triggers}`;
+      }
+      criteriaObj['nenhuma'] = 'nenhuma objeção, cliente neutro, concordando com proposta, saudações ou fechamento positivo';
+
+      // Monta o state com as últimas falas em português
+      const stateHistory = state.conversationBuffer.slice(-3).map(c => `${c.speaker}: ${c.text}`).join('\n');
+      const stateContent = stateHistory
+        ? `${stateHistory}\nCliente: ${spokenText}`
+        : `Cliente: ${spokenText}`;
+
+      const payload = {
+        state: stateContent,
+        temperature: 1.0,
+        questions: {
+          tem_objecao: {
+            type: 'noul',
+            instructions: 'Does the customer express an objection, doubt, concern, resistance, skepticism, budget issue, timing issue, or pushback?',
+          },
+          objecao: {
+            type: 'choice',
+            instructions: 'Which sales objection is the customer expressing?',
+            criteria: criteriaObj,
+          },
+          fase: {
+            type: 'choice',
+            instructions: 'What phase is the sales call currently in?',
+            criteria: {
+              abertura: 'Abertura, saudações, olá, bom dia, boa tarde, conexão inicial',
+              diagnostico_de_dor: 'Diagnóstico de dor, problemas atuais, desafios da empresa, perde muito cliente',
+              apresentacao: 'Apresentação da solução, demonstração do agente de IA, funcionalidades',
+              objecao: 'Objeção do cliente, achou caro, dúvida, resistência, hesitação, contra-argumento',
+              fechamento: 'Fechamento do negócio, valores finais, contrato, pix, assinar, próximos passos',
+            },
+          },
+          terminou_de_falar: {
+            type: 'noul',
+            instructions: 'Has the customer finished speaking their complete sentence or thought, or was the phrase cut off/interrupted?',
+          },
+        },
+      };
+
+      try {
+        const resp = await fetch('/alr', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+
+        // Se uma fala mais nova chegou enquanto essa estava em trânsito, descarta a chamada parcial obsoleta!
+        if (requestId !== state.pendingRequestId) {
+          return;
+        }
+
+        const elapsedMs = Math.round(performance.now() - t0);
+        processAlrDecision(data, spokenText, elapsedMs);
+      } catch (err) {
+        console.error('[ALR DISPATCH ERROR]', err);
+      }
+    }
+
+    // Aplicação das Regras Estritas do Copiloto
+    function processAlrDecision(data, spokenText, elapsedMs) {
+      state.totalDecisions++;
+      state.totalLatencyMs += elapsedMs;
+      updateTelemetryHud();
+
+      const temObjecao = data.answers?.tem_objecao?.noul ?? 0;
+      const objChoice = data.answers?.objecao?.choice ?? 'nenhuma';
+      const objConf = data.answers?.objecao?.confidence ?? 0;
+      const fase = data.answers?.fase?.choice ?? 'objecao';
+      const terminou = data.answers?.terminou_de_falar?.noul ?? 1.0;
+
+      // 1. Atualiza a Fase da Call no Topo
+      updatePhaseTracker(fase);
+
+      // 2. Se a frase estiver cortada, aguarda o restante
+      if (terminou < 0.50) {
+        return;
+      }
+
+      // 3. Regra no código: mostrar o card se tem_objecao for pelo menos 0,6 e a confiança da objeção pelo menos 0,5
+      if (temObjecao >= 0.60 && objConf >= 0.50 && objChoice !== 'nenhuma') {
+        // Regra: Não repetir o mesmo card seguido
+        if (state.lastActiveCardId === objChoice) {
+          return;
+        }
+
+        const objMeta = state.objections.find(o => o.id === objChoice) || {
+          id: objChoice,
+          name: objChoice,
+          argument: 'Argumento não cadastrado para esta objeção.'
+        };
+
+        showObjectionHeroCard(objMeta, spokenText, objConf, elapsedMs, false);
+      } else if (temObjecao >= 0.60 && (objChoice === 'nenhuma' || objConf < 0.50)) {
+        const autoLearnToggle = document.getElementById('toggle-autolearn');
+        if (autoLearnToggle && autoLearnToggle.checked) {
+          triggerLlmAutoLearning(spokenText, elapsedMs);
+        }
+      }
+    }
+
+    async function triggerLlmAutoLearning(spokenText, elapsedMs) {
+      showToast('🧠 ALR: Objeção inédita detectada! Consultando Professor LLM...');
+
+      try {
+        const resp = await fetch('/alr/auto-learn', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer_speech: spokenText,
+            conversation_context: state.conversationBuffer.slice(-3).map(c => `${c.speaker}: ${c.text}`).join('\n')
+          })
+        });
+
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (data.success && data.learned_objection) {
+          const learned = data.learned_objection;
+          if (!state.objections.some(o => o.id === learned.id)) {
+            state.objections.push(learned);
+            saveObjections();
+          }
+          showObjectionHeroCard(learned, spokenText, 1.0, elapsedMs, true);
+          showToast(`✨ Objeção "${learned.name}" aprendida e memorizada no ALR!`);
+        }
+      } catch (err) {
+        console.error('[AUTO LEARN ERROR]', err);
+      }
+    }
+
+    function showObjectionHeroCard(objMeta, triggerText, confidence, latencyMs, isLlmLearned) {
+      state.lastActiveCardId = objMeta.id;
+      state.objectionsOvercome++;
+      updateTelemetryHud();
+
+      document.getElementById('hero-idle-state').style.display = 'none';
+      const activeState = document.getElementById('hero-active-state');
+      activeState.style.display = 'flex';
+      document.getElementById('hero-card').classList.add('has-objection');
+
+      document.getElementById('hero-obj-name').innerHTML = isLlmLearned
+        ? `${escapeHtml(objMeta.name)} <span style="font-size:10px; background:rgba(168,85,247,0.25); color:#c084fc; border:1px solid rgba(168,85,247,0.5); padding:2px 8px; border-radius:4px; font-weight:700; margin-left:6px; vertical-align:middle;">🧠 APRENDIDO POR LLM</span>`
+        : escapeHtml(objMeta.name);
+      document.getElementById('hero-confidence').textContent = `🎯 ${Math.round(confidence * 100)}% confiança`;
+      document.getElementById('hero-latency').textContent = `⚡ ${latencyMs} ms`;
+      document.getElementById('hero-trigger-text').textContent = `"${triggerText}"`;
+      document.getElementById('hero-argument-text').textContent = objMeta.argument;
+
+      // Registra no histórico da call
+      addToHistory(objMeta, confidence);
+    }
+
+    function dismissHeroCard() {
+      state.lastActiveCardId = null;
+      document.getElementById('hero-card').classList.remove('has-objection');
+      document.getElementById('hero-active-state').style.display = 'none';
+      document.getElementById('hero-idle-state').style.display = 'flex';
+      showToast('Objeção marcada como superada!');
+    }
+
+    function updatePhaseTracker(fase) {
+      const validPhases = ['abertura', 'diagnostico_de_dor', 'apresentacao', 'objecao', 'fechamento'];
+      const target = validPhases.includes(fase) ? fase : 'objecao';
+      
+      validPhases.forEach(p => {
+        const el = document.getElementById(`phase-${p}`);
+        if (el) el.classList.remove('active');
+      });
+      const activeEl = document.getElementById(`phase-${target}`);
+      if (activeEl) activeEl.classList.add('active');
+    }
+
+    function addToHistory(objMeta, confidence) {
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+      state.history.unshift({ objMeta, confidence, timeStr });
+
+      const container = document.getElementById('history-list');
+      document.getElementById('history-count').textContent = `${state.history.length} registrada(s)`;
+
+      container.innerHTML = state.history.map(item => `
+        <div class="history-chip" onclick="showObjectionHeroCard(getObjById('${item.objMeta.id}'), '', ${item.confidence}, 0)">
+          <span class="history-chip-time">${item.timeStr}</span>
+          <span class="history-chip-name">${escapeHtml(item.objMeta.name)}</span>
+          <span class="history-chip-badge">${Math.round(item.confidence * 100)}%</span>
+        </div>
+      `).join('');
+    }
+
+    function getObjById(id) {
+      return state.objections.find(o => o.id === id) || { id, name: id, argument: '' };
+    }
+
+    function updateTelemetryHud() {
+      const avgMs = state.totalDecisions > 0 ? (state.totalLatencyMs / state.totalDecisions).toFixed(1) : '0.00';
+      document.getElementById('hud-avg-latency').textContent = `${avgMs} ms`;
+      document.getElementById('hud-total-decisions').textContent = state.totalDecisions;
+      document.getElementById('hud-objections-count').textContent = state.objectionsOvercome;
+    }
+
+    // Adiciona bolha de fala na coluna
+    function addSpeechBubble(channel, text, isInterim) {
+      const feed = document.getElementById(`feed-${channel}`);
+      const empty = feed.querySelector('.empty-state');
+      if (empty) empty.remove();
+
+      let bubble = feed.querySelector('.speech-bubble.interim');
+      if (!bubble && isInterim) {
+        bubble = document.createElement('div');
+        bubble.className = 'speech-bubble interim';
+        feed.appendChild(bubble);
+      } else if (!isInterim) {
+        if (bubble) bubble.remove();
+        bubble = document.createElement('div');
+        bubble.className = 'speech-bubble';
+        feed.appendChild(bubble);
+      }
+
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      bubble.innerHTML = `<span class="speech-time">${timeStr}</span>${escapeHtml(text)}`;
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    function recordConversation(speaker, text) {
+      state.conversationBuffer.push({ speaker, text });
+      if (state.conversationBuffer.length > 8) {
+        state.conversationBuffer.shift();
+      }
+    }
+
+    // =========================================================================
+    // 4. Modal / Drawer de Objeções (CRUD Completo)
+    // =========================================================================
+    function openDrawer() {
+      document.getElementById('drawer-objections').classList.add('open');
+    }
+
+    function closeDrawer() {
+      document.getElementById('drawer-objections').classList.remove('open');
+      resetObjectionForm();
+    }
+
+    function resetObjectionForm() {
+      document.getElementById('form-mode-title').textContent = 'Adicionar Nova Objeção';
+      document.getElementById('form-obj-id').value = '';
+      document.getElementById('form-obj-name').value = '';
+      document.getElementById('form-obj-triggers').value = '';
+      document.getElementById('form-obj-argument').value = '';
+      document.getElementById('btn-cancel-edit').style.display = 'none';
+    }
+
+    function saveObjectionFromForm() {
+      const idInput = document.getElementById('form-obj-id').value.trim();
+      const name = document.getElementById('form-obj-name').value.trim();
+      const triggers = document.getElementById('form-obj-triggers').value.trim();
+      const argument = document.getElementById('form-obj-argument').value.trim();
+
+      if (!name || !triggers || !argument) {
+        showToast('Preencha o nome, os gatilhos e o argumento da objeção.');
+        return;
+      }
+
+      const id = idInput || name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '_');
+
+      const existingIdx = state.objections.findIndex(o => o.id === id);
+      if (existingIdx >= 0) {
+        state.objections[existingIdx] = { id, name, triggers, argument };
+        showToast(`Objeção "${name}" atualizada!`);
+      } else {
+        state.objections.push({ id, name, triggers, argument });
+        showToast(`Objeção "${name}" adicionada com sucesso!`);
+      }
+
+      saveObjections();
+      resetObjectionForm();
+    }
+
+    window.editObjection = function(id) {
+      const obj = state.objections.find(o => o.id === id);
+      if (!obj) return;
+      document.getElementById('form-mode-title').textContent = `Editar Objeção: ${obj.name}`;
+      document.getElementById('form-obj-id').value = obj.id;
+      document.getElementById('form-obj-name').value = obj.name;
+      document.getElementById('form-obj-triggers').value = obj.triggers;
+      document.getElementById('form-obj-argument').value = obj.argument;
+      document.getElementById('btn-cancel-edit').style.display = 'inline-block';
+      document.querySelector('.drawer-body').scrollTop = 0;
+    };
+
+    window.deleteObjection = function(id) {
+      if (confirm('Tem certeza que deseja excluir esta objeção?')) {
+        state.objections = state.objections.filter(o => o.id !== id);
+        saveObjections();
+        showToast('Objeção excluída.');
+      }
+    };
+
+    function resetDefaults() {
+      if (confirm('Restaurar as 7 objeções padrão do ALR para venda de Agentes de IA?')) {
+        state.objections = [...DEFAULT_OBJECTIONS];
+        saveObjections();
+        showToast('7 Objeções padrão restauradas!');
+      }
+    }
+
+    // =========================================================================
+    // 5. Utilitários e Event Bindings
+    // =========================================================================
+    function bindEvents() {
+      document.getElementById('btn-toggle-listen').addEventListener('click', toggleListening);
+      document.getElementById('btn-open-objections').addEventListener('click', openDrawer);
+      document.getElementById('btn-close-drawer').addEventListener('click', closeDrawer);
+      document.getElementById('btn-save-objection').addEventListener('click', saveObjectionFromForm);
+      document.getElementById('btn-cancel-edit').addEventListener('click', resetObjectionForm);
+      document.getElementById('btn-reset-defaults').addEventListener('click', resetDefaults);
+      document.getElementById('btn-dismiss-card').addEventListener('click', dismissHeroCard);
+
+      document.getElementById('btn-copy-argument').addEventListener('click', () => {
+        const text = document.getElementById('hero-argument-text').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          showToast('📋 Argumento copiado para a área de transferência!');
+        });
+      });
+
+      // Toolbar de Testes Rápidos
+      document.querySelectorAll('.btn-test-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const phrase = btn.getAttribute('data-test');
+          addSpeechBubble('customer', phrase, false);
+          recordConversation('Cliente', phrase);
+          handleCustomerSpeech(phrase, false);
+        });
+      });
+
+      document.getElementById('btn-test-submit').addEventListener('click', () => {
+        const input = document.getElementById('test-custom-input');
+        const phrase = input.value.trim();
+        if (!phrase) return;
+        input.value = '';
+        addSpeechBubble('customer', phrase, false);
+        recordConversation('Cliente', phrase);
+        handleCustomerSpeech(phrase, false);
+      });
+
+      document.getElementById('test-custom-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          document.getElementById('btn-test-submit').click();
+        }
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-message').textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2800);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

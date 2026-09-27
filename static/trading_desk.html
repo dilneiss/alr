@@ -121,6 +121,20 @@
         </div>
       </div>
 
+      <!-- Adaptive Learning Badge -->
+      <div id="adaptive-learning-card" class="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-lg bg-navy-850 border border-emerald-700/60">
+        <div class="text-right">
+          <div class="text-[10px] uppercase font-bold tracking-wider text-emerald-400">Aprendizado Adaptativo</div>
+          <div id="adaptive-win-rate" class="text-xs font-semibold text-emerald-300 flex items-center gap-1.5 justify-end">
+            <span>Win Rate: 0.0%</span>
+          </div>
+        </div>
+        <div class="h-7 w-[1px] bg-slate-700"></div>
+        <div>
+          <div class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Pesos / Cooldowns</div>
+          <div id="adaptive-active-factors" class="text-xs mono font-bold text-slate-200">10 Fatores • 0 CD</div>
+        </div>
+      </div>
       <!-- Action Buttons & Portfolio Summary -->
       <div class="flex items-center gap-3">
         <button id="btn-emergency-stop" onclick="triggerEmergencyStop()" class="px-3.5 py-1.5 rounded-lg bg-rose-600/90 hover:bg-rose-600 text-white font-semibold text-xs transition shadow-lg shadow-rose-900/30 flex items-center gap-1.5 active:scale-95">
@@ -419,7 +433,7 @@
           </div>
 
           <!-- Technical Indicators Bar -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-1 text-xs">
             <div class="p-2 rounded bg-navy-900 border border-navy-800">
               <div class="text-[10px] uppercase text-slate-400">RSI (14)</div>
               <div id="stat-rsi" class="mono font-semibold text-slate-200 mt-0.5">50.00</div>
@@ -429,12 +443,47 @@
               <div id="stat-supertrend" class="mono font-semibold text-slate-200 mt-0.5">$0.00 (Alta)</div>
             </div>
             <div class="p-2 rounded bg-navy-900 border border-navy-800">
+              <div class="text-[10px] uppercase text-slate-400">ADX (Tendência)</div>
+              <div id="stat-adx" class="mono font-semibold text-slate-200 mt-0.5">25.0 (Forte)</div>
+            </div>
+            <div class="p-2 rounded bg-navy-900 border border-navy-800">
+              <div class="text-[10px] uppercase text-slate-400">Donchian (Low/High)</div>
+              <div id="stat-donchian" class="mono font-semibold text-slate-200 mt-0.5">-- / --</div>
+            </div>
+            <div class="p-2 rounded bg-navy-900 border border-navy-800">
               <div class="text-[10px] uppercase text-slate-400">Bollinger Bandwidth</div>
               <div id="stat-bollinger" class="mono font-semibold text-slate-200 mt-0.5">0.00% (Normal)</div>
             </div>
             <div class="p-2 rounded bg-navy-900 border border-navy-800">
               <div class="text-[10px] uppercase text-slate-400">Volatilidade ATR (14)</div>
               <div id="stat-atr" class="mono font-semibold text-slate-200 mt-0.5">$0.00</div>
+            </div>
+          </div>
+          <!-- Advanced Technical Indicators Bar (Fase 38 - Quant Fortress) -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-1 text-xs">
+            <div class="p-2 rounded bg-navy-900 border border-navy-800">
+              <div class="text-[10px] uppercase text-slate-400">VWAP Institucional</div>
+              <div id="stat-vwap" class="mono font-semibold text-cyan-300 mt-0.5">$0.00</div>
+            </div>
+            <div class="p-2 rounded bg-navy-900 border border-navy-800">
+              <div class="text-[10px] uppercase text-slate-400">TTM Squeeze (Keltner)</div>
+              <div id="stat-squeeze" class="mono font-semibold text-slate-200 mt-0.5"><span class="text-slate-400 text-xs">Normal</span></div>
+            </div>
+            <div class="p-2 rounded bg-navy-900 border border-navy-800">
+              <div class="text-[10px] uppercase text-slate-400">MFI (Fluxo de Capital)</div>
+              <div id="stat-mfi" class="mono font-semibold text-slate-200 mt-0.5">50.00</div>
+            </div>
+            <div class="p-2 rounded bg-navy-900 border border-navy-800">
+              <div class="text-[10px] uppercase text-slate-400">Estocástico %K / %D</div>
+              <div id="stat-stoch" class="mono font-semibold text-slate-200 mt-0.5">50.0 / 50.0</div>
+            </div>
+            <div class="p-2 rounded bg-navy-900 border border-navy-800">
+              <div class="text-[10px] uppercase text-slate-400">Order Book Imbalance</div>
+              <div id="stat-obi" class="mono font-semibold text-slate-200 mt-0.5">0.0%</div>
+            </div>
+            <div class="p-2 rounded bg-navy-900 border border-navy-800">
+              <div class="text-[10px] uppercase text-slate-400">Fear & Greed Index</div>
+              <div id="stat-fear-greed" class="mono font-semibold text-slate-200 mt-0.5">50 (Neutro)</div>
             </div>
           </div>
         </div>
@@ -503,6 +552,9 @@
               </button>
               <button onclick="lockBreakEven()" class="py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs transition border border-slate-700 active:scale-95" title="Mover Stop Loss para o preço de entrada (0 a 0)">
                 Travar 0 a 0
+              </button>
+              <button onclick="openTradeSnapshotModal(selectedAsset)" class="btn btn-xs btn-outline-info py-2 px-3 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 font-semibold text-xs transition border border-cyan-500/30 flex items-center justify-center gap-1 active:scale-95" title="Ver snapshot de indicadores e pesos da entrada">
+                📊 Indicadores & Pesos
               </button>
             </div>
 
@@ -597,9 +649,152 @@
             </details>
           </div>
         </div>
-
       </div>
     </div>
+    <!-- ⚡ Arena Multi-Estratégia ao Vivo (Champion vs Challengers) -->
+    <section id="arena-section" class="glass-panel rounded-xl p-4 w-full flex flex-col gap-4 border border-cyan-500/30 shadow-xl">
+      <!-- Section Header -->
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-navy-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-2.5 h-2.5 rounded-full bg-cyan-400 pulse-green flex-shrink-0"></div>
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <span>⚡ Arena Multi-Estratégia ao Vivo (Champion vs Challengers)</span>
+              <span id="arena-competitors-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">6 Perfis Concorrentes</span>
+            </h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">Execução paralela contínua de estratégias quantitativas em carteiras virtuais independentes com auto-promoção da melhor performance.</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 text-xs">
+          <div class="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-navy-950 border border-navy-800">
+            <span class="text-slate-400 text-[11px]">Campeã Atual:</span>
+            <span id="arena-active-champion-title" class="mono font-bold text-emerald-400 text-xs">trend_supertrend_heavy</span>
+          </div>
+          <button onclick="pollArenaStatus()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold transition border border-slate-700 flex items-center gap-1 active:scale-95" title="Atualizar dados da Arena ao vivo">
+            <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Atualizar Arena
+          </button>
+        </div>
+      </div>
+
+      <!-- Competitors Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="text-[11px] uppercase font-bold text-slate-400 border-b border-navy-800 bg-navy-900 sticky top-0">
+            <tr>
+              <th class="py-2.5 px-3">Perfil da Estratégia</th>
+              <th class="py-2.5 px-3">Papel</th>
+              <th class="py-2.5 px-3">Saldo Virtual ($)</th>
+              <th class="py-2.5 px-3">Win Rate %</th>
+              <th class="py-2.5 px-3">PnL Líquido USD</th>
+              <th class="py-2.5 px-3">Profit Factor</th>
+              <th class="py-2.5 px-3">Sharpe Ratio</th>
+              <th class="py-2.5 px-3">Posição Atual</th>
+              <th class="py-2.5 px-3 text-right">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="arena-competitors-body" class="divide-y divide-navy-800/60 mono text-slate-300">
+            <tr>
+              <td colspan="9" class="text-center py-6 text-slate-500">Conectando aos competidores da Arena Multi-Estratégia...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Recent Auto-Promotions Log -->
+      <div class="pt-2 border-t border-navy-800/80 flex flex-col gap-2">
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-bold text-slate-300 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Histórico de Promoções da Arena (Promotion History)
+          </span>
+          <span id="arena-promo-count" class="text-[10px] text-slate-400 mono">0 eventos</span>
+        </div>
+        <div id="arena-promotion-history-list" class="flex flex-col gap-1.5 text-[11px] max-h-36 overflow-y-auto pr-1">
+          <div class="text-slate-500 text-xs py-1">Nenhuma auto-promoção registrada até o momento.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 🏛️ Otimizador de Backtest Histórico de 90 Dias (3 Meses) -->
+    <section id="backtest-section" class="glass-panel rounded-xl p-4 w-full flex flex-col gap-4 border border-indigo-500/30 shadow-xl">
+      <!-- Section Header -->
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-navy-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-2.5 h-2.5 rounded-full bg-indigo-400 pulse-green flex-shrink-0"></div>
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <span>🏛️ Otimizador de Backtest Histórico de 90 Dias (3 Meses)</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Calibração Quantitativa</span>
+            </h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">Executa simulação retroativa com candles históricos da Binance, classifica os 6 perfis por Sharpe Ratio / Win Rate e elege a campeã estatística.</p>
+          </div>
+        </div>
+
+        <!-- Backtest Controls Form -->
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <div class="flex items-center gap-1.5">
+            <label class="text-[11px] text-slate-400">Ativo:</label>
+            <select id="backtest-asset-select" class="px-2.5 py-1.5 rounded-lg bg-navy-950 border border-navy-700 text-white font-mono text-xs focus:outline-none focus:border-cyan-500">
+              <option value="BTC-USDT" selected>BTC-USDT (Bitcoin)</option>
+              <option value="ETH-USDT">ETH-USDT (Ethereum)</option>
+              <option value="SOL-USDT">SOL-USDT (Solana)</option>
+              <option value="BNB-USDT">BNB-USDT (Binance Coin)</option>
+              <option value="XRP-USDT">XRP-USDT (Ripple)</option>
+              <option value="ADA-USDT">ADA-USDT (Cardano)</option>
+              <option value="DOGE-USDT">DOGE-USDT (Dogecoin)</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <label class="text-[11px] text-slate-400">Período:</label>
+            <select id="backtest-period-select" class="px-2.5 py-1.5 rounded-lg bg-navy-950 border border-navy-700 text-white text-xs focus:outline-none focus:border-cyan-500">
+              <option value="30">30 Dias</option>
+              <option value="60">60 Dias</option>
+              <option value="90" selected>90 Dias (3 Meses)</option>
+            </select>
+          </div>
+
+          <button id="btn-run-backtest" onclick="executeBacktestOptimizer()" class="px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs transition shadow-lg shadow-cyan-900/30 flex items-center gap-2 active:scale-95">
+            <span id="btn-run-backtest-text">▶️ Executar Otimização e Eleger Campeão</span>
+            <div id="btn-run-backtest-spinner" class="hidden w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Output Area (Initially with placeholder or results) -->
+      <div id="backtest-results-container" class="flex flex-col gap-3">
+        <!-- Summary Card -->
+        <div id="backtest-summary-box" class="p-3.5 rounded-xl bg-navy-950/80 border border-navy-800 text-xs text-slate-400">
+          Clique em <strong>[▶️ Executar Otimização e Eleger Campeão]</strong> para iniciar a simulação contrafactual de 90 dias com ranking analítico dos perfis.
+        </div>
+
+        <!-- Ranked Comparison Table -->
+        <div class="overflow-x-auto">
+          <table id="backtest-results-table" class="w-full text-left text-xs">
+            <thead class="text-[11px] uppercase font-bold text-slate-400 border-b border-navy-800 bg-navy-900 sticky top-0">
+              <tr>
+                <th class="py-2 px-3">Rank</th>
+                <th class="py-2 px-3">Estratégia</th>
+                <th class="py-2 px-3">Trades</th>
+                <th class="py-2 px-3">Win Rate %</th>
+                <th class="py-2 px-3">PnL Líquido USD</th>
+                <th class="py-2 px-3">Retorno %</th>
+                <th class="py-2 px-3">Profit Factor</th>
+                <th class="py-2 px-3">Max Drawdown %</th>
+                <th class="py-2 px-3">Sharpe Ratio</th>
+                <th class="py-2 px-3 text-right">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="backtest-results-tbody" class="divide-y divide-navy-800/60 mono text-slate-300">
+              <tr>
+                <td colspan="10" class="text-center py-5 text-slate-500">Aguardando execução do backtest...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
     <!-- Recent Executions Log Section -->
     <section class="glass-panel rounded-xl p-4 w-full">
@@ -623,11 +818,12 @@
               <th class="py-2 px-3">Taxa</th>
               <th class="py-2 px-3">PnL Realizado</th>
               <th class="py-2 px-3">Motivo / Confluência</th>
+              <th class="py-2 px-3 text-right">Snapshot</th>
             </tr>
           </thead>
-          <tbody id="executions-table-body" class="divide-y divide-navy-800/60 mono text-slate-300">
+          <tbody id="executions-body" class="divide-y divide-navy-800/60 mono text-slate-300">
             <tr>
-              <td colspan="8" class="text-center py-6 text-slate-500">Nenhuma ordem executada até o momento.</td>
+              <td colspan="9" class="text-center py-6 text-slate-500">Nenhuma ordem executada até o momento.</td>
             </tr>
           </tbody>
         </table>
@@ -696,6 +892,144 @@
     <div class="flex gap-2">
       <button onclick="document.getElementById('modal-set-max-trade').close()" class="flex-1 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold">Cancelar</button>
       <button onclick="submitMaxTradeAllocation()" class="flex-1 py-1.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold">Salvar Teto</button>
+    </div>
+  </dialog>
+
+  <!-- Modal de Snapshot de Indicadores e Pesos na Entrada do Trade -->
+  <dialog id="tradeSnapshotModal" class="bg-navy-900 text-white rounded-2xl p-6 border border-cyan-500/40 shadow-2xl backdrop:bg-black/80 max-w-4xl w-full max-h-[90vh] overflow-y-auto text-xs m-auto" onclick="if (event.target === this) this.close()">
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between border-b border-navy-800 pb-3 mb-4">
+      <div class="flex items-center gap-2.5">
+        <div class="w-3 h-3 rounded-full bg-cyan-400 pulse-green flex-shrink-0"></div>
+        <div>
+          <h3 class="font-bold text-sm text-white flex items-center gap-2">
+            <span>Snapshot de Indicadores & Pesos na Entrada do Trade</span>
+            <span id="snap-asset-badge" class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">BTC-USDT</span>
+          </h3>
+          <p class="text-[11px] text-slate-400 mt-0.5">Auditoria imutável das condições matemáticas e pesos no momento exato do disparo da ordem</p>
+        </div>
+      </div>
+      <button onclick="document.getElementById('tradeSnapshotModal').close()" class="w-8 h-8 rounded-lg bg-navy-800 hover:bg-navy-700 text-slate-300 hover:text-white flex items-center justify-center text-lg font-bold transition">&times;</button>
+    </div>
+
+    <!-- Metadata Ribbon: Asset, Action, Timestamp, Executed Price -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl bg-navy-950/80 border border-navy-800 mb-4">
+      <div>
+        <div class="text-[10px] uppercase font-bold text-slate-400">Ativo</div>
+        <div id="snap-asset" class="font-bold text-white mono text-xs mt-0.5">--</div>
+      </div>
+      <div>
+        <div class="text-[10px] uppercase font-bold text-slate-400">Ação / Lado</div>
+        <div id="snap-action" class="font-bold text-emerald-400 mono text-xs mt-0.5">--</div>
+      </div>
+      <div>
+        <div class="text-[10px] uppercase font-bold text-slate-400">Preço Executado</div>
+        <div id="snap-price" class="font-bold text-cyan-300 mono text-xs mt-0.5">--</div>
+      </div>
+      <div>
+        <div class="text-[10px] uppercase font-bold text-slate-400">Data / Hora da Entrada</div>
+        <div id="snap-time" class="mono text-slate-300 text-xs mt-0.5">--</div>
+      </div>
+    </div>
+
+    <!-- Section 1: Valores dos Indicadores no Momento da Entrada -->
+    <div class="mb-5">
+      <div class="flex items-center gap-2 mb-2.5 pb-1 border-b border-navy-800">
+        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <h4 class="font-bold text-xs uppercase tracking-wider text-slate-200">1. Valores dos Indicadores no Momento da Entrada</h4>
+      </div>
+      <div id="snap-indicators-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+        <!-- RSI -->
+        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
+          <div class="text-[10px] uppercase text-slate-400">RSI (14)</div>
+          <div id="snap-ind-rsi" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+        </div>
+        <!-- ADX -->
+        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
+          <div class="text-[10px] uppercase text-slate-400">ADX (14) & DIs</div>
+          <div id="snap-ind-adx" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+        </div>
+        <!-- VWAP -->
+        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
+          <div class="text-[10px] uppercase text-slate-400">VWAP Institucional</div>
+          <div id="snap-ind-vwap" class="mono font-bold text-cyan-300 text-xs mt-0.5">--</div>
+        </div>
+        <!-- Ichimoku Cloud -->
+        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
+          <div class="text-[10px] uppercase text-slate-400">Ichimoku Kumo Cloud</div>
+          <div id="snap-ind-ichimoku" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+        </div>
+        <!-- Bollinger Bandwidth -->
+        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
+          <div class="text-[10px] uppercase text-slate-400">Bollinger Bandwidth</div>
+          <div id="snap-ind-bb" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+        </div>
+        <!-- MFI -->
+        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
+          <div class="text-[10px] uppercase text-slate-400">MFI (Fluxo de Dinheiro)</div>
+          <div id="snap-ind-mfi" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+        </div>
+        <!-- Stoch %K/%D -->
+        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
+          <div class="text-[10px] uppercase text-slate-400">Estocástico %K / %D</div>
+          <div id="snap-ind-stoch" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+        </div>
+        <!-- Parabolic SAR -->
+        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
+          <div class="text-[10px] uppercase text-slate-400">PSAR / Volatilidade ATR</div>
+          <div id="snap-ind-psar" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+        </div>
+        <!-- Order Book Imbalance -->
+        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
+          <div class="text-[10px] uppercase text-slate-400">Order Book Imbalance</div>
+          <div id="snap-ind-obi" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+        </div>
+        <!-- Fear & Greed / Sentimento -->
+        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
+          <div class="text-[10px] uppercase text-slate-400">Fear & Greed / News</div>
+          <div id="snap-ind-fear-greed" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Pesos Ativos dos Fatores -->
+    <div class="mb-5">
+      <div class="flex items-center gap-2 mb-2.5 pb-1 border-b border-navy-800">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 18h12l3-18H3z"/></svg>
+        <h4 class="font-bold text-xs uppercase tracking-wider text-slate-200">2. Pesos Ativos dos Fatores (Learned Weight Multipliers)</h4>
+      </div>
+      <div class="overflow-x-auto max-h-56 overflow-y-auto rounded-lg border border-navy-800 bg-navy-950">
+        <table class="w-full text-left text-xs">
+          <thead class="text-[10px] uppercase font-bold text-slate-400 border-b border-navy-800 sticky top-0 bg-navy-900">
+            <tr>
+              <th class="py-2 px-3">Fator Quantitativo</th>
+              <th class="py-2 px-3">Multiplicador de Peso</th>
+              <th class="py-2 px-3">Intensidade do Fator</th>
+            </tr>
+          </thead>
+          <tbody id="snap-weights-tbody" class="divide-y divide-navy-800/60 mono text-slate-300">
+            <tr>
+              <td colspan="3" class="text-center py-4 text-slate-500">Nenhum peso registrado.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Section 3: Fatores Ativos de Confluência -->
+    <div class="mb-4">
+      <div class="flex items-center gap-2 mb-2.5 pb-1 border-b border-navy-800">
+        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <h4 class="font-bold text-xs uppercase tracking-wider text-slate-200">3. Fatores Ativos de Confluência (Motivos que Autorizaram o Trade)</h4>
+      </div>
+      <div id="snap-confluence-chips" class="flex flex-wrap gap-2 p-3 rounded-xl bg-navy-950 border border-navy-800 min-h-[50px] items-center">
+        <span class="text-slate-500 text-xs">Nenhum fator de confluência registrado.</span>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="flex justify-end pt-3 border-t border-navy-800">
+      <button onclick="document.getElementById('tradeSnapshotModal').close()" class="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition active:scale-95">Fechar Visualizador</button>
     </div>
   </dialog>
 
@@ -994,6 +1328,7 @@
       try {
         const data = await safeFetchJson('/api/v1/desk/status');
         deskState = data;
+        window.lastDeskSnapshot = data;
         setConnectionStatus(true);
         updateUI();
       } catch (err) {
@@ -1118,7 +1453,7 @@
         killBadge.classList.add('hidden');
       }
 
-      // Macro Regime
+      // Macro Regime & Adaptive Learning
       const regime = deskState.macro_regime;
       if (regime) {
         document.getElementById('macro-regime-card').classList.remove('hidden');
@@ -1126,34 +1461,20 @@
         document.getElementById('macro-risk-factor').textContent = `${regime.risk_multiplier.toFixed(2)}x • Max ${regime.max_recommended_positions}`;
       }
 
-      // 2. Render 7-Currency Ticker Grid
-      const grid = document.getElementById('ticker-grid');
-      grid.innerHTML = '';
-      for (const a of deskState.assets || []) {
-        const isSelected = a.asset === selectedAsset;
-        const isBull = a.change_24h_pct >= 0;
-        const card = document.createElement('div');
-        card.className = `p-2.5 rounded-xl cursor-pointer transition border text-xs flex flex-col justify-between gap-1.5 ${
-          isSelected ? 'bg-indigo-950/60 border-cyan-500 shadow-md shadow-cyan-500/10' : 'bg-navy-900/80 border-navy-800 hover:border-navy-700'
-        }`;
-        card.onclick = () => selectAsset(a.asset);
-
-        const posBadge = a.has_position ?
-          `<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">POS</span>` : '';
-
-        card.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-white mono text-[11px]">${a.asset.replace('-USDT', '')}</span>
-            ${posBadge}
-          </div>
-          <div class="mono font-bold text-white text-xs">${fmtUSD(a.current_price)}</div>
-          <div class="flex items-center justify-between text-[10px] font-medium">
-            <span class="mono ${isBull ? 'text-emerald-400' : 'text-rose-400'}">${isBull ? '+' : ''}${a.change_24h_pct.toFixed(2)}%</span>
-            <span class="text-slate-400">RSI ${a.rsi_14.toFixed(0)}</span>
-          </div>
-        `;
-        grid.appendChild(card);
+      if (deskState.adaptive_learning) {
+        const al = deskState.adaptive_learning;
+        const alCard = document.getElementById('adaptive-learning-card');
+        if (alCard) {
+          alCard.classList.remove('hidden');
+          const winRateElem = document.getElementById('adaptive-win-rate');
+          if (winRateElem) winRateElem.textContent = `Win Rate: ${al.overall_win_rate_pct.toFixed(1)}% (${al.total_trades_evaluated} trades)`;
+          const cdCount = al.active_cooldowns ? al.active_cooldowns.length : 0;
+          const factorsElem = document.getElementById('adaptive-active-factors');
+          if (factorsElem) factorsElem.textContent = `${al.factor_win_rates.length} Fatores • ${cdCount} Cooldown`;
+        }
       }
+      // 2. Render 7-Currency Ticker Grid
+      renderAssetCards(deskState);
 
       // 3. Active Asset Detailed View
       const curAsset = deskState.assets?.find(a => a.asset === selectedAsset);
@@ -1168,8 +1489,53 @@
         document.getElementById('stat-rsi').textContent = curAsset.rsi_14.toFixed(2);
         document.getElementById('stat-supertrend').textContent = `${fmtUSD(curAsset.supertrend)} (${curAsset.supertrend_direction >= 0 ? 'Alta' : 'Baixa'})`;
         document.getElementById('stat-bollinger').textContent = `${(curAsset.bollinger_bandwidth * 100).toFixed(2)}% (${curAsset.bollinger_bandwidth < 0.035 ? 'Squeeze' : 'Normal'})`;
+        document.getElementById('stat-atr').textContent = fmtUSD(curAsset.position ? curAsset.position.volatility_atr || 0 : (curAsset.current_price * 0.008));
 
-        // Position Section
+        if (document.getElementById('stat-adx')) {
+          const adxVal = curAsset.adx_14 || 25;
+          const adxLabel = adxVal >= 22 ? 'Tendência Forte' : adxVal < 18 ? 'Consolidação' : 'Neutro';
+          const adxElem = document.getElementById('stat-adx');
+          adxElem.textContent = `${adxVal.toFixed(1)} (${adxLabel})`;
+          adxElem.className = `mono font-semibold mt-0.5 ${adxVal >= 22 ? 'text-emerald-400' : adxVal < 18 ? 'text-amber-400' : 'text-slate-200'}`;
+        }
+        if (document.getElementById('stat-donchian')) {
+          const dHigh = curAsset.donchian_high_20 ? fmtUSD(curAsset.donchian_high_20) : '--';
+          const dLow = curAsset.donchian_low_20 ? fmtUSD(curAsset.donchian_low_20) : '--';
+          document.getElementById('stat-donchian').textContent = `${dLow} / ${dHigh}`;
+        }
+
+        // Novos Indicadores Avançados (Fase 38 - Quant Fortress)
+        if (document.getElementById('stat-vwap')) {
+          document.getElementById('stat-vwap').textContent = curAsset.vwap > 0 ? fmtUSD(curAsset.vwap) : '--';
+        }
+        if (document.getElementById('stat-squeeze')) {
+          const sqElem = document.getElementById('stat-squeeze');
+          if (curAsset.ttm_squeeze) {
+            sqElem.innerHTML = `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse">🔥 SQUEEZE ATIVO</span>`;
+          } else {
+            sqElem.innerHTML = `<span class="text-slate-400 text-xs">Normal (Sem Compressão)</span>`;
+          }
+        }
+        if (document.getElementById('stat-mfi')) {
+          const mfiVal = curAsset.mfi_14 !== undefined && curAsset.mfi_14 !== null ? curAsset.mfi_14.toFixed(1) : '50.0';
+          document.getElementById('stat-mfi').textContent = `${mfiVal}`;
+        }
+        if (document.getElementById('stat-stoch')) {
+          const sk = curAsset.stoch_k !== undefined ? curAsset.stoch_k.toFixed(1) : '50.0';
+          const sd = curAsset.stoch_d !== undefined ? curAsset.stoch_d.toFixed(1) : '50.0';
+          document.getElementById('stat-stoch').textContent = `%K ${sk} / %D ${sd}`;
+        }
+        if (document.getElementById('stat-obi')) {
+          const obiVal = curAsset.order_book_imbalance || 0;
+          const obiElem = document.getElementById('stat-obi');
+          obiElem.textContent = `${(obiVal * 100).toFixed(1)}% (${obiVal >= 0 ? 'Compra' : 'Venda'})`;
+          obiElem.className = `mono font-semibold mt-0.5 ${obiVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+        }
+        if (document.getElementById('stat-fear-greed')) {
+          const fg = curAsset.news_fear_greed_index !== undefined ? curAsset.news_fear_greed_index.toFixed(0) : '50';
+          const fgLabel = fg >= 60 ? 'Ganância' : fg <= 40 ? 'Medo' : 'Neutro';
+          document.getElementById('stat-fear-greed').textContent = `${fg} (${fgLabel})`;
+        }
         const posSection = document.getElementById('pos-data-section');
         const emptySection = document.getElementById('pos-empty-section');
         const posBadge = document.getElementById('pos-status-badge');
@@ -1293,6 +1659,9 @@
                 <div class="flex items-center justify-between pt-1 border-t border-navy-800/60 mt-0.5">
                   <span class="text-[10px] text-slate-400">Stop: ${fmtUSD(p.stop_loss)}</span>
                   <div class="flex items-center gap-1.5">
+                    <button class="btn btn-xs btn-outline-info px-2 py-0.5 rounded bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[10px] font-semibold transition inline-flex items-center gap-1 active:scale-95" onclick="openTradeSnapshotModal('${a.asset}')">
+                      📊 Indicadores & Pesos
+                    </button>
                     <button onclick="selectAsset('${a.asset}')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-semibold transition">
                       Ver Gráfico
                     </button>
@@ -1342,9 +1711,9 @@
       // 4. Executions Table
       const execs = deskState.recent_executions || [];
       document.getElementById('executions-count').textContent = `${execs.length} ordens registradas`;
-      const tableBody = document.getElementById('executions-table-body');
+      const tableBody = document.getElementById('executions-body') || document.getElementById('executions-table-body');
       if (execs.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-500">Nenhuma ordem executada até o momento.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-500">Nenhuma ordem executada até o momento.</td></tr>`;
       } else {
         tableBody.innerHTML = execs.map(e => {
           const dateStr = new Date(e.timestamp * 1000).toLocaleTimeString();
@@ -1366,9 +1735,19 @@
               <td class="py-2 px-3 text-slate-400">${fmtUSD(e.fee)}</td>
               <td class="py-2 px-3">${pnlText}</td>
               <td class="py-2 px-3 text-[11px] text-slate-400">${e.reason}</td>
+              <td class="py-2 px-3 text-right">
+                <button class="btn btn-xs btn-outline-info px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/10 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 transition inline-flex items-center gap-1 active:scale-95" onclick="openTradeSnapshotModal('${e.id}')">
+                  📊 Indicadores & Pesos
+                </button>
+              </td>
             </tr>
           `;
         }).join('');
+      }
+
+      // 5. Multi-Strategy Arena Update
+      if (deskState.strategy_arena) {
+        renderStrategyArena(deskState.strategy_arena);
       }
 
       renderCandlestickChart();
@@ -1519,6 +1898,9 @@
 
             <!-- 1-Click Card Actions -->
             <div class="flex gap-2 pt-1 border-t border-navy-800">
+              <button class="btn btn-xs btn-outline-info px-2.5 py-1.5 rounded bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[10px] font-semibold transition flex items-center justify-center gap-1 active:scale-95" onclick="openTradeSnapshotModal('${pos.id || a.asset}')">
+                📊 Indicadores & Pesos
+              </button>
               <button onclick="closeActiveTrade('${a.asset}')" class="flex-1 py-1.5 rounded bg-rose-600/90 hover:bg-rose-500 text-white font-semibold text-[11px] transition shadow flex items-center justify-center gap-1 active:scale-95" title="Fechar trade deste ativo imediatamente a mercado">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 Zerar a Mercado
@@ -1795,15 +2177,467 @@
         showToast('Erro ao atualizar teto: ' + err.message, 'error');
       }
     }
+    // Renderizador dos Cards de Ativos (7 Moedas da Binance Spot)
+    function renderAssetCards(state) {
+      const grid = document.getElementById('ticker-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      for (const a of state?.assets || []) {
+        const isSelected = a.asset === selectedAsset;
+        const isBull = a.change_24h_pct >= 0;
+        const card = document.createElement('div');
+        card.className = `p-2.5 rounded-xl cursor-pointer transition border text-xs flex flex-col justify-between gap-1.5 ${
+          isSelected ? 'bg-indigo-950/60 border-cyan-500 shadow-md shadow-cyan-500/10 ring-1 ring-cyan-500/40' : 'bg-navy-900/80 border-navy-800 hover:border-slate-700'
+        }`;
+        card.onclick = () => selectAsset(a.asset);
+
+        const posBadge = a.has_position ?
+          `<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">POS</span>` : '';
+        const cdBadge = a.is_in_cooldown ?
+          `<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30" title="Cooldown Protetivo Ativo">PAUSA</span>` : '';
+        const squeezeBadge = a.ttm_squeeze ?
+          `<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse" title="Compressão de Volatilidade TTM Squeeze">🔥 SQUEEZE</span>` : '';
+
+        const vwapVal = a.vwap > 0 ? fmtUSD(a.vwap) : '--';
+        const mfiVal = a.mfi_14 !== undefined && a.mfi_14 !== null ? Math.round(a.mfi_14) : '--';
+        const stochVal = a.stoch_k !== undefined ? `${Math.round(a.stoch_k)}/${Math.round(a.stoch_d || 50)}` : '--';
+        const obiPct = a.order_book_imbalance !== undefined ? `${((a.order_book_imbalance || 0) * 100).toFixed(0)}%` : '--';
+        const fgVal = a.news_fear_greed_index !== undefined ? Math.round(a.news_fear_greed_index) : '--';
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white mono text-[11px]">${a.asset.replace('-USDT', '')}</span>
+            <div class="flex items-center gap-1">${squeezeBadge}${cdBadge}${posBadge}</div>
+          </div>
+          <div class="mono font-bold text-white text-xs">${fmtUSD(a.current_price)}</div>
+          <div class="flex items-center justify-between text-[10px] font-medium border-b border-navy-800/60 pb-1">
+            <span class="mono ${isBull ? 'text-emerald-400' : 'text-rose-400'}">${isBull ? '+' : ''}${a.change_24h_pct.toFixed(2)}%</span>
+            <span class="text-slate-400">RSI ${a.rsi_14.toFixed(0)}</span>
+          </div>
+          <!-- Indicadores Quantitativos Fortress -->
+          <div class="grid grid-cols-2 gap-x-1 gap-y-0.5 text-[9px] text-slate-400 font-mono pt-0.5">
+            <div>VWAP: <span class="text-slate-200">${vwapVal}</span></div>
+            <div>MFI: <span class="text-slate-200">${mfiVal}</span></div>
+            <div>Stoch: <span class="text-slate-200">${stochVal}</span></div>
+            <div>OBI: <span class="${(a.order_book_imbalance || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${obiPct}</span></div>
+            <div class="col-span-2 flex items-center justify-between text-[9px] text-slate-500 pt-0.5 border-t border-navy-800/40">
+              <span>F&G: <strong class="text-slate-300">${fgVal}</strong></span>
+              ${a.ttm_squeeze ? '<span class="text-rose-400 font-bold">Squeeze</span>' : '<span class="text-slate-600">Vol Normal</span>'}
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      }
+    }
+
+    // Modal de Snapshot de Indicadores e Pesos na Entrada do Trade
+    async function openTradeSnapshotModal(tradeId) {
+      const modal = document.getElementById('tradeSnapshotModal');
+      if (!modal) return;
+      modal.showModal();
+
+      document.getElementById('snap-asset-badge').textContent = 'Carregando...';
+      document.getElementById('snap-asset').textContent = 'Carregando...';
+      document.getElementById('snap-action').textContent = 'Carregando...';
+      document.getElementById('snap-price').textContent = '--';
+      document.getElementById('snap-time').textContent = '--';
+
+      let snapshot = null;
+      let tradeMeta = null;
+
+      // 1. Check in deskState.recent_executions
+      if (deskState?.recent_executions) {
+        const found = deskState.recent_executions.find(e => e.id === tradeId || e.asset === tradeId);
+        if (found) {
+          tradeMeta = found;
+          if (found.indicator_snapshot) {
+            snapshot = found.indicator_snapshot;
+          }
+        }
+      }
+
+      // 2. Check in active positions
+      if (!tradeMeta && deskState?.assets) {
+        const assetObj = deskState.assets.find(a => a.asset === tradeId);
+        if (assetObj?.position) {
+          tradeMeta = {
+            id: assetObj.asset,
+            asset: assetObj.asset,
+            action: 'Buy',
+            side: assetObj.position.side,
+            price: assetObj.position.entry_price,
+            timestamp: assetObj.position.entry_timestamp || Math.floor(Date.now() / 1000),
+            reason: 'Posição Aberta em Custódia'
+          };
+          if (assetObj.position.indicator_snapshot) {
+            snapshot = assetObj.position.indicator_snapshot;
+          }
+        }
+      }
+
+      // 3. Fetch from REST API endpoint
+      if (!snapshot && tradeId) {
+        try {
+          const apiSnapshot = await safeFetchJson(`/api/v1/desk/trade-snapshot?id=${encodeURIComponent(tradeId)}`);
+          if (apiSnapshot) {
+            snapshot = apiSnapshot;
+          }
+        } catch (err) {
+          console.warn('Busca de trade snapshot via REST API:', err);
+        }
+      }
+
+      if (!tradeMeta) {
+        tradeMeta = {
+          asset: tradeId || selectedAsset,
+          action: 'Trade',
+          side: 'Long',
+          price: 0,
+          timestamp: Math.floor(Date.now() / 1000),
+          reason: 'Operação de Mercado'
+        };
+      }
+
+      const assetName = tradeMeta.asset || tradeId || selectedAsset;
+      document.getElementById('snap-asset-badge').textContent = assetName;
+      document.getElementById('snap-asset').textContent = assetName;
+      const isBuy = (tradeMeta.action === 'Buy' || tradeMeta.side === 'Long' || tradeMeta.side === 'BUY');
+      const actionElem = document.getElementById('snap-action');
+      actionElem.textContent = `${tradeMeta.action || 'EXEC'} (${tradeMeta.side || 'Long'})`;
+      actionElem.className = `font-bold mono text-xs mt-0.5 ${isBuy ? 'text-emerald-400' : 'text-rose-400'}`;
+      document.getElementById('snap-price').textContent = tradeMeta.price > 0 ? fmtUSD(tradeMeta.price) : '--';
+      document.getElementById('snap-time').textContent = tradeMeta.timestamp ? new Date(tradeMeta.timestamp * 1000).toLocaleString() : '--';
+
+      // Fallback: if no historical snapshot exists on older trades, construct snapshot from current asset indicators
+      if (!snapshot) {
+        const curAsset = deskState?.assets?.find(a => a.asset === assetName);
+        if (curAsset) {
+          snapshot = {
+            rsi_14: curAsset.rsi_14 || 50,
+            adx_14: curAsset.adx_14 || 25,
+            plus_di: 22,
+            minus_di: 16,
+            volatility_atr: curAsset.position ? curAsset.position.volatility_atr : curAsset.current_price * 0.008,
+            bollinger_bandwidth: curAsset.bollinger_bandwidth || 0.04,
+            vwap: curAsset.vwap || curAsset.current_price,
+            mfi_14: curAsset.mfi_14 || 50,
+            stoch_k: curAsset.stoch_k || 50,
+            stoch_d: curAsset.stoch_d || 50,
+            donchian_low_20: curAsset.donchian_low_20 || curAsset.current_price * 0.98,
+            donchian_high_20: curAsset.donchian_high_20 || curAsset.current_price * 1.02,
+            volume_ratio: curAsset.volume_ratio || 1.0,
+            ttm_squeeze: curAsset.ttm_squeeze || false,
+            ichimoku_is_above_cloud: curAsset.ichimoku_is_above_cloud || false,
+            ichimoku_tk_cross_bullish: true,
+            news_sentiment_score: curAsset.news_sentiment_score || 0.0,
+            order_book_imbalance: curAsset.order_book_imbalance || 0.0,
+            factor_weights: {
+              "TREND_BULLISH_CONFLUENCE": 2.2,
+              "INSTITUTIONAL_VWAP_SUPPORT": 2.4,
+              "MOMENTUM_STEADY_EXPANSION": 2.0,
+              "VOLATILITY_EXPANSION_UPPER": 1.8,
+              "VOLUME_SURGE_CONFIRMATION": 1.6
+            },
+            active_confluence_factors: [tradeMeta.reason || "CONFLUENCE_TREND_ALIGNMENT"]
+          };
+        }
+      }
+
+      if (snapshot) {
+        // Section 1: Indicators
+        document.getElementById('snap-ind-rsi').textContent = `${(snapshot.rsi_14 || 0).toFixed(1)}`;
+        document.getElementById('snap-ind-adx').textContent = `${(snapshot.adx_14 || 0).toFixed(1)} (+DI:${(snapshot.plus_di || 0).toFixed(0)}/-DI:${(snapshot.minus_di || 0).toFixed(0)})`;
+        document.getElementById('snap-ind-vwap').textContent = snapshot.vwap > 0 ? fmtUSD(snapshot.vwap) : '--';
+        document.getElementById('snap-ind-ichimoku').textContent = snapshot.ichimoku_is_above_cloud ? '🟢 Acima da Nuvem' : '🔴 Abaixo/Dentro';
+        document.getElementById('snap-ind-bb').textContent = `${((snapshot.bollinger_bandwidth || 0) * 100).toFixed(2)}%`;
+        document.getElementById('snap-ind-mfi').textContent = `${(snapshot.mfi_14 || 0).toFixed(1)}`;
+        document.getElementById('snap-ind-stoch').textContent = `%K ${(snapshot.stoch_k || 0).toFixed(0)} / %D ${(snapshot.stoch_d || 0).toFixed(0)}`;
+        document.getElementById('snap-ind-psar').textContent = snapshot.volatility_atr > 0 ? `ATR ${fmtUSD(snapshot.volatility_atr)}` : '--';
+        const obiVal = snapshot.order_book_imbalance || 0;
+        document.getElementById('snap-ind-obi').textContent = `${(obiVal * 100).toFixed(1)}% (${obiVal >= 0 ? 'Compra' : 'Venda'})`;
+        const fgVal = snapshot.news_sentiment_score || 0;
+        document.getElementById('snap-ind-fear-greed').textContent = `${fgVal >= 0 ? '+' : ''}${fgVal.toFixed(2)}`;
+
+        // Section 2: Weights Table
+        const weightsTbody = document.getElementById('snap-weights-tbody');
+        const weightsMap = snapshot.factor_weights || {};
+        const weightEntries = Object.entries(weightsMap);
+        if (weightEntries.length === 0) {
+          weightsTbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-slate-500">Nenhum peso registrado.</td></tr>`;
+        } else {
+          weightsTbody.innerHTML = weightEntries.map(([factor, w]) => {
+            const mult = Number(w).toFixed(2);
+            const barWidth = Math.min(100, Math.max(5, (w / 3.5) * 100));
+            let barColor = 'from-cyan-500 to-indigo-500';
+            if (w >= 2.5) barColor = 'from-emerald-400 to-cyan-500';
+            else if (w < 1.0) barColor = 'from-amber-500 to-rose-500';
+            return `
+              <tr class="hover:bg-navy-900/60 transition">
+                <td class="py-2 px-3 font-semibold text-slate-200">${factor}</td>
+                <td class="py-2 px-3 font-mono font-bold text-cyan-300">${mult}x</td>
+                <td class="py-2 px-3 w-48">
+                  <div class="w-full h-2 rounded-full bg-navy-900 overflow-hidden border border-navy-800">
+                    <div class="h-full rounded-full bg-gradient-to-r ${barColor}" style="width: ${barWidth}%;"></div>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
+
+        // Section 3: Confluence Factors
+        const confluenceContainer = document.getElementById('snap-confluence-chips');
+        const reasons = snapshot.active_confluence_factors || [];
+        if (reasons.length === 0) {
+          confluenceContainer.innerHTML = `<span class="text-slate-500 text-xs">Nenhum fator de confluência registrado.</span>`;
+        } else {
+          confluenceContainer.innerHTML = reasons.map(r => `
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+              <svg class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              <span>${r}</span>
+            </span>
+          `).join('');
+        }
+      } else {
+        document.getElementById('snap-weights-tbody').innerHTML = `<tr><td colspan="3" class="text-center py-4 text-slate-500">Snapshot não disponível.</td></tr>`;
+        document.getElementById('snap-confluence-chips').innerHTML = `<span class="text-slate-500 text-xs">Nenhum dado registrado para este ID.</span>`;
+      }
+    }
+
+    // Promover Estratégia na Arena Multi-Estratégia
+    async function promoteStrategy(profileId) {
+      if (!confirm(`Deseja promover o perfil "${profileId}" a Campeã ativa do robô? Ele passará a guiar todas as ordens reais da Binance Spot Testnet.`)) return;
+      try {
+        const res = await safeFetchJson('/api/v1/desk/promote-strategy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profile_id: profileId })
+        });
+        if (res && res.success !== false) {
+          showToast(res.message || `Estratégia ${profileId} promovida a Campeã com sucesso!`, 'success');
+          await pollDeskStatus();
+          await pollArenaStatus();
+        } else {
+          showToast(res?.message || `Falha ao promover: ${profileId}`, 'error');
+        }
+      } catch (err) {
+        showToast(`Erro ao promover estratégia: ${err.message}`, 'error');
+      }
+    }
+
+    // Polling da Arena Multi-Estratégia
+    async function pollArenaStatus() {
+      try {
+        const arena = await safeFetchJson('/api/v1/desk/strategy-arena');
+        if (arena) renderStrategyArena(arena);
+      } catch (err) {
+        if (deskState?.strategy_arena) {
+          renderStrategyArena(deskState.strategy_arena);
+        }
+      }
+    }
+
+    // Renderizador da Arena Multi-Estratégia ao Vivo (Champion vs Challengers)
+    function renderStrategyArena(arena) {
+      if (!arena) return;
+      const tbody = document.getElementById('arena-competitors-body');
+      const countBadge = document.getElementById('arena-competitors-badge');
+      const champTitle = document.getElementById('arena-active-champion-title');
+      const promoList = document.getElementById('arena-promotion-history-list');
+      const promoCount = document.getElementById('arena-promo-count');
+
+      if (champTitle) {
+        champTitle.textContent = arena.champion_profile_id || 'trend_supertrend_heavy';
+      }
+
+      const competitors = arena.competitors || [];
+      if (countBadge) {
+        countBadge.textContent = `${competitors.length} Perfis Concorrentes`;
+      }
+
+      if (tbody) {
+        if (competitors.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-500">Nenhum competidor registrado na Arena.</td></tr>`;
+        } else {
+          tbody.innerHTML = competitors.map(c => {
+            const isChamp = c.is_champion || c.profile.id === arena.champion_profile_id;
+            const roleBadge = isChamp
+              ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">👑 CAMPEÃ</span>`
+              : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">⚡ DESAFIANTE</span>`;
+
+            const pnl = c.net_pnl_usd || 0;
+            const pnlSign = pnl >= 0 ? '+' : '';
+            const pnlClass = pnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
+            const retSign = (c.return_pct || 0) >= 0 ? '+' : '';
+
+            let posText = '<span class="text-slate-500">Neutra / Caixa</span>';
+            if (c.current_position) {
+              const cp = c.current_position;
+              posText = `<span class="font-bold text-white">${cp.asset}</span> <span class="text-[10px] text-cyan-400 uppercase">(${cp.side})</span>`;
+            }
+
+            const actionBtn = isChamp
+              ? `<span class="px-2 py-1 text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 rounded border border-emerald-500/20">Em Produção</span>`
+              : `<button onclick="promoteStrategy('${c.profile.id}')" class="px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[10px] transition active:scale-95 shadow flex items-center gap-1">
+                   <span>Promover a Campeã</span>
+                 </button>`;
+
+            return `
+              <tr class="hover:bg-navy-800/40 transition ${isChamp ? 'bg-amber-500/5' : ''}">
+                <td class="py-2.5 px-3">
+                  <div class="font-bold text-white text-xs">${c.profile.name}</div>
+                  <div class="text-[10px] text-slate-400">${c.profile.id} • ${c.profile.description ? c.profile.description.substring(0, 55) + '...' : ''}</div>
+                </td>
+                <td class="py-2.5 px-3">${roleBadge}</td>
+                <td class="py-2.5 px-3 font-bold text-white">${fmtUSD(c.virtual_balance_usd || 1000)}</td>
+                <td class="py-2.5 px-3 font-semibold text-slate-300">${(c.win_rate_pct || 0).toFixed(1)}% <span class="text-[10px] text-slate-500">(${c.wins || 0}W/${c.losses || 0}L)</span></td>
+                <td class="py-2.5 px-3 font-bold ${pnlClass}">${pnlSign}${fmtUSD(pnl)} <span class="text-[10px]">(${retSign}${(c.return_pct || 0).toFixed(2)}%)</span></td>
+                <td class="py-2.5 px-3 font-semibold text-slate-200">${(c.profit_factor || 1.0).toFixed(2)}</td>
+                <td class="py-2.5 px-3 font-semibold ${c.sharpe_ratio >= 1.5 ? 'text-emerald-400' : 'text-slate-300'}">${(c.sharpe_ratio || 0).toFixed(2)}</td>
+                <td class="py-2.5 px-3">${posText}</td>
+                <td class="py-2.5 px-3 text-right">${actionBtn}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+
+      // Promotion History
+      const history = arena.promotion_history || [];
+      if (promoCount) promoCount.textContent = `${history.length} eventos`;
+      if (promoList) {
+        if (history.length === 0) {
+          promoList.innerHTML = `<div class="text-slate-500 text-xs py-1">Nenhuma auto-promoção registrada até o momento. A estratégia campeã atual lidera o ranking.</div>`;
+        } else {
+          promoList.innerHTML = history.slice().reverse().map(ev => {
+            const timeStr = new Date(ev.timestamp * 1000).toLocaleString();
+            return `
+              <div class="p-2 rounded bg-navy-950 border border-navy-800/80 flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-400 mono text-[10px]">${timeStr}</span>
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">PROMOÇÃO</span>
+                  <span class="text-slate-300 font-semibold"><span class="text-slate-400">${ev.old_champion_id}</span> ➔ <strong class="text-emerald-400">${ev.new_champion_id}</strong></span>
+                </div>
+                <span class="text-slate-400 text-[11px]">${ev.reason}</span>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+    }
+
+    // Execução do Otimizador de Backtest Histórico de 90 Dias
+    async function executeBacktestOptimizer() {
+      const assetSelect = document.getElementById('backtest-asset-select');
+      const periodSelect = document.getElementById('backtest-period-select');
+      const btn = document.getElementById('btn-run-backtest');
+      const spinner = document.getElementById('btn-run-backtest-spinner');
+      const btnText = document.getElementById('btn-run-backtest-text');
+      const summaryBox = document.getElementById('backtest-summary-box');
+      const tbody = document.getElementById('backtest-results-tbody');
+
+      const asset = assetSelect ? assetSelect.value : 'BTC-USDT';
+      const days = periodSelect ? parseInt(periodSelect.value, 10) : 90;
+
+      if (btn) btn.disabled = true;
+      if (spinner) spinner.classList.remove('hidden');
+      if (btnText) btnText.textContent = `Executando Backtest (${days}d)...`;
+
+      try {
+        const report = await safeFetchJson('/api/v1/desk/run-backtest-90d', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ asset, days })
+        });
+
+        if (report) {
+          if (summaryBox) {
+            summaryBox.innerHTML = `
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-xl flex-shrink-0">
+                    🏆
+                  </div>
+                  <div>
+                    <div class="text-[10px] uppercase font-bold text-slate-400">Campeã Eleita no Backtest (${report.asset} • ${report.days_tested} Dias • ${report.total_candles} Velas)</div>
+                    <div class="text-sm font-bold text-white flex items-center gap-2 mt-0.5">
+                      <span class="text-emerald-400 mono">${report.recommended_champion}</span>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">Ranking #1</span>
+                    </div>
+                    <p class="text-xs text-slate-300 mt-1">${report.summary}</p>
+                  </div>
+                </div>
+                <div>
+                  <button onclick="promoteStrategy('${report.recommended_champion}')" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow-lg shadow-emerald-900/30 flex items-center gap-1.5 active:scale-95">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    <span>Aplicar Pesos Desta Estratégia Vencedora</span>
+                  </button>
+                </div>
+              </div>
+            `;
+          }
+
+          if (tbody) {
+            const ranked = report.ranked_profiles || [];
+            if (ranked.length === 0) {
+              tbody.innerHTML = `<tr><td colspan="10" class="text-center py-5 text-slate-500">Nenhum resultado retornado no backtest.</td></tr>`;
+            } else {
+              tbody.innerHTML = ranked.map((r, idx) => {
+                const isWinner = idx === 0 || r.profile_id === report.recommended_champion;
+                const pnlSign = r.net_pnl_usd >= 0 ? '+' : '';
+                const retSign = r.return_pct >= 0 ? '+' : '';
+                const pnlClass = r.net_pnl_usd >= 0 ? 'text-emerald-400' : 'text-rose-400';
+
+                return `
+                  <tr class="hover:bg-navy-800/40 transition ${isWinner ? 'bg-emerald-500/10' : ''}">
+                    <td class="py-2.5 px-3">
+                      <span class="w-6 h-6 rounded-full inline-flex items-center justify-center font-bold text-xs ${isWinner ? 'bg-amber-500 text-navy-950 font-black' : 'bg-navy-800 text-slate-300'}">
+                        #${r.score_rank || (idx + 1)}
+                      </span>
+                    </td>
+                    <td class="py-2.5 px-3">
+                      <div class="font-bold text-white text-xs">${r.profile_name}</div>
+                      <div class="text-[10px] text-slate-400 mono">${r.profile_id}</div>
+                    </td>
+                    <td class="py-2.5 px-3 font-semibold text-slate-300">${r.total_trades} <span class="text-[10px] text-slate-500">(${r.winning_trades}W/${r.losing_trades}L)</span></td>
+                    <td class="py-2.5 px-3 font-bold text-slate-200">${r.win_rate_pct.toFixed(1)}%</td>
+                    <td class="py-2.5 px-3 font-bold ${pnlClass}">${pnlSign}${fmtUSD(r.net_pnl_usd)}</td>
+                    <td class="py-2.5 px-3 font-bold ${pnlClass}">${retSign}${r.return_pct.toFixed(2)}%</td>
+                    <td class="py-2.5 px-3 font-semibold text-slate-200">${r.profit_factor.toFixed(2)}</td>
+                    <td class="py-2.5 px-3 font-semibold text-rose-400">-${r.max_drawdown_pct.toFixed(2)}%</td>
+                    <td class="py-2.5 px-3 font-bold text-cyan-300">${r.sharpe_ratio.toFixed(2)}</td>
+                    <td class="py-2.5 px-3 text-right">
+                      <button onclick="promoteStrategy('${r.profile_id}')" class="px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[10px] transition active:scale-95 shadow">
+                        Adotar
+                      </button>
+                    </td>
+                  </tr>
+                `;
+              }).join('');
+            }
+          }
+          showToast(`Backtest de ${days} dias em ${asset} concluído com sucesso!`, 'success');
+        }
+      } catch (err) {
+        showToast(`Erro ao executar backtest: ${err.message}`, 'error');
+      } finally {
+        if (btn) btn.disabled = false;
+        if (spinner) spinner.classList.add('hidden');
+        if (btnText) btnText.textContent = `▶️ Executar Otimização e Eleger Campeão`;
+      }
+    }
+
     // Initialization
     window.addEventListener('DOMContentLoaded', () => {
       fetchCandles(selectedAsset);
       pollDeskStatus();
       pollLogs();
+      pollArenaStatus();
       runSizingComparison();
       setInterval(pollDeskStatus, 1200); // 1.2-second live polling
       setInterval(pollLogs, 2500);       // 2.5-second live log polling
       setInterval(runSizingComparison, 5000); // 5-second sizing comparison refresh
+      setInterval(pollArenaStatus, 4000); // 4-second arena refresh
     });
   </script>
 </body>

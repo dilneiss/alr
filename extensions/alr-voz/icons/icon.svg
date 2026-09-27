@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff7a00" />
+      <stop offset="100%" stop-color="#f97316" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#f97316" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+  
+  <!-- Fundo Circular com Gradiente Laranja -->
+  <rect width="128" height="128" rx="32" fill="#0b111a" />
+  <circle cx="64" cy="64" r="50" fill="url(#orangeGrad)" filter="url(#glow)" />
+  
+  <!-- Ícone de Microfone Branco Estilizado -->
+  <g fill="#ffffff" transform="translate(16, 16)">
+    <!-- Corpo do mic -->
+    <rect x="38" y="24" width="20" height="34" rx="10" />
+    <!-- Suporte do mic -->
+    <path d="M26,46 C26,59 36,68 48,68 C60,68 70,59 70,46" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" />
+    <!-- Haste e Base -->
+    <line x1="48" y1="68" x2="48" y2="82" stroke="#ffffff" stroke-width="6" stroke-linecap="round" />
+    <line x1="32" y1="82" x2="64" y2="82" stroke="#ffffff" stroke-width="6" stroke-linecap="round" />
+  </g>
+</svg>
