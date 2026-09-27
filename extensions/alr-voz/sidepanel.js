@@ -15,6 +15,11 @@ const state = {
   totalActions: 0,
   latencies: [],
 
+  // Trava de Idempotência e Anti-Duplicação
+  lastExecutedText: "",
+  lastExecutedTimestamp: 0,
+  isActionExecuting: false,
+  lastCompletedPhrase: "",
   // Debounce & Fala
   speechDebounceTimer: null,
   currentTranscript: "",
@@ -299,21 +304,35 @@ function updateMicButtonUI(isActive) {
   }
 }
 
-// Atualiza a bolha de fala na interface
+// Gerenciador Reativo de Bolhas de Fala (Sem repetição da mesma palavra)
 function updateLiveSpeechBubble(text, isInterim) {
-  let activeBubble = document.getElementById("current-live-bubble");
-  if (!activeBubble) {
-    activeBubble = document.createElement("div");
-    activeBubble.id = "current-live-bubble";
-    activeBubble.className = "transcript-bubble active-live";
-    els.transcriptBubbles.appendChild(activeBubble);
+  if (!els.transcriptBubbles) return;
+  const cleanText = (text || "").trim();
+  if (!cleanText) return;
+
+  let html = "";
+
+  // Se houver uma frase anterior e for DIFERENTE da atual, exibe acima em cinza
+  if (state.lastCompletedPhrase && state.lastCompletedPhrase.toLowerCase() !== cleanText.toLowerCase()) {
+    html += `<div class="transcript-bubble" style="color: #64748b; font-size: 13px; margin-bottom: 4px;">${escapeHtml(state.lastCompletedPhrase)}</div>`;
   }
 
-  activeBubble.textContent = text;
-  activeBubble.classList.toggle("interim", isInterim);
+  // Frase ativa atual (branca, exatamente uma linha)
+  const interimClass = isInterim ? "interim" : "";
+  html += `<div class="transcript-bubble active-live ${interimClass}" id="current-live-bubble">${escapeHtml(cleanText)}</div>`;
+
+  els.transcriptBubbles.innerHTML = html;
 
   const container = document.getElementById("transcript-container");
   if (container) container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(str) {
+  return (str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 // Filtro estrito de ruído: rejeita palavras soltas (ex: "teste", "oi", "bom dia") e sons sem comando claro
@@ -329,7 +348,7 @@ function isActionableSpeech(text) {
   }
 
   // Para 2 ou mais palavras, exige verbo ou expressão imperativa clara de ação de navegador
-  const hasActionTrigger = /\b(abre|abrir|acessa|acessar|entra no|entra na|ir para|pesquisa|pesquisar|busca|buscar|procura|procurar|trocar de aba|mudar de aba|muda de aba|próxima aba|aba anterior|fechar aba|fecha a aba|fecha essa aba|nova aba|nova guia|rola para|rolar para|desce a página|sobe a página|volta|voltar|avança|avançar|recarrega|recarregar|atualiza|atualizar)\b/i.test(clean);
+  const hasActionTrigger = /\b(abre|abrir|acessa|acessar|entra no|entra na|ir para|pesquisa|pesquisar|busca|buscar|procura|procurar|clica|clicar|clique|seleciona|selecionar|aperta|apertar|analisa|analisar|trocar de aba|mudar de aba|muda de aba|próxima aba|aba anterior|fechar aba|fecha a aba|fecha essa aba|nova aba|nova guia|rola para|rolar para|desce a página|sobe a página|volta|voltar|avança|avançar|recarrega|recarregar|atualiza|atualizar|o que tem na tela)\b/i.test(clean);
 
   return hasActionTrigger;
 }
@@ -338,10 +357,24 @@ function isActionableSpeech(text) {
 async function dispatchVoiceDecision(spokenText) {
   if (!spokenText || spokenText.trim().length < 2) return;
 
+  const cleanCmd = spokenText.trim().toLowerCase();
+  const now = Date.now();
+
+  // Trava de Idempotência: impede reexecução da mesma frase falada em menos de 2.000 ms
+  if (cleanCmd === state.lastExecutedText && (now - state.lastExecutedTimestamp) < 2000) {
+    console.log("[ALR Anti-Duplication] Comando idêntico descartado por idempotência:", cleanCmd);
+    return;
+  }
+
+  // Impede reentrância de ações enquanto outra está em trânsito
+  if (state.isActionExecuting) {
+    console.log("[ALR Anti-Duplication] Ação em andamento, descartando disparo concorrente:", cleanCmd);
+    return;
+  }
+
   state.totalCalls += 1;
   const t0 = performance.now();
 
-  archiveCurrentSpeechBubble(spokenText);
 
   // Gate Anti-Ruído: se a fala for apenas uma palavra solta (ex: "teste") ou conversa de fundo de vídeo
   if (!isActionableSpeech(spokenText)) {
@@ -359,6 +392,10 @@ async function dispatchVoiceDecision(spokenText) {
     return;
   }
 
+  state.lastExecutedText = cleanCmd;
+  state.lastExecutedTimestamp = now;
+  state.isActionExecuting = true;
+
   // Pergunta tipada de escolha de intenção aberta e universal
   const payload = {
     state: spokenText,
@@ -370,6 +407,8 @@ async function dispatchVoiceDecision(spokenText) {
         criteria: {
           abrir_site: "Comando verbal explícito para abrir um site ou serviço web (ex: 'abre o YouTube', 'acessa o GitHub')",
           pesquisar: "Comando verbal explícito para pesquisar um termo (ex: 'pesquisa bolo de cenoura', 'busca notícias')",
+          clicar_elemento: "Comando para clicar em um link, botão, vídeo ou elemento por ordem ordinal ou por texto (ex: 'clica no terceiro link', 'clica em Entrar')",
+          analisar_tela: "Comando para analisar visualmente a tela ativa ou imagem via visão computacional do ALR (ex: 'analisa a tela')",
           trocar_aba: "Comando para mudar de aba (ex: 'trocar de aba', 'próxima aba')",
           fechar_aba: "Comando para encerrar a aba ativa (ex: 'fecha essa aba')",
           nova_aba: "Comando para criar nova guia (ex: 'abre nova aba')",
@@ -449,8 +488,18 @@ function evaluateUniversalVoiceCommand(text) {
 
   const hasOpenVerb = /\b(abre|abrir|acessa|acessar|entra no|entra na|ir para)\b/i.test(lower);
   const hasSearchVerb = /\b(pesquisa|pesquisar|busca|buscar|procura|procurar)\b/i.test(lower);
+  const hasClickVerb = /\b(clica|clicar|clique|seleciona|selecionar|aperta|apertar)\b/i.test(lower);
+  const hasVisionVerb = lower.includes("analisa a tela") || lower.includes("analisar tela") || lower.includes("o que tem na tela") || lower.includes("analisa essa imagem") || lower.includes("extrair cores");
 
-  if (hasOpenVerb) {
+  if (hasVisionVerb) {
+    action = "analisar_tela";
+    probs.analisar_tela = 1.0;
+    probs.nenhum = 0.0;
+  } else if (hasClickVerb) {
+    action = "clicar_elemento";
+    probs.clicar_elemento = 1.0;
+    probs.nenhum = 0.0;
+  } else if (hasOpenVerb) {
     action = "abrir_site";
     probs.abrir_site = 1.0;
     probs.nenhum = 0.0;
@@ -487,7 +536,6 @@ function evaluateUniversalVoiceCommand(text) {
     probs.rolar_pagina = 1.0;
     probs.nenhum = 0.0;
   }
-
   const executionDetails = resolveUniversalActionParameters(action, text);
 
   return {
@@ -575,6 +623,67 @@ function resolveUniversalActionParameters(action, text) {
       };
     }
 
+    case "clicar_elemento": {
+      const ordinalsMap = {
+        "primeiro": 0, "1º": 0, "1o": 0, "primeira": 0,
+        "segundo": 1, "2º": 1, "2o": 1, "segunda": 1,
+        "terceiro": 2, "3º": 2, "3o": 2, "terceira": 2,
+        "quarto": 3, "4º": 3, "4o": 3, "quarta": 3,
+        "quinto": 4, "5º": 4, "5o": 4, "quinta": 4,
+        "sexto": 5, "6º": 5, "6o": 5,
+        "setimo": 6, "sétimo": 6, "7º": 6,
+        "oitavo": 7, "8º": 7,
+        "nono": 8, "9º": 8,
+        "decimo": 9, "décimo": 9, "10º": 9,
+        "ultimo": 999, "último": 999,
+      };
+
+      let matchedOrdinal = null;
+      let ordinalIndex = 0;
+
+      for (const [ordWord, idx] of Object.entries(ordinalsMap)) {
+        const reg = new RegExp(`\\b${ordWord}\\b`, "i");
+        if (reg.test(lower)) {
+          matchedOrdinal = ordWord;
+          ordinalIndex = idx;
+          break;
+        }
+      }
+
+      if (matchedOrdinal !== null) {
+        let targetType = "link";
+        if (lower.includes("video") || lower.includes("vídeo")) targetType = "video";
+        else if (lower.includes("botao") || lower.includes("botão")) targetType = "button";
+
+        return {
+          command: "clicar_elemento",
+          params: { mode: "ordinal", index: ordinalIndex, targetType },
+          displayText: `clicou no ${matchedOrdinal} ${targetType}`,
+        };
+      }
+
+      let cleanTarget = text.replace(/^(por favor\s+)?(clica no botão|clica no|clica na|clica em|clicar no|clicar na|clicar em|clique no|clique na|clique em|clica|clicar|clique|seleciona|selecionar)\s+/gi, "").trim();
+      cleanTarget = cleanTarget.replace(/(\s+para mim|\s+por favor)$/gi, "").trim();
+
+      if (cleanTarget.length >= 2) {
+        return {
+          command: "clicar_elemento",
+          params: { mode: "text", text: cleanTarget },
+          displayText: `clicou em "${cleanTarget}"`,
+        };
+      }
+
+      return { command: "none", params: {}, displayText: "aguardando elemento para clicar" };
+    }
+
+    case "analisar_tela": {
+      return {
+        command: "analisar_tela",
+        params: { backendUrl: state.backendUrl },
+        displayText: "analisou a tela via ALR Vision",
+      };
+    }
+
     case "pesquisar": {
       // Extrai qualquer termo livre removendo gatilhos
       let query = text.replace(/agora pesquisa|pesquisa por|pesquisar por|pesquisa|pesquisar|busca por|buscar por|busca|buscar|procura por|procurar por|procura|procurar/gi, "").trim();
@@ -638,47 +747,68 @@ function resolveUniversalActionParameters(action, text) {
 
 // Executa o comando via Background e Atualiza a Interface
 async function executeAndRenderDecision(dec, spokenText, elapsedMs) {
-  const isLegitimateAction = dec.action !== "nenhum" && dec.browserCommand !== "none" && dec.confidence >= state.confidenceThreshold;
+  try {
+    const isLegitimateAction = dec.action !== "nenhum" && dec.browserCommand !== "none" && dec.confidence >= state.confidenceThreshold;
 
-  if (isLegitimateAction) {
-    state.totalActions += 1;
+    if (isLegitimateAction) {
+      state.totalActions += 1;
 
-    // Despacha a ação real no Chrome
-    chrome.runtime.sendMessage({
-      type: "EXECUTE_BROWSER_ACTION",
-      action: dec.browserCommand,
-      params: dec.params,
-    });
+      if (dec.action === "analisar_tela") {
+        chrome.runtime.sendMessage({
+          type: "CAPTURE_AND_ANALYZE_SCREEN",
+          backendUrl: state.backendUrl,
+        }, (response) => {
+          if (response && response.success && response.report) {
+            const rep = response.report;
+            const colorInfo = rep.colors ? (rep.colors.dominant_color_name_pt || "analisada") : "analisada";
+            const displayReport = `✓ Tela analisada: cor dominante ${colorInfo} (${rep.brightness_desc || "luminosidade normal"})`;
+            els.decisionActionDesc.textContent = displayReport;
 
-    // Registra no Log de Ações Executadas
-    addLogEntry({
-      heard: spokenText,
-      executed: dec.displayAction,
-      actionType: dec.action,
-      latencyMs: elapsedMs,
-      timestamp: formatCurrentTime(),
-    });
+            addLogEntry({
+              heard: spokenText,
+              executed: displayReport,
+              actionType: "analisar_tela",
+              latencyMs: elapsedMs,
+              timestamp: formatCurrentTime(),
+            });
+          }
+        });
+      } else {
+        chrome.runtime.sendMessage({
+          type: "EXECUTE_BROWSER_ACTION",
+          action: dec.browserCommand,
+          params: dec.params,
+        });
 
-    // Atualiza Card de Decisão para AGIU com borda verde
-    els.decisionCard.className = "decision-card state-acted";
-    els.decisionTimeBadge.textContent = `decidido em ${Math.round(elapsedMs)} ms`;
-    els.decisionStatusTitle.textContent = "AGIU";
-    els.decisionActionDesc.textContent = dec.displayAction;
-  } else {
-    // Permanece em AGUARDANDO sem disparar nenhuma ação no navegador
-    els.decisionCard.className = "decision-card state-waiting";
-    els.decisionTimeBadge.textContent = `${Math.round(elapsedMs)} ms`;
-    els.decisionStatusTitle.textContent = "AGUARDANDO";
-    els.decisionActionDesc.textContent = "Comando não executado (certeza insuficiente ou sem ação clara).";
+        addLogEntry({
+          heard: spokenText,
+          executed: dec.displayAction,
+          actionType: dec.action,
+          latencyMs: elapsedMs,
+          timestamp: formatCurrentTime(),
+        });
+      }
+      archiveCurrentSpeechBubble(spokenText);
+
+      els.decisionCard.className = "decision-card state-acted";
+      els.decisionTimeBadge.textContent = `decidido em ${Math.round(elapsedMs)} ms`;
+      els.decisionStatusTitle.textContent = "AGIU";
+      els.decisionActionDesc.textContent = dec.displayAction;
+    } else {
+      els.decisionCard.className = "decision-card state-waiting";
+      els.decisionTimeBadge.textContent = `${Math.round(elapsedMs)} ms`;
+      els.decisionStatusTitle.textContent = "AGUARDANDO";
+      els.decisionActionDesc.textContent = "Comando não executado (certeza insuficiente ou sem ação clara).";
+    }
+
+    els.decisionSpeechQuote.style.display = "block";
+    els.decisionSpeechQuote.textContent = `"${spokenText}"`;
+
+    renderIntentionBars(dec.probabilities, dec.action);
+    updateMetricsUI();
+  } finally {
+    state.isActionExecuting = false;
   }
-
-  els.decisionSpeechQuote.style.display = "block";
-  els.decisionSpeechQuote.textContent = `"${spokenText}"`;
-
-  // Renderiza Barras Horizontais de Probabilidade de Intenção
-  renderIntentionBars(dec.probabilities, dec.action);
-
-  updateMetricsUI();
 }
 
 // Renderiza as barras horizontais no Card
