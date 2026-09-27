@@ -1700,6 +1700,40 @@ cargo run -p alr-cli -- playground --port 3000
   * [`docs/connectors.md`](docs/connectors.md): Conectores REST externos e webhooks com HMAC-SHA256.
 
 ---
+## 🖥️ Experiência de Usuário Universal (UX Responsiva Multi-Resolução)
+
+O **Playground Universal do ALR** e todos os cockpits web integrados foram projetados e calibrados para oferecer uma experiência de visualização e controle impecável em **qualquer resolução de tela**, eliminando a necessidade de dar zoom-out para enxergar formulários, botões ou resultados.
+
+### 1. Sistema Fluido de Breakpoints
+
+* **Monitores Ultra-Wide ($\ge 1920\text{px}$ e $\ge 2400\text{px}$ / $3440\times1440$):**
+  * O layout expande fluidamente para `max-width: 98vw; width: 100%;`, eliminando faixas pretas laterais vazias.
+  * Dashboards e grids de métricas reorganizam-se em 3 a 4 colunas largas, ampliando a linha do tempo DAG e o espaço de visualização tabular.
+* **Desktop Standard ($1441\text{px}$ a $1919\text{px}$ / $1920\times1080$):**
+  * Layouts calibrados com colunas proporcionais `minmax(0, 1fr)` que aproveitam toda a largura sem cortes.
+* **Laptops & Telas Médias ($1101\text{px}$ a $1440\text{px}$ - ex: $1366\times768$, $1280\times800$, $1440\times900$):**
+  * O painel de decisões tipadas adapta-se para `160px minmax(360px, 420px) 1fr` com `min-width: 0`, impedindo que a coluna de probabilidades ou botões de envio vazem para fora da viewport.
+* **Laptops Compactos & Tablets ($769\text{px}$ a $1100\text{px}$ - ex: $1024\times768$):**
+  * O menu secundário recolhe-se automaticamente ao carregar para liberar **$270\text{px}$ imediatos** para o conteúdo ativo.
+  * Quando expandido, atua como gaveta flutuante (*overlay*) sem esmagar o espaço de trabalho.
+  * Layouts de decisões comutam para 2 colunas com presets de acesso rápido no topo.
+* **Tablets Portrait & Smartphones ($\le 768\text{px}$ e $< 500\text{px}$):**
+  * Reorganização vertical em coluna única fluida com rolagem suave.
+  * Dock de navegação compacto ($52\text{px}$) com alvos de toque otimizados ($\ge 40\text{px}$).
+
+### 2. Controle de Sidebar com Atalho Global
+
+* **Botão Toggle no Cabeçalho (`☰`)**: Alterna instantaneamente a visibilidade do menu de módulos secundário.
+* **Atalho de Teclado**: Pressione <kbd>Alt</kbd> + <kbd>B</kbd> para recolher ou expandir as barras laterais a qualquer momento.
+* **Persistência Inteligente**: A escolha do usuário é gravada automaticamente no `localStorage` do navegador.
+
+### 3. Painéis Autônomos com Sticky Actions
+
+* Cada painel de entrada e saída conta com **rolagem vertical isolada** (`overflow-y: auto; max-height: calc(100vh - 160px)`), garantindo que o cabeçalho e os botões de execução (`sticky-action-bar`) permaneçam sempre visíveis e acionáveis sem necessidade de rolar a página inteira.
+* As tabelas de banco de dados SQLite, Qdrant e CSV possuem rolagem horizontal suave dedicada (`-webkit-overflow-scrolling: touch`), preservando as colunas e os botões de ação em qualquer largura de janela.
+
+---
+
 
 ## 📜 Licença
 

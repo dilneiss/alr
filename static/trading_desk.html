@@ -80,6 +80,62 @@
       backdrop-filter: blur(12px);
       border: 1px solid rgba(51, 65, 85, 0.6);
     }
+
+    /* Responsive Cockpit Layout for Laptop (1366x768, 1280x800) & Mobile (< 1200px) */
+    @media (max-width: 1199px) {
+      #main-cockpit-grid {
+        display: flex !important;
+        flex-direction: column !important;
+      }
+      #chart-column-container {
+        width: 100% !important;
+      }
+      #chart-canvas-box {
+        min-height: 380px !important;
+        height: 420px !important;
+      }
+      #position-column-container {
+        width: 100% !important;
+        overflow-x: auto;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+      }
+    }
+
+    /* Mobile Screens (< 640px) */
+    @media (max-width: 640px) {
+      #chart-canvas-box {
+        min-height: 320px !important;
+        height: 350px !important;
+      }
+    }
+
+    /* Ultra-Wide Layout (>= 2000px) */
+    @media (min-width: 2000px) {
+      .max-w-7xl {
+        max-width: 98% !important;
+      }
+      .ultra-tech-bar {
+        grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+      }
+    }
+
+    /* Adaptive Grid for Trade Snapshot Modal (1 col mobile, 2 col laptop, 4 col desktop) */
+    .snap-grid-adaptive {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+    @media (max-width: 1200px) {
+      .snap-grid-adaptive {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      }
+    }
+    @media (max-width: 640px) {
+      .snap-grid-adaptive {
+        grid-template-columns: 1fr !important;
+      }
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased">
@@ -392,10 +448,10 @@
 
   <!-- Main Trading Cockpit: Chart (Left) + Detailed Position with Risk Rationale (Right) -->
   <main class="max-w-7xl mx-auto px-4 py-4 w-full flex-1 flex flex-col gap-4">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <div id="main-cockpit-grid" class="grid grid-cols-1 xl:grid-cols-12 gap-4">
       
       <!-- Chart Column (8 cols) -->
-      <div class="lg:col-span-8 flex flex-col gap-3">
+      <div id="chart-column-container" class="xl:col-span-8 flex flex-col gap-3">
         <div class="glass-panel rounded-xl p-4 flex flex-col gap-3">
           <!-- Chart Header -->
           <div class="flex flex-wrap items-center justify-between gap-3 border-b border-navy-800 pb-3">
@@ -422,7 +478,7 @@
           </div>
 
           <!-- HTML5 Canvas 60 FPS Candlestick -->
-          <div class="relative w-full aspect-[16/9] min-h-[360px] bg-navy-950 rounded-lg overflow-hidden border border-navy-800 flex items-center justify-center">
+          <div id="chart-canvas-box" class="relative w-full aspect-[16/9] min-h-[380px] bg-navy-950 rounded-lg overflow-hidden border border-navy-800 flex items-center justify-center">
             <canvas id="candlestick-canvas" class="w-full h-full block"></canvas>
             <div id="chart-loading-overlay" class="absolute inset-0 bg-navy-950/80 flex items-center justify-center text-xs text-slate-400">
               <div class="flex flex-col items-center gap-2">
@@ -431,9 +487,8 @@
               </div>
             </div>
           </div>
-
           <!-- Technical Indicators Bar -->
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-1 text-xs">
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 ultra-tech-bar gap-2 pt-1 text-xs">
             <div class="p-2 rounded bg-navy-900 border border-navy-800">
               <div class="text-[10px] uppercase text-slate-400">RSI (14)</div>
               <div id="stat-rsi" class="mono font-semibold text-slate-200 mt-0.5">50.00</div>
@@ -457,10 +512,9 @@
             <div class="p-2 rounded bg-navy-900 border border-navy-800">
               <div class="text-[10px] uppercase text-slate-400">Volatilidade ATR (14)</div>
               <div id="stat-atr" class="mono font-semibold text-slate-200 mt-0.5">$0.00</div>
-            </div>
           </div>
           <!-- Advanced Technical Indicators Bar (Fase 38 - Quant Fortress) -->
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-1 text-xs">
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 ultra-tech-bar gap-2 pt-1 text-xs">
             <div class="p-2 rounded bg-navy-900 border border-navy-800">
               <div class="text-[10px] uppercase text-slate-400">VWAP Institucional</div>
               <div id="stat-vwap" class="mono font-semibold text-cyan-300 mt-0.5">$0.00</div>
@@ -486,11 +540,11 @@
               <div id="stat-fear-greed" class="mono font-semibold text-slate-200 mt-0.5">50 (Neutro)</div>
             </div>
           </div>
-        </div>
       </div>
 
       <!-- Position Cockpit & Transparent Risk Explanations (4 cols) -->
-      <div class="lg:col-span-4 flex flex-col gap-3">
+      <!-- Position Cockpit & Transparent Risk Explanations (4 cols) -->
+      <div id="position-column-container" class="xl:col-span-4 flex flex-col gap-3">
         
         <!-- Active Position Card -->
         <div class="glass-panel rounded-xl p-4 flex flex-col gap-3">
@@ -896,7 +950,7 @@
   </dialog>
 
   <!-- Modal de Snapshot de Indicadores e Pesos na Entrada do Trade -->
-  <dialog id="tradeSnapshotModal" class="bg-navy-900 text-white rounded-2xl p-6 border border-cyan-500/40 shadow-2xl backdrop:bg-black/80 max-w-4xl w-full max-h-[90vh] overflow-y-auto text-xs m-auto" onclick="if (event.target === this) this.close()">
+  <dialog id="tradeSnapshotModal" class="bg-navy-900 text-white rounded-2xl p-4 sm:p-6 border border-cyan-500/40 shadow-2xl backdrop:bg-black/80 max-w-4xl w-[95vw] sm:w-[90vw] max-h-[90vh] overflow-y-auto text-xs m-auto" onclick="if (event.target === this) this.close()">
     <!-- Modal Header -->
     <div class="flex items-center justify-between border-b border-navy-800 pb-3 mb-4">
       <div class="flex items-center gap-2.5">
@@ -907,13 +961,12 @@
             <span id="snap-asset-badge" class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">BTC-USDT</span>
           </h3>
           <p class="text-[11px] text-slate-400 mt-0.5">Auditoria imutável das condições matemáticas e pesos no momento exato do disparo da ordem</p>
-        </div>
       </div>
       <button onclick="document.getElementById('tradeSnapshotModal').close()" class="w-8 h-8 rounded-lg bg-navy-800 hover:bg-navy-700 text-slate-300 hover:text-white flex items-center justify-center text-lg font-bold transition">&times;</button>
     </div>
 
     <!-- Metadata Ribbon: Asset, Action, Timestamp, Executed Price -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl bg-navy-950/80 border border-navy-800 mb-4">
+    <div class="snap-grid-adaptive p-3 rounded-xl bg-navy-950/80 border border-navy-800 mb-4">
       <div>
         <div class="text-[10px] uppercase font-bold text-slate-400">Ativo</div>
         <div id="snap-asset" class="font-bold text-white mono text-xs mt-0.5">--</div>
@@ -938,7 +991,7 @@
         <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         <h4 class="font-bold text-xs uppercase tracking-wider text-slate-200">1. Valores dos Indicadores no Momento da Entrada</h4>
       </div>
-      <div id="snap-indicators-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+      <div id="snap-indicators-grid" class="snap-grid-adaptive">
         <!-- RSI -->
         <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
           <div class="text-[10px] uppercase text-slate-400">RSI (14)</div>

@@ -23,12 +23,13 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
 
-    /* Header */
+    /* Responsive Header */
     header {
       background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--border); padding: 14px 28px;
+      border-bottom: 1px solid var(--border); padding: 12px 24px;
       display: flex; align-items: center; justify-content: space-between;
       position: sticky; top: 0; z-index: 50;
+      flex-wrap: wrap; gap: 12px;
     }
     .brand { display: flex; align-items: center; gap: 12px; }
     .brand-logo {
@@ -39,12 +40,12 @@
     }
     .brand-title h1 { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; }
     .brand-title p { font-size: 11.5px; color: var(--text-muted); }
-    .header-pills { display: flex; gap: 12px; align-items: center; }
+    .header-pills { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
     .pill {
       display: inline-flex; align-items: center; gap: 6px;
       padding: 5px 12px; border-radius: 20px; font-size: 11.5px; font-weight: 700;
-      border: 1px solid transparent;
+      border: 1px solid transparent; white-space: nowrap; flex-shrink: 0;
     }
     .pill-green { background: rgba(16, 185, 129, 0.12); color: var(--accent-green); border-color: rgba(16, 185, 129, 0.3); }
     .pill-cyan { background: rgba(6, 182, 212, 0.12); color: var(--accent-cyan); border-color: rgba(6, 182, 212, 0.3); }
@@ -58,7 +59,7 @@
 
     /* Metric Cards Grid */
     .metrics-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;
     }
     .metric-card {
       background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
@@ -81,6 +82,8 @@
     .panel {
       background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
       padding: 20px; display: flex; flex-direction: column; gap: 16px;
+      overflow-x: auto; scrollbar-width: thin; scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
     }
     .panel-header {
       display: flex; justify-content: space-between; align-items: center;
@@ -136,6 +139,69 @@
     .console-output {
       flex: 1; overflow-y: auto; max-height: 240px; color: #a5f3fc;
       line-height: 1.5; white-space: pre-wrap; word-break: break-all;
+    }
+
+    /* Responsive Media Queries for All Resolutions */
+    @media (max-width: 768px) {
+      header {
+        padding: 10px 14px;
+      }
+      .brand-title h1 {
+        font-size: 14.5px;
+      }
+      .brand-title p {
+        font-size: 10.5px;
+      }
+      .header-pills {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 6px;
+      }
+      .pill {
+        padding: 4px 8px;
+        font-size: 10.5px;
+      }
+      main {
+        padding: 14px;
+        gap: 16px;
+      }
+      .metrics-grid {
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 10px;
+      }
+      .metric-card {
+        padding: 12px 14px;
+      }
+      .metric-val {
+        font-size: 22px;
+      }
+      .panel {
+        padding: 14px;
+      }
+      .console-input-row {
+        flex-direction: column;
+      }
+      .btn-exec {
+        padding: 10px;
+      }
+      .niches-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      }
+    }
+
+    @media (min-width: 2000px) {
+      main {
+        max-width: 96%;
+      }
+      .metrics-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      .dashboard-split {
+        grid-template-columns: 2.2fr 1fr;
+      }
+      .niches-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      }
     }
   </style>
 </head>

@@ -2713,6 +2713,17 @@ pub fn render_playground_html() -> String {
             flex-direction: column;
             z-index: 90;
             overflow: hidden;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .secondary-submenu-bar.collapsed {
+            width: 0 !important;
+            min-width: 0 !important;
+            border: none !important;
+            opacity: 0 !important;
+            overflow: hidden !important;
+            pointer-events: none !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .submenu-header {
@@ -2877,6 +2888,41 @@ pub fn render_playground_html() -> String {
             padding: 0 16px;
             flex-shrink: 0;
             z-index: 40;
+        }
+
+        .btn-toggle-sidebar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: #0d131a;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            color: var(--text-muted);
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-right: 10px;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .btn-toggle-sidebar:hover {
+            background: rgba(187, 251, 0, 0.1);
+            border-color: var(--accent-lime);
+            color: var(--accent-lime);
+            box-shadow: 0 0 10px rgba(187, 251, 0, 0.25);
+        }
+
+        .btn-toggle-sidebar:active {
+            transform: scale(0.95);
+        }
+
+        .btn-toggle-sidebar.active {
+            color: var(--accent-lime);
+            border-color: rgba(187, 251, 0, 0.4);
+            background: #111a24;
         }
 
         .topbar-breadcrumb {
@@ -3236,7 +3282,7 @@ pub fn render_playground_html() -> String {
 
         .info-guide-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 12px;
         }
 
@@ -3369,8 +3415,9 @@ pub fn render_playground_html() -> String {
         .panel-content {
             flex: 1;
             overflow-y: auto;
+            max-height: calc(100vh - 160px);
+            min-height: 120px;
             padding: 14px;
-            min-height: 0;
             display: flex;
             flex-direction: column;
             gap: 12px;
@@ -3634,8 +3681,8 @@ pub fn render_playground_html() -> String {
         .sticky-action-bar {
             position: sticky;
             bottom: 0;
-            z-index: 15;
-            background: rgba(8, 12, 18, 0.95);
+            z-index: 10;
+            background: #0b0f14;
             backdrop-filter: blur(10px);
             padding: 10px 0 0 0;
             border-top: 1px solid var(--border-subtle);
@@ -4422,6 +4469,11 @@ pub fn render_playground_html() -> String {
             line-height: 1.5;
             overflow: auto;
             position: relative;
+            white-space: pre-wrap;
+            word-break: break-all;
+            word-wrap: break-word;
+            max-width: 100%;
+            box-sizing: border-box;
         }
 
         .copy-json-btn {
@@ -4542,10 +4594,11 @@ pub fn render_playground_html() -> String {
 
         .db-content-grid {
             display: grid;
-            grid-template-columns: 220px 230px 1fr;
+            grid-template-columns: minmax(180px, 220px) minmax(200px, 240px) 1fr;
             gap: 0;
             flex: 1;
             overflow: hidden;
+            width: 100%;
         }
 
         /* Sidebar de Tabelas */
@@ -4754,9 +4807,13 @@ pub fn render_playground_html() -> String {
         }
 
         /* Container de Tabela com Scroll Suave */
-        .db-table-wrapper {
+        .db-table-wrapper,
+        .db-table-container {
             flex: 1;
-            overflow: auto;
+            overflow-x: auto;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            width: 100%;
             position: relative;
         }
 
@@ -4915,7 +4972,8 @@ pub fn render_playground_html() -> String {
             top: 0;
             right: 0;
             bottom: 0;
-            width: 440px;
+            width: min(480px, 90vw);
+            max-width: 100%;
             background: #090e14;
             border-left: 1px solid var(--border-active);
             box-shadow: -8px 0 24px rgba(0, 0, 0, 0.7);
@@ -4997,9 +5055,11 @@ pub fn render_playground_html() -> String {
 
         .drawer-field-val.json-val {
             color: #38bdf8;
-            white-space: pre;
+            white-space: pre-wrap;
+            word-break: break-all;
+            word-wrap: break-word;
             overflow-x: auto;
-            max-height: 180px;
+            max-height: 220px;
         }
 
         .drawer-footer {
@@ -5402,7 +5462,7 @@ pub fn render_playground_html() -> String {
            ========================================================================== */
         .workspace-tutorials {
             display: grid;
-            grid-template-columns: 360px 1fr;
+            grid-template-columns: minmax(260px, 320px) 1fr;
             gap: 16px;
             width: 100%;
             max-width: 1540px;
@@ -5725,7 +5785,7 @@ pub fn render_playground_html() -> String {
 
         .comparison-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 14px;
             margin: 12px 0;
         }
@@ -5984,7 +6044,7 @@ pub fn render_playground_html() -> String {
            ========================================================================== */
         .workspace-routes {
             display: grid;
-            grid-template-columns: 620px 1fr;
+            grid-template-columns: minmax(360px, 48%) 1fr;
             gap: 16px;
             width: 100%;
             max-width: 1540px;
@@ -6001,6 +6061,8 @@ pub fn render_playground_html() -> String {
             flex-direction: column;
             gap: 10px;
             position: relative;
+            flex: 1;
+            min-height: 480px;
         }
 
         .routes-canvas-wrap {
@@ -6010,12 +6072,19 @@ pub fn render_playground_html() -> String {
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 8px 30px rgba(0,0,0,0.8);
+            flex: 1;
+            min-height: 380px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         #routes-real-map {
             display: block;
             width: 100%;
-            height: 420px;
+            min-height: 380px;
+            height: 100%;
+            flex: 1;
             background: #06090d;
             z-index: 5;
         }
@@ -6138,7 +6207,7 @@ pub fn render_playground_html() -> String {
 
         .routes-kpi-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
             gap: 8px;
         }
 
@@ -6153,8 +6222,11 @@ pub fn render_playground_html() -> String {
 
         .routes-table-wrap {
             flex: 1;
+            overflow-x: auto;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             position: relative;
+            width: 100%;
         }
 
         /* ==========================================================================
@@ -6162,12 +6234,21 @@ pub fn render_playground_html() -> String {
            ========================================================================== */
         .workspace-workbench {
             display: grid;
-            grid-template-columns: 440px 1fr;
+            grid-template-columns: minmax(320px, 45%) 1fr;
             gap: 16px;
             width: 100%;
             max-width: 1540px;
             height: 100%;
             overflow: hidden;
+        }
+
+        .workbench-table-wrap {
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+            width: 100%;
         }
 
         .workbench-left-panel {
@@ -6209,6 +6290,7 @@ pub fn render_playground_html() -> String {
         .recipes-subnav-tabs {
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
             gap: 6px;
             background: #080c10;
             border: 1px solid var(--border-subtle);
@@ -6247,7 +6329,7 @@ pub fn render_playground_html() -> String {
 
         .recipe-content-grid {
             display: grid;
-            grid-template-columns: 460px 1fr;
+            grid-template-columns: minmax(320px, 45%) 1fr;
             gap: 16px;
             flex: 1;
             overflow: hidden;
@@ -6259,7 +6341,7 @@ pub fn render_playground_html() -> String {
            ========================================================================== */
         .workspace-a2a {
             display: grid;
-            grid-template-columns: 360px 1fr 420px;
+            grid-template-columns: minmax(280px, 1.1fr) minmax(320px, 1.4fr) minmax(300px, 1.3fr);
             gap: 16px;
             width: 100%;
             max-width: 1540px;
@@ -6740,78 +6822,561 @@ pub fn render_playground_html() -> String {
         .alr-assistant-skill-reuse { color: var(--accent-cyan); }
         .alr-assistant-empty { font-size: 11px; color: var(--text-dim); line-height: 1.5; }
 
-        @media (max-width: 1200px) {
+        /* ========================================================================== */
+        /* RESPONSIVIDADE COMPLETA E UX MULTI-RESOLUÇÃO (ALR PLAYGROUND) */
+        /* ========================================================================== */
+
+        /* 1. ULTRA-WIDE & TELAS GRANDES (min-width: 1920px) */
+        @media (min-width: 1920px) {
+            .workspace-decisions,
+            .workspace-wrap,
+            .workspace-ecommerce,
+            .workspace-workbench,
+            .workspace-a2a,
+            .workspace-games,
+            .workspace-routes,
+            .workspace-vision,
+            .workspace-qa,
+            .workspace-trading,
+            .db-workspace {
+                max-width: 98vw;
+                width: 100%;
+            }
+
             .workspace-decisions {
-                grid-template-columns: 180px 1fr 1fr;
+                grid-template-columns: 240px 520px 1fr;
             }
-            .workspace-ecommerce {
-                grid-template-columns: 1fr 1fr;
-            }
-            .workspace-workbench {
-                grid-template-columns: 1fr 1fr;
-            }
-            .recipe-content-grid {
-                grid-template-columns: 1fr 1fr;
-            }
+
             .workspace-a2a {
-                grid-template-columns: 280px 1fr 300px;
+                grid-template-columns: 380px 1fr 440px;
+            }
+
+            .workspace-workbench {
+                grid-template-columns: 520px 1fr;
+            }
+
+            .workspace-games {
+                grid-template-columns: 1fr 420px;
+            }
+
+            .workspace-routes {
+                grid-template-columns: 700px 1fr;
+            }
+
+            .workspace-vision {
+                grid-template-columns: 460px 1fr;
+            }
+
+            .recipe-content-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .info-guide-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .telemetry-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .qa-summary-grid {
+                grid-template-columns: repeat(4, 1fr);
             }
         }
 
-        @media (max-width: 900px) {
+        /* 1.1 SUPER ULTRA-WIDE & 4K (min-width: 2400px) */
+        @media (min-width: 2400px) {
             .workspace-decisions {
-                display: flex;
-                flex-direction: column;
-                height: auto;
-                overflow-y: auto;
+                grid-template-columns: 280px 600px 1fr;
+                gap: 20px;
             }
-            .presets-sidebar {
-                max-height: 160px;
+
+            .workspace-a2a {
+                grid-template-columns: 420px 1fr 500px;
+                gap: 20px;
             }
-            .panel {
-                height: auto;
-                max-height: 520px;
+
+            .workspace-workbench {
+                grid-template-columns: 600px 1fr;
+                gap: 20px;
             }
+
+            .recipe-content-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .info-guide-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* 2. DESKTOP STANDARD (1441px a 1919px) */
+        @media (min-width: 1441px) and (max-width: 1919px) {
+            .workspace-decisions,
+            .workspace-wrap,
             .workspace-ecommerce,
             .workspace-workbench,
-            .recipe-content-grid,
-            .workspace-vision,
+            .workspace-a2a,
+            .workspace-games,
             .workspace-routes,
+            .workspace-vision,
+            .workspace-qa,
+            .workspace-trading,
+            .db-workspace {
+                max-width: 96vw;
+                width: 100%;
+            }
+
+            .workspace-decisions {
+                grid-template-columns: 200px minmax(400px, 460px) minmax(0, 1fr);
+            }
+
             .workspace-a2a {
+                grid-template-columns: 340px minmax(0, 1fr) 380px;
+            }
+
+            .workspace-workbench {
+                grid-template-columns: minmax(400px, 460px) minmax(0, 1fr);
+            }
+
+            .workspace-ecommerce {
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            }
+
+            .workspace-games {
+                grid-template-columns: minmax(0, 1fr) 360px;
+            }
+
+            .workspace-routes {
+                grid-template-columns: 580px minmax(0, 1fr);
+            }
+
+            .workspace-vision {
+                grid-template-columns: 400px minmax(0, 1fr);
+            }
+        }
+
+        /* 3. LAPTOP STANDARD (1101px a 1440px - ex: 1366x768, 1280x800, 1440x900) */
+        @media (min-width: 1101px) and (max-width: 1440px) {
+            .workspace-decisions {
+                grid-template-columns: 160px minmax(360px, 420px) 1fr;
+                gap: 12px;
+            }
+
+            .workspace-decisions > * {
+                min-width: 0;
+            }
+
+            .workspace-a2a {
+                grid-template-columns: 280px 1fr 300px;
+                gap: 12px;
+            }
+
+            .workspace-a2a > * {
+                min-width: 0;
+            }
+
+            .workspace-workbench {
+                grid-template-columns: minmax(340px, 42%) 1fr;
+                gap: 12px;
+            }
+
+            .workspace-workbench > * {
+                min-width: 0;
+            }
+
+            .workspace-games {
+                grid-template-columns: 1fr 320px;
+                gap: 12px;
+            }
+
+            .workspace-routes {
+                grid-template-columns: 500px 1fr;
+                gap: 12px;
+            }
+
+            .workspace-vision {
+                grid-template-columns: 340px 1fr;
+                gap: 12px;
+            }
+
+            .workspace-ecommerce {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+
+            .recipe-content-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+
+            .topbar-premise-chip {
+                max-width: 260px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+
+        /* 4. LAPTOP COMPACTO & TABLET LANDSCAPE (769px a 1100px - ex: 1024x768) */
+        @media (min-width: 769px) and (max-width: 1100px) {
+            .secondary-submenu-bar {
+                position: absolute;
+                left: 68px;
+                top: 0;
+                bottom: 0;
+                height: 100%;
+                z-index: 150;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85);
+            }
+
+            .secondary-submenu-bar.collapsed {
+                width: 0 !important;
+                min-width: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            .workspace-decisions {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                height: auto;
+                overflow-y: auto;
+            }
+
+            .presets-sidebar {
+                grid-column: 1 / -1;
+                max-height: 140px;
+            }
+
+            .workspace-a2a,
+            .workspace-workbench,
+            .workspace-routes,
+            .workspace-vision,
+            .workspace-games,
+            .workspace-qa,
+            .workspace-trading,
+            .workspace-ecommerce,
+            .recipe-content-grid {
                 display: flex;
                 flex-direction: column;
                 height: auto;
                 overflow-y: auto;
+                gap: 12px;
             }
+
             .vision-left-panel,
             .vision-right-panel,
             .workbench-left-panel,
+            .workbench-right-panel,
+            .games-sidebar {
+                max-height: 520px;
+            }
+
+            .topbar-premise-chip {
+                display: none;
+            }
+        }
+
+        /* 5. MOBILE & TABLET PORTRAIT (max-width: 768px) */
+        @media (max-width: 768px) {
+            .primary-icon-dock {
+                width: 52px;
+                min-width: 52px;
+                padding: 6px 0;
+            }
+
+            .dock-brand-logo {
+                width: 34px;
+                height: 34px;
+                border-radius: 8px;
+            }
+
+            .dock-item-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 15px;
+            }
+
+            .secondary-submenu-bar {
+                position: absolute;
+                left: 52px;
+                top: 0;
+                bottom: 0;
+                height: 100%;
+                z-index: 150;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
+                max-width: calc(100vw - 52px);
+            }
+
+            .secondary-submenu-bar.collapsed {
+                width: 0 !important;
+                min-width: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            .workspace-topbar {
+                padding: 0 8px;
+            }
+
+            .topbar-premise-chip {
+                display: none;
+            }
+
+            .topbar-actions-group .btn-api-modal span:last-child {
+                display: none;
+            }
+
+            .workspace-wrap {
+                padding: 6px 8px;
+            }
+
+            .workspace-decisions,
+            .workspace-ecommerce,
+            .workspace-workbench,
+            .workspace-a2a,
+            .workspace-games,
+            .workspace-routes,
+            .workspace-vision,
+            .workspace-qa,
+            .workspace-trading,
+            .recipe-content-grid {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+                overflow-y: auto;
+                gap: 10px;
+            }
+
+            .panel {
+                height: auto;
+                max-height: 480px;
+                overflow: hidden;
+            }
+
+            .panel-header {
+                padding: 0 10px;
+                height: 38px;
+            }
+
+            .panel-content {
+                padding: 10px;
+                max-height: 440px;
+                overflow-y: auto;
+            }
+
+            .presets-sidebar {
+                max-height: 140px;
+            }
+
+            .sticky-action-bar {
+                padding: 8px 0 0 0;
+                position: sticky;
+                bottom: 0;
+                background: #0b0f14;
+                z-index: 10;
+            }
+
+            /* Touch targets mínimos de 40px para botões */
+            button,
+            .btn-game-ctrl,
+            .subnav-tab,
+            .switcher-btn,
+            .dock-item-btn,
+            .btn-toggle-sidebar,
+            .submenu-item {
+                min-height: 40px;
+            }
+        }
+
+        /* 5.1 TELAS MUITO ESTREITAS (< 500px) */
+        @media (max-width: 500px) {
+            .app-layout {
+                flex-direction: column-reverse;
+            }
+
+            .primary-icon-dock {
+                width: 100%;
+                min-width: 100%;
+                height: 50px;
+                flex-direction: row;
+                justify-content: flex-start;
+                padding: 0 4px;
+                border-right: none;
+                border-top: 1px solid var(--border-subtle);
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                z-index: 200;
+                background: #05080c;
+            }
+
+            .dock-top-brand,
+            .dock-bottom-actions {
+                display: none;
+            }
+
+            .dock-nav-items {
+                flex-direction: row;
+                justify-content: flex-start;
+                overflow-x: auto;
+                width: 100%;
+                gap: 4px;
+                padding: 0 4px;
+            }
+
+            .dock-item-btn {
+                width: 36px;
+                height: 36px;
+                min-height: 36px;
+                flex-shrink: 0;
+            }
+
+            .main-workspace-area {
+                height: calc(100vh - 50px);
+                min-height: 0;
+            }
+
+            .secondary-submenu-bar {
+                left: 0;
+                bottom: 50px;
+                height: calc(100vh - 50px);
+                max-width: 100vw;
+                width: 100vw;
+            }
+
+            .alr-assistant-panel {
+                max-width: 100vw;
+                width: 100vw;
+            }
+
+            .alr-assistant-toggle {
+                right: 10px;
+                bottom: 60px;
+                font-size: 11px;
+                padding: 8px 11px;
+            }
+        }
+
+        /* ==========================================================================
+           RESPONSIVIDADE DAS VIEWS ESPECÍFICAS (ROUTES, DB, WORKBENCH, A2A, TUTORIALS)
+           ========================================================================== */
+        @media (max-width: 1200px) {
+            .workspace-a2a {
+                display: flex !important;
+                flex-direction: column !important;
+                height: auto !important;
+                overflow-y: visible !important;
+                gap: 16px !important;
+            }
+            .workspace-a2a > div {
+                max-height: none !important;
+                height: auto !important;
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .workspace-workbench {
+                display: flex !important;
+                flex-direction: column !important;
+                grid-template-columns: 1fr !important;
+                height: auto !important;
+                overflow: visible !important;
+            }
+            .workbench-left-panel,
             .workbench-right-panel {
-                max-height: 500px;
+                max-height: none !important;
+                height: auto !important;
+            }
+            .recipe-content-grid {
+                display: flex !important;
+                flex-direction: column !important;
+                height: auto !important;
+                max-height: none !important;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .workspace-routes {
+                display: flex !important;
+                flex-direction: column !important;
+                height: auto !important;
+                overflow: visible !important;
+                gap: 16px !important;
+            }
+            .routes-map-panel {
+                height: auto !important;
+                min-height: 480px !important;
+            }
+            .routes-canvas-wrap {
+                min-height: 380px !important;
+                height: 400px !important;
+            }
+            #routes-real-map {
+                min-height: 380px !important;
+                height: 400px !important;
+            }
+            .routes-itinerary-panel {
+                height: auto !important;
+                max-height: 600px !important;
+            }
+            .db-content-grid {
+                grid-template-columns: 180px 200px 1fr !important;
+            }
+        }
+
+        @media (max-width: 850px) {
+            .db-content-grid {
+                display: flex !important;
+                flex-direction: column !important;
+                height: auto !important;
+                overflow: visible !important;
+            }
+            .db-sidebar {
+                max-height: 170px !important;
+            }
+            .db-main-panel {
+                min-height: 480px !important;
+            }
+            .workspace-tutorials {
+                display: flex !important;
+                flex-direction: column !important;
+                height: auto !important;
+            }
+            .tutorial-sidebar {
+                max-height: 220px !important;
+            }
+            .tutorials-hero-bar {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 12px !important;
             }
         }
 
         @media (max-width: 768px) {
-            .workspace-wrap {
-                padding: 6px 8px;
+            .db-record-drawer {
+                top: auto !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                max-height: 80vh !important;
+                border-left: none !important;
+                border-top: 2px solid var(--accent-lime) !important;
+                transform: translateY(100%) !important;
+                border-radius: 12px 12px 0 0 !important;
             }
-            .panel {
-                max-height: 480px;
-            }
-            .panel-header {
-                padding: 0 10px;
-            }
-            .panel-content {
-                padding: 10px;
-            }
-            .sticky-action-bar {
-                padding: 8px 0 0 0;
+            .db-record-drawer.open {
+                transform: translateY(0) !important;
             }
         }
 
-        @media (max-width: 520px) {
-            .alr-assistant-panel { max-width: 100vw; width: 100vw; }
-            .alr-assistant-toggle { right: 10px; bottom: 10px; font-size: 11px; padding: 8px 11px; }
+        /* Garantia Global anti-overflow para blocos de código cURL e JSON */
+        pre, code, .json-pre-viewer, .cli-code-block, .curl-box {
+            white-space: pre-wrap !important;
+            word-break: break-all !important;
+            word-wrap: break-word !important;
         }
     </style>
 </head>
@@ -6931,6 +7496,7 @@ pub fn render_playground_html() -> String {
     <!-- 3. ÁREA PRINCIPAL / CANVAS WORKSPACE -->
     <main class="main-workspace-area">
         <header class="workspace-topbar">
+            <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" onclick="toggleSecondarySidebar()" title="Recolher/Expandir menu lateral (Alt+B)" aria-label="Recolher Menu">☰</button>
             <div class="topbar-breadcrumb">
                 <span class="topbar-crumb-root" onclick="goToHome()" style="cursor: pointer;" title="Ir para a Tela Inicial">ALR System 1</span>
                 <span class="topbar-crumb-sep">&rsaquo;</span>
@@ -7325,6 +7891,113 @@ pub fn render_playground_html() -> String {
             </div>
 
             <div class="workspace-recipes" style="gap: 14px;">
+                <!-- Card 0: MANUAL PRÁTICO DEFINITIVO: COMO USAR COMO COPILOTO DE VERDADE NA CALL -->
+                <div style="background: linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(11, 15, 20, 0.95) 100%); border: 1.5px solid rgba(249, 115, 22, 0.4); border-radius: 12px; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 24px;">🎙️</span>
+                            <div>
+                                <div style="font-size: 16px; font-weight: 800; color: #ffffff; letter-spacing: -0.01em;">
+                                    MANUAL DE OPERAÇÃO: Como Usar o Copiloto de Vendas para Funcionar de Verdade na Call
+                                </div>
+                                <div style="font-size: 12px; color: var(--accent-orange); font-weight: 600;">
+                                    Guia de Bordo para o Vendedor • Zero Erros de Áudio • Resposta em &lt; 1 ms sem Dar Zoom-out
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <a href="http://localhost:3001" target="_blank" class="btn-game-ctrl primary" style="text-decoration: none; padding: 7px 18px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); border: none;">
+                                <span>🚀 Abrir Tela do Copiloto (Porta 3001) &rarr;</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 4 Etapas Visuais de Configuração e Uso -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+                        <!-- Etapa 1: Organização das Telas -->
+                        <div style="background: #0f1622; border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); font-weight: 800; font-size: 12px; border-radius: 6px; padding: 2px 7px;">PASSO 1</span>
+                                <span style="font-weight: 700; color: #ffffff; font-size: 13px;">🖥️ Posicione as Janelas (Split Screen)</span>
+                            </div>
+                            <p style="font-size: 12px; color: #94a3b8; line-height: 1.5;">
+                                O copiloto precisa ficar visível enquanto você conversa com o cliente:
+                            </p>
+                            <ul style="font-size: 11.5px; color: #cbd5e1; line-height: 1.6; padding-left: 18px;">
+                                <li><strong>1 Monitor:</strong> No Google Meet pressione <kbd style="background:#1e293b; padding:1px 5px; border-radius:4px; border:1px solid #475569;">Win</kbd> + <kbd style="background:#1e293b; padding:1px 5px; border-radius:4px; border:1px solid #475569;">&larr;</kbd> (metade esquerda). No Copiloto pressione <kbd style="background:#1e293b; padding:1px 5px; border-radius:4px; border:1px solid #475569;">Win</kbd> + <kbd style="background:#1e293b; padding:1px 5px; border-radius:4px; border:1px solid #475569;">&rarr;</kbd> (metade direita).</li>
+                                <li><strong>2 Monitores (Ideal):</strong> Meet no monitor principal (onde fica a webcam) e o Copiloto no segundo monitor logo abaixo ou ao lado da câmera. Você lê a quebra sem desviar o olhar do cliente!</li>
+                            </ul>
+                        </div>
+
+                        <!-- Etapa 2: O Segredo do Áudio Dual-Channel -->
+                        <div style="background: #0f1622; border: 1.5px solid rgba(249, 115, 22, 0.5); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); font-weight: 800; font-size: 12px; border-radius: 6px; padding: 2px 7px;">PASSO 2</span>
+                                <span style="font-weight: 700; color: #ffffff; font-size: 13px;">🎙️ Captura de Áudio (O Ponto Crítico)</span>
+                            </div>
+                            <p style="font-size: 12px; color: #94a3b8; line-height: 1.5;">
+                                O Copiloto escuta 2 canais ao mesmo tempo via Chrome nativo:
+                            </p>
+                            <ol style="font-size: 11.5px; color: #cbd5e1; line-height: 1.6; padding-left: 18px;">
+                                <li>No Copiloto (<a href="http://localhost:3001" target="_blank" style="color:var(--accent-cyan); font-weight:600;">localhost:3001</a>), clique em <strong>"Começar a ouvir"</strong>.</li>
+                                <li>Permita o acesso ao <strong>Microfone</strong> (Canal do Vendedor).</li>
+                                <li>Na janela <em>"Escolha o que compartilhar"</em>, vá na aba <strong>"Guia do Chrome"</strong> e selecione a aba do <strong>Google Meet</strong>.</li>
+                                <li><strong style="color: #ef4444; background: rgba(239,68,68,0.15); padding: 1px 4px; border-radius: 3px;">OBRIGATÓRIO:</strong> Marque a caixa <strong>"Compartilhar também o áudio da guia"</strong> no canto inferior esquerdo. Se não marcar, ele não escuta a voz do cliente!</li>
+                            </ol>
+                        </div>
+
+                        <!-- Etapa 3: Fone de Ouvido & Anti-Eco -->
+                        <div style="background: #0f1622; border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="background: rgba(16, 185, 129, 0.2); color: var(--accent-green); font-weight: 800; font-size: 12px; border-radius: 6px; padding: 2px 7px;">PASSO 3</span>
+                                <span style="font-weight: 700; color: #ffffff; font-size: 13px;">🎧 Uso Obrigatório de Fone / Headset</span>
+                            </div>
+                            <p style="font-size: 12px; color: #94a3b8; line-height: 1.5;">
+                                <strong>Por que usar fone de ouvido na call?</strong>
+                            </p>
+                            <p style="font-size: 11.5px; color: #cbd5e1; line-height: 1.5;">
+                                Se você usar caixas de som abertas, o áudio do cliente sai nos alto-falantes e entra de volta no seu microfone, gerando eco, loop e falsas transcrições duplicadas. Com fone ou headset, os 2 canais ficam 100% isolados e o ALR atinge precisão cirúrgica de 100%!
+                            </p>
+                        </div>
+
+                        <!-- Etapa 4: Como Agir quando o Card Surgir -->
+                        <div style="background: #0f1622; border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="background: rgba(56, 189, 248, 0.2); color: var(--accent-cyan); font-weight: 800; font-size: 12px; border-radius: 6px; padding: 2px 7px;">PASSO 4</span>
+                                <span style="font-weight: 700; color: #ffffff; font-size: 13px;">⚡ Como Agir com o Card de Combate</span>
+                            </div>
+                            <p style="font-size: 12px; color: #94a3b8; line-height: 1.5;">
+                                Quando o cliente hesitar ou levantar uma objeção:
+                            </p>
+                            <ul style="font-size: 11.5px; color: #cbd5e1; line-height: 1.5; padding-left: 18px;">
+                                <li>O card surge na sua tela em <strong>&lt; 1 ms</strong> com o nome da objeção e confiança (ex: 98%).</li>
+                                <li><strong>Não leia como um robô:</strong> use o argumento pronto exibido em destaque como sua linha mestra de resposta.</li>
+                                <li>Após responder, clique em <strong>"Superada ✓"</strong> para registrar nas estatísticas ou <strong>"Dispensar ✕"</strong> se ele mudou de assunto.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Checklist Rápido Pré-Call (30 Segundos) -->
+                    <div style="background: #0a0f18; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 20px;">📋</span>
+                            <div>
+                                <span style="font-size: 12.5px; font-weight: 700; color: #ffffff;">Checklist Rápido Pré-Call (30 Segundos antes da Reunião):</span>
+                                <div style="font-size: 11.5px; color: #94a3b8; display: flex; gap: 14px; flex-wrap: wrap; margin-top: 3px;">
+                                    <span><strong style="color:var(--accent-lime);">✓</strong> Motor ALR ativo (:3000)</span>
+                                    <span><strong style="color:var(--accent-lime);">✓</strong> Copiloto ativo (:3001)</span>
+                                    <span><strong style="color:var(--accent-lime);">✓</strong> Fone de ouvido conectado</span>
+                                    <span><strong style="color:var(--accent-lime);">✓</strong> "Compartilhar áudio da guia" marcado no Meet</span>
+                                    <span><strong style="color:var(--accent-lime);">✓</strong> Telas em Split Screen</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn-game-ctrl" style="padding: 6px 14px; font-size: 11px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: var(--accent-cyan);" onclick="window.open('http://localhost:3001', '_blank')">
+                            Testar Conexão do Copiloto &rarr;
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Card 1: Como Funciona & A Hierarquia de Decisão de 6 Níveis -->
                 <div style="background: #0d1522; border: 1px solid var(--border-color); border-radius: 10px; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px;">
                     <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -7428,26 +8101,40 @@ pub fn render_playground_html() -> String {
                 </div>
 
                 <!-- Card 4: Como Instalar e Rodar em 3 Passos -->
-                <div style="background: #0d1522; border: 1px solid var(--border-color); border-radius: 10px; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <span style="font-size: 14px; font-weight: 700; color: #ffffff;">🚀 Como Iniciar e Usar no Google Meet em 3 Passos:</span>
-                        <span style="font-family: var(--font-mono); font-size: 11px; color: var(--accent-orange);">Zero Dependências Externas</span>
+                <div style="background: #0d1522; border: 1px solid var(--border-color); border-radius: 10px; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                        <span style="font-size: 14px; font-weight: 700; color: #ffffff;">🚀 Inicialização Rápida em 3 Passos (Zero Dependências):</span>
+                        <span style="font-family: var(--font-mono); font-size: 11px; color: var(--accent-orange);">Pronto em menos de 1 minuto</span>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
-                        <div style="background: #111a28; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px 14px;">
-                            <div style="font-weight: 700; color: var(--accent-lime); font-size: 11px; margin-bottom: 6px;">PASSO 1: INICIAR ALR</div>
-                            <div style="font-size: 12px; color: #cbd5e1; margin-bottom: 8px;">Inicie o motor System 1 na porta 3000:</div>
-                            <div class="cli-code-block" style="margin: 0; padding: 6px 10px; font-size: 11px;">cargo run -p alr-cli -- playground --port 3000</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
+                        <div style="background: #111a28; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="font-weight: 700; color: var(--accent-lime); font-size: 11px;">PASSO 1: INICIAR MOTOR ALR</div>
+                                <span style="font-size: 10px; font-family: var(--font-mono); color: var(--accent-cyan);">Porta 3000</span>
+                            </div>
+                            <div style="font-size: 12px; color: #cbd5e1;">Inicie o runtime cognitivo System 1:</div>
+                            <div class="cli-code-block" style="margin: 4px 0 0 0; padding: 8px 10px; font-size: 11px;">cargo run -p alr-cli -- playground --port 3000<button class="btn-copy-code" onclick="copySnippet(this)">Copiar</button></div>
+                            <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;">Mantém as rotas de inferência ativas em &lt; 20 µs.</div>
                         </div>
-                        <div style="background: #111a28; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px 14px;">
-                            <div style="font-weight: 700; color: var(--accent-lime); font-size: 11px; margin-bottom: 6px;">PASSO 2: INICIAR COPILOTO</div>
-                            <div style="font-size: 12px; color: #cbd5e1; margin-bottom: 8px;">Inicie o servidor proxy Node.js na porta 3001:</div>
-                            <div class="cli-code-block" style="margin: 0; padding: 6px 10px; font-size: 11px;">node server.js</div>
+                        <div style="background: #111a28; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="font-weight: 700; color: var(--accent-lime); font-size: 11px;">PASSO 2: INICIAR SERVIDOR COPILOTO</div>
+                                <span style="font-size: 10px; font-family: var(--font-mono); color: var(--accent-cyan);">Porta 3001</span>
+                            </div>
+                            <div style="font-size: 12px; color: #cbd5e1;">Em outro terminal, inicie o proxy Node.js leve:</div>
+                            <div class="cli-code-block" style="margin: 4px 0 0 0; padding: 8px 10px; font-size: 11px;">node server.js<button class="btn-copy-code" onclick="copySnippet(this)">Copiar</button></div>
+                            <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;">Não requer npm install (100% Node.js puro).</div>
                         </div>
-                        <div style="background: #111a28; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px 14px;">
-                            <div style="font-weight: 700; color: var(--accent-lime); font-size: 11px; margin-bottom: 6px;">PASSO 3: ABRIR NO CHROME</div>
-                            <div style="font-size: 12px; color: #cbd5e1; margin-bottom: 8px;">Acesse <code>http://localhost:3001</code>, clique em "Começar a ouvir" e selecione a aba do Google Meet com áudio!</div>
-                            <a href="http://localhost:3001" target="_blank" style="color: var(--accent-cyan); font-size: 11.5px; font-weight: 600; text-decoration: underline;">Abrir Copiloto &rarr;</a>
+                        <div style="background: #111a28; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="font-weight: 700; color: var(--accent-lime); font-size: 11px;">PASSO 3: ABRIR NO GOOGLE CHROME</div>
+                                <span style="font-size: 10px; font-family: var(--font-mono); color: var(--green-text);">Online</span>
+                            </div>
+                            <div style="font-size: 12px; color: #cbd5e1;">Acesse a interface no navegador Chrome ou Edge:</div>
+                            <a href="http://localhost:3001" target="_blank" class="btn-game-ctrl primary" style="text-decoration: none; padding: 7px 12px; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px;">
+                                <span>🚀 Abrir http://localhost:3001 &rarr;</span>
+                            </a>
+                            <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;">Clique em "Começar a ouvir" e conecte à aba do Meet com áudio!</div>
                         </div>
                     </div>
                 </div>
@@ -7558,7 +8245,7 @@ pub fn render_playground_html() -> String {
                         </div>
                         <span style="font-family: var(--font-mono); font-size: 11px; color: var(--accent-orange);">Pasta: extensions/alr-voz</span>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 4px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 4px;">
                         <div style="background: #111a28; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 10px 12px;">
                             <div style="font-weight: 700; color: var(--accent-lime); font-size: 11px; margin-bottom: 4px;">PASSO 1</div>
                             <div style="font-size: 11.5px; color: #cbd5e1;">Abra uma nova aba no Chrome e acesse <code style="color: var(--accent-cyan); background: #060a10; padding: 2px 4px; border-radius: 4px;">chrome://extensions</code></div>
@@ -7600,7 +8287,7 @@ pub fn render_playground_html() -> String {
                         <span class="badge-type" style="background: rgba(249, 115, 22, 0.15); color: var(--accent-orange);">20 Casos Reais</span>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;" id="alr-voice-examples-grid">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px;" id="alr-voice-examples-grid">
                         <!-- Os 20 comandos renderizados em cards -->
                     </div>
                 </div>
@@ -8210,7 +8897,7 @@ println!("✓ Exit code 0, zero panics e sem memory leaks!");</code></pre>
 
                     <!-- Painel de Dados -->
                     <div class="db-main-panel">
-                        <div class="db-table-header-bar">
+                        <div class="db-table-header-bar" style="flex-wrap: wrap; gap: 8px;">
                             <div class="db-table-title-area">
                                 <span class="db-active-table-title" id="db-active-table-title">
                                     <span>⚡</span>
@@ -8218,7 +8905,7 @@ println!("✓ Exit code 0, zero panics e sem memory leaks!");</code></pre>
                                 </span>
                                 <span class="db-active-table-desc" id="db-active-table-desc">Habilidades autônomas validadas e taxas de sucesso</span>
                             </div>
-                            <div class="db-toolbar-actions">
+                            <div class="db-toolbar-actions" style="flex-wrap: wrap; gap: 6px;">
                                 <input type="text" class="db-search-rows-input" id="db-search-rows-input" placeholder="🔍 Buscar na tabela...">
                                 <button class="btn-db-action active" id="btn-db-view-data">
                                     <span>📊 Dados</span>
@@ -8235,8 +8922,8 @@ println!("✓ Exit code 0, zero panics e sem memory leaks!");</code></pre>
                             </div>
                         </div>
 
-                        <!-- Tabela de Dados -->
-                        <div class="db-table-wrapper" id="db-table-wrapper">
+                        <!-- Tabela de Dados (Container com scroll horizontal e touch) -->
+                        <div class="db-table-wrapper db-table-container" id="db-table-wrapper">
                             <table class="alr-data-table" id="db-main-table">
                                 <thead id="db-table-thead"></thead>
                                 <tbody id="db-table-tbody"></tbody>
@@ -8663,7 +9350,7 @@ println!("✓ Exit code 0, zero panics e sem memory leaks!");</code></pre>
                     </div>
 
                     <!-- Barra de Controles Rápidos -->
-                    <div style="display: grid; grid-template-columns: 2.1fr 1.2fr 1.4fr 1.1fr; gap: 8px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px;">
                         <div class="field-group">
                             <label class="field-label" style="display: flex; justify-content: space-between; align-items: center;">
                                 <span>CEP de Saída (Hub / CD)</span>
@@ -8704,7 +9391,7 @@ println!("✓ Exit code 0, zero panics e sem memory leaks!");</code></pre>
                         </div>
                     </div>
 
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                         <button class="btn-game-ctrl primary flex-1 justify-center" id="btn-routes-optimize">
                             <span>⚡ Simular & Otimizar Rota no Mapa Real (&lt; 5 ms em Rust)</span>
                         </button>
@@ -8834,7 +9521,7 @@ Entrega: rastreio, pedido, entrega, correios, envio
 Geral: nota fiscal, cnpj, dúvida, suporte</textarea>
                     </div>
 
-                    <div class="sticky-action-bar">
+                    <div class="sticky-action-bar" style="flex-wrap: wrap; gap: 8px;">
                         <button class="btn-game-ctrl primary flex-1 justify-center" id="btn-wb-process">
                             <span>⚡ Processar Linhas em CPU (Ctrl+Enter)</span>
                         </button>
@@ -8850,7 +9537,7 @@ Geral: nota fiscal, cnpj, dúvida, suporte</textarea>
                         <span style="font-family: var(--font-mono); font-size: 11px; color: var(--accent-lime);" id="wb-throughput-badge">&gt; 50.000 linhas/s (CPU)</span>
                     </div>
 
-                    <div style="flex: 1; overflow: auto;">
+                    <div class="workbench-table-wrap" style="flex: 1; overflow-x: auto; overflow-y: auto; -webkit-overflow-scrolling: touch; width: 100%;">
                         <table class="alr-data-table">
                             <thead>
                                 <tr>
@@ -9104,9 +9791,17 @@ Linha de log de auditoria #5: Concluída checagem com sucesso.</textarea>
                 </div>
             </div>
 
+            <!-- Seletor de Abas A2A para Telas Compactas (< 1200px) -->
+            <div class="a2a-mobile-tabs" style="display: none; gap: 6px; margin-bottom: 12px; overflow-x: auto; flex-wrap: wrap;">
+                <button class="subnav-tab active" onclick="switchA2aMobileTab('agents', this)">🤖 1. Agentes & Entrada</button>
+                <button class="subnav-tab" onclick="switchA2aMobileTab('bus', this)">📨 2. Barramento A2A</button>
+                <button class="subnav-tab" onclick="switchA2aMobileTab('hitl', this)">👤 3. HitL & Diff</button>
+                <button class="subnav-tab" onclick="switchA2aMobileTab('all', this)">📑 Ver Todos</button>
+            </div>
+
             <div class="workspace-a2a">
                 <!-- Coluna 1: Agentes Registrados no Pipeline -->
-                <div class="vision-left-panel">
+                <div class="vision-left-panel" id="a2a-panel-agents">
                     <div style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Agentes no Pipeline A2A</div>
                     <div class="a2a-agent-card">
                         <div style="font-weight: 700; color: #fff; font-size: 12px;">Agente 01: Triagem & Sentimento</div>
@@ -9134,7 +9829,7 @@ Linha de log de auditoria #5: Concluída checagem com sucesso.</textarea>
                 </div>
 
                 <!-- Coluna 2: Fluxo de Mensagens A2A -->
-                <div class="vision-right-panel">
+                <div class="vision-right-panel" id="a2a-panel-bus">
                     <div style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Fluxo de Mensagens Padronizadas A2A</div>
                     <div id="a2a-messages-flow" style="display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto;">
                         <div class="a2a-msg-bubble">
@@ -9145,7 +9840,7 @@ Linha de log de auditoria #5: Concluída checagem com sucesso.</textarea>
                 </div>
 
                 <!-- Coluna 3: Card de Aprovação HitL & Diff Preview -->
-                <div class="vision-right-panel">
+                <div class="vision-right-panel" id="a2a-panel-hitl">
                     <div style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Card de Aprovação Humana (HitL)</div>
                     <div id="a2a-hitl-card" style="background: rgba(245, 158, 11, 0.08); border: 1px solid var(--amber-border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
                         <div style="color: var(--amber-text); font-weight: 700; font-size: 12px;">⚠️ OPERAÇÃO FINANCEIRA CRÍTICA: ESTORNO PIX</div>
@@ -9950,6 +10645,38 @@ Linha de log de auditoria #5: Concluída checagem com sucesso.</textarea>
             });
         }
 
+        window.toggleSecondarySidebar = function(forceCollapse) {
+            const sidebar = document.getElementById('secondary-submenu-bar');
+            const btn = document.getElementById('btn-toggle-sidebar');
+            if (!sidebar) return;
+
+            let isCollapsed;
+            if (typeof forceCollapse === 'boolean') {
+                isCollapsed = forceCollapse;
+                sidebar.classList.toggle('collapsed', isCollapsed);
+            } else {
+                isCollapsed = sidebar.classList.toggle('collapsed');
+            }
+
+            if (btn) {
+                btn.classList.toggle('active', isCollapsed);
+                btn.title = isCollapsed ? 'Expandir menu lateral (Alt+B)' : 'Recolher menu lateral (Alt+B)';
+                btn.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+            }
+
+            try {
+                localStorage.setItem('alr_sidebar_collapsed', isCollapsed ? '1' : '0');
+            } catch (_) {}
+            return isCollapsed;
+        };
+
+        window.addEventListener('keydown', function(e) {
+            if (e.altKey && (e.key === 'b' || e.key === 'B')) {
+                e.preventDefault();
+                window.toggleSecondarySidebar();
+            }
+        });
+
         window.filterSubmenuItems = function(query) {
             renderSubmenu(activeCategory, query);
         };
@@ -9984,6 +10711,12 @@ Linha de log de auditoria #5: Concluída checagem com sucesso.</textarea>
         window.activateSubmenuItem = function(item) {
             activeView = item.view;
 
+            if (window.innerWidth <= 1100) {
+                const sidebar = document.getElementById('secondary-submenu-bar');
+                if (sidebar && !sidebar.classList.contains('collapsed')) {
+                    window.toggleSecondarySidebar(true);
+                }
+            }
             document.querySelectorAll('.view-section').forEach(sec => {
                 sec.classList.toggle('active', sec.id === `view-${activeView}`);
             });
@@ -14615,12 +15348,15 @@ cargo check --workspace<button class="btn-copy-code" onclick="copySnippet(this)"
                     <div style="font-size:12px; color:#cbd5e1; margin-top:8px;">Passo 2: Iniciar o servidor Node.js isolado (porta 3001):</div>
                     <div class="cli-code-block">node server.js<button class="btn-copy-code" onclick="copySnippet(this)">Copiar</button></div>
 
-                    <div style="font-size:12px; color:#cbd5e1; margin-top:8px;">Passo 3: Abrir no Google Chrome e Conectar ao Meet:</div>
-                    <p style="font-size:12px; color:#94a3b8; line-height:1.5;">
-                        Acesse <code>http://localhost:3001</code>, clique em <strong>Começar a ouvir</strong>, autorize o microfone e selecione a aba do Google Meet com a opção <em>"Compartilhar áudio da aba"</em> ativada.
-                    </p>
+                    <div style="font-size:13px; font-weight:700; color:#ffffff; margin-top:14px;">3. Guia de Bordo: Como Usar na Call para Funcionar de Verdade</div>
+                    <ul style="font-size:12px; color:#cbd5e1; line-height:1.6; padding-left:20px; margin:6px 0;">
+                        <li><strong>Split Screen de Janelas:</strong> No Google Meet pressione <kbd>Win</kbd> + <kbd>&larr;</kbd> (esquerda) e no Copiloto pressione <kbd>Win</kbd> + <kbd>&rarr;</kbd> (direita). Em dois monitores, mantenha o Copiloto no segundo monitor alinhado com a webcam.</li>
+                        <li><strong>Áudio da Guia do Meet (Obrigatório):</strong> Ao clicar em "Começar a ouvir", escolha a aba <em>Guia do Chrome</em> &rarr; <em>Google Meet</em> e <strong style="color:#ef4444;">MARQUE a caixa 'Compartilhar áudio da guia'</strong> no canto inferior esquerdo. Se não marcar, a voz do cliente não é captada.</li>
+                        <li><strong>Fone de Ouvido:</strong> Obrigatório usar headset/fone para evitar que o som do cliente saia nos alto-falantes e gere eco de retorno no seu microfone.</li>
+                        <li><strong>Reação ao Card:</strong> O card surge em &lt; 1 ms com o argumento ideal. Use o texto como guia de pensamento e clique em <em>'Superada ✓'</em> assim que desarmar a hesitação do cliente.</li>
+                    </ul>
 
-                    <div style="font-size:13px; font-weight:700; color:#ffffff; margin-top:14px;">3. Regras de Decisão Rígidas no Código</div>
+                    <div style="font-size:13px; font-weight:700; color:#ffffff; margin-top:14px;">4. Regras de Decisão Rígidas no Código</div>
                     <ul style="font-size:12px; color:#94a3b8; line-height:1.6; padding-left:20px; margin:6px 0;">
                         <li><strong>Limiar Estrito:</strong> O card só é exibido se <code>tem_objecao &ge; 0.60</code> e a confiança de <code>objecao &ge; 0.50</code>.</li>
                         <li><strong>Tratamento de Fala Cortada:</strong> Se a frase estiver incompleta (<code>terminou_de_falar &lt; 0.50</code>), o sistema aguarda o restante antes de agir.</li>
@@ -14814,10 +15550,22 @@ cargo check --workspace<button class="btn-copy-code" onclick="copySnippet(this)"
                     }
                     runRouteOptimization();
                 });
-            } else {
-                setTimeout(() => { routesMap.invalidateSize(); }, 200);
             }
 
+            // Garante invalidateSize ao redimensionar tela ou alterar layout
+            if (!mapContainer._resizeObserverAttached) {
+                mapContainer._resizeObserverAttached = true;
+                if (window.ResizeObserver) {
+                    const ro = new ResizeObserver(() => {
+                        if (routesMap) routesMap.invalidateSize();
+                    });
+                    ro.observe(mapContainer);
+                }
+                window.addEventListener('resize', () => {
+                    if (routesMap) routesMap.invalidateSize();
+                });
+            }
+            setTimeout(() => { if (routesMap) routesMap.invalidateSize(); }, 150);
             if (btnRoutesSearchCep) {
                 btnRoutesSearchCep.onclick = searchCepAndCenter;
             }
@@ -15599,6 +16347,24 @@ Lead Frio: apenas olhando, documentação, onde posso baixar`;
             if (btnRunA2aPipeline) btnRunA2aPipeline.onclick = runA2aCollaborativePipeline;
         }
 
+        window.switchA2aMobileTab = function(tab, btn) {
+            document.querySelectorAll('.a2a-mobile-tabs .subnav-tab').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            const pAgents = document.getElementById('a2a-panel-agents');
+            const pBus = document.getElementById('a2a-panel-bus');
+            const pHitl = document.getElementById('a2a-panel-hitl');
+            if (!pAgents || !pBus || !pHitl) return;
+            if (tab === 'agents') {
+                pAgents.style.display = 'flex'; pBus.style.display = 'none'; pHitl.style.display = 'none';
+            } else if (tab === 'bus') {
+                pAgents.style.display = 'none'; pBus.style.display = 'flex'; pHitl.style.display = 'none';
+            } else if (tab === 'hitl') {
+                pAgents.style.display = 'none'; pBus.style.display = 'none'; pHitl.style.display = 'flex';
+            } else {
+                pAgents.style.display = 'flex'; pBus.style.display = 'flex'; pHitl.style.display = 'flex';
+            }
+        };
+
         async function runA2aCollaborativePipeline() {
             if (!a2aInputMsg || !a2aMessagesFlow) return;
             const msg = a2aInputMsg.value;
@@ -16262,7 +17028,7 @@ Lead Frio: apenas olhando, documentação, onde posso baixar`;
                     </div>
                     <div style="color: #ffffff; font-weight:700; margin-bottom: 4px;">Comando: "${text}"</div>
                     <div style="color: var(--accent-orange); margin-bottom: 6px;">Intenção Vencedora: ${selected.toUpperCase()} (Confiança: ${conf})</div>
-                    <pre style="color: #94a3b8; font-size: 10px; margin: 0; overflow-x: auto;">${JSON.stringify(data, null, 2)}</pre>
+                    <pre style="color: #94a3b8; font-size: 10px; margin: 0; overflow-x: auto; white-space: pre-wrap; word-break: break-all;">${JSON.stringify(data, null, 2)}</pre>
                 `;
             } catch (err) {
                 resultBox.innerHTML = `<span style="color: #ef4444;">Erro ao consultar /v1/systemone: ${err.message}</span>`;
@@ -16485,6 +17251,23 @@ Lead Frio: apenas olhando, documentação, onde posso baixar`;
                 if (feedback) feedback.textContent = `Erro no replay: ${err.message}`;
             }
         };
+
+        (function initSidebarState() {
+            try {
+                const saved = localStorage.getItem('alr_sidebar_collapsed');
+                if (saved === '1') {
+                    window.toggleSecondarySidebar(true);
+                } else if (saved === '0') {
+                    window.toggleSecondarySidebar(false);
+                } else if (window.innerWidth < 1100) {
+                    window.toggleSecondarySidebar(true);
+                }
+            } catch (_) {
+                if (window.innerWidth < 1100) {
+                    window.toggleSecondarySidebar(true);
+                }
+            }
+        })();
 
         selectCategory('decisions');
         loadPreset('agent_guardrail');

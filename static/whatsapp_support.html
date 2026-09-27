@@ -41,8 +41,9 @@
 
     /* Left Panel: Contacts */
     .contacts-panel {
-      width: 400px; background-color: var(--wa-panel-bg);
+      width: min(380px, 35vw); background-color: var(--wa-panel-bg);
       border-right: 1px solid var(--wa-border); display: flex; flex-direction: column;
+      flex-shrink: 0;
     }
     .panel-header {
       height: 54px; background-color: var(--wa-header-bg);
@@ -50,13 +51,32 @@
       padding: 0 16px; border-bottom: 1px solid var(--wa-border);
     }
 
-    /* 20 Niches Horizontal Bar */
-    .niche-carousel {
-      display: flex; gap: 6px; padding: 8px 12px;
-      background: #182229; overflow-x: auto; white-space: nowrap;
-      border-bottom: 1px solid var(--wa-border);
-      scrollbar-width: thin;
+    /* 20 Niches Horizontal Bar with smooth scroll buttons */
+    .niche-carousel-wrap {
+      position: relative; display: flex; align-items: center;
+      background: #182229; border-bottom: 1px solid var(--wa-border);
+      width: 100%; overflow: hidden;
     }
+    .niche-carousel {
+      display: flex; gap: 6px; padding: 8px 30px;
+      background: #182229; overflow-x: auto; white-space: nowrap;
+      scrollbar-width: thin; scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch; flex: 1;
+    }
+    .niche-scroll-btn {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(32, 44, 51, 0.95); border: 1px solid var(--wa-border);
+      color: var(--wa-accent-green); font-size: 16px; font-weight: bold;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; z-index: 10; transition: all 0.15s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4); line-height: 1; user-select: none;
+    }
+    .niche-scroll-btn:hover {
+      background: var(--wa-accent-green); color: #000;
+    }
+    .niche-scroll-btn.btn-prev { left: 4px; }
+    .niche-scroll-btn.btn-next { right: 4px; }
     .niche-chip {
       background: #202c33; border: 1px solid var(--wa-border);
       color: var(--wa-text-secondary); border-radius: 16px;
@@ -223,6 +243,114 @@
     .progress-bar-fill {
       height: 100%; width: 0%; background: #4ade80; transition: width 0.1s;
     }
+
+    /* Responsive Navigation: WhatsApp Web Mobile (< 960px) */
+    .btn-back-contacts {
+      display: none;
+      align-items: center; gap: 4px;
+      background: transparent; border: none;
+      color: var(--wa-accent-green); font-size: 14.5px; font-weight: 700;
+      cursor: pointer; margin-right: 10px; padding: 6px 10px;
+      border-radius: 6px; transition: background 0.15s; flex-shrink: 0;
+    }
+    .btn-back-contacts:hover {
+      background: rgba(0, 168, 132, 0.15);
+    }
+    .btn-toggle-telemetry {
+      display: none;
+      align-items: center; gap: 4px;
+      background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--alr-blue); font-size: 11.5px; font-weight: 700;
+      cursor: pointer; padding: 4px 10px; border-radius: 12px;
+      margin-left: auto; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+    }
+    .btn-toggle-telemetry:hover {
+      background: rgba(56, 189, 248, 0.25);
+    }
+    #btn-close-telemetry {
+      display: none;
+    }
+
+    @media (max-width: 959px) {
+      #top-bar {
+        padding: 0 10px;
+        font-size: 11.5px;
+      }
+      #top-bar > div:last-child {
+        display: none;
+      }
+      .container {
+        position: relative;
+        width: 100vw;
+        overflow: hidden;
+      }
+      .contacts-panel {
+        width: 100vw !important;
+        min-width: 100vw !important;
+        display: flex;
+      }
+      .chat-window {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        width: 100vw !important;
+        min-width: 100vw !important;
+        display: none;
+        z-index: 20;
+      }
+      .container.mobile-chat-open .contacts-panel {
+        display: none !important;
+      }
+      .container.mobile-chat-open .chat-window {
+        display: flex !important;
+      }
+      .btn-back-contacts {
+        display: inline-flex !important;
+      }
+      .btn-toggle-telemetry {
+        display: inline-flex !important;
+      }
+      .shield-indicator {
+        display: none !important;
+      }
+      .telemetry-panel {
+        display: none;
+      }
+      .telemetry-panel.mobile-drawer-open {
+        display: flex !important;
+        position: fixed;
+        top: 38px; left: 0; right: 0; bottom: 0;
+        width: 100vw !important;
+        z-index: 60;
+        background: #111b21;
+      }
+      #btn-close-telemetry {
+        display: block !important;
+      }
+      .messages-area {
+        padding: 14px 16px;
+      }
+      .msg-bubble {
+        max-width: 85%;
+      }
+    }
+
+    @media (min-width: 960px) and (max-width: 1280px) {
+      .contacts-panel {
+        width: min(340px, 32vw);
+      }
+      .telemetry-panel {
+        width: min(340px, 32vw);
+      }
+    }
+
+    @media (min-width: 2000px) {
+      .contacts-panel {
+        width: 440px;
+      }
+      .telemetry-panel {
+        width: 480px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -245,9 +373,13 @@
         <span class="chip chip-green" id="active-niche-pill">🛒 E-commerce</span>
       </div>
 
-      <!-- Carrossel de Seleção dos 20 Nichos -->
-      <div class="niche-carousel" id="niche-carousel">
-        <!-- Renderizado dinamicamente via JS -->
+      <!-- Carrossel de Seleção dos 20 Nichos com Navegação Suave -->
+      <div class="niche-carousel-wrap">
+        <button type="button" class="niche-scroll-btn btn-prev" onclick="scrollNicheCarousel(-160)" aria-label="Rolar nichos para esquerda">‹</button>
+        <div class="niche-carousel" id="niche-carousel">
+          <!-- Renderizado dinamicamente via JS -->
+        </div>
+        <button type="button" class="niche-scroll-btn btn-next" onclick="scrollNicheCarousel(160)" aria-label="Rolar nichos para direita">›</button>
       </div>
 
       <div class="search-box">
@@ -261,12 +393,18 @@
     <!-- Painel Central: Chat Ativo -->
     <div class="chat-window">
       <div class="window-header">
+        <button id="btn-back-to-contacts" class="btn-back-contacts" onclick="closeMobileChat()">
+          ← Conversas
+        </button>
         <div class="window-avatar" id="active-avatar">JS</div>
-        <div style="flex: 1;">
-          <div style="font-weight: 600; font-size: 15.5px;" id="active-name">João Silva</div>
-          <div style="font-size: 12px; color: var(--wa-text-secondary);" id="active-phone">+55 (11) 98765-4321 &bull; online</div>
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-weight: 600; font-size: 15.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="active-name">João Silva</div>
+          <div style="font-size: 12px; color: var(--wa-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="active-phone">+55 (11) 98765-4321 &bull; online</div>
         </div>
-        <div style="font-size: 12px; color: #86efac; font-weight: 600;">🔒 Protegido pelo ALR Safety Shield</div>
+        <button id="btn-toggle-telemetry" class="btn-toggle-telemetry" onclick="toggleMobileTelemetry()" title="Ver telemetria cognitiva e economia de tokens">
+          📊 Telemetria
+        </button>
+        <div class="shield-indicator" style="font-size: 12px; color: #86efac; font-weight: 600; margin-left: 8px;">🔒 Safety Shield</div>
       </div>
 
       <div class="messages-area" id="messages-area">
@@ -281,7 +419,10 @@
 
     <!-- Painel Direito: Telemetria & Auto-Aprendizado -->
     <div class="telemetry-panel">
-      <div class="section-title">📊 Telemetria Cognitiva ALR</div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <div class="section-title" style="margin-bottom: 0;">📊 Telemetria Cognitiva ALR</div>
+        <button id="btn-close-telemetry" onclick="toggleMobileTelemetry()" style="background: transparent; border: none; color: #94a3b8; font-size: 18px; font-weight: bold; cursor: pointer; padding: 4px 8px;" title="Fechar Telemetria">✕</button>
+      </div>
 
       <!-- Card Origem da Decisão & Ciclo Cognitivo -->
       <div class="card">
@@ -569,6 +710,26 @@
       });
     }
 
+    function scrollNicheCarousel(amount) {
+      const el = document.getElementById('niche-carousel');
+      if (el) el.scrollBy({ left: amount, behavior: 'smooth' });
+    }
+
+    function openMobileChat() {
+      const container = document.querySelector('.container');
+      if (container) container.classList.add('mobile-chat-open');
+    }
+
+    function closeMobileChat() {
+      const container = document.querySelector('.container');
+      if (container) container.classList.remove('mobile-chat-open');
+    }
+
+    function toggleMobileTelemetry() {
+      const panel = document.querySelector('.telemetry-panel');
+      if (panel) panel.classList.toggle('mobile-drawer-open');
+    }
+
     function switchNiche(key) {
       activeNicheKey = key;
       renderNicheCarousel();
@@ -578,10 +739,17 @@
       document.getElementById('kb-article-val').innerText = `${n.kb.id} (${n.kb.title})`;
       document.getElementById('learn-template').value = customLearnedTemplates[key] || n.template;
 
+      // Scroll active chip into view inside carousel
+      const carousel = document.getElementById('niche-carousel');
+      if (carousel) {
+        const activeChip = carousel.querySelector('.niche-chip.active');
+        if (activeChip) activeChip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+
       // Seleciona o primeiro contato do nicho
       activeContactId = n.contacts[0].id;
       renderContacts();
-      selectContact(activeContactId);
+      selectContact(activeContactId, false);
     }
 
     function extractEntities(text) {
@@ -655,7 +823,7 @@
       contacts.forEach(c => {
         const item = document.createElement('div');
         item.className = `chat-item ${c.id === activeContactId ? 'active' : ''}`;
-        item.onclick = () => selectContact(c.id);
+        item.onclick = () => selectContact(c.id, true);
 
         const lastMsg = c.history.length > 0 ? c.history[c.history.length - 1].text : c.initialMsg;
 
@@ -674,7 +842,10 @@
       });
     }
 
-    function selectContact(id) {
+    function selectContact(id, isUserClick = false) {
+      if (isUserClick && window.innerWidth < 960) {
+        openMobileChat();
+      }
       activeContactId = id;
       const contacts = NICHES_DB[activeNicheKey].contacts;
       const contact = contacts.find(c => c.id === id);
