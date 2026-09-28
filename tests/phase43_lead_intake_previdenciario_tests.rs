@@ -184,3 +184,61 @@ async fn test_whatsapp_handover_generation() {
     assert!(handover.prefilled_message.contains("90"));
     assert_eq!(handover.priority, "ALTA");
 }
+
+#[tokio::test]
+async fn test_contextual_age_and_gender_recognition() {
+    let mut engine = LeadIntakeEngine::default();
+    let mut lead = LeadProfile::new("lead_invalidez_01".to_string(), "Segurado Teste");
+
+    // Mensagem 1: Declara que busca invalidez
+    let (reply1, _) = engine
+        .process_lead_message(
+            &mut lead,
+            "Quero dar entrada em aposentadoria por invalidez.",
+        )
+        .await;
+
+    assert_eq!(
+        lead.benefit_type,
+        Some(PrevidenciarioBenefitType::AposentadoriaInvalidez)
+    );
+    assert!(reply1.text.contains("idade atual"));
+    assert!(reply1.text.contains("homem ou mulher"));
+
+    // Mensagem 2: Responde "tenho 37, homem"
+    let (reply2, _) = engine
+        .process_lead_message(&mut lead, "tenho 37, homem")
+        .await;
+
+    assert_eq!(lead.age, Some(37));
+    assert_eq!(lead.gender, Some("M".to_string()));
+    // Deve avançar para a próxima pergunta (contribuição), não repetir idade/gênero!
+    assert!(reply2.text.contains("quantos anos de contribuição"));
+}
+
+#[tokio::test]
+async fn test_contextual_contribution_years_short_reply() {
+    let mut engine = LeadIntakeEngine::default();
+    let mut lead = LeadProfile::new("lead_short_contrib".to_string(), "Marcos");
+    lead.benefit_type = Some(PrevidenciarioBenefitType::AposentadoriaTempo);
+    lead.age = Some(45);
+    lead.gender = Some("M".to_string());
+
+    // Simula que a última pergunta do assistente foi sobre contribuição
+    lead.dialogue_history.push(alr_agent::lead_intake::LeadDialogueMessage {
+        sender: "assistant".to_string(),
+        text: "Muito importante: aproximadamente **quantos anos de contribuição** você já possui somando carteira de trabalho assinada, carnês ou tempo de trabalho na roça/rural?".to_string(),
+        timestamp: 100,
+        message_type: "dialogue".to_string(),
+        source: None,
+    });
+
+    // Usuário responde apenas "20"
+    let (reply, _) = engine.process_lead_message(&mut lead, "20").await;
+
+    assert_eq!(lead.contribution_years, Some(20.0));
+    // O assistente NÃO deve perguntar contribuição de novo!
+    assert!(!reply.text.contains("quantos anos de contribuição"));
+    // Deve perguntar sobre a negativa do INSS
+    assert!(reply.text.contains("negado/indeferido"));
+}

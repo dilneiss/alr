@@ -20118,9 +20118,24 @@ Lead Frio: apenas olhando, documentação, onde posso baixar`;
             }
             const ageEl = document.getElementById('wa-ent-age');
             if (ageEl) {
-                const age = lead.age ? `${lead.age} anos` : '-';
-                const gen = lead.gender ? ` (${lead.gender})` : '';
-                ageEl.textContent = lead.age ? `${age}${gen}` : '-';
+                let genderLabel = '';
+                if (lead.gender === 'M' || lead.gender === 'm' || lead.gender === 'Homem') {
+                    genderLabel = 'Homem';
+                } else if (lead.gender === 'F' || lead.gender === 'f' || lead.gender === 'Mulher') {
+                    genderLabel = 'Mulher';
+                } else if (lead.gender) {
+                    genderLabel = lead.gender;
+                }
+
+                if (lead.age && genderLabel) {
+                    ageEl.textContent = `${lead.age} anos (${genderLabel})`;
+                } else if (lead.age) {
+                    ageEl.textContent = `${lead.age} anos`;
+                } else if (genderLabel) {
+                    ageEl.textContent = genderLabel;
+                } else {
+                    ageEl.textContent = '-';
+                }
             }
             const timeEl = document.getElementById('wa-ent-time');
             if (timeEl) {
@@ -20131,7 +20146,7 @@ Lead Frio: apenas olhando, documentação, onde posso baixar`;
                 if (lead.has_inss_denial === true) {
                     inssEl.innerHTML = '<span style="color: #ff4444; font-weight: 700;">Sim (Negativa Formal)</span>';
                 } else if (lead.has_inss_denial === false) {
-                    inssEl.textContent = 'Não informou negativa';
+                    inssEl.textContent = 'Não (Ainda não solicitou)';
                 } else {
                     inssEl.textContent = '-';
                 }

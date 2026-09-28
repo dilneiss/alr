@@ -295,14 +295,26 @@ impl PrevidenciarioRuleEngine {
     }
 
     /// Detecta intenção de benefício previdenciário no texto
+    /// Detecta intenção de benefício previdenciário no texto (regras léxicas e sinônimos)
     pub fn detect_benefit_type(text: &str) -> Option<PrevidenciarioBenefitType> {
         let lower = text.to_lowercase();
+
+        // 1. BPC / LOAS (Benefício Assistencial)
         if lower.contains("bpc")
             || lower.contains("loas")
             || lower.contains("benefício assistencial")
+            || lower.contains("beneficio assistencial")
             || lower.contains("idoso de baixa renda")
+            || lower.contains("cadunico")
+            || lower.contains("cadúnico")
+            || lower.contains("amparo assistencial")
+            || lower.contains("nunca contribui")
+            || lower.contains("nunca paguei inss")
+            || lower.contains("sem renda")
+            || lower.contains("miserabilidade")
         {
             Some(PrevidenciarioBenefitType::BpcLoas)
+        // 2. Auxílio-Doença (Incapacidade Temporária)
         } else if lower.contains("auxilio doenca")
             || lower.contains("auxílio doença")
             || lower.contains("auxilio-doenca")
@@ -314,54 +326,106 @@ impl PrevidenciarioRuleEngine {
             || lower.contains("pericia do inss")
             || lower.contains("perícia do inss")
             || lower.contains("perícia")
+            || lower.contains("pericia")
             || lower.contains("afastamento")
+            || lower.contains("afastado")
             || lower.contains("acidente de trabalho")
             || lower.contains("hernia")
             || lower.contains("hérnia")
+            || lower.contains("cirurgia")
+            || lower.contains("problema na coluna")
+            || lower.contains("dor na coluna")
+            || lower.contains("coluna travada")
+            || lower.contains("estou doente")
+            || lower.contains("atestado de afastamento")
         {
             Some(PrevidenciarioBenefitType::AuxilioDoenca)
+        // 3. Aposentadoria por Invalidez (Incapacidade Permanente)
         } else if lower.contains("invalidez")
             || lower.contains("incapacidade permanente")
+            || lower.contains("incapacidade definitiva")
             || lower.contains("aposentadoria por invalidez")
+            || lower.contains("não consigo mais trabalhar")
+            || lower.contains("nao consigo mais trabalhar")
+            || lower.contains("nunca mais volto")
+            || lower.contains("aposentar por doença")
+            || lower.contains("aposentar por doenca")
         {
             Some(PrevidenciarioBenefitType::AposentadoriaInvalidez)
+        // 4. Aposentadoria Especial (Insalubridade / Periculosidade)
         } else if lower.contains("especial")
             || lower.contains("insalubre")
+            || lower.contains("insalubridade")
             || lower.contains("periculosidade")
+            || lower.contains("periculoso")
             || lower.contains("ppp")
+            || lower.contains("ltcat")
             || lower.contains("frigorifico")
+            || lower.contains("frigorífico")
             || lower.contains("enfermagem")
             || lower.contains("soldador")
+            || lower.contains("vigilante")
+            || lower.contains("químico")
+            || lower.contains("quimico")
+            || lower.contains("ruído")
+            || lower.contains("ruido")
         {
             Some(PrevidenciarioBenefitType::AposentadoriaEspecial)
+        // 5. Pensão por Morte
         } else if lower.contains("pensao por morte")
             || lower.contains("pensão por morte")
             || lower.contains("falecimento do marido")
+            || lower.contains("falecimento da esposa")
+            || lower.contains("marido faleceu")
             || lower.contains("esposa faleceu")
+            || lower.contains("esposo faleceu")
+            || lower.contains("marido morreu")
+            || lower.contains("esposa morreu")
+            || lower.contains("esposo morreu")
             || lower.contains("conjuge falecido")
+            || lower.contains("cônjuge falecido")
+            || lower.contains("óbito")
+            || lower.contains("obito")
         {
             Some(PrevidenciarioBenefitType::PensaoMorte)
+        // 6. Revisão de Benefício
         } else if lower.contains("revisao")
             || lower.contains("revisão")
             || lower.contains("vida toda")
             || lower.contains("inss errou")
             || lower.contains("aumentar minha aposentadoria")
+            || lower.contains("aumentar meu benefício")
+            || lower.contains("valor veio baixo")
+            || lower.contains("cálculo errado")
+            || lower.contains("calculo errado")
         {
             Some(PrevidenciarioBenefitType::RevisaoBeneficio)
+        // 7. Aposentadoria por Tempo de Contribuição
         } else if lower.contains("tempo de contribuicao")
             || lower.contains("tempo de contribuição")
             || lower.contains("tempo de serviço")
+            || lower.contains("tempo de servico")
             || lower.contains("carteira de trabalho")
+            || lower.contains("carteira assinada")
             || lower.contains("anos de contribuicao")
             || lower.contains("anos de contribuição")
             || lower.contains("pedagio")
             || lower.contains("pedágio")
+            || lower.contains("regras de transição")
+            || lower.contains("regras de transicao")
+            || lower.contains("pontos")
         {
             Some(PrevidenciarioBenefitType::AposentadoriaTempo)
+        // 8. Aposentadoria por Idade
         } else if lower.contains("aposentadoria por idade")
             || lower.contains("aposentar por idade")
             || lower.contains("idade minima")
+            || lower.contains("idade mínima")
+            || lower.contains("65 anos")
+            || lower.contains("62 anos")
             || lower.contains("aposentar")
+            || lower.contains("me aposentar")
+            || lower.contains("dar entrada na aposentadoria")
         {
             Some(PrevidenciarioBenefitType::AposentadoriaIdade)
         } else {
@@ -369,47 +433,127 @@ impl PrevidenciarioRuleEngine {
         }
     }
 
-    /// Extrai idade do texto (ex: "tenho 64 anos", "estou com 67", "65 anos")
+    /// Extrai o gênero do cliente (M ou F) analisando tokens isolados, termos e frases
+    pub fn extract_gender(text: &str) -> Option<String> {
+        let lower = text.to_lowercase();
+        let clean = lower.replace(
+            [
+                ',', '.', ';', ':', '!', '?', '-', '/', '(', ')', '[', ']', '{', '}',
+            ],
+            " ",
+        );
+        let tokens: Vec<&str> = clean.split_whitespace().collect();
+
+        // 1. Tokens masculinos explícitos
+        for &t in &tokens {
+            if t == "homem"
+                || t == "homens"
+                || t == "masculino"
+                || t == "masc"
+                || t == "macho"
+                || t == "senhor"
+                || t == "sr"
+            {
+                return Some("M".to_string());
+            }
+        }
+
+        // 2. Tokens femininos explícitos
+        for &t in &tokens {
+            if t == "mulher"
+                || t == "mulheres"
+                || t == "feminino"
+                || t == "feminina"
+                || t == "fem"
+                || t == "senhora"
+                || t == "sra"
+                || t == "dona"
+            {
+                return Some("F".to_string());
+            }
+        }
+
+        // 3. Tokens de caractere único ('m' ou 'f')
+        for &t in &tokens {
+            if t == "m" {
+                return Some("M".to_string());
+            }
+            if t == "f" {
+                return Some("F".to_string());
+            }
+        }
+
+        // 4. Frases e expressões
+        if lower.contains("sou homem")
+            || lower.contains("sou um homem")
+            || lower.contains("do sexo masculino")
+        {
+            return Some("M".to_string());
+        }
+        if lower.contains("sou mulher")
+            || lower.contains("sou uma mulher")
+            || lower.contains("dona de casa")
+            || lower.contains("do sexo feminino")
+        {
+            return Some("F".to_string());
+        }
+
+        None
+    }
+
+    /// Extrai idade do texto (modo compatível)
     pub fn extract_age(text: &str) -> Option<u32> {
-        let words: Vec<&str> = text.split_whitespace().collect();
-        for i in 0..words.len() {
-            let w = words[i].trim_matches(|c: char| !c.is_numeric());
-            if let Ok(num) = w.parse::<u32>() {
+        Self::extract_age_contextual(text, false)
+    }
+
+    /// Extrai idade do texto com consciência de diálogo
+    pub fn extract_age_contextual(text: &str, is_answering_age: bool) -> Option<u32> {
+        let clean = text.replace(
+            [
+                ',', '.', ';', ':', '!', '?', '-', '/', '(', ')', '[', ']', '{', '}',
+            ],
+            " ",
+        );
+        let words: Vec<&str> = clean.split_whitespace().collect();
+
+        for (i, &word) in words.iter().enumerate() {
+            let digits: String = word.chars().filter(|c| c.is_numeric()).collect();
+            if let Ok(num) = digits.parse::<u32>() {
                 if (18..=105).contains(&num) {
+                    let forward = words
+                        .iter()
+                        .skip(i + 1)
+                        .take(4)
+                        .cloned()
+                        .collect::<Vec<_>>()
+                        .join(" ")
+                        .to_lowercase();
+
+                    // Se for claramente anos de contribuição ("35 anos de contribuição"), não é idade
+                    if forward.contains("contribu")
+                        || forward.contains("carteira")
+                        || forward.contains("trabalh")
+                    {
+                        continue;
+                    }
+
+                    if is_answering_age {
+                        return Some(num);
+                    }
+
+                    // Se não for em resposta direta de idade, exige prefixo ou sufixo
                     if i + 1 < words.len()
                         && (words[i + 1].starts_with("ano") || words[i + 1].starts_with("idade"))
                     {
-                        let forward = words
-                            .iter()
-                            .skip(i + 1)
-                            .take(4)
-                            .cloned()
-                            .collect::<Vec<_>>()
-                            .join(" ")
-                            .to_lowercase();
-                        if !forward.contains("contribu")
-                            && !forward.contains("trabalh")
-                            && !forward.contains("carteira")
-                        {
-                            return Some(num);
-                        }
+                        return Some(num);
                     }
                     if i > 0
                         && (words[i - 1].contains("tenho")
                             || words[i - 1].contains("com")
-                            || words[i - 1].contains("fiz"))
+                            || words[i - 1].contains("fiz")
+                            || words[i - 1].contains("estou"))
                     {
-                        let forward = words
-                            .iter()
-                            .skip(i)
-                            .take(4)
-                            .cloned()
-                            .collect::<Vec<_>>()
-                            .join(" ")
-                            .to_lowercase();
-                        if !forward.contains("contribu") {
-                            return Some(num);
-                        }
+                        return Some(num);
                     }
                 }
             }
@@ -417,32 +561,121 @@ impl PrevidenciarioRuleEngine {
         None
     }
 
-    /// Extrai tempo aproximado de contribuição em anos
+    /// Extrai tempo aproximado de contribuição em anos (modo compatível)
     pub fn extract_contribution_years(text: &str) -> Option<f32> {
-        let words: Vec<&str> = text.split_whitespace().collect();
-        for i in 0..words.len() {
-            let w = words[i].trim_matches(|c: char| !c.is_numeric());
-            if let Ok(num) = w.parse::<f32>() {
-                if (1.0..=50.0).contains(&num) {
+        Self::extract_contribution_years_contextual(text, false)
+    }
+
+    /// Extrai tempo de contribuição em anos com consciência de diálogo
+    pub fn extract_contribution_years_contextual(
+        text: &str,
+        is_answering_contribution: bool,
+    ) -> Option<f32> {
+        let lower = text.to_lowercase();
+
+        // 1. Menções de zero contribuição
+        if lower.contains("nunca contribu")
+            || lower.contains("nunca paguei")
+            || lower.contains("nenhum ano")
+            || lower.contains("zero ano")
+            || lower.trim() == "0"
+            || lower.trim() == "0 anos"
+            || lower.trim() == "nenhum"
+            || lower.trim() == "nenhuma"
+            || lower.trim() == "nao tenho"
+            || lower.trim() == "não tenho"
+        {
+            return Some(0.0);
+        }
+
+        let clean = lower.replace(
+            [',', ';', ':', '!', '?', '/', '(', ')', '[', ']', '{', '}'],
+            " ",
+        );
+        let words: Vec<&str> = clean.split_whitespace().collect();
+
+        for (i, &word) in words.iter().enumerate() {
+            let digits: String = word
+                .chars()
+                .filter(|c| c.is_numeric() || *c == '.')
+                .collect();
+            if let Ok(num) = digits.parse::<f32>() {
+                if (1.0..=55.0).contains(&num) {
+                    if is_answering_contribution {
+                        // Se o assistente perguntou anos de contribuição, qualquer número (ex: "20", "20 anos", "tenho 20")
+                        // é diretamente o tempo de contribuição!
+                        return Some(num);
+                    }
+
+                    // Fora do fluxo guiado, exige contexto na frase
                     let nearby_ctx = words
                         .iter()
                         .skip(i.saturating_sub(2))
                         .take(8)
                         .cloned()
                         .collect::<Vec<_>>()
-                        .join(" ")
-                        .to_lowercase();
+                        .join(" ");
+
                     if nearby_ctx.contains("carteira")
                         || nearby_ctx.contains("contribu")
                         || nearby_ctx.contains("trabalh")
                         || nearby_ctx.contains("inss")
                         || nearby_ctx.contains("carne")
+                        || nearby_ctx.contains("carnê")
+                        || nearby_ctx.contains("tempo de serviço")
                     {
                         return Some(num);
                     }
                 }
             }
         }
+        None
+    }
+
+    /// Extrai status de negativa formal do INSS com consciência de diálogo
+    pub fn extract_inss_denial(text: &str, is_answering_denial: bool) -> Option<bool> {
+        let lower = text.to_lowercase();
+
+        // 1. Menções afirmativas de negativa em qualquer mensagem
+        if lower.contains("negou")
+            || lower.contains("negad")
+            || lower.contains("indefer")
+            || lower.contains("recus")
+            || lower.contains("cess")
+            || lower.contains("cortaram")
+            || lower.contains("cancela")
+        {
+            return Some(true);
+        }
+
+        // 2. Se for resposta à pergunta de negativa do INSS
+        if is_answering_denial {
+            let clean = lower.replace([',', '.', ';', ':', '!', '?', '-'], " ");
+            let trimmed = clean.trim();
+            let tokens: Vec<&str> = trimmed.split_whitespace().collect();
+
+            for &t in &tokens {
+                if t == "sim" || t == "ja" || t == "já" || t == "foi" || t == "deu" {
+                    return Some(true);
+                }
+                if t == "nao" || t == "não" || t == "nunca" || t == "ainda" {
+                    return Some(false);
+                }
+            }
+
+            if trimmed.starts_with("sim") || trimmed.contains("foi negado") {
+                return Some(true);
+            }
+            if trimmed.starts_with("não")
+                || trimmed.starts_with("nao")
+                || trimmed.contains("ainda não")
+                || trimmed.contains("ainda nao")
+                || trimmed.contains("nunca dei")
+            {
+                return Some(false);
+            }
+        }
+
         None
     }
 
@@ -537,7 +770,14 @@ pub struct LeadIntakeEngine {
 
 impl Default for LeadIntakeEngine {
     fn default() -> Self {
-        Self::new("5511999998888")
+        let store: Arc<dyn SemanticMemoryStore> =
+            Arc::new(alr_memory::MockSemanticMemoryStore::new());
+        let embedder: Arc<dyn EmbeddingProvider> =
+            Arc::new(alr_memory::MockEmbeddingProvider::default());
+        let mut engine = Self::new("5511999998888");
+        engine.semantic_store = Some(store);
+        engine.embedder = Some(embedder);
+        engine
     }
 }
 
@@ -576,6 +816,167 @@ impl LeadIntakeEngine {
         self
     }
 
+    /// Semeia arquétipos semânticos na memória vetorial (Qdrant ou Mock)
+    pub async fn seed_benefit_semantic_memories(&self) -> Result<()> {
+        if let (Some(store), Some(embedder)) = (&self.semantic_store, &self.embedder) {
+            let archetypes = [
+                (
+                    "aposentadoria_tempo",
+                    "Aposentadoria por Tempo de Contribuição e Transição",
+                    "Quero me aposentar por tempo de contribuição tenho 35 anos ou 30 anos de carteira assinada carnê GPS tempo de serviço regras de transição pedágio 50% ou 100% pontos 86 96",
+                ),
+                (
+                    "aposentadoria_idade",
+                    "Aposentadoria por Idade Urbana e Rural",
+                    "Aposentadoria por idade mínima 65 anos homem ou 62 anos mulher com carência de 180 meses 15 anos de contribuição INSS tempo rural roça atingi a idade me aposentar",
+                ),
+                (
+                    "bpc_loas",
+                    "BPC LOAS Benefício Assistencial Idoso ou Deficiente",
+                    "Idoso com mais de 65 anos ou deficiente de qualquer idade baixa renda família pobre CadÚnico sem contribuição nunca pagou INSS salário mínimo miserabilidade",
+                ),
+                (
+                    "auxilio_doenca",
+                    "Auxílio-Doença Incapacidade Temporária Afastamento Perícia",
+                    "Auxílio-doença benefício por incapacidade temporária perícia médica atestado laudo hérnia de disco cirurgia acidente de trabalho afastamento pelo médico dor insuportável coluna",
+                ),
+                (
+                    "aposentadoria_invalidez",
+                    "Aposentadoria por Invalidez Incapacidade Permanente",
+                    "Aposentadoria por invalidez incapacidade permanente definitiva não consigo mais trabalhar doença grave sequela irreversível nunca mais volto ao trabalho",
+                ),
+                (
+                    "aposentadoria_especial",
+                    "Aposentadoria Especial Insalubridade Periculosidade PPP",
+                    "Aposentadoria especial insalubre periculosidade ruído calor químico vigilante soldador enfermagem frigorífico PPP LTCAT",
+                ),
+                (
+                    "pensao_morte",
+                    "Pensão por Morte Óbito do Segurado",
+                    "Pensão por morte meu marido faleceu esposa morreu companheiro faleceu dependente financeiro certidão de óbito casamento união estável",
+                ),
+                (
+                    "revisao_beneficio",
+                    "Revisão de Benefício Previdenciário e Atrasados",
+                    "Revisão de benefício revisão da vida toda cálculo errado do INSS valor muito baixo aumentar salário da aposentadoria cobrar atrasados",
+                ),
+            ];
+
+            let mut memories = Vec::new();
+            for (slug, title, text) in archetypes {
+                if let Ok(vecs) = embedder.embed(&[text.to_string()]).await {
+                    if let Some(vec) = vecs.into_iter().next() {
+                        let mut mem = SemanticMemory::new(
+                            "previdenciario",
+                            SemanticMemoryType::Policy,
+                            title.to_string(),
+                            text.to_string(),
+                            "system_preseeded",
+                        );
+                        mem.vector = Some(vec);
+                        mem.metadata
+                            .insert("benefit_type".to_string(), serde_json::json!(slug));
+                        memories.push(mem);
+                    }
+                }
+            }
+            if !memories.is_empty() {
+                let _ = store.upsert(memories).await;
+            }
+        }
+        Ok(())
+    }
+
+    /// Detecta tipo de benefício usando regras léxicas e busca vetorial no Qdrant/SemanticMemoryStore
+    pub async fn detect_benefit_type_smart(
+        &self,
+        text: &str,
+        is_answering_benefit: bool,
+    ) -> Option<PrevidenciarioBenefitType> {
+        // 1. Regra léxica com sinônimos e termos coloquiais
+        if let Some(ben) = PrevidenciarioRuleEngine::detect_benefit_type(text) {
+            return Some(ben);
+        }
+
+        // 2. Se houver Qdrant ou Semantic Memory Store conectada, busca semântica vetorial
+        if let (Some(store), Some(embedder)) = (&self.semantic_store, &self.embedder) {
+            if let Ok(vecs) = embedder.embed(&[text.to_string()]).await {
+                if let Some(vec) = vecs.into_iter().next() {
+                    let query = SemanticQuery::new("previdenciario", vec)
+                        .with_memory_type(SemanticMemoryType::Policy)
+                        .with_top_k(1);
+                    if let Ok(results) = store.search(query).await {
+                        if let Some(top) = results.first() {
+                            if top.score >= 0.58 {
+                                if let Some(serde_json::Value::String(ben_str)) =
+                                    top.memory.metadata.get("benefit_type")
+                                {
+                                    match ben_str.as_str() {
+                                        "aposentadoria_tempo" => {
+                                            return Some(
+                                                PrevidenciarioBenefitType::AposentadoriaTempo,
+                                            )
+                                        }
+                                        "aposentadoria_idade" => {
+                                            return Some(
+                                                PrevidenciarioBenefitType::AposentadoriaIdade,
+                                            )
+                                        }
+                                        "aposentadoria_especial" => {
+                                            return Some(
+                                                PrevidenciarioBenefitType::AposentadoriaEspecial,
+                                            )
+                                        }
+                                        "aposentadoria_invalidez" => {
+                                            return Some(
+                                                PrevidenciarioBenefitType::AposentadoriaInvalidez,
+                                            )
+                                        }
+                                        "bpc_loas" => {
+                                            return Some(PrevidenciarioBenefitType::BpcLoas)
+                                        }
+                                        "auxilio_doenca" => {
+                                            return Some(PrevidenciarioBenefitType::AuxilioDoenca)
+                                        }
+                                        "pensao_morte" => {
+                                            return Some(PrevidenciarioBenefitType::PensaoMorte)
+                                        }
+                                        "revisao_beneficio" => {
+                                            return Some(
+                                                PrevidenciarioBenefitType::RevisaoBeneficio,
+                                            )
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Se for resposta à pergunta de benefício, termos genéricos
+        if is_answering_benefit {
+            let lower = text.to_lowercase();
+            if lower.contains("aposentar") || lower.contains("aposentadoria") {
+                return Some(PrevidenciarioBenefitType::AposentadoriaTempo);
+            }
+            if lower.contains("auxilio")
+                || lower.contains("auxílio")
+                || lower.contains("doenca")
+                || lower.contains("doença")
+            {
+                return Some(PrevidenciarioBenefitType::AuxilioDoenca);
+            }
+            if lower.contains("bpc") || lower.contains("loas") {
+                return Some(PrevidenciarioBenefitType::BpcLoas);
+            }
+        }
+
+        None
+    }
+
     /// Processa mensagem livre do lead simulando o fluxo de chat do WhatsApp
     pub async fn process_lead_message(
         &mut self,
@@ -584,6 +985,50 @@ impl LeadIntakeEngine {
     ) -> (LeadDialogueMessage, Option<LeadHandoverReport>) {
         let now = chrono::Utc::now().timestamp();
         lead.updated_at = now;
+
+        // Inspeciona qual foi a última pergunta feita pelo assistente para contextualizar respostas curtas
+        let last_assistant_question = lead
+            .dialogue_history
+            .iter()
+            .rev()
+            .find(|m| m.sender == "assistant")
+            .map(|m| m.text.to_lowercase());
+
+        let is_answering_age_gender = last_assistant_question
+            .as_ref()
+            .map(|q| {
+                q.contains("idade") || q.contains("homem ou mulher") || q.contains("você é homem")
+            })
+            .unwrap_or(false);
+
+        let is_answering_contribution = last_assistant_question
+            .as_ref()
+            .map(|q| {
+                q.contains("quantos anos de contribuição")
+                    || q.contains("tempo de contribuição")
+                    || q.contains("anos de contribui")
+            })
+            .unwrap_or(false);
+
+        let is_answering_denial = last_assistant_question
+            .as_ref()
+            .map(|q| {
+                q.contains("negado")
+                    || q.contains("indeferido")
+                    || q.contains("solicitação")
+                    || q.contains("pedido no inss")
+            })
+            .unwrap_or(false);
+
+        let is_answering_benefit = last_assistant_question
+            .as_ref()
+            .map(|q| {
+                q.contains("se aposentar")
+                    || q.contains("bpc/loas")
+                    || q.contains("qual benefício")
+                    || q.contains("auxílio-doença")
+            })
+            .unwrap_or(false);
 
         // Registra mensagem do cliente
         lead.dialogue_history.push(LeadDialogueMessage {
@@ -620,51 +1065,70 @@ impl LeadIntakeEngine {
         }
 
         // =========================================================================
-        // CAMADA 2: EXTRAÇÃO DE ENTIDADES PREVIDENCIÁRIAS
+        // CAMADA 2: EXTRAÇÃO DE ENTIDADES PREVIDENCIÁRIAS COM CONSCIÊNCIA DE DIÁLOGO
         // =========================================================================
+        // 1. Benefício Alvo
         if lead.benefit_type.is_none() {
-            lead.benefit_type = PrevidenciarioRuleEngine::detect_benefit_type(incoming_message);
-        }
-        if lead.age.is_none() {
-            lead.age = PrevidenciarioRuleEngine::extract_age(incoming_message);
-        }
-        if lead.contribution_years.is_none() {
-            lead.contribution_years =
-                PrevidenciarioRuleEngine::extract_contribution_years(incoming_message);
+            lead.benefit_type = self
+                .detect_benefit_type_smart(incoming_message, is_answering_benefit)
+                .await;
         }
 
-        let lower = incoming_message.to_lowercase();
-        if lower.contains("negou")
-            || lower.contains("negad")
-            || lower.contains("indefer")
-            || lower.contains("recus")
-            || lower.contains("cess")
-        {
-            lead.has_inss_denial = Some(true);
+        // 2. Gênero (M ou F)
+        if lead.gender.is_none() {
+            lead.gender = PrevidenciarioRuleEngine::extract_gender(incoming_message);
         }
+
+        // 3. Idade
+        if lead.age.is_none() {
+            lead.age = PrevidenciarioRuleEngine::extract_age_contextual(
+                incoming_message,
+                is_answering_age_gender,
+            );
+        }
+
+        // 4. Tempo de Contribuição
+        if lead.contribution_years.is_none() {
+            lead.contribution_years =
+                PrevidenciarioRuleEngine::extract_contribution_years_contextual(
+                    incoming_message,
+                    is_answering_contribution,
+                );
+        }
+
+        // 5. Negativa do INSS
+        if lead.has_inss_denial.is_none() {
+            lead.has_inss_denial = PrevidenciarioRuleEngine::extract_inss_denial(
+                incoming_message,
+                is_answering_denial,
+            );
+        }
+
+        // 6. Laudos e Perícia
+        let lower = incoming_message.to_lowercase();
         if lower.contains("laudo")
             || lower.contains("atestado")
             || lower.contains("exame")
             || lower.contains("cid")
+            || lower.contains("perícia")
+            || lower.contains("pericia")
         {
             lead.has_medical_report = Some(true);
         }
-        if lower.contains("sou mulher")
-            || lower.contains("sou dona de casa")
-            || lower.contains("senhora")
-        {
-            lead.gender = Some("F".to_string());
-        } else if lower.contains("sou homem") || lower.contains("senhor") {
-            lead.gender = Some("M".to_string());
-        }
+
+        // 7. Trabalhador Rural
         if lower.contains("rural")
             || lower.contains("roça")
+            || lower.contains("roca")
             || lower.contains("agricult")
             || lower.contains("pescad")
+            || lower.contains("lavoura")
         {
             lead.is_rural_worker = Some(true);
         }
 
+        // Auto-semeia arquétipos se ainda vazio
+        let _ = self.seed_benefit_semantic_memories().await;
         // =========================================================================
         // CAMADA 3: BUSCA DE DÚVIDA JURÍDICA NA MEMÓRIA SEMÂNTICA (QDRANT / $0 TOKENS)
         // =========================================================================
@@ -746,6 +1210,14 @@ impl LeadIntakeEngine {
             let text = format!(
                 "Perfeito! Compreendi que seu interesse é em **{ben_name}**.\n\nPara calcularmos os requisitos objetivos da lei: qual é a sua **idade atual** e você é **homem ou mulher**?"
             );
+            (text, None)
+        } else if lead.gender.is_none()
+            && !matches!(
+                lead.benefit_type,
+                Some(PrevidenciarioBenefitType::PensaoMorte)
+            )
+        {
+            let text = "Muito importante para apurarmos a data exata da aposentadoria pelas regras de transição da Reforma: você é **homem ou mulher**?".to_string();
             (text, None)
         } else if lead.contribution_years.is_none()
             && !matches!(lead.benefit_type, Some(PrevidenciarioBenefitType::BpcLoas))
