@@ -3849,20 +3849,22 @@
       if (!hist || hist.length === 0) {
         return `<span class="text-slate-500 italic text-[9px]">Setup inicial ativo</span>`;
       }
-      return hist.map((h, i) => {
+      const slice = hist.slice(-2);
+      return slice.map((h, i) => {
         const isCurrent = h.is_current;
-        const tag = isCurrent ? '🟢 Atual' : 'v' + (i + 1);
+        const tag = isCurrent ? '🟢 Atual' : 'Anterior';
         const pnlSign = h.pnl_usd >= 0 ? '+' : '';
         const shortName = (h.strategy_name || '')
           .replace(' (Seguidor de Tendência Forte)', '')
           .replace(' (Mutante Tendência/POC)', '')
-          .replace(' (Ponto de Controle)', '');
+          .replace(' (Ponto de Controle)', '')
+          .replace(' (Acelerador de Rompimento)', '');
         return `
           <span class="inline-flex items-center gap-1 ${isCurrent ? 'text-cyan-300 font-bold' : 'text-slate-400'}">
             <span class="px-1 py-0.2 rounded text-[8px] bg-navy-900 border border-navy-800 font-bold">${tag}</span>
-            <span class="truncate max-w-[100px]" title="${h.strategy_name}">${shortName}</span>
-            <span class="text-[8px] ${h.pnl_usd >= 0 ? 'text-emerald-400' : 'text-rose-400'}">(${pnlSign}${fmtUSD(h.pnl_usd)})</span>
-            ${i < hist.length - 1 ? '<span class="text-slate-600">➔</span>' : ''}
+            <span class="truncate max-w-[120px]" title="${h.strategy_name}">${shortName}</span>
+            <span class="text-[8px] ${h.pnl_usd >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-semibold">(${pnlSign}${fmtUSD(h.pnl_usd)})</span>
+            ${i < slice.length - 1 ? '<span class="text-slate-600 font-bold">➔</span>' : ''}
           </span>
         `;
       }).join(' ');
