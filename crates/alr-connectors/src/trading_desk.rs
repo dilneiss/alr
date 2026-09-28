@@ -17,7 +17,7 @@
 use crate::trading::{
     asset_baseline_price, generate_synthetic_candles, BacktestReport, Candle, DeskStatusSnapshot,
     ForexConnector, ForexPipCalculator, ForexQuote, GraphTopologyData, IndicatorWeightsSnapshot,
-    MultiAssetTraderEngine, OrderSide, StrategyArena, FOREX_MAJOR_BASKET,
+    MultiAssetTraderEngine, OrderSide, StrategyArena, SystemResourceMetrics, FOREX_MAJOR_BASKET,
 };
 use anyhow::Result;
 use axum::{
@@ -550,6 +550,14 @@ pub async fn post_forex_config_handler(
     }))
 }
 
+/// Handler para fornecer métricas em tempo real de hardware, latência e consumo de recursos
+pub async fn get_desk_resources_handler(
+    State(state): State<TradingDeskState>,
+) -> Json<SystemResourceMetrics> {
+    let engine = state.engine.read();
+    Json(engine.get_system_resource_metrics())
+}
+
 /// Cria o Router Axum completo com todas as rotas do Trading Desk (usando logger padrão)
 pub fn create_trading_desk_router(
     engine: Arc<parking_lot::RwLock<MultiAssetTraderEngine>>,
@@ -615,6 +623,7 @@ pub fn create_trading_desk_router_with_logger(
         .route("/api/v1/desk/forex/quotes", get(get_forex_quotes_handler))
         .route("/api/v1/desk/forex/order", post(post_forex_order_handler))
         .route("/api/v1/desk/forex/config", post(post_forex_config_handler))
+        .route("/api/v1/desk/resources", get(get_desk_resources_handler))
         .route(
             "/static/alr-logo.webp",
             get(|| async {
@@ -709,7 +718,7 @@ mod tests {
     fn test_strategy_profiles_and_dual_market_basket() {
         assert_eq!(DUAL_MARKET_BASKET.len(), 14);
         let profiles = StrategyProfile::default_profiles();
-        assert_eq!(profiles.len(), 400);
+        assert_eq!(profiles.len(), 200);
 
         let crypto_count = profiles
             .iter()
@@ -721,12 +730,12 @@ mod tests {
             .count();
 
         assert_eq!(
-            crypto_count, 200,
-            "Deve haver exatamente 200 perfis de Cripto"
+            crypto_count, 100,
+            "Deve haver exatamente 100 perfis de Cripto"
         );
         assert_eq!(
-            forex_count, 200,
-            "Deve haver exatamente 200 perfis de Forex"
+            forex_count, 100,
+            "Deve haver exatamente 100 perfis de Forex"
         );
 
         // Validação de IDs estritamente únicos

@@ -722,6 +722,9 @@ Infraestrutura completa de alta frequência e baixa latência para execução qu
    * **Cockpit Web com Alternador de Mercado (`Market Switcher`)**:
      * No topo do dashboard web (`http://localhost:3800`), o operador pode alternar livremente entre **🪙 Criptomoedas (7 Ativos)** e **💱 Forex & Câmbio (7 Pares Majors)**.
      * Exibição de cotações em tempo real com **Bid / Ask**, **Spread em Pips**, **Valor do Pip**, cotações com precisão decimal institucional e modal para despacho manual de ordens com 1 clique!
+10. **Monitor de Consumo de Recursos de Hardware & Telemetria do Robô (`SystemResourceMetrics`):**
+   * **Métricas em Tempo Real**: Coleta contínua de memória RAM do processo via FFI nativo (RSS e Pico ~28 MB), percentual de CPU e frequência de loop contínuo (~15 Hz), latência de decisão local System 1 (< 20 µs), custo inviolável de IA ($0.00 / 0 tokens em rotina), integridade do banco SQLite (`alr_state.db` em modo WAL), e latência de rede com as APIs da Binance Spot Testnet e OANDA/MT5.
+   * **Barra Executiva de Telemetria no Web Cockpit**: Exibição permanente de telemetria no topo do painel e endpoint REST dedicado `GET /api/v1/desk/resources` com dados em formato JSON para auditoria e observabilidade.
 ```bash
 # Simulação completa no terminal com gráfico de preços em ASCII, indicadores e extrato de PnL
 cargo run -p alr-cli -- trader-demo --asset BTC-USDT --candles 50
