@@ -100,6 +100,7 @@ cargo run -p alr-cli -- quickstart
 | :--- | :---: | :--- | :--- |
 | [`docs/quickstart-3-minutos.md`](docs/quickstart-3-minutos.md) | 📄 Documento | Tutorial passo a passo de 180s: Instalar $\to$ Configurar $\to$ Treinar | Leitura direta no GitHub / Markdown |
 | [`docs/api-reference.md`](docs/api-reference.md) | 📡 Referência API | Documentação completa de todos os endpoints REST, `/v1/systemone`, 15 Recipes, Domínios, Trading Desk e MCP | Leitura direta ou na aba **📡 API Docs** do Playground (`http://localhost:3000`) |
+| [`docs/cookbooks-reference.md`](docs/cookbooks-reference.md) | 📖 Cookbooks | Guia exaustivo dos 20 Cookbooks oficiais do TypeSafe JEV + Smart Home Demo adaptados para o ALR System 1 | Leitura direta no GitHub / Markdown |
 | [`static/install_and_usage.html`](static/install_and_usage.html) | 🖥️ Web Interativa | Guia visual de instalação com seletor de SO (Win/Linux/Mac) e simulador CLI | `cargo run -p alr-cli -- install-guide` |
 | [`static/showcase.html`](static/showcase.html) | 🌟 Vitrine Web | Demonstração animada completa: Ciclo cognitivo, 20 nichos, jogos e calculadora de ROI | `cargo run -p alr-cli -- showcase` |
 | [`static/whatsapp_support.html`](static/whatsapp_support.html) | 📱 WhatsApp Desk | Central omnichannel nos 20 nichos com chat ao vivo e auto-aprendizado dinâmico | `cargo run -p alr-cli -- whatsapp` |
@@ -107,6 +108,7 @@ cargo run -p alr-cli -- quickstart
 | [`ALR Playground Oficial`](http://localhost:3000) | ⚗️ Web Interativa | Centro Principal de Testes e Decisões Tipadas (100% PT-BR, Linha do Tempo & HUD) | `cargo run -p alr-cli -- playground` |
 | [`extensions/alr-voz/`](extensions/alr-voz/README.md) | 🎙️ Extensão Chrome | ALR Voz: Controle do navegador por voz em tempo real conectado ao ALR System 1 | Carregar no Chrome (`chrome://extensions`) |
 | [`Copiloto de Call de Vendas`](README_COPILOTO.md) | 💼 Web Copiloto | Copiloto em tempo real para Google Meet com quebra de objeções instantânea via ALR System 1 | `node server.js` (`http://localhost:3001`) |
+| [`skills/alr-systemone/SKILL.md`](skills/alr-systemone/SKILL.md) | 🧠 Skill Oficial | Motor de Decisões Tipadas System 1 (Choice, Noul, Score) em CPU local com $0.00 de custo | Primitivas para agentes em Oh My Pi, Claude Code e JEV SDK |
 
 ### ⚗️ Playground Universal do ALR: O Centro Principal de Testes e Simulações
 
@@ -1733,6 +1735,86 @@ O **Playground Universal do ALR** e todos os cockpits web integrados foram proje
 * As tabelas de banco de dados SQLite, Qdrant e CSV possuem rolagem horizontal suave dedicada (`-webkit-overflow-scrolling: touch`), preservando as colunas e os botões de ação em qualquer largura de janela.
 
 ---
+## 🧠 Skill Oficial: ALR System 1 (TypeSafe Jev Engine & Primitivas de Decisão)
+
+O ALR conta com a Skill oficial **`alr-systemone`** ([`skills/alr-systemone/SKILL.md`](skills/alr-systemone/SKILL.md)), que encapsula todo o paradigma do JEV / TypeSafe AI de forma melhorada, permitindo que agentes autônomos e desenvolvedores utilizem decisões de IA como **primitivas nativas de programação**:
+
+```
+Code owns the workflow; the model supplies programmable common sense where ordinary code needs semantic understanding.
+```
+
+### 1. As 3 Primitivas Fundamentais de Decisão
+
+| Primitiva | O que Retorna | Quando Usar | Como o Código Consome |
+| :--- | :--- | :--- | :--- |
+| **`Choice`** | Candidato vencedor + distribuição Softmax + `confidence` | Quando uma opção exclusiva deve ser escolhida entre alternativas concorrentes | `if resp.choice == "financeiro" { ... }` com base na certeza |
+| **`Noul`** | Probabilidade booleana $P(\text{sim})$ de $0.0$ a $1.0$ | Para condições de sim/não (urgência, risco, gatilho, fraude) | `if resp.noul >= 0.75 { trigger_emergency(); }` |
+| **`Score`** | Valor contínuo ponderado pelas probabilidades de níveis | Para intensidade em escala ordinal ordenada (0 a $N$) | `order_by(resp.score)` para ranqueamento e prioridade |
+
+### 2. Por que o ALR System 1 é Superior ao JEV Original?
+
+1. **Zero Custo ($0.00)**: Não consome tokens de API paga nem exige créditos em dólares.
+2. **Execução 100% Local em CPU**: Não depende de GPU e roda em qualquer máquina (Windows, Linux, macOS).
+3. **Latência em Sub-Microssegundos**: Decisões tomadas entre **$20\text{ µs}$ e $400\text{ µs}$**, enquanto chamadas a nuvens remotas levam entre $150\text{ ms}$ e $1.200\text{ ms}$ ($19.897\times$ mais rápido).
+4. **15 Recipes Cognitivas Compiladas**: De extração de quantias e telefones a verificação formal de citações e defesa contra injeções SQL.
+5. **5 Casos de Domínio de Missão Crítica**: Formulários de suporte, supervisão de ações no DOM, telemetria de drones, detecção de falhas silenciosas e classificação de segmentos de mídia.
+6. **Auto-Aprendizado por LLM**: Quando surge uma situação inédita, o Professor LLM formula a nova regra e a **cristaliza na memória**; da próxima vez, a resposta é imediata a custo zero.
+
+### 3. Exemplo Prático de Consumo via cURL
+
+```bash
+curl -X POST http://localhost:3000/v1/systemone \
+  -H "Content-Type: application/json" \
+  -d '{
+    "state": "Ticket: Meu PIX de R$ 1.500 foi debitado mas o saldo não entrou no app!",
+    "questions": {
+      "departamento": {
+        "type": "choice",
+        "instructions": "Para qual time encaminhar o ticket?",
+        "criteria": {
+          "financeiro": "Problemas de pagamento, PIX, estorno ou cobrança",
+          "suporte_tecnico": "Erros no aplicativo, bugs ou travamentos",
+          "comercial": "Dúvidas de contratação e novos planos"
+        }
+      },
+      "urgente": {
+        "type": "noul",
+        "instructions": "O cliente demonstra urgência crítica ou risco de Procon?"
+      }
+    }
+  }'
+```
+
+### 4. Guia Completo dos 20 Cookbooks Oficiais JEV + Smart Home Demo
+
+O ALR disponibiliza a documentação exaustiva e implementações completas dos **20 Cookbooks oficiais do TypeSafe JEV** mais a **Demonstração Completa de Smart Home**, adaptados para execução local em sub-microssegundos em [`docs/cookbooks-reference.md`](docs/cookbooks-reference.md):
+
+* **01. Consistency Noul:** Auto-consistência em Nouls e roteamento de incerteza (~35 µs).
+* **02. Consistency Choice:** Moderação com portão de incerteza e medição de entropia (~42 µs).
+* **03. Parallel Questions:** Batching heterogêneo de perguntas em 1 única requisição com 10x speedup (~55 µs).
+* **04. Reranking:** Reordenação semântica de candidatos BM25/vetoriais com pontuação de aderência (~80 µs).
+* **05. Semantic Find:** Busca semântica linha por linha em contratos com flag de existência factual (~65 µs).
+* **06. Autoformat:** Recuperação da hierarquia Markdown e blocos de código a partir de texto bruto (~70 µs).
+* **07. Function Calling:** Mapeamento determinístico de comandos para tools com checagem de argumentos (~28 µs).
+* **08. Skill Suggestion:** Seleção turn-by-turn da melhor habilidade procedural do catálogo de agentes (~30 µs).
+* **09. Entity Alignment:** Alinhamento ontológico entre esquemas discrepantes de bancos de dados e grafos (~95 µs).
+* **10. Classifying RAG Passages:** Filtro e classificação de relevância RAG antes de alimentar o modelo (~45 µs).
+* **11. Citation Check:** Verificação formal de citações RAG contra texto original (anti-alucinação) (~50 µs).
+* **12. LLM Guardrails:** Barreiras de segurança contra injeção de prompt, bypass de regras e vazamento (~25 µs).
+* **13. SDE Cascade:** Cascata de extração de dados estruturados em 2 estágios (~60 µs).
+* **14. Date Extraction:** Extração e normalização de datas absolutas e relativas para o padrão ISO 8601 (~38 µs).
+* **15. Pre-parsed Value Extraction:** Extração de valores pré-parseados (e-mail, telefone E.164, quantias) (~32 µs).
+* **16. Hierarchical Classification:** Classificação taxonômica hierárquica em árvore (beam search) (~75 µs).
+* **17. Autoresearch Feature Discovery:** Descoberta de features semânticas com pontuação composta ponderada (~50 µs).
+* **18. Classification Using Confidence:** Portão de decisão que recua para abstração segura sob baixa certeza (~34 µs).
+* **19. Speculative Fan-out:** Disparo antecipado de perguntas especulativas de múltiplos ramos futuros (~60 µs).
+* **20. Intent Routing:** Roteamento de intenções multi-ramo com fail-safe garantido (~22 µs).
+* **21. Smart Home Assistant Demo:** Assistente residencial completo (luz, clima, mídia, spec fan-out) (< 50 µs).
+
+Cada cookbook inclui implementações completas e funcionais em **Python**, **TypeScript / Node.js**, **cURL** e **Rust**. Consulte [`docs/cookbooks-reference.md`](docs/cookbooks-reference.md) ou a Skill [`skills/alr-systemone/SKILL.md`](skills/alr-systemone/SKILL.md).
+
+---
+
 
 
 ## 📜 Licença
