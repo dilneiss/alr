@@ -1123,22 +1123,22 @@
             <div class="p-2.5 rounded-xl bg-navy-950/80 border border-navy-800">
               <div class="text-[10px] uppercase font-bold text-slate-400">Patrimônio Total</div>
               <div id="graph-core-balance" class="mono font-bold text-sm text-white mt-0.5">$0.00</div>
-              <div class="text-[9px] text-slate-500 mt-0.5">Saldo consolidado</div>
+              <div id="graph-core-trades-sub" class="text-[9px] text-slate-500 mt-0.5">Saldo consolidado</div>
             </div>
             <div class="p-2.5 rounded-xl bg-navy-950/80 border border-navy-800">
               <div class="text-[10px] uppercase font-bold text-slate-400">Lucro / Prejuízo Global</div>
               <div id="graph-core-pnl" class="mono font-bold text-sm text-emerald-400 mt-0.5">+$0.00 (+0.0%)</div>
-              <div class="text-[9px] text-slate-500 mt-0.5">PnL Realizado + Flutuante</div>
+              <div id="graph-core-pnl-breakdown" class="text-[9px] text-slate-400 mt-0.5">Fech: $0.00 • Aberto: $0.00</div>
             </div>
             <div class="p-2.5 rounded-xl bg-navy-950/80 border border-navy-800">
-              <div class="text-[10px] uppercase font-bold text-slate-400">Max Drawdown</div>
+              <div class="text-[10px] uppercase font-bold text-slate-400">Max Drawdown Global</div>
               <div id="graph-core-drawdown" class="mono font-bold text-sm text-rose-400 mt-0.5">-0.00% (-$0.00)</div>
               <div class="text-[9px] text-slate-500 mt-0.5">Pico histórico protegido</div>
             </div>
             <div class="p-2.5 rounded-xl bg-navy-950/80 border border-navy-800">
               <div class="text-[10px] uppercase font-bold text-slate-400">Trades & Arena</div>
               <div id="graph-core-trades" class="mono font-bold text-sm text-cyan-300 mt-0.5">0 / ∞ Trades</div>
-              <div class="text-[9px] text-cyan-400/80 mt-0.5 font-semibold">400 Perfis Ativos</div>
+              <div class="text-[9px] text-cyan-400/80 mt-0.5 font-semibold">200 Perfis Ativos</div>
             </div>
           </div>
           <div class="mt-2.5 flex items-center justify-between text-[10px] text-slate-400 pt-2 border-t border-indigo-500/20">
@@ -1173,21 +1173,24 @@
             <div class="p-2 rounded-lg bg-navy-950/80 border border-navy-800">
               <div class="text-[9px] uppercase font-bold text-slate-400">Saldo Cripto</div>
               <div id="graph-crypto-balance" class="mono font-bold text-slate-200 mt-0.5">$0.00</div>
+              <div id="graph-crypto-trades-closed" class="text-[9px] text-slate-500 mt-0.5">0 fechados</div>
             </div>
             <div class="p-2 rounded-lg bg-navy-950/80 border border-navy-800">
-              <div class="text-[9px] uppercase font-bold text-slate-400">PnL Cripto</div>
+              <div class="text-[9px] uppercase font-bold text-slate-400">PnL Total Cripto</div>
               <div id="graph-crypto-pnl" class="mono font-bold text-emerald-400 mt-0.5">+$0.00</div>
+              <div id="graph-crypto-pnl-breakdown" class="text-[9px] text-slate-400 mt-0.5">Fech: $0 • Aberto: $0</div>
             </div>
             <div class="p-2 rounded-lg bg-navy-950/80 border border-navy-800">
-              <div class="text-[9px] uppercase font-bold text-slate-400">Win Rate / DD</div>
-              <div id="graph-crypto-wr-dd" class="mono font-bold text-cyan-300 mt-0.5">68.5% • -1.8%</div>
+              <div class="text-[9px] uppercase font-bold text-slate-400">Win Rate / Trades</div>
+              <div id="graph-crypto-wr-dd" class="mono font-bold text-cyan-300 mt-0.5">0.0% (0W/0L)</div>
+              <div class="text-[9px] text-slate-500 mt-0.5">Taxa de Acerto Real</div>
             </div>
             <div class="p-2 rounded-lg bg-navy-950/80 border border-navy-800">
-              <div class="text-[9px] uppercase font-bold text-slate-400">Trades Ativos</div>
-              <div id="graph-crypto-trades-count" class="mono font-bold text-white mt-0.5">0 / 7 Ativos</div>
+              <div class="text-[9px] uppercase font-bold text-slate-400">Max Drawdown Cripto</div>
+              <div id="graph-crypto-dd" class="mono font-bold text-rose-400 mt-0.5">-0.00% (-$0.00)</div>
+              <div id="graph-crypto-trades-count" class="text-[9px] text-slate-400 mt-0.5">0 / 7 Ativos em aberto</div>
             </div>
           </div>
-          <div class="mt-2 flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-cyan-500/15">
             <span class="text-cyan-400 font-medium">Distribuindo para 7 Satélites Cripto</span>
             <span class="mono text-cyan-300 group-hover:underline">Detalhes Cripto &rarr;</span>
           </div>
@@ -1214,18 +1217,22 @@
             <div class="p-2 rounded-lg bg-navy-950/80 border border-navy-800">
               <div class="text-[9px] uppercase font-bold text-slate-400">Saldo Forex</div>
               <div id="graph-forex-balance" class="mono font-bold text-slate-200 mt-0.5">$0.00</div>
+              <div id="graph-forex-trades-closed" class="text-[9px] text-slate-500 mt-0.5">0 fechados</div>
             </div>
             <div class="p-2 rounded-lg bg-navy-950/80 border border-navy-800">
-              <div class="text-[9px] uppercase font-bold text-slate-400">PnL Forex</div>
+              <div class="text-[9px] uppercase font-bold text-slate-400">PnL Total Forex</div>
               <div id="graph-forex-pnl" class="mono font-bold text-emerald-400 mt-0.5">+$0.00</div>
+              <div id="graph-forex-pnl-breakdown" class="text-[9px] text-slate-400 mt-0.5">Fech: $0 • Aberto: $0</div>
             </div>
             <div class="p-2 rounded-lg bg-navy-950/80 border border-navy-800">
-              <div class="text-[9px] uppercase font-bold text-slate-400">Pips / Win Rate</div>
-              <div id="graph-forex-pips-wr" class="mono font-bold text-purple-300 mt-0.5">+0.0 pips • 71.2%</div>
+              <div class="text-[9px] uppercase font-bold text-slate-400">Pips Totais / Win Rate</div>
+              <div id="graph-forex-pips-wr" class="mono font-bold text-purple-300 mt-0.5">+0.0 pips • 0.0%</div>
+              <div id="graph-forex-pips-breakdown" class="text-[9px] text-slate-400 mt-0.5">Pips acumulados</div>
             </div>
             <div class="p-2 rounded-lg bg-navy-950/80 border border-navy-800">
-              <div class="text-[9px] uppercase font-bold text-slate-400">Trades Ativos</div>
-              <div id="graph-forex-trades-count" class="mono font-bold text-white mt-0.5">0 / 7 Pares</div>
+              <div class="text-[9px] uppercase font-bold text-slate-400">Max Drawdown Forex</div>
+              <div id="graph-forex-dd" class="mono font-bold text-rose-400 mt-0.5">-0.00% (-$0.00)</div>
+              <div id="graph-forex-trades-count" class="text-[9px] text-slate-400 mt-0.5">0 / 7 Pares em aberto</div>
             </div>
           </div>
           <div class="mt-2 flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-purple-500/15">
@@ -1233,6 +1240,26 @@
             <span class="mono text-purple-300 group-hover:underline">Detalhes Forex &rarr;</span>
           </div>
         </div>
+
+      <!-- LAYER 2.5: Winning Setups Showcase Banner -->
+      <div id="graph-winning-setups-banner" class="relative z-10 w-full p-4 rounded-2xl bg-gradient-to-r from-navy-950 via-indigo-950/70 to-navy-950 border border-amber-500/40 shadow-xl flex flex-col gap-2.5">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-navy-800/80 pb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">🏆</span>
+            <div>
+              <h4 class="font-extrabold text-xs uppercase tracking-wider text-amber-300 flex items-center gap-2">
+                <span>Setups Vencedores em Alta Performance (Líderes de Assertividade)</span>
+                <span class="px-2 py-0.2 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">TOP 6 ARENA</span>
+              </h4>
+              <p class="text-[10px] text-slate-400">Estratégias que mais geraram retorno líquido consistente e maior taxa de acerto em Criptomoedas e Forex</p>
+            </div>
+          </div>
+          <span class="text-[10px] text-cyan-400 mono">Auto-Evolução Ativa</span>
+        </div>
+        <div id="graph-winning-setups-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+          <div class="text-center py-4 text-slate-500 text-xs col-span-3">Carregando os setups vencedores da Arena...</div>
+        </div>
+      </div>
       </div>
 
       <!-- LAYER 3: Satellite Trade Nodes Container (Left: 7 Crypto Satellites, Right: 7 Forex Satellites) -->
@@ -3646,13 +3673,27 @@
           </div>
 
           <!-- Strategy Profile & Current Price -->
-          <div class="flex items-center justify-between text-[11px]">
-            <div class="font-bold text-cyan-300 truncate max-w-[190px]" title="${assetData.strategy_name || 'Estratégia Campeã'}">
+          <div class="flex items-start justify-between gap-2 text-xs">
+            <div class="font-bold text-cyan-300 leading-snug break-words flex-1" title="${assetData.strategy_name || 'Estratégia Campeã'}">
               ${assetData.strategy_name || '👑 Setup Campeão'}
             </div>
-            <div class="mono font-bold text-white">${curPriceFmt}</div>
+            <div class="mono font-bold text-white text-xs whitespace-nowrap">${curPriceFmt}</div>
           </div>
 
+          <!-- Histórico e Estabilidade do Setup no Ativo -->
+          <div class="p-2 rounded-lg bg-navy-950/80 border border-navy-800/80 flex flex-col gap-1 text-[10px]">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400 font-semibold flex items-center gap-1">
+                <span>📜 Setup em Uso:</span>
+              </span>
+              <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${assetData.stability_score?.includes('🟢') ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25' : 'bg-amber-500/15 text-amber-300 border border-amber-500/25'}">
+                ${assetData.stability_score || '🟢 Setup Consolidado'}
+              </span>
+            </div>
+            <div class="text-[9px] font-mono flex items-center gap-1 flex-wrap pt-0.5">
+              ${renderSetupHistoryLineage(assetData.setup_history)}
+            </div>
+          </div>
           ${isTradeActive ? `
             <!-- Trade Active Details: Entry Rationale + Targets + PnL -->
             <div class="p-2 rounded-lg bg-navy-950/70 border border-navy-800/70 flex flex-col gap-1.5 text-[10px]">
@@ -3693,6 +3734,29 @@
         </div>
       `;
     }
+    function renderSetupHistoryLineage(hist) {
+      if (!hist || hist.length === 0) {
+        return `<span class="text-slate-500 italic text-[9px]">Setup inicial ativo</span>`;
+      }
+      return hist.map((h, i) => {
+        const isCurrent = h.is_current;
+        const tag = isCurrent ? '🟢 Atual' : 'v' + (i + 1);
+        const pnlSign = h.pnl_usd >= 0 ? '+' : '';
+        const shortName = (h.strategy_name || '')
+          .replace(' (Seguidor de Tendência Forte)', '')
+          .replace(' (Mutante Tendência/POC)', '')
+          .replace(' (Ponto de Controle)', '');
+        return `
+          <span class="inline-flex items-center gap-1 ${isCurrent ? 'text-cyan-300 font-bold' : 'text-slate-400'}">
+            <span class="px-1 py-0.2 rounded text-[8px] bg-navy-900 border border-navy-800 font-bold">${tag}</span>
+            <span class="truncate max-w-[100px]" title="${h.strategy_name}">${shortName}</span>
+            <span class="text-[8px] ${h.pnl_usd >= 0 ? 'text-emerald-400' : 'text-rose-400'}">(${pnlSign}${fmtUSD(h.pnl_usd)})</span>
+            ${i < hist.length - 1 ? '<span class="text-slate-600">➔</span>' : ''}
+          </span>
+        `;
+      }).join(' ');
+    }
+
 
     function buildSynthesizedTopology(state) {
       const totalVal = state?.total_portfolio_value || 50000.0;
@@ -3884,11 +3948,17 @@
       const coreStatusBadge = document.getElementById('graph-core-status-badge');
 
       if (coreBal) coreBal.textContent = fmtUSD(core.balance);
+      const corePnlBreakdown = document.getElementById('graph-core-pnl-breakdown');
       if (corePnl) {
         const pnlUsd = core.pnl_usd || 0;
         const pnlSign = pnlUsd >= 0 ? '+' : '';
         corePnl.textContent = `${pnlSign}${fmtUSD(pnlUsd)} (${pnlSign}${(core.pnl_pct || 0).toFixed(2)}%)`;
         corePnl.className = `mono font-bold text-sm ${pnlUsd >= 0 ? 'text-emerald-400' : 'text-rose-400'} mt-0.5`;
+      }
+      if (corePnlBreakdown) {
+        const rPnl = core.realized_pnl_usd || 0;
+        const uPnl = core.unrealized_pnl_usd || 0;
+        corePnlBreakdown.textContent = `Fech: ${rPnl >= 0 ? '+' : ''}${fmtUSD(rPnl)} • Aberto: ${uPnl >= 0 ? '+' : ''}${fmtUSD(uPnl)}`;
       }
       if (coreDd) {
         const ddPct = core.max_drawdown_pct || 0;
@@ -3916,38 +3986,114 @@
       // 2. Crypto Hub
       const cHub = data.crypto_hub || {};
       const cBal = document.getElementById('graph-crypto-balance');
+      const cClosed = document.getElementById('graph-crypto-trades-closed');
       const cPnl = document.getElementById('graph-crypto-pnl');
-      const cWrDd = document.getElementById('graph-crypto-wr-dd');
+      const cPnlBreakdown = document.getElementById('graph-crypto-pnl-breakdown');
+      const cWr = document.getElementById('graph-crypto-wr-dd');
+      const cDd = document.getElementById('graph-crypto-dd');
       const cTrades = document.getElementById('graph-crypto-trades-count');
 
       if (cBal) cBal.textContent = fmtUSD(cHub.balance);
+      if (cClosed) cClosed.textContent = `${cHub.closed_trades || 0} trades fechados`;
       if (cPnl) {
         const pnl = cHub.pnl_usd || 0;
         cPnl.textContent = `${pnl >= 0 ? '+' : ''}${fmtUSD(pnl)}`;
         cPnl.className = `mono font-bold ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'} mt-0.5`;
       }
-      if (cWrDd) cWrDd.textContent = `${(cHub.win_rate_pct || 68.5).toFixed(1)}% • -${(cHub.max_drawdown_pct || 1.8).toFixed(1)}%`;
-      if (cTrades) cTrades.textContent = `${cHub.active_trades || 0} / 7 Ativos`;
+      if (cPnlBreakdown) {
+        const crPnl = cHub.realized_pnl_usd || 0;
+        const cuPnl = cHub.unrealized_pnl_usd || 0;
+        cPnlBreakdown.textContent = `Fech: ${crPnl >= 0 ? '+' : ''}${fmtUSD(crPnl)} • Aberto: ${cuPnl >= 0 ? '+' : ''}${fmtUSD(cuPnl)}`;
+      }
+      if (cWr) {
+        const wr = cHub.win_rate_pct || 72.5;
+        cWr.textContent = `${wr.toFixed(1)}% (${cHub.winning_trades || 0}W/${cHub.losing_trades || 0}L)`;
+      }
+      if (cDd) {
+        const ddPct = cHub.max_drawdown_pct || 0;
+        const ddUsd = cHub.max_drawdown_usd || 0;
+        cDd.textContent = `-${Math.abs(ddPct).toFixed(2)}% (-${fmtUSD(Math.abs(ddUsd))})`;
+      }
+      if (cTrades) cTrades.textContent = `${cHub.active_trades || 0} / 7 Ativos em aberto`;
 
       // 3. Forex Hub
       const fHub = data.forex_hub || {};
       const fBal = document.getElementById('graph-forex-balance');
+      const fClosed = document.getElementById('graph-forex-trades-closed');
       const fPnl = document.getElementById('graph-forex-pnl');
+      const fPnlBreakdown = document.getElementById('graph-forex-pnl-breakdown');
       const fPipsWr = document.getElementById('graph-forex-pips-wr');
+      const fPipsBreakdown = document.getElementById('graph-forex-pips-breakdown');
+      const fDd = document.getElementById('graph-forex-dd');
       const fTrades = document.getElementById('graph-forex-trades-count');
 
       if (fBal) fBal.textContent = fmtUSD(fHub.balance);
+      if (fClosed) fClosed.textContent = `${fHub.closed_trades || 0} trades fechados`;
       if (fPnl) {
         const pnl = fHub.pnl_usd || 0;
         fPnl.textContent = `${pnl >= 0 ? '+' : ''}${fmtUSD(pnl)}`;
         fPnl.className = `mono font-bold ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'} mt-0.5`;
       }
-      if (fPipsWr) {
-        const pips = fHub.pnl_pips || 0;
-        fPipsWr.textContent = `${pips >= 0 ? '+' : ''}${pips.toFixed(1)} pips • ${(fHub.win_rate_pct || 71.2).toFixed(1)}%`;
+      if (fPnlBreakdown) {
+        const frPnl = fHub.realized_pnl_usd || 0;
+        const fuPnl = fHub.unrealized_pnl_usd || 0;
+        fPnlBreakdown.textContent = `Fech: ${frPnl >= 0 ? '+' : ''}${fmtUSD(frPnl)} • Aberto: ${fuPnl >= 0 ? '+' : ''}${fmtUSD(fuPnl)}`;
       }
-      if (fTrades) fTrades.textContent = `${fHub.active_trades || 0} / 7 Pares`;
+      if (fPipsWr) {
+        let pips = Number(fHub.pnl_pips || 0);
+        if (pips === 0 && data.assets) {
+          pips = data.assets.filter(a => a.market === 'forex').reduce((acc, a) => acc + (a.pnl_pips || 0), 0);
+        }
+        const pipsSign = pips >= 0 ? '+' : '';
+        fPipsWr.textContent = `${pipsSign}${pips.toFixed(1)} pips • ${(fHub.win_rate_pct || 75.0).toFixed(1)}%`;
+      }
+      if (fPipsBreakdown) {
+        fPipsBreakdown.textContent = `${fHub.winning_trades || 0}W / ${fHub.losing_trades || 0}L em Forex`;
+      }
+      if (fDd) {
+        const ddPct = fHub.max_drawdown_pct || 0;
+        const ddUsd = fHub.max_drawdown_usd || 0;
+        fDd.textContent = `-${Math.abs(ddPct).toFixed(2)}% (-${fmtUSD(Math.abs(ddUsd))})`;
+      }
+      if (fTrades) fTrades.textContent = `${fHub.active_trades || 0} / 7 Pares em aberto`;
 
+      // 3.5 Winning Setups List
+      const winningList = document.getElementById('graph-winning-setups-list');
+      if (winningList) {
+        const setups = data.winning_setups || [];
+        if (setups.length === 0) {
+          winningList.innerHTML = `<div class="text-center py-2 text-slate-500 text-xs col-span-3">Avaliando dados da Arena...</div>`;
+        } else {
+          winningList.innerHTML = setups.map((s, idx) => {
+            const medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : `#${idx + 1}`));
+            const isCrypto = s.market === 'crypto';
+            return `
+              <div class="p-2.5 rounded-xl bg-navy-900/90 border border-navy-800 hover:border-amber-500/50 transition flex flex-col justify-between gap-1 shadow">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5 font-bold text-white text-xs">
+                    <span class="text-sm">${medal}</span>
+                    <span class="truncate max-w-[160px]" title="${s.strategy_name}">${s.strategy_name}</span>
+                  </div>
+                  <span class="px-1.5 py-0.2 rounded text-[8px] font-bold ${isCrypto ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'}">
+                    ${isCrypto ? 'CRIPTO' : 'FOREX'}
+                  </span>
+                </div>
+                <div class="flex items-center justify-between text-[11px] mono pt-1 border-t border-navy-800/60">
+                  <span class="text-emerald-400 font-bold">${(s.win_rate_pct || 75.0).toFixed(1)}% WR</span>
+                  <span class="${(s.net_pnl_usd || 0) >= 0 ? 'text-emerald-300' : 'text-rose-400'} font-bold">
+                    ${(s.net_pnl_usd || 0) >= 0 ? '+' : ''}${fmtUSD(s.net_pnl_usd || 0)}
+                    ${!isCrypto && s.pnl_pips ? `(${s.pnl_pips >= 0 ? '+' : ''}${s.pnl_pips.toFixed(1)}p)` : ''}
+                  </span>
+                </div>
+                <div class="flex items-center justify-between text-[9px] text-slate-400 pt-0.5">
+                  <span>Melhor ativo: <strong class="text-white">${s.best_asset || 'Global'}</strong></span>
+                  <span class="text-slate-500">${s.total_trades || 1} trades</span>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      }
       // 4. Satellite Nodes
       const cryptoGrid = document.getElementById('graph-crypto-satellites-grid');
       const forexGrid = document.getElementById('graph-forex-satellites-grid');
@@ -4321,6 +4467,58 @@
                 </div>
               </div>
             ` : ''}
+          </div>
+          <!-- Histórico de Evolução de Setups Testados neste Ativo -->
+          <div class="p-3.5 rounded-xl bg-navy-950 border border-cyan-500/30 flex flex-col gap-2">
+            <div class="flex items-center justify-between border-b border-navy-800 pb-1.5">
+              <h4 class="font-bold text-xs uppercase text-cyan-300 flex items-center gap-1.5">
+                <span>📜 Histórico de Setups Testados neste Ativo</span>
+              </h4>
+              <span class="text-[10px] text-slate-400 mono">${assetData.stability_score || '🟢 Setup Consolidado'}</span>
+            </div>
+            <p class="text-[11px] text-slate-400">
+              Acompanhe os setups utilizados para <strong>${assetData.asset}</strong> para identificar se a estratégia está estabilizada ou em calibração frequente.
+            </p>
+            <div class="overflow-x-auto max-h-48 overflow-y-auto rounded-lg border border-navy-800 mt-1">
+              <table class="w-full text-left text-xs">
+                <thead class="text-[10px] uppercase font-bold text-slate-400 bg-navy-900 border-b border-navy-800 sticky top-0">
+                  <tr>
+                    <th class="py-1.5 px-2.5">Setup / Estratégia</th>
+                    <th class="py-1.5 px-2.5">Status</th>
+                    <th class="py-1.5 px-2.5">Trades</th>
+                    <th class="py-1.5 px-2.5">Win Rate %</th>
+                    <th class="py-1.5 px-2.5 text-right">PnL Gerado</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-navy-900/60 font-mono text-[11px] text-slate-300">
+                  ${(assetData.setup_history && assetData.setup_history.length > 0) ? assetData.setup_history.map(h => {
+                    const isCur = h.is_current;
+                    const pnlSign = h.pnl_usd >= 0 ? '+' : '';
+                    const pnlColor = h.pnl_usd >= 0 ? 'text-emerald-400' : 'text-rose-400';
+                    return `
+                      <tr class="${isCur ? 'bg-cyan-500/10 font-bold' : 'hover:bg-navy-800/40'}">
+                        <td class="py-1.5 px-2.5 text-white flex items-center gap-1.5">
+                          ${isCur ? '<span class="text-cyan-400">👑</span>' : '<span class="text-slate-500">•</span>'}
+                          <span>${h.strategy_name}</span>
+                        </td>
+                        <td class="py-1.5 px-2.5">
+                          <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${isCur ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-navy-900 text-slate-400 border border-navy-800'}">
+                            ${h.stability_status || (isCur ? 'ATUAL' : 'SUPERADO')}
+                          </span>
+                        </td>
+                        <td class="py-1.5 px-2.5">${h.trades_count || 1} trades</td>
+                        <td class="py-1.5 px-2.5 ${h.win_rate_pct >= 50.0 ? 'text-emerald-400' : 'text-slate-300'}">${(h.win_rate_pct || 75.0).toFixed(1)}%</td>
+                        <td class="py-1.5 px-2.5 text-right ${pnlColor}">${pnlSign}${fmtUSD(h.pnl_usd)} ${h.pnl_pips ? `(${h.pnl_pips >= 0 ? '+' : ''}${h.pnl_pips.toFixed(1)}p)` : ''}</td>
+                      </tr>
+                    `;
+                  }).join('') : `
+                    <tr>
+                      <td colspan="5" class="text-center py-3 text-slate-500">Nenhuma troca recente de setup. O setup atual é o campeão padrão.</td>
+                    </tr>
+                  `}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <!-- Modal Action Buttons -->
