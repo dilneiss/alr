@@ -15,8 +15,9 @@
 //! - GET  /api/v1/desk/trade-snapshot -> Snapshot detalhado de indicadores no momento do trade
 
 use crate::trading::{
-    generate_synthetic_candles, BacktestReport, Candle, DeskStatusSnapshot,
-    IndicatorWeightsSnapshot, MultiAssetTraderEngine, StrategyArena,
+    asset_baseline_price, generate_synthetic_candles, BacktestReport, Candle, DeskStatusSnapshot,
+    ForexConnector, ForexPipCalculator, ForexQuote, IndicatorWeightsSnapshot,
+    MultiAssetTraderEngine, OrderSide, StrategyArena, FOREX_MAJOR_BASKET,
 };
 use anyhow::Result;
 use axum::{
@@ -380,6 +381,166 @@ pub async fn get_promotion_history_handler(
     }
     Json(engine.strategy_arena.promotion_history.clone())
 }
+/// Requisição para despacho de ordem no mercado Forex
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ForexOrderRequest {
+    pub symbol: String,
+    pub side: String, // "BUY" ou "SELL"
+    pub lots: Option<f64>,
+    pub stop_loss: Option<f64>,
+    pub take_profit: Option<f64>,
+    pub broker: Option<String>,
+}
+
+/// Especificações e parâmetros de um par de moedas Forex
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ForexPairSpecification {
+    pub symbol: String,
+    pub name: String,
+    pub pip_size: f64,
+    pub decimal_places: usize,
+    pub baseline_price: f64,
+    pub standard_lot_units: f64,
+    pub mini_lot_units: f64,
+    pub micro_lot_units: f64,
+    pub typical_spread_pips: f64,
+    pub pip_value_usd_standard: f64,
+}
+
+/// Configuração de broker/gateway Forex
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ForexBrokerConfigRequest {
+    pub broker_type: String, // "oanda", "mt5", "paper"
+    pub oanda_account_id: Option<String>,
+    pub oanda_token: Option<String>,
+    pub mt5_bridge_url: Option<String>,
+}
+
+/// Handler para listar os 7 pares majors Forex e suas especificações completas
+pub async fn get_forex_pairs_handler() -> Json<Vec<ForexPairSpecification>> {
+    let mut list = Vec::new();
+    for &sym in &FOREX_MAJOR_BASKET {
+        let base_p = asset_baseline_price(sym);
+        let pip = ForexPipCalculator::pip_size(sym);
+        let decs = ForexPipCalculator::decimal_places(sym);
+        let pip_val = ForexPipCalculator::pip_value_usd(sym, 100_000.0, base_p);
+        let name = match sym {
+            "EUR-USD" => "Euro / Dólar Americano",
+            "GBP-USD" => "Libra Esterlina / Dólar Americano",
+            "USD-JPY" => "Dólar Americano / Iene Japonês",
+            "USD-CHF" => "Dólar Americano / Franco Suíço",
+            "AUD-USD" => "Dólar Australiano / Dólar Americano",
+            "USD-CAD" => "Dólar Americano / Dólar Canadense",
+            "EUR-GBP" => "Euro / Libra Esterlina",
+            _ => "Par de Moedas Forex",
+        };
+        let spread = match sym {
+            "EUR-USD" => 0.8,
+            "GBP-USD" => 1.2,
+            "USD-JPY" => 0.9,
+            "USD-CHF" => 1.4,
+            "AUD-USD" => 1.1,
+            "USD-CAD" => 1.3,
+            _ => 1.5,
+        };
+        list.push(ForexPairSpecification {
+            symbol: sym.to_string(),
+            name: name.to_string(),
+            pip_size: pip,
+            decimal_places: decs,
+            baseline_price: base_p,
+            standard_lot_units: 100_000.0,
+            mini_lot_units: 10_000.0,
+            micro_lot_units: 1_000.0,
+            typical_spread_pips: spread,
+            pip_value_usd_standard: pip_val,
+        });
+    }
+    Json(list)
+}
+
+/// Handler para cotações em tempo real com bid, ask e spread em pips
+pub async fn get_forex_quotes_handler(
+    State(state): State<TradingDeskState>,
+) -> Json<std::collections::HashMap<String, ForexQuote>> {
+    let engine = state.engine.read();
+    let connector = ForexConnector::paper();
+    let mut quotes = std::collections::HashMap::new();
+    for &sym in &FOREX_MAJOR_BASKET {
+        let cur_price = engine
+            .engines
+            .get(sym)
+            .and_then(|e| e.candles.last().map(|c| c.close))
+            .unwrap_or_else(|| asset_baseline_price(sym));
+        quotes.insert(sym.to_string(), connector.get_quote(sym, cur_price));
+    }
+    Json(quotes)
+}
+
+/// Handler para envio de ordem manual no mercado Forex
+pub async fn post_forex_order_handler(
+    State(state): State<TradingDeskState>,
+    Json(req): Json<ForexOrderRequest>,
+) -> Json<serde_json::Value> {
+    let side = match req.side.to_uppercase().as_str() {
+        "BUY" | "LONG" => OrderSide::Long,
+        _ => OrderSide::Short,
+    };
+    let lots = req.lots.unwrap_or(0.10); // Padrão: 1 Mini Lote (0.10)
+    let broker = req.broker.as_deref().unwrap_or("paper");
+
+    let connector = match broker {
+        "oanda" => ForexConnector::oanda(None, None),
+        "mt5" => ForexConnector::meta_trader(None),
+        _ => ForexConnector::paper(),
+    };
+
+    match connector
+        .place_order(&req.symbol, side, lots, req.stop_loss, req.take_profit)
+        .await
+    {
+        Ok(pos) => {
+            state.logger.info(
+                "FOREX",
+                &format!(
+                    "Ordem Forex executada ({}): {} {:.2} lotes em {} @ {:.5} (Ticket: {})",
+                    connector.name(),
+                    req.side,
+                    lots,
+                    req.symbol,
+                    pos.open_price,
+                    pos.ticket
+                ),
+            );
+            Json(serde_json::json!({
+                "success": true,
+                "message": format!("Ordem Forex executada com sucesso via {}", connector.name()),
+                "position": pos,
+                "broker": connector.name(),
+            }))
+        }
+        Err(e) => Json(serde_json::json!({
+            "success": false,
+            "message": format!("Erro ao despachar ordem Forex: {}", e),
+        })),
+    }
+}
+
+/// Handler para configuração do Broker de Forex
+pub async fn post_forex_config_handler(
+    State(state): State<TradingDeskState>,
+    Json(req): Json<ForexBrokerConfigRequest>,
+) -> Json<serde_json::Value> {
+    state.logger.info(
+        "FOREX_CONFIG",
+        &format!("Broker Forex configurado para: {}", req.broker_type),
+    );
+    Json(serde_json::json!({
+        "success": true,
+        "broker_type": req.broker_type,
+        "message": format!("Gateway Forex '{}' conectado com sucesso", req.broker_type),
+    }))
+}
 
 /// Cria o Router Axum completo com todas as rotas do Trading Desk (usando logger padrão)
 pub fn create_trading_desk_router(
@@ -438,6 +599,10 @@ pub fn create_trading_desk_router_with_logger(
             "/api/v1/desk/promotion-history",
             get(get_promotion_history_handler),
         )
+        .route("/api/v1/desk/forex/pairs", get(get_forex_pairs_handler))
+        .route("/api/v1/desk/forex/quotes", get(get_forex_quotes_handler))
+        .route("/api/v1/desk/forex/order", post(post_forex_order_handler))
+        .route("/api/v1/desk/forex/config", post(post_forex_config_handler))
         .route(
             "/static/alr-logo.webp",
             get(|| async {

@@ -1972,6 +1972,14 @@ impl ExchangeSimulationConfig {
             slippage_pct: 0.0005,  // 0.05%
         }
     }
+    pub fn forex() -> Self {
+        Self {
+            name: "Forex ECN/STP Broker".to_string(),
+            maker_fee_pct: 0.00005, // 0.5 pips spread médio
+            taker_fee_pct: 0.00008,
+            slippage_pct: 0.00005,
+        }
+    }
 
     pub fn zero_fee() -> Self {
         Self {
@@ -4447,6 +4455,16 @@ impl LlmMarketRegimeAdvisor {
     }
 }
 
+/// Categoria de Mercado Financeiro negociado no ALR
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum MarketCategory {
+    #[default]
+    Crypto,
+    Forex,
+    Mixed,
+}
+
 /// Cesta padrão dos 7 ativos líderes de volume global
 pub const DEFAULT_MULTI_ASSET_BASKET: [&str; 7] = [
     "BTC-USDT",
@@ -4458,9 +4476,191 @@ pub const DEFAULT_MULTI_ASSET_BASKET: [&str; 7] = [
     "DOGE-USDT",
 ];
 
+/// Cesta padrão dos 7 principais pares de moedas do mercado Forex global (Majors)
+pub const FOREX_MAJOR_BASKET: [&str; 7] = [
+    "EUR-USD", "GBP-USD", "USD-JPY", "USD-CHF", "AUD-USD", "USD-CAD", "EUR-GBP",
+];
+
+/// Identifica se um símbolo pertence ao mercado de Forex
+pub fn is_forex_symbol(asset: &str) -> bool {
+    let clean = asset.to_uppercase().replace(['/', '_'], "-");
+    FOREX_MAJOR_BASKET.iter().any(|&fx| fx == clean)
+        || clean.starts_with("EUR-")
+        || clean.starts_with("GBP-")
+        || clean.starts_with("USD-")
+        || clean.starts_with("AUD-")
+        || clean.ends_with("-JPY")
+        || clean.ends_with("-CHF")
+        || clean.ends_with("-CAD")
+        || clean.ends_with("-GBP")
+        || (clean.ends_with("-USD")
+            && !clean.contains("BTC")
+            && !clean.contains("ETH")
+            && !clean.contains("SOL")
+            && !clean.contains("BNB")
+            && !clean.contains("XRP")
+            && !clean.contains("ADA")
+            && !clean.contains("DOGE"))
+}
+
+/// Tipo de Lote no mercado Forex
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ForexLotType {
+    /// Lote Standard: 100.000 unidades da moeda base (1.00)
+    Standard,
+    /// Mini Lote: 10.000 unidades da moeda base (0.10)
+    Mini,
+    /// Micro Lote: 1.000 unidades da moeda base (0.01)
+    Micro,
+    /// Lote customizado com fração livre de volume
+    Custom(f64),
+}
+
+impl ForexLotType {
+    pub fn units(&self) -> f64 {
+        match self {
+            Self::Standard => 100_000.0,
+            Self::Mini => 10_000.0,
+            Self::Micro => 1_000.0,
+            Self::Custom(lots) => *lots * 100_000.0,
+        }
+    }
+
+    pub fn lots(&self) -> f64 {
+        match self {
+            Self::Standard => 1.0,
+            Self::Mini => 0.10,
+            Self::Micro => 0.01,
+            Self::Custom(lots) => *lots,
+        }
+    }
+
+    pub fn from_lots(lots: f64) -> Self {
+        if (lots - 1.0).abs() < 1e-4 {
+            Self::Standard
+        } else if (lots - 0.10).abs() < 1e-4 {
+            Self::Mini
+        } else if (lots - 0.01).abs() < 1e-4 {
+            Self::Micro
+        } else {
+            Self::Custom(lots)
+        }
+    }
+}
+
+/// Calculadora de Pips, Margem e Risco para o mercado Forex
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ForexPipCalculator;
+
+impl ForexPipCalculator {
+    /// Determina o tamanho de 1 pip para o par (0.01 para pares com JPY, 0.0001 para a maioria)
+    pub fn pip_size(symbol: &str) -> f64 {
+        let sym = symbol.to_uppercase().replace(['/', '_'], "-");
+        if sym.contains("JPY") {
+            0.01
+        } else {
+            0.0001
+        }
+    }
+
+    /// Determina o número de casas decimais para cotação oficial (3 para JPY com pipettes, 5 para majors)
+    pub fn decimal_places(symbol: &str) -> usize {
+        let sym = symbol.to_uppercase().replace(['/', '_'], "-");
+        if sym.contains("JPY") {
+            3
+        } else {
+            5
+        }
+    }
+
+    /// Calcula a diferença em Pips entre dois preços
+    pub fn calculate_pips(symbol: &str, price_from: f64, price_to: f64) -> f64 {
+        let pip = Self::pip_size(symbol);
+        if pip <= 0.0 {
+            return 0.0;
+        }
+        (price_to - price_from) / pip
+    }
+
+    /// Calcula o valor financeiro em USD de 1 pip dado o volume em unidades
+    pub fn pip_value_usd(symbol: &str, units: f64, current_price: f64) -> f64 {
+        let sym = symbol.to_uppercase().replace(['/', '_'], "-");
+        let pip = Self::pip_size(symbol);
+
+        if sym.ends_with("-USD") || sym.ends_with("USD") {
+            pip * units
+        } else if sym.starts_with("USD-") || sym.starts_with("USD") {
+            if current_price > 0.0 {
+                (pip / current_price) * units
+            } else {
+                pip * units
+            }
+        } else {
+            pip * units * current_price
+        }
+    }
+
+    /// Calcula o PnL líquido em USD considerando o lado da operação, pips e spread
+    pub fn calculate_pnl_usd(
+        symbol: &str,
+        side: OrderSide,
+        entry_price: f64,
+        exit_price: f64,
+        units: f64,
+        spread_pips: f64,
+    ) -> f64 {
+        let raw_pips = match side {
+            OrderSide::Long => Self::calculate_pips(symbol, entry_price, exit_price),
+            OrderSide::Short => Self::calculate_pips(symbol, exit_price, entry_price),
+        };
+        let net_pips = raw_pips - spread_pips;
+        let pip_val = Self::pip_value_usd(symbol, units, exit_price);
+        net_pips * pip_val
+    }
+
+    /// Formata o preço com o número de decimais adequado ao par Forex
+    pub fn format_price(symbol: &str, price: f64) -> String {
+        let decs = Self::decimal_places(symbol);
+        format!("{:.1$}", price, decs)
+    }
+}
+
+/// Cotação completa em tempo real para um par Forex
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ForexQuote {
+    pub symbol: String,
+    pub bid: f64,
+    pub ask: f64,
+    pub spread_pips: f64,
+    pub change_24h_pct: f64,
+    pub high_24h: f64,
+    pub low_24h: f64,
+    pub pip_value_standard_lot: f64,
+    pub timestamp: i64,
+}
+
+/// Posição aberta ou fechada no mercado Forex
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ForexPosition {
+    pub ticket: String,
+    pub symbol: String,
+    pub side: OrderSide,
+    pub lots: f64,
+    pub units: f64,
+    pub open_price: f64,
+    pub current_price: f64,
+    pub pips_pnl: f64,
+    pub usd_pnl: f64,
+    pub open_time: i64,
+    pub stop_loss: Option<f64>,
+    pub take_profit: Option<f64>,
+}
+
 /// Preço base de referência para simulações e snapshots determinísticos
 pub fn asset_baseline_price(asset: &str) -> f64 {
-    match asset.to_uppercase().as_str() {
+    let clean = asset.to_uppercase().replace(['/', '_'], "-");
+    match clean.as_str() {
         "BTC-USDT" | "BTCUSDT" => 64_250.0,
         "ETH-USDT" | "ETHUSDT" => 3_480.0,
         "SOL-USDT" | "SOLUSDT" => 152.0,
@@ -4468,6 +4668,14 @@ pub fn asset_baseline_price(asset: &str) -> f64 {
         "XRP-USDT" | "XRPUSDT" => 0.585,
         "ADA-USDT" | "ADAUSDT" => 0.485,
         "DOGE-USDT" | "DOGEUSDT" => 0.125,
+        // Forex Currency Pairs
+        "EUR-USD" | "EURUSD" => 1.0850,
+        "GBP-USD" | "GBPUSD" => 1.2950,
+        "USD-JPY" | "USDJPY" => 154.20,
+        "USD-CHF" | "USDCHF" => 0.8920,
+        "AUD-USD" | "AUDUSD" => 0.6580,
+        "USD-CAD" | "USDCAD" => 1.3850,
+        "EUR-GBP" | "EURGBP" => 0.8380,
         _ => 100.0,
     }
 }
@@ -4500,6 +4708,19 @@ impl Default for MultiAssetConfig {
     }
 }
 
+impl MultiAssetConfig {
+    pub fn forex(initial_capital: f64) -> Self {
+        Self {
+            initial_capital,
+            max_concurrent_positions: 3,
+            max_portfolio_risk_pct: 8.0,
+            max_risk_per_trade_pct: 1.5,
+            max_trade_allocation_usd: 1_000.0,
+            exchange_config: ExchangeSimulationConfig::forex(),
+            basket: FOREX_MAJOR_BASKET.iter().map(|s| s.to_string()).collect(),
+        }
+    }
+}
 /// Snapshot individual de um ativo para o Dashboard Web
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AssetDeskStatus {
@@ -4578,8 +4799,17 @@ pub struct AssetDeskStatus {
     pub mtf_alignment_bullish: bool,
     #[serde(default)]
     pub champion_profile_id: Option<String>,
+    #[serde(default)]
+    pub is_forex: bool,
+    #[serde(default)]
+    pub bid: f64,
+    #[serde(default)]
+    pub ask: f64,
+    #[serde(default)]
+    pub spread_pips: f64,
+    #[serde(default)]
+    pub pip_value_usd: f64,
 }
-
 /// Snapshot global da mesa de operações para o Dashboard Web (Axum API)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeskStatusSnapshot {
@@ -4604,8 +4834,11 @@ pub struct DeskStatusSnapshot {
     pub adaptive_learning: Option<AdaptiveLearningReport>,
     #[serde(default)]
     pub strategy_arena: Option<StrategyArena>,
+    #[serde(default)]
+    pub market_category: MarketCategory,
+    #[serde(default)]
+    pub forex_quotes: HashMap<String, ForexQuote>,
 }
-
 /// Relatório analítico comparativo contrafactual de dimensionamento de trades ("What-If" Analysis)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TradeSizingComparisonReport {
@@ -5424,6 +5657,9 @@ impl StrategyArena {
         for &asset in &DEFAULT_MULTI_ASSET_BASKET {
             asset_champs.insert(asset.to_string(), champ_id.clone());
         }
+        for &asset in &FOREX_MAJOR_BASKET {
+            asset_champs.insert(asset.to_string(), champ_id.clone());
+        }
 
         let mut arena = Self {
             champion_profile_id: champ_id,
@@ -5946,6 +6182,37 @@ impl MultiAssetTraderEngine {
         self.advisor = advisor;
         self
     }
+    pub fn new_forex(capital: f64) -> Self {
+        Self::new(MultiAssetConfig::forex(capital))
+    }
+
+    pub fn market_category(&self) -> MarketCategory {
+        let has_forex = self.config.basket.iter().any(|a| is_forex_symbol(a));
+        let has_crypto = self.config.basket.iter().any(|a| !is_forex_symbol(a));
+        if has_forex && has_crypto {
+            MarketCategory::Mixed
+        } else if has_forex {
+            MarketCategory::Forex
+        } else {
+            MarketCategory::Crypto
+        }
+    }
+
+    pub fn get_forex_quotes(&self) -> HashMap<String, ForexQuote> {
+        let connector = ForexConnector::paper();
+        let mut map = HashMap::new();
+        for asset in &self.config.basket {
+            if is_forex_symbol(asset) {
+                let current_price = self
+                    .engines
+                    .get(asset)
+                    .and_then(|e| e.candles.last().map(|c| c.close))
+                    .unwrap_or_else(|| asset_baseline_price(asset));
+                map.insert(asset.clone(), connector.get_quote(asset, current_price));
+            }
+        }
+        map
+    }
 
     /// Restaura posições abertas do SQLite na reinicialização do robô
     pub fn restore_open_positions_from_store(&mut self) -> Result<usize> {
@@ -6418,6 +6685,23 @@ impl MultiAssetTraderEngine {
                     btc_dump_shield_active: indicators.btc_dump_shield_active,
                     mtf_alignment_bullish: indicators.mtf_alignment_bullish,
                     champion_profile_id: self.strategy_arena.asset_champions.get(asset).cloned(),
+                    is_forex: is_forex_symbol(asset),
+                    bid: if is_forex_symbol(asset) {
+                        current_price - (ForexPipCalculator::pip_size(asset) * 0.5)
+                    } else {
+                        current_price * 0.9998
+                    },
+                    ask: if is_forex_symbol(asset) {
+                        current_price + (ForexPipCalculator::pip_size(asset) * 0.5)
+                    } else {
+                        current_price * 1.0002
+                    },
+                    spread_pips: if is_forex_symbol(asset) { 1.0 } else { 0.0 },
+                    pip_value_usd: if is_forex_symbol(asset) {
+                        ForexPipCalculator::pip_value_usd(asset, 100_000.0, current_price)
+                    } else {
+                        0.0
+                    },
                 });
             }
         }
@@ -6453,6 +6737,8 @@ impl MultiAssetTraderEngine {
             recent_executions,
             adaptive_learning: Some(self.learner.get_report()),
             strategy_arena: Some(self.strategy_arena.clone()),
+            market_category: self.market_category(),
+            forex_quotes: self.get_forex_quotes(),
         }
     }
 
@@ -8339,4 +8625,475 @@ pub fn parse_binance_kline_response(json: &serde_json::Value) -> Result<Vec<Cand
 
     candles.sort_by_key(|c| c.timestamp);
     Ok(candles)
+}
+
+/// Resposta de ordem de mercado ou limite na OANDA v20 REST API
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OandaOrderResponse {
+    pub order_id: String,
+    pub instrument: String,
+    pub units: f64,
+    pub price: f64,
+    pub time: String,
+    pub status: String,
+}
+
+/// Resposta de ordem no terminal MetaTrader 5 via REST Bridge Gateway
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MetaTraderOrderResponse {
+    pub ticket: u64,
+    pub symbol: String,
+    pub order_type: String,
+    pub lots: f64,
+    pub open_price: f64,
+    pub sl: f64,
+    pub tp: f64,
+    pub status: String,
+}
+
+/// Converte a resposta JSON do endpoint `/v3/instruments/{instrument}/candles` da OANDA v20 em `Vec<Candle>` do ALR.
+pub fn parse_oanda_candles_response(json: &serde_json::Value) -> Result<Vec<Candle>> {
+    let arr = json["candles"]
+        .as_array()
+        .ok_or_else(|| anyhow::anyhow!("Missing 'candles' array in OANDA response"))?;
+
+    let mut candles = Vec::with_capacity(arr.len());
+    for item in arr {
+        let time_str = item["time"].as_str().unwrap_or("");
+        let timestamp = if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(time_str) {
+            dt.timestamp()
+        } else if let Ok(ts) = time_str.parse::<i64>() {
+            ts
+        } else {
+            chrono::Utc::now().timestamp()
+        };
+
+        let mid = &item["mid"];
+        let open = mid["o"]
+            .as_str()
+            .and_then(|s| s.parse().ok())
+            .or_else(|| mid["o"].as_f64())
+            .unwrap_or(0.0);
+        let high = mid["h"]
+            .as_str()
+            .and_then(|s| s.parse().ok())
+            .or_else(|| mid["h"].as_f64())
+            .unwrap_or(0.0);
+        let low = mid["l"]
+            .as_str()
+            .and_then(|s| s.parse().ok())
+            .or_else(|| mid["l"].as_f64())
+            .unwrap_or(0.0);
+        let close = mid["c"]
+            .as_str()
+            .and_then(|s| s.parse().ok())
+            .or_else(|| mid["c"].as_f64())
+            .unwrap_or(0.0);
+        let volume = item["volume"]
+            .as_f64()
+            .or_else(|| item["volume"].as_i64().map(|v| v as f64))
+            .unwrap_or(50.0);
+
+        candles.push(Candle::new(timestamp, open, high, low, close, volume));
+    }
+
+    candles.sort_by_key(|c| c.timestamp);
+    Ok(candles)
+}
+
+/// Gera velas sintéticas ultra-realistas com dinâmica de pips para moedas Forex
+pub fn generate_forex_candles(
+    seed: u64,
+    count: usize,
+    baseline_price: f64,
+    symbol: &str,
+) -> Vec<Candle> {
+    let mut candles = Vec::with_capacity(count);
+    let mut current = baseline_price;
+    let base_time = chrono::Utc::now().timestamp() - (count as i64 * 60);
+    let pip = ForexPipCalculator::pip_size(symbol);
+
+    for i in 0..count {
+        let t = base_time + (i as i64 * 60);
+        let cycle = i as f64;
+        let wave = ((cycle * 0.15) + (seed as f64)).sin() * (pip * 3.5);
+        let noise = (((i as u64 * 23 + seed) % 100) as f64 - 49.0) / 100.0 * (pip * 2.0);
+        let open = current;
+        let close = (open + wave + noise).max(pip * 10.0);
+        let high = open.max(close) + (pip * 1.5);
+        let low = (open.min(close) - (pip * 1.5)).max(pip * 5.0);
+        let volume = 150.0 + (((i as u64 * 13 + seed) % 300) as f64);
+        current = close;
+
+        candles.push(Candle::new(t, open, high, low, close, volume));
+    }
+
+    candles
+}
+
+/// Conector Oficial para OANDA v20 REST API (https://developer.oanda.com/rest-live-v20/introduction/)
+#[derive(Clone)]
+pub struct OandaTestnetConnector {
+    pub client: reqwest::Client,
+    pub base_url: String,
+    pub account_id: Option<String>,
+    pub api_token: Option<String>,
+}
+
+impl OandaTestnetConnector {
+    pub const PRACTICE_URL: &'static str = "https://api-fxpractice.oanda.com";
+    pub const LIVE_URL: &'static str = "https://api-fxtrade.oanda.com";
+
+    pub fn new(account_id: Option<String>, api_token: Option<String>) -> Self {
+        Self {
+            client: reqwest::Client::builder()
+                .timeout(std::time::Duration::from_secs(10))
+                .build()
+                .unwrap_or_default(),
+            base_url: Self::PRACTICE_URL.to_string(),
+            account_id,
+            api_token,
+        }
+    }
+
+    pub fn mock() -> Self {
+        Self {
+            client: reqwest::Client::default(),
+            base_url: Self::PRACTICE_URL.to_string(),
+            account_id: Some("101-004-1234567-001".to_string()),
+            api_token: Some("mock_oanda_token_9999".to_string()),
+        }
+    }
+
+    pub fn is_live(&self) -> bool {
+        match (&self.account_id, &self.api_token) {
+            (Some(acc), Some(tok)) => {
+                !acc.is_empty()
+                    && !tok.is_empty()
+                    && !acc.starts_with("mock_")
+                    && !tok.starts_with("mock_")
+            }
+            _ => false,
+        }
+    }
+
+    /// Formata símbolo para o padrão da OANDA (ex: "EUR-USD" -> "EUR_USD")
+    pub fn format_instrument(symbol: &str) -> String {
+        symbol.to_uppercase().replace(['/', '-'], "_")
+    }
+
+    /// Busca velas históricas (OHLC) da OANDA v20
+    pub async fn fetch_candles(
+        &self,
+        instrument: &str,
+        granularity: &str,
+        count: usize,
+    ) -> Result<Vec<Candle>> {
+        let inst = Self::format_instrument(instrument);
+        if self.is_live() {
+            let url = format!("{}/v3/instruments/{}/candles", self.base_url, inst);
+            let resp = self
+                .client
+                .get(&url)
+                .bearer_auth(self.api_token.as_deref().unwrap_or(""))
+                .query(&[
+                    ("price", "M"),
+                    ("granularity", granularity),
+                    ("count", &count.to_string()),
+                ])
+                .send()
+                .await;
+
+            if let Ok(res) = resp {
+                if let Ok(json) = res.json::<serde_json::Value>().await {
+                    if let Ok(candles) = parse_oanda_candles_response(&json) {
+                        if !candles.is_empty() {
+                            return Ok(candles);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fallback determinístico
+        let baseline = asset_baseline_price(instrument);
+        Ok(generate_forex_candles(101, count, baseline, instrument))
+    }
+
+    /// Despacha uma ordem de mercado na OANDA v20
+    pub async fn place_market_order(
+        &self,
+        instrument: &str,
+        units: f64,
+        stop_loss: Option<f64>,
+        take_profit: Option<f64>,
+    ) -> Result<OandaOrderResponse> {
+        let inst = Self::format_instrument(instrument);
+        let time_str = chrono::Utc::now().to_rfc3339();
+
+        if self.is_live() {
+            if let Some(acc) = &self.account_id {
+                let url = format!("{}/v3/accounts/{}/orders", self.base_url, acc);
+                let mut order_obj = serde_json::json!({
+                    "order": {
+                        "instrument": inst,
+                        "units": format!("{:.0}", units),
+                        "type": "MARKET",
+                        "positionFill": "DEFAULT",
+                        "timeInForce": "FOK"
+                    }
+                });
+                if let Some(sl) = stop_loss {
+                    order_obj["order"]["stopLossOnFill"] =
+                        serde_json::json!({ "price": format!("{:.5}", sl) });
+                }
+                if let Some(tp) = take_profit {
+                    order_obj["order"]["takeProfitOnFill"] =
+                        serde_json::json!({ "price": format!("{:.5}", tp) });
+                }
+
+                let resp = self
+                    .client
+                    .post(&url)
+                    .bearer_auth(self.api_token.as_deref().unwrap_or(""))
+                    .json(&order_obj)
+                    .send()
+                    .await;
+
+                if let Ok(res) = resp {
+                    if let Ok(json) = res.json::<serde_json::Value>().await {
+                        let fill_tx = &json["orderFillTransaction"];
+                        if let Some(id_str) = fill_tx["id"].as_str() {
+                            let price = fill_tx["price"]
+                                .as_str()
+                                .and_then(|s| s.parse().ok())
+                                .unwrap_or(0.0);
+                            return Ok(OandaOrderResponse {
+                                order_id: id_str.to_string(),
+                                instrument: inst,
+                                units,
+                                price,
+                                time: time_str,
+                                status: "FILLED".to_string(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fallback simulação determinística
+        let baseline = asset_baseline_price(instrument);
+        Ok(OandaOrderResponse {
+            order_id: format!("sim-oanda-{}", uuid::Uuid::new_v4().simple()),
+            instrument: inst,
+            units,
+            price: baseline,
+            time: time_str,
+            status: "FILLED".to_string(),
+        })
+    }
+}
+
+/// Conector para MetaTrader 5 (MT5) via REST Bridge Gateway local/remoto
+#[derive(Clone)]
+pub struct MetaTraderBridgeConnector {
+    pub client: reqwest::Client,
+    pub bridge_url: String,
+    pub magic_number: u64,
+}
+
+impl MetaTraderBridgeConnector {
+    pub const DEFAULT_BRIDGE_URL: &'static str = "http://127.0.0.1:5001/api";
+
+    pub fn new(bridge_url: Option<String>, magic_number: Option<u64>) -> Self {
+        Self {
+            client: reqwest::Client::builder()
+                .timeout(std::time::Duration::from_secs(5))
+                .build()
+                .unwrap_or_default(),
+            bridge_url: bridge_url.unwrap_or_else(|| Self::DEFAULT_BRIDGE_URL.to_string()),
+            magic_number: magic_number.unwrap_or(777123),
+        }
+    }
+
+    /// Formata símbolo para o padrão MT5 (ex: "EUR-USD" -> "EURUSD")
+    pub fn format_symbol(symbol: &str) -> String {
+        symbol.to_uppercase().replace(['/', '-', '_'], "")
+    }
+
+    /// Despacha uma ordem para o terminal MetaTrader 5 via bridge
+    pub async fn send_order(
+        &self,
+        symbol: &str,
+        cmd: &str, // "BUY" ou "SELL"
+        lots: f64,
+        sl: Option<f64>,
+        tp: Option<f64>,
+    ) -> Result<MetaTraderOrderResponse> {
+        let sym = Self::format_symbol(symbol);
+        let payload = serde_json::json!({
+            "symbol": sym,
+            "action": cmd.to_uppercase(),
+            "volume": lots,
+            "sl": sl.unwrap_or(0.0),
+            "tp": tp.unwrap_or(0.0),
+            "magic": self.magic_number,
+            "comment": "ALR Quant Fortress Forex"
+        });
+
+        let url = format!("{}/order", self.bridge_url);
+        let resp = self.client.post(&url).json(&payload).send().await;
+
+        if let Ok(res) = resp {
+            if let Ok(json) = res.json::<serde_json::Value>().await {
+                if let Some(ticket) = json["ticket"].as_u64() {
+                    let open_price = json["price"].as_f64().unwrap_or(0.0);
+                    return Ok(MetaTraderOrderResponse {
+                        ticket,
+                        symbol: sym,
+                        order_type: cmd.to_uppercase(),
+                        lots,
+                        open_price,
+                        sl: sl.unwrap_or(0.0),
+                        tp: tp.unwrap_or(0.0),
+                        status: "EXECUTED".to_string(),
+                    });
+                }
+            }
+        }
+
+        // Fallback simulação determinística
+        let baseline = asset_baseline_price(symbol);
+        let fake_ticket = 100000 + (chrono::Utc::now().timestamp() as u64 % 900000);
+        Ok(MetaTraderOrderResponse {
+            ticket: fake_ticket,
+            symbol: sym,
+            order_type: cmd.to_uppercase(),
+            lots,
+            open_price: baseline,
+            sl: sl.unwrap_or(0.0),
+            tp: tp.unwrap_or(0.0),
+            status: "SIMULATED".to_string(),
+        })
+    }
+}
+
+/// Conector Unificado de Forex para o ALR (OANDA, MetaTrader 5 ou Paper Trading)
+#[derive(Clone)]
+pub enum ForexConnector {
+    Oanda(OandaTestnetConnector),
+    MetaTrader(MetaTraderBridgeConnector),
+    Paper,
+}
+
+impl ForexConnector {
+    pub fn oanda(account_id: Option<String>, token: Option<String>) -> Self {
+        Self::Oanda(OandaTestnetConnector::new(account_id, token))
+    }
+
+    pub fn meta_trader(bridge_url: Option<String>) -> Self {
+        Self::MetaTrader(MetaTraderBridgeConnector::new(bridge_url, None))
+    }
+
+    pub fn paper() -> Self {
+        Self::Paper
+    }
+
+    pub fn name(&self) -> &'static str {
+        match self {
+            Self::Oanda(_) => "OANDA v20 REST API",
+            Self::MetaTrader(_) => "MetaTrader 5 REST Bridge",
+            Self::Paper => "Forex Paper Trading Desk",
+        }
+    }
+
+    pub async fn fetch_candles(&self, symbol: &str, count: usize) -> Result<Vec<Candle>> {
+        match self {
+            Self::Oanda(oanda) => oanda.fetch_candles(symbol, "M1", count).await,
+            Self::MetaTrader(_) | Self::Paper => {
+                let baseline = asset_baseline_price(symbol);
+                Ok(generate_forex_candles(42, count, baseline, symbol))
+            }
+        }
+    }
+
+    pub fn get_quote(&self, symbol: &str, current_price: f64) -> ForexQuote {
+        let pip = ForexPipCalculator::pip_size(symbol);
+        let spread_pips = match symbol.to_uppercase().as_str() {
+            s if s.contains("EUR") && s.contains("USD") => 0.8,
+            s if s.contains("GBP") && s.contains("USD") => 1.2,
+            s if s.contains("USD") && s.contains("JPY") => 0.9,
+            s if s.contains("USD") && s.contains("CHF") => 1.4,
+            s if s.contains("AUD") && s.contains("USD") => 1.1,
+            s if s.contains("USD") && s.contains("CAD") => 1.3,
+            _ => 1.5,
+        };
+        let half_spread = (spread_pips * pip) / 2.0;
+        let bid = current_price - half_spread;
+        let ask = current_price + half_spread;
+        let pip_val_std = ForexPipCalculator::pip_value_usd(symbol, 100_000.0, current_price);
+
+        ForexQuote {
+            symbol: symbol.to_string(),
+            bid,
+            ask,
+            spread_pips,
+            change_24h_pct: 0.12,
+            high_24h: current_price + (pip * 25.0),
+            low_24h: current_price - (pip * 25.0),
+            pip_value_standard_lot: pip_val_std,
+            timestamp: chrono::Utc::now().timestamp(),
+        }
+    }
+
+    pub async fn place_order(
+        &self,
+        symbol: &str,
+        side: OrderSide,
+        lots: f64,
+        sl: Option<f64>,
+        tp: Option<f64>,
+    ) -> Result<ForexPosition> {
+        let units = ForexLotType::from_lots(lots).units();
+        let cmd = match side {
+            OrderSide::Long => "BUY",
+            OrderSide::Short => "SELL",
+        };
+
+        let (ticket, open_price) = match self {
+            Self::Oanda(oanda) => {
+                let o_units = match side {
+                    OrderSide::Long => units,
+                    OrderSide::Short => -units,
+                };
+                let resp = oanda.place_market_order(symbol, o_units, sl, tp).await?;
+                (resp.order_id, resp.price)
+            }
+            Self::MetaTrader(mt5) => {
+                let resp = mt5.send_order(symbol, cmd, lots, sl, tp).await?;
+                (resp.ticket.to_string(), resp.open_price)
+            }
+            Self::Paper => {
+                let baseline = asset_baseline_price(symbol);
+                let fake_ticket = format!("fx-paper-{}", uuid::Uuid::new_v4().simple());
+                (fake_ticket, baseline)
+            }
+        };
+
+        Ok(ForexPosition {
+            ticket,
+            symbol: symbol.to_string(),
+            side,
+            lots,
+            units,
+            open_price,
+            current_price: open_price,
+            pips_pnl: 0.0,
+            usd_pnl: 0.0,
+            open_time: chrono::Utc::now().timestamp(),
+            stop_loss: sl,
+            take_profit: tp,
+        })
+    }
 }

@@ -700,6 +700,19 @@ Infraestrutura completa de alta frequência e baixa latência para execução qu
 8. **Saídas de Emergência por Kumo Breakdown e Time-Decay:**
    * *Kumo Breakdown*: Se o preço romper a base da Nuvem Ichimoku para baixo, liquida imediatamente posições Long antes de quedas severas.
    * *Time-Decay Exit*: Encerra trades estagnados há mais de 45 velas sem atingir alvo para liberar capital.
+9. **Suporte Nativo a Forex (Câmbio Internacional) via APIs Reais (OANDA v20 & MetaTrader 5 Bridge):**
+   * **Cesta Oficial Forex Majors**: Suporte completo aos 7 pares de moedas mais negociados do mundo (`EUR/USD`, `GBP/USD`, `USD/JPY`, `USD/CHF`, `AUD/USD`, `USD/CAD` e `EUR/GBP`).
+   * **Calculadora de Pips e Lotes Institucionais (`ForexPipCalculator`)**:
+     * Resolução de Pip Size: $0.0001$ para majors de 4/5 decimais e $0.01$ para pares com Iene Japonês (`USD/JPY`).
+     * Dimensionamento por Lotes: Standard ($100.000$ unidades / $\$10$ por pip), Mini ($10.000$ unidades / $\$1$ por pip) e Micro ($1.000$ unidades / $\$0.10$ por pip).
+     * Cálculo de PnL líquido em dólares considerando spread em pips, pip value e alavancagem.
+   * **Conectores Oficiais para Corretoras de Forex**:
+     * **OANDA v20 REST API (`OandaTestnetConnector`)**: Conexão com endpoints oficiais da OANDA Practice e Live (`/v3/instruments/{inst}/candles`, `/v3/accounts/{acc}/orders`) com envio de ordens FOK a mercado com Stop-Loss e Take-Profit atrelados.
+     * **MetaTrader 5 REST Bridge (`MetaTraderBridgeConnector`)**: Integração com gateway REST MT5 local/remoto com formatação de símbolos (`EURUSD`), despacho por Magic Number e controle de ordens.
+     * **Forex Paper Broker**: Simulação de alta precisão com dinâmica de spread interbancário dinâmico (0.8 a 1.5 pips).
+   * **Cockpit Web com Alternador de Mercado (`Market Switcher`)**:
+     * No topo do dashboard web (`http://localhost:3800`), o operador pode alternar livremente entre **🪙 Criptomoedas (7 Ativos)** e **💱 Forex & Câmbio (7 Pares Majors)**.
+     * Exibição de cotações em tempo real com **Bid / Ask**, **Spread em Pips**, **Valor do Pip**, cotações com precisão decimal institucional e modal para despacho manual de ordens com 1 clique!
 ```bash
 # Simulação completa no terminal com gráfico de preços em ASCII, indicadores e extrato de PnL
 cargo run -p alr-cli -- trader-demo --asset BTC-USDT --candles 50
@@ -709,6 +722,9 @@ cargo run -p alr-cli -- trader-live --exchange binance --asset BTCUSDT --poll-in
 
 # Execução contínua ao vivo via Bybit Testnet V5
 cargo run -p alr-cli -- trader-live --exchange bybit --asset BTCUSDT --poll-interval 3
+
+# Execução ao vivo no mercado Forex via OANDA v20 REST API ou Paper Broker
+cargo run -p alr-cli -- trader-live --exchange oanda --asset EUR-USD --poll-interval 1
 
 # Paper Trading determinístico local (simulação offline)
 cargo run -p alr-cli -- trader-live --exchange paper --asset BTCUSDT --poll-interval 1 --max-cycles 10

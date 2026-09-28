@@ -161,10 +161,21 @@
               KILL SWITCH ATIVO
             </span>
           </div>
-          <p class="text-xs text-slate-400">Multi-Asset Autonomous Quantitative Execution • 7 Moedas Líquidas na Binance Spot Testnet</p>
+          <p class="text-xs text-slate-400">Multi-Asset Autonomous Quantitative Execution • Criptomoedas & Câmbio Forex</p>
         </div>
       </div>
 
+      <!-- Market Switcher: Criptomoedas vs Forex -->
+      <div class="flex items-center p-1 rounded-xl bg-navy-950 border border-navy-800 shadow-inner">
+        <button id="market-tab-crypto" onclick="switchMarket('crypto')" class="px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-cyan-600 text-white shadow">
+          <span>🪙 Criptomoedas</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[9px] bg-cyan-950 text-cyan-200">7 Ativos</span>
+        </button>
+        <button id="market-tab-forex" onclick="switchMarket('forex')" class="px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+          <span>💱 Forex & Câmbio</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[9px] bg-navy-800 text-slate-300">7 Pares</span>
+        </button>
+      </div>
       <!-- Macro Regime Badge -->
       <div id="macro-regime-card" class="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-lg bg-navy-850 border border-navy-700/80">
         <div class="text-right">
@@ -981,7 +992,86 @@
     </div>
   </dialog>
 
-  <!-- Modal de Snapshot de Indicadores e Pesos na Entrada do Trade -->
+  <!-- Modal de Execução de Ordem Forex -->
+  <dialog id="forexOrderModal" class="bg-navy-900 text-white rounded-2xl p-5 border border-indigo-500/40 shadow-2xl backdrop:bg-black/75 max-w-md w-full">
+    <div class="flex items-center justify-between border-b border-navy-800 pb-3 mb-3">
+      <div class="flex items-center gap-2">
+        <span class="text-base">💱</span>
+        <h3 class="font-bold text-sm text-white">Negociação no Mercado Forex</h3>
+      </div>
+      <button onclick="document.getElementById('forexOrderModal').close()" class="text-slate-400 hover:text-white text-lg">&times;</button>
+    </div>
+
+    <div class="flex flex-col gap-3 text-xs">
+      <div>
+        <label class="text-[10px] uppercase font-bold text-slate-400">Par de Moedas (Currency Pair)</label>
+        <select id="forex-order-symbol" onchange="updateForexModalPrices()" class="w-full mt-1 px-3 py-1.5 rounded bg-navy-950 border border-navy-700 text-white font-mono text-xs focus:outline-none focus:border-cyan-500">
+          <option value="EUR-USD">EUR/USD (Euro / US Dollar) • Spread ~0.8 pips</option>
+          <option value="GBP-USD">GBP/USD (British Pound / US Dollar) • Spread ~1.2 pips</option>
+          <option value="USD-JPY">USD/JPY (US Dollar / Japanese Yen) • Spread ~0.9 pips</option>
+          <option value="USD-CHF">USD/CHF (US Dollar / Swiss Franc) • Spread ~1.4 pips</option>
+          <option value="AUD-USD">AUD/USD (Australian Dollar / US Dollar) • Spread ~1.1 pips</option>
+          <option value="USD-CAD">USD/CAD (US Dollar / Canadian Dollar) • Spread ~1.3 pips</option>
+          <option value="EUR-GBP">EUR/GBP (Euro / British Pound) • Spread ~1.5 pips</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 p-2.5 rounded-lg bg-navy-950 border border-navy-800 text-[11px] mono">
+        <div>Bid (Venda): <strong id="forex-modal-bid" class="text-rose-400 font-bold">--</strong></div>
+        <div>Ask (Compra): <strong id="forex-modal-ask" class="text-emerald-400 font-bold">--</strong></div>
+        <div>Spread: <span id="forex-modal-spread" class="text-cyan-400 font-semibold">-- pips</span></div>
+        <div>Pip Value: <span id="forex-modal-pipval" class="text-slate-300 font-semibold">$10.00 / Std</span></div>
+      </div>
+
+      <div>
+        <label class="text-[10px] uppercase font-bold text-slate-400">Tamanho da Posição (Lotes)</label>
+        <div class="grid grid-cols-3 gap-1.5 mt-1">
+          <button type="button" onclick="setForexLot(0.01)" id="lot-btn-micro" class="py-1.5 px-2 rounded bg-navy-950 border border-navy-800 hover:border-cyan-500 text-[11px] font-semibold text-center transition">
+            <div class="text-cyan-300 font-bold">0.01 Micro</div>
+            <div class="text-[9px] text-slate-500">1.000 un ($10)</div>
+          </button>
+          <button type="button" onclick="setForexLot(0.10)" id="lot-btn-mini" class="py-1.5 px-2 rounded bg-cyan-600 text-white border border-cyan-500 text-[11px] font-semibold text-center transition">
+            <div class="font-bold">0.10 Mini</div>
+            <div class="text-[9px] text-cyan-100">10.000 un ($100)</div>
+          </button>
+          <button type="button" onclick="setForexLot(1.00)" id="lot-btn-std" class="py-1.5 px-2 rounded bg-navy-950 border border-navy-800 hover:border-cyan-500 text-[11px] font-semibold text-center transition">
+            <div class="text-cyan-300 font-bold">1.00 Standard</div>
+            <div class="text-[9px] text-slate-500">100.000 un ($1k)</div>
+          </button>
+        </div>
+        <input id="forex-order-lots" type="number" step="0.01" min="0.01" value="0.10" class="w-full mt-1.5 px-3 py-1.5 rounded bg-navy-950 border border-navy-700 text-white font-mono text-xs focus:outline-none focus:border-cyan-500">
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="text-[10px] uppercase font-bold text-slate-400">Stop-Loss (Preço)</label>
+          <input id="forex-order-sl" type="number" step="0.0001" placeholder="Opcional" class="w-full mt-1 px-3 py-1.5 rounded bg-navy-950 border border-navy-700 text-white font-mono text-xs focus:outline-none focus:border-cyan-500">
+        </div>
+        <div>
+          <label class="text-[10px] uppercase font-bold text-slate-400">Take-Profit (Preço)</label>
+          <input id="forex-order-tp" type="number" step="0.0001" placeholder="Opcional" class="w-full mt-1 px-3 py-1.5 rounded bg-navy-950 border border-navy-700 text-white font-mono text-xs focus:outline-none focus:border-cyan-500">
+        </div>
+      </div>
+
+      <div>
+        <label class="text-[10px] uppercase font-bold text-slate-400">Broker / Gateway de Execução</label>
+        <select id="forex-order-broker" class="w-full mt-1 px-3 py-1.5 rounded bg-navy-950 border border-navy-700 text-white font-mono text-xs focus:outline-none focus:border-cyan-500">
+          <option value="paper">📝 Forex Paper Trading (Simulação ECN de Alta Fidelidade)</option>
+          <option value="oanda">🌐 OANDA v20 REST API (Practice / Live)</option>
+          <option value="mt5">🖥️ MetaTrader 5 REST Bridge (Local / Broker STP)</option>
+        </select>
+      </div>
+
+      <div class="flex gap-2 pt-2 border-t border-navy-800">
+        <button onclick="submitForexOrder('SELL')" class="flex-1 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition active:scale-95 shadow">
+          VENDER (SHORT)
+        </button>
+        <button onclick="submitForexOrder('BUY')" class="flex-1 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition active:scale-95 shadow">
+          COMPRAR (LONG)
+        </button>
+      </div>
+    </div>
+  </dialog>
   <dialog id="tradeSnapshotModal" class="bg-navy-900 text-white rounded-2xl p-5 sm:p-6 border border-cyan-500/40 shadow-2xl backdrop:bg-black/80 max-w-4xl w-[95vw] sm:w-[90vw] max-h-[90vh] overflow-y-auto overflow-x-hidden text-xs m-auto" onclick="if (event.target === this) this.close()">
     <div class="flex flex-col gap-4 w-full">
       <!-- Modal Header -->
@@ -2275,11 +2365,165 @@
         showToast('Erro ao atualizar teto: ' + err.message, 'error');
       }
     }
-    // Renderizador dos Cards de Ativos (7 Moedas da Binance Spot)
+    const FOREX_PAIRS_DEF = [
+      { sym: 'EUR-USD', name: 'EUR/USD', desc: 'Euro / US Dollar', base: 1.0854, spread: 0.8, dec: 4 },
+      { sym: 'GBP-USD', name: 'GBP/USD', desc: 'British Pound / US Dollar', base: 1.2952, spread: 1.2, dec: 4 },
+      { sym: 'USD-JPY', name: 'USD/JPY', desc: 'US Dollar / Japanese Yen', base: 154.25, spread: 0.9, dec: 2 },
+      { sym: 'USD-CHF', name: 'USD/CHF', desc: 'US Dollar / Swiss Franc', base: 0.8922, spread: 1.4, dec: 4 },
+      { sym: 'AUD-USD', name: 'AUD/USD', desc: 'Australian Dollar / US Dollar', base: 0.6582, spread: 1.1, dec: 4 },
+      { sym: 'USD-CAD', name: 'USD/CAD', desc: 'US Dollar / Canadian Dollar', base: 1.3854, spread: 1.3, dec: 4 },
+      { sym: 'EUR-GBP', name: 'EUR/GBP', desc: 'Euro / British Pound', base: 0.8385, spread: 1.5, dec: 4 }
+    ];
+
+    let currentMarketMode = 'crypto';
+    let currentForexLot = 0.10;
+
+    function switchMarket(mode) {
+      currentMarketMode = mode;
+      const btnCrypto = document.getElementById('market-tab-crypto');
+      const btnForex = document.getElementById('market-tab-forex');
+
+      if (mode === 'forex') {
+        if (btnForex) btnForex.className = 'px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow';
+        if (btnCrypto) btnCrypto.className = 'px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-1.5';
+        selectedAsset = 'EUR-USD';
+      } else {
+        if (btnCrypto) btnCrypto.className = 'px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-cyan-600 text-white shadow';
+        if (btnForex) btnForex.className = 'px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-1.5';
+        selectedAsset = 'BTC-USDT';
+      }
+      renderAssetCards(deskState);
+      renderActiveAssetDetailed(deskState);
+    }
+
+    function openForexOrderModal(symbol) {
+      const modal = document.getElementById('forexOrderModal');
+      if (!modal) return;
+      const symSelect = document.getElementById('forex-order-symbol');
+      if (symSelect && symbol) {
+        symSelect.value = symbol;
+      }
+      updateForexModalPrices();
+      modal.showModal();
+    }
+
+    function setForexLot(lot) {
+      currentForexLot = lot;
+      const inp = document.getElementById('forex-order-lots');
+      if (inp) inp.value = lot.toFixed(2);
+
+      ['micro', 'mini', 'std'].forEach(k => {
+        const btn = document.getElementById(`lot-btn-${k}`);
+        if (!btn) return;
+        const target = k === 'micro' ? 0.01 : (k === 'mini' ? 0.10 : 1.00);
+        if (Math.abs(lot - target) < 1e-4) {
+          btn.className = 'py-1.5 px-2 rounded bg-cyan-600 text-white border border-cyan-500 text-[11px] font-semibold text-center transition';
+        } else {
+          btn.className = 'py-1.5 px-2 rounded bg-navy-950 border border-navy-800 hover:border-cyan-500 text-[11px] font-semibold text-center transition';
+        }
+      });
+    }
+
+    function updateForexModalPrices() {
+      const sym = document.getElementById('forex-order-symbol')?.value || 'EUR-USD';
+      const def = FOREX_PAIRS_DEF.find(p => p.sym === sym) || FOREX_PAIRS_DEF[0];
+      const pip = sym.includes('JPY') ? 0.01 : 0.0001;
+      const half = (def.spread * pip) / 2;
+      const bid = def.base - half;
+      const ask = def.base + half;
+      const dec = def.dec;
+
+      const bidEl = document.getElementById('forex-modal-bid');
+      const askEl = document.getElementById('forex-modal-ask');
+      const spEl = document.getElementById('forex-modal-spread');
+      const pvEl = document.getElementById('forex-modal-pipval');
+
+      if (bidEl) bidEl.textContent = bid.toFixed(dec + 1);
+      if (askEl) askEl.textContent = ask.toFixed(dec + 1);
+      if (spEl) spEl.textContent = `${def.spread.toFixed(1)} pips`;
+      if (pvEl) pvEl.textContent = sym.includes('JPY') ? `~$6.50 / Std` : `$10.00 / Std`;
+    }
+
+    async function submitForexOrder(side) {
+      const sym = document.getElementById('forex-order-symbol')?.value || 'EUR-USD';
+      const lots = parseFloat(document.getElementById('forex-order-lots')?.value) || currentForexLot;
+      const sl = parseFloat(document.getElementById('forex-order-sl')?.value) || null;
+      const tp = parseFloat(document.getElementById('forex-order-tp')?.value) || null;
+      const broker = document.getElementById('forex-order-broker')?.value || 'paper';
+
+      try {
+        const res = await safeFetchJson('/api/v1/desk/forex/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ symbol: sym, side, lots, stop_loss: sl, take_profit: tp, broker })
+        });
+        if (res && res.success) {
+          showToast(`Ordem Forex executada com sucesso: ${side} ${lots} lotes em ${sym}!`, 'success');
+          document.getElementById('forexOrderModal')?.close();
+          await pollDeskStatus();
+          await pollLogs();
+        } else {
+          showToast(res?.message || 'Falha ao executar ordem Forex', 'error');
+        }
+      } catch (err) {
+        showToast('Erro ao despachar ordem Forex: ' + err.message, 'error');
+      }
+    }
+
+    // Renderizador dos Cards de Ativos (Criptomoedas ou Forex)
     function renderAssetCards(state) {
       const grid = document.getElementById('ticker-grid');
       if (!grid) return;
       grid.innerHTML = '';
+
+      if (currentMarketMode === 'forex') {
+        for (const p of FOREX_PAIRS_DEF) {
+          const isSelected = p.sym === selectedAsset;
+          const curPrice = state?.forex_quotes?.[p.sym]?.bid || p.base;
+          const pip = p.sym.includes('JPY') ? 0.01 : 0.0001;
+          const halfSpread = (p.spread * pip) / 2;
+          const bid = curPrice - halfSpread;
+          const ask = curPrice + halfSpread;
+          const pipVal = p.sym.includes('JPY') ? '~$6.50' : '$10.00';
+
+          const card = document.createElement('div');
+          card.className = `p-2.5 rounded-xl cursor-pointer transition border text-xs flex flex-col justify-between gap-1.5 ${
+            isSelected ? 'bg-indigo-950/70 border-indigo-400 shadow-md shadow-indigo-500/10 ring-1 ring-indigo-400/40' : 'bg-navy-900/80 border-navy-800 hover:border-slate-700'
+          }`;
+          card.onclick = () => selectAsset(p.sym);
+
+          card.innerHTML = `
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white mono text-[11px] flex items-center gap-1">
+                <span>${p.name}</span>
+                <span class="px-1.5 py-0.2 rounded text-[8px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">FX MAJOR</span>
+              </span>
+              <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">${p.spread.toFixed(1)} pips</span>
+            </div>
+            <div class="mono font-bold text-white text-sm">${curPrice.toFixed(p.dec + 1)}</div>
+            <div class="flex items-center justify-between text-[10px] font-medium border-b border-navy-800/60 pb-1">
+              <span class="text-rose-400 mono">Bid: ${bid.toFixed(p.dec + 1)}</span>
+              <span class="text-emerald-400 mono">Ask: ${ask.toFixed(p.dec + 1)}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-x-1 gap-y-0.5 text-[9px] text-slate-400 font-mono pt-0.5">
+              <div>Pip Size: <span class="text-slate-200">${pip}</span></div>
+              <div>Pip Val: <span class="text-slate-200">${pipVal}/lot</span></div>
+              <div class="col-span-2 text-[9px] text-slate-400 pt-0.5 border-t border-navy-800/40">
+                Lotes: <strong class="text-cyan-300">0.01 Micro • 0.10 Mini • 1.00 Std</strong>
+              </div>
+              <div class="col-span-2 pt-1">
+                <button onclick="event.stopPropagation(); openForexOrderModal('${p.sym}')" class="w-full py-1 rounded bg-indigo-600/90 hover:bg-indigo-600 text-white font-semibold text-[10px] transition active:scale-95 flex items-center justify-center gap-1 shadow">
+                  <span>💱 Negociar ${p.name}</span>
+                </button>
+              </div>
+            </div>
+          `;
+          grid.appendChild(card);
+        }
+        return;
+      }
+
+      // Modo Criptomoedas
       for (const a of state?.assets || []) {
         const isSelected = a.asset === selectedAsset;
         const isBull = a.change_24h_pct >= 0;

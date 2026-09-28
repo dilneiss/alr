@@ -29,15 +29,18 @@ pub use secrets::{
 };
 pub use tasks::{AgentCheckpoint, AgentTask, TaskPriority, TaskQueue, TaskStatus};
 pub use trading::{
-    asset_baseline_price, generate_paper_market_snapshot, generate_synthetic_candles,
-    parse_binance_kline_response, parse_bybit_kline_response, AssetDeskStatus,
+    asset_baseline_price, generate_forex_candles, generate_paper_market_snapshot,
+    generate_synthetic_candles, is_forex_symbol, parse_binance_kline_response,
+    parse_bybit_kline_response, parse_oanda_candles_response, AssetDeskStatus,
     BinanceOrderResponse, BinanceTestnetConnector, BybitOrderRequest, BybitOrderResponse,
     BybitTestnetConnector, BybitTicker, Candle, CandleTick, CryptoTraderEngine, DeskStatusSnapshot,
-    ExchangeSimulationConfig, JevTradingDecision, LlmMarketRegimeAdvisor, MacroRegimeReport,
-    MarketRegime, MarketSnapshot, MultiAssetConfig, MultiAssetTraderEngine, OrderBook, OrderSide,
-    RiskControlPolicy, RiskPolicy, RiskRationale, SqliteTradingStore, TechnicalIndicators,
-    TradeExecution, TradeExecutionReport, TradeSizingComparisonReport, TradingAction,
-    TradingPosition, TradingSignal, DEFAULT_MULTI_ASSET_BASKET,
+    ExchangeSimulationConfig, ForexConnector, ForexLotType, ForexPipCalculator, ForexPosition,
+    ForexQuote, JevTradingDecision, LlmMarketRegimeAdvisor, MacroRegimeReport, MarketCategory,
+    MarketRegime, MarketSnapshot, MetaTraderBridgeConnector, MetaTraderOrderResponse,
+    MultiAssetConfig, MultiAssetTraderEngine, OandaOrderResponse, OandaTestnetConnector, OrderBook,
+    OrderSide, RiskControlPolicy, RiskPolicy, RiskRationale, SqliteTradingStore,
+    TechnicalIndicators, TradingPosition, TradingSignal, DEFAULT_MULTI_ASSET_BASKET,
+    FOREX_MAJOR_BASKET,
 };
 pub use trading_desk::*;
 pub use trading_logger::*;
