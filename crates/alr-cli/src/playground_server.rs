@@ -19968,6 +19968,27 @@ Lead Frio: apenas olhando, documentação, onde posso baixar`;
         // =====================================================================
         // 14. WHATSAPP PREVIDENCIÁRIO LEADS DESK (SYSTEM 1 + QDRANT)
         // =====================================================================
+        function escapeHtml(unsafe) {
+            if (unsafe == null) return '';
+            return String(unsafe)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        const BENEFIT_LABELS = {
+            'aposentadoria_idade': 'Aposentadoria por Idade',
+            'aposentadoria_tempo': 'Aposentadoria por Tempo (EC 103)',
+            'aposentadoria_especial': 'Aposentadoria Especial (Insalubridade)',
+            'aposentadoria_invalidez': 'Aposentadoria por Invalidez',
+            'bpc_loas': 'BPC / LOAS (Benefício Assistencial)',
+            'auxilio_doenca': 'Auxílio-Doença (Incapacidade)',
+            'pensao_morte': 'Pensão por Morte',
+            'revisao_beneficio': 'Revisão de Benefício',
+        };
+
         let currentLeadState = null;
         let isLeadProcessing = false;
 
@@ -20024,13 +20045,14 @@ Lead Frio: apenas olhando, documentação, onde posso baixar`;
             }
 
             history.forEach(m => {
-                const isAssistant = m.role === 'assistant';
+                const isAssistant = m.sender === 'assistant' || m.role === 'assistant';
                 const bubble = document.createElement('div');
                 bubble.className = `wa-msg ${isAssistant ? 'assistant' : 'lead'}`;
                 
-                const timeStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                const timeStr = m.timestamp ? new Date(m.timestamp * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                const textContent = m.text || m.content || '';
                 bubble.innerHTML = `
-                    <div>${escapeHtml(m.content)}</div>
+                    <div style="white-space: pre-wrap;">${escapeHtml(textContent)}</div>
                     <div class="wa-msg-meta">
                         <span>${timeStr}</span>
                         ${isAssistant ? '<span style="color: #53bdeb;">✓✓</span>' : ''}
@@ -20044,7 +20066,7 @@ Lead Frio: apenas olhando, documentação, onde posso baixar`;
         function updateLeadDossier(lead, handover) {
             if (!lead) return;
             const nameEl = document.getElementById('wa-lead-name');
-            if (nameEl) nameEl.textContent = lead.name || 'Maria Aparecida';
+            if (nameEl) nameEl.textContent = lead.customer_name || lead.name || 'Maria Aparecida';
 
             // Score e Barra
             const score = Math.round(lead.qualification_score || 0);
@@ -20066,14 +20088,14 @@ Lead Frio: apenas olhando, documentação, onde posso baixar`;
             // Status Chip
             const statusChip = document.getElementById('wa-lead-status-chip');
             if (statusChip) {
-                const s = lead.status;
-                if (s === 'QualifiedHighPriority' || s === 'QualifiedStandard') {
+                const s = String(lead.status || '').toLowerCase();
+                if (s.includes('qualified') || s.includes('handover')) {
                     statusChip.textContent = 'QUALIFICADO - ALTA PRIORIDADE';
                     statusChip.style.background = 'rgba(0, 255, 136, 0.15)';
                     statusChip.style.color = '#00ff88';
                     statusChip.style.borderColor = 'rgba(0, 255, 136, 0.3)';
                     if (scoreDesc) scoreDesc.textContent = 'Caso com alta probabilidade de êxito judicial/administrativo';
-                } else if (s === 'DiscardedSpam' || s === 'DiscardedOutOfScope') {
+                } else if (s.includes('discard')) {
                     statusChip.textContent = 'DESCARTADO (FORA DE ESCOPO)';
                     statusChip.style.background = 'rgba(255, 68, 68, 0.15)';
                     statusChip.style.color = '#ff4444';
@@ -20091,7 +20113,8 @@ Lead Frio: apenas olhando, documentação, onde posso baixar`;
             // Entidades
             const benEl = document.getElementById('wa-ent-benefit');
             if (benEl) {
-                benEl.textContent = lead.benefit_type || 'Não identificado';
+                const rawBen = lead.benefit_type || '';
+                benEl.textContent = BENEFIT_LABELS[rawBen] || rawBen || 'Não identificado';
             }
             const ageEl = document.getElementById('wa-ent-age');
             if (ageEl) {
@@ -20115,8 +20138,10 @@ Lead Frio: apenas olhando, documentação, onde posso baixar`;
             }
             const docsEl = document.getElementById('wa-ent-docs');
             if (docsEl) {
-                if (lead.medical_reports && lead.medical_reports.length > 0) {
-                    docsEl.textContent = lead.medical_reports.join(', ');
+                if (lead.has_medical_report === true) {
+                    docsEl.innerHTML = '<span style="color: #00ff88; font-weight: 600;">Sim (Laudo / Atestado Médico)</span>';
+                } else if (lead.notes && lead.notes.length > 0) {
+                    docsEl.textContent = lead.notes.join(', ');
                 } else {
                     docsEl.textContent = '-';
                 }
@@ -20126,15 +20151,20 @@ Lead Frio: apenas olhando, documentação, onde posso baixar`;
             const handoverBox = document.getElementById('wa-handover-container');
             const handoverLink = document.getElementById('wa-handover-link');
             const handoverReason = document.getElementById('wa-handover-reason');
-            if (handover && handover.lawyer_whatsapp_link) {
+            const waUrl = (handover && (handover.whatsapp_url || handover.lawyer_whatsapp_link)) || null;
+            const summaryText = (handover && (handover.case_summary || handover.summary)) || null;
+
+            if (waUrl) {
                 if (handoverBox) handoverBox.style.display = 'block';
-                if (handoverLink) handoverLink.href = handover.lawyer_whatsapp_link;
-                if (handoverReason) handoverReason.textContent = handover.summary || 'Lead previdenciário com documentação mínima atendida.';
+                if (handoverLink) handoverLink.href = waUrl;
+                if (handoverReason) handoverReason.textContent = summaryText || 'Lead previdenciário com documentação mínima atendida.';
             } else if (score >= 70) {
                 if (handoverBox) handoverBox.style.display = 'block';
-                const textMsg = encodeURIComponent(`Olá Dr(a), novo lead qualificado pelo ALR:\nNome: ${lead.name}\nBenefício: ${lead.benefit_type || 'Previdenciário'}\nScore: ${score}%\nNegativa INSS: ${lead.has_inss_denial ? 'Sim' : 'Não'}`);
-                if (handoverLink) handoverLink.href = `https://wa.me/5511987654321?text=${textMsg}`;
-                if (handoverReason) handoverReason.textContent = `Caso de ${lead.benefit_type || 'Aposentadoria'} com alta probabilidade. Encaminhe diretamente para a equipe jurídica.`;
+                const clientName = lead.customer_name || lead.name || 'Cliente';
+                const benName = BENEFIT_LABELS[lead.benefit_type] || lead.benefit_type || 'Previdenciário';
+                const textMsg = encodeURIComponent(`Olá Dr(a), novo lead qualificado pelo ALR:\nNome: ${clientName}\nBenefício: ${benName}\nScore: ${score}%\nNegativa INSS: ${lead.has_inss_denial ? 'Sim' : 'Não'}`);
+                if (handoverLink) handoverLink.href = `https://wa.me/5511999998888?text=${textMsg}`;
+                if (handoverReason) handoverReason.textContent = `Caso de ${benName} com alta probabilidade. Encaminhe diretamente para a equipe jurídica.`;
             } else {
                 if (handoverBox) handoverBox.style.display = 'none';
             }
@@ -20161,7 +20191,7 @@ Lead Frio: apenas olhando, documentação, onde posso baixar`;
                 userBubble.className = 'wa-msg lead';
                 const timeStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                 userBubble.innerHTML = `
-                    <div>${escapeHtml(message)}</div>
+                    <div style="white-space: pre-wrap;">${escapeHtml(message)}</div>
                     <div class="wa-msg-meta"><span>${timeStr}</span></div>
                 `;
                 chatBox.appendChild(userBubble);
@@ -20186,11 +20216,15 @@ Lead Frio: apenas olhando, documentação, onde posso baixar`;
                 if (resp.ok) {
                     const data = await resp.json();
                     if (data.reply && chatBox) {
+                        const replyContent = (typeof data.reply === 'object' && data.reply !== null)
+                            ? (data.reply.text || data.reply.content || '')
+                            : String(data.reply || '');
+
                         const botBubble = document.createElement('div');
                         botBubble.className = 'wa-msg assistant';
                         const timeStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                         botBubble.innerHTML = `
-                            <div>${escapeHtml(data.reply)}</div>
+                            <div style="white-space: pre-wrap;">${escapeHtml(replyContent)}</div>
                             <div class="wa-msg-meta">
                                 <span>${timeStr}</span>
                                 <span style="color: #53bdeb;">✓✓</span>
@@ -20227,11 +20261,11 @@ Lead Frio: apenas olhando, documentação, onde posso baixar`;
                     const data = await resp.json();
                     const v = data.validation;
                     resultBox.innerHTML = `
-                        <div style="color: ${v.is_valid ? '#00ff88' : '#ffaa00'}; font-weight: 600; margin-bottom: 4px;">
-                            ${v.is_valid ? '✅ AUDITORIA CONFORME (VALIDADO)' : '⚠️ AUDITORIA COM RESSALVAS'}
+                        <div style="color: ${v.is_approved_for_human ? '#00ff88' : '#ffaa00'}; font-weight: 600; margin-bottom: 4px;">
+                            ${v.is_approved_for_human ? '✅ AUDITORIA CONFORME (VALIDADO)' : '⚠️ AUDITORIA COM RESSALVAS'}
                         </div>
-                        <div style="margin-bottom: 4px; color: #e9edef;">${escapeHtml(v.legal_rationale)}</div>
-                        <div style="font-size: 11px; color: #8696a0;">Recomendação: ${escapeHtml(v.recommended_action)}</div>
+                        <div style="margin-bottom: 4px; color: #e9edef;">${escapeHtml(v.legal_thesis_summary || '')}</div>
+                        <div style="font-size: 11px; color: #8696a0;">Recomendação: ${escapeHtml(v.recommended_action || '')}</div>
                     `;
                 } else {
                     resultBox.innerHTML = '<span style="color: #ff4444;">Erro ao validar dossiê via LLM.</span>';
