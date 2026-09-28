@@ -5047,8 +5047,11 @@ pub struct WinningSetupInfo {
     pub pnl_pips: f64,
     pub best_asset: String,
     pub rank: usize,
+    #[serde(default)]
+    pub real_desk_trades: usize,
+    #[serde(default)]
+    pub real_desk_pnl: f64,
 }
-
 /// Nó de Ativo individual com detalhes completos da operação e da estratégia campeã
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphTopologyAssetNode {
@@ -8138,44 +8141,43 @@ impl MultiAssetTraderEngine {
             });
         }
 
-        let half_cash = self.total_cash * 0.5;
         let crypto_init = (self.initial_capital * 0.5).max(1.0);
-        let crypto_balance = (half_cash + crypto_positions_val).max(0.0);
         let crypto_total_pnl = crypto_realized_pnl + crypto_unrealized_pnl;
+        let crypto_balance = (crypto_init + crypto_total_pnl).max(0.0);
         let crypto_pnl_pct = (crypto_total_pnl / crypto_init) * 100.0;
         let crypto_win_rate = if crypto_closed_trades > 0 {
             (crypto_wins as f64 / crypto_closed_trades as f64) * 100.0
         } else {
-            72.5
+            0.0
         };
         let crypto_peak =
             (crypto_init + crypto_realized_pnl.max(0.0) + crypto_positions_val).max(crypto_init);
+        let crypto_dd_usd = (crypto_peak - crypto_balance).max(0.0);
         let crypto_dd_pct = if crypto_peak > 0.0 {
-            ((crypto_peak - crypto_balance) / crypto_peak * 100.0).clamp(0.0, 100.0)
+            (crypto_dd_usd / crypto_peak * 100.0).clamp(0.0, 100.0)
         } else {
             0.0
         };
-        let crypto_dd_usd = (crypto_peak - crypto_balance).max(0.0);
 
         let forex_init = (self.initial_capital * 0.5).max(1.0);
-        let forex_balance = (half_cash + forex_positions_val).max(0.0);
         let forex_total_pnl = forex_realized_pnl + forex_unrealized_pnl;
+        let forex_balance = (forex_init + forex_total_pnl).max(0.0);
         let forex_pnl_pct = (forex_total_pnl / forex_init) * 100.0;
         let forex_win_rate = if forex_closed_trades > 0 {
             (forex_wins as f64 / forex_closed_trades as f64) * 100.0
         } else {
-            75.0
+            0.0
         };
         let forex_peak =
             (forex_init + forex_realized_pnl.max(0.0) + forex_positions_val).max(forex_init);
+        let forex_dd_usd = (forex_peak - forex_balance).max(0.0);
         let forex_dd_pct = if forex_peak > 0.0 {
-            ((forex_peak - forex_balance) / forex_peak * 100.0).clamp(0.0, 100.0)
+            (forex_dd_usd / forex_peak * 100.0).clamp(0.0, 100.0)
         } else {
             0.0
         };
-        let forex_dd_usd = (forex_peak - forex_balance).max(0.0);
 
-        let total_val = self.total_portfolio_value();
+        let total_val = crypto_balance + forex_balance;
         let total_realized = crypto_realized_pnl + forex_realized_pnl;
         let total_unrealized = crypto_unrealized_pnl + forex_unrealized_pnl;
         let total_pnl_usd = total_realized + total_unrealized;
@@ -8190,9 +8192,14 @@ impl MultiAssetTraderEngine {
         let core_win_rate = if total_closed > 0 {
             (total_wins as f64 / total_closed as f64) * 100.0
         } else {
-            74.2
+            0.0
         };
-        let core_dd_pct = self.drawdown_pct().max(self.max_drawdown_seen);
+        let core_dd_usd = crypto_dd_usd + forex_dd_usd;
+        let core_dd_pct = if (crypto_peak + forex_peak) > 0.0 {
+            (core_dd_usd / (crypto_peak + forex_peak) * 100.0).clamp(0.0, 100.0)
+        } else {
+            0.0
+        };
 
         let core_hub = GraphTopologyHubData {
             id: "core_alr".to_string(),
@@ -8204,7 +8211,7 @@ impl MultiAssetTraderEngine {
             unrealized_pnl_usd: total_unrealized,
             win_rate_pct: core_win_rate,
             max_drawdown_pct: core_dd_pct,
-            max_drawdown_usd: self.max_drawdown_amount_usd,
+            max_drawdown_usd: core_dd_usd,
             active_trades: self.active_positions_count(),
             total_trades: total_closed + self.active_positions_count(),
             closed_trades: total_closed,
@@ -8271,6 +8278,21 @@ impl MultiAssetTraderEngine {
                 .unwrap_or_else(|| "Global".to_string());
 
             let pips = comp.asset_pnl.get("EUR-USD").copied().unwrap_or(0.0) * 1.5;
+
+            // Mede a performance real deste setup nas ordens executadas na carteira
+            let mut real_trades = 0;
+            let mut real_pnl = 0.0;
+            for eng in self.engines.values() {
+                if self.strategy_arena.asset_champions.get(&eng.asset) == Some(&comp.profile.id) {
+                    real_trades += eng.trade_history.len();
+                    real_pnl += eng
+                        .trade_history
+                        .iter()
+                        .filter_map(|t| t.realized_pnl)
+                        .sum::<f64>();
+                }
+            }
+
             winning_setups.push(WinningSetupInfo {
                 strategy_id: comp.profile.id.clone(),
                 strategy_name: comp.profile.name.clone(),
@@ -8281,6 +8303,8 @@ impl MultiAssetTraderEngine {
                 pnl_pips: pips,
                 best_asset,
                 rank: idx + 1,
+                real_desk_trades: real_trades,
+                real_desk_pnl: real_pnl,
             });
         }
 
