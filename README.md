@@ -5,7 +5,7 @@
 
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B%20%7C%201.98.1-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-green.svg)](LICENSE)
-[![Testes](https://img.shields.io/badge/Testes-410%2F410%20Passando-brightgreen.svg)]()
+[![Testes](https://img.shields.io/badge/Testes-417%2F417%20Passando-brightgreen.svg)]()
 [![Taxa de Autonomia](https://img.shields.io/badge/Autonomia%20Local-98.8%25-orange.svg)]()
 [![Evasão de Loop](https://img.shields.io/badge/Evas%C3%A3o%20de%20Loop-Ativa-brightgreen.svg)](docs/training-new-tasks.md)
 [![Status de Liberação](https://img.shields.io/badge/Certifica%C3%A7%C3%A3o%20de%20Release-Certificado%20com%20Limita%C3%A7%C3%B5es-yellow.svg)](docs/final-certification-report.md)
@@ -967,6 +967,21 @@ curl -s -X POST http://localhost:3000/api/v1/learning/replay \
 # Regressão automatizada do motor de sugestão e da assinatura de estado
 cargo test -p alr-cli --test phase35_playground_learning_cycle_tests
 ```
+
+### Caso 43: WhatsApp Previdenciário Inteligente (Triagem Instantânea, Entidades, Viabilidade & Handover Legal)
+Motor inteligente para escritórios de advocacia previdenciária construído nativamente em Rust sobre o ALR, combinando System 1 determinístico em sub-milissegundo (< 400 µs), extração de entidades da legislação (Lei 8.213/91, EC 103/2019, Lei 8.742/93 LOAS), cálculo calibrado de viabilidade e transição com link oficial `wa.me` para o advogado responsável.
+
+1. **Triagem Anti-Spam e Fora de Escopo Instantânea:** Filtra mensagens trabalhistas, cíveis, criminais, familiares (divórcio/alimentos) e lixo/spam em < 20 µs sem gastar nenhum token de LLM.
+2. **Extração de Entidades Previdenciárias:** Idade, gênero, benefício alvo (Aposentadoria por Idade, Tempo, Especial, Invalidez, Auxílio-Doença, BPC/LOAS, Pensão por Morte, Revisão da Vida Toda), tempo de contribuição, carência documental e presença de negativa formal do INSS.
+3. **Score Calibrado de Viabilidade Jurídica (0 a 100%):** Avalia a solidez da tese com base nas regras de transição da Reforma e pondera a presença de indeferimento administrativo formal para tutela de urgência.
+4. **Handover Automático com Link `wa.me`:** Ao atingir qualificação ($\ge 70\%$), gera um resumo estruturado do caso e monta o link do WhatsApp para conversa direta com o advogado.
+5. **Ciclo de Auto-Aprendizado Legal com Qdrant (1536d):** Perguntas inéditas sobre regras de transição (ex: pedágio 50%/100%) consultam o Professor LLM especialista e cristalizam a resposta no Qdrant. Consultas subsequentes respondem da memória vetorial em 18 µs com custo $0.00.
+6. **Simulador Interativo WhatsApp Desk:** Tela interativa no Playground Universal (`/view-whatsapp`) com chat simulado estilo WhatsApp Web, presets de casos reais (Carlos 35a, Dona Maria LOAS, João Hérnia, Spam), painel de dossiê, validação com LLM e memorização no Qdrant.
+
+```bash
+# Executar os testes automatizados da Fase 43 (WhatsApp Previdenciário)
+cargo test -p alr-cli --test phase43_lead_intake_previdenciario_tests
+```
 ---
 
 ## 🔄 Detector Universal de Loops & Evasão
@@ -1313,7 +1328,7 @@ cargo run -p alr-cli -- playground-test
 # 45. Executar Bateria Completa de Testes de QA (Web & Programas com Self-Healing)
 cargo run -p alr-cli -- qa-demo
 
-# 46. Executar a Suíte Completa de Testes Automatizados (356 Testes em 87 Suítes)
+# 46. Executar a Suíte Completa de Testes Automatizados (417 Testes em 72 Suítes)
 cargo test --workspace
 ```
 

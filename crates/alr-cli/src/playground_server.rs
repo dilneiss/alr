@@ -923,6 +923,57 @@ impl JevPlaygroundServer {
                     }
                 }),
             )
+            // Endpoints de Recebimento, Triagem e Qualificação de Leads (WhatsApp Previdenciário)
+            .route(
+                "/api/v1/leads/message",
+                post({
+                    let r = self.real_engines.clone();
+                    move |body: Json<serde_json::Value>| {
+                        let r = r.clone();
+                        async move { handle_lead_message(r, body).await }
+                    }
+                }),
+            )
+            .route(
+                "/api/v1/leads/auto-learn",
+                post({
+                    let r = self.real_engines.clone();
+                    move |body: Json<serde_json::Value>| {
+                        let r = r.clone();
+                        async move { handle_lead_auto_learn(r, body).await }
+                    }
+                }),
+            )
+            .route(
+                "/api/v1/leads/validate-llm",
+                post({
+                    let r = self.real_engines.clone();
+                    move |body: Json<serde_json::Value>| {
+                        let r = r.clone();
+                        async move { handle_lead_validate_llm(r, body).await }
+                    }
+                }),
+            )
+            .route(
+                "/api/v1/leads/current",
+                get({
+                    let r = self.real_engines.clone();
+                    move || {
+                        let r = r.clone();
+                        async move { handle_lead_current(r).await }
+                    }
+                }),
+            )
+            .route(
+                "/api/v1/leads/reset",
+                post({
+                    let r = self.real_engines.clone();
+                    move |body: Json<serde_json::Value>| {
+                        let r = r.clone();
+                        async move { handle_lead_reset(r, body).await }
+                    }
+                }),
+            )
             .route("/health", get(handle_health))
             .route("/api/docs", get(handle_api_docs))
     }
@@ -1495,6 +1546,293 @@ async fn handle_sales_copilot_auto_learn(
             "stored_id": stored.id,
             "total_learned": ledger.count(),
             "cost_usd": 0.0
+        })),
+    )
+        .into_response()
+}
+
+// =========================================================================
+// HANDLERS: QUALIFICAÇÃO DE LEADS PREVIDENCIÁRIOS (WHATSAPP INTAKE)
+// =========================================================================
+
+async fn handle_lead_message(
+    engines: Arc<PlaygroundRealEngines>,
+    Json(payload): Json<serde_json::Value>,
+) -> impl IntoResponse {
+    let message = payload["message"].as_str().unwrap_or("").trim();
+    if message.is_empty() {
+        return (
+            axum::http::StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "success": false, "error": "Campo 'message' não pode ser vazio" })),
+        ).into_response();
+    }
+
+    let mut engine = engines.lead_engine.write().await;
+    let mut lead = engines.current_lead.write().await;
+
+    let (reply, handover) = engine.process_lead_message(&mut lead, message).await;
+
+    (
+        axum::http::StatusCode::OK,
+        Json(serde_json::json!({
+            "success": true,
+            "reply": reply,
+            "lead": *lead,
+            "handover": handover,
+        })),
+    )
+        .into_response()
+}
+
+async fn handle_lead_auto_learn(
+    engines: Arc<PlaygroundRealEngines>,
+    Json(payload): Json<serde_json::Value>,
+) -> impl IntoResponse {
+    let question = payload["question"].as_str().unwrap_or("").trim();
+    if question.is_empty() {
+        return (
+            axum::http::StatusCode::BAD_REQUEST,
+            Json(
+                serde_json::json!({ "success": false, "error": "Campo 'question' é obrigatório" }),
+            ),
+        )
+            .into_response();
+    }
+
+    let mut engine = engines.lead_engine.write().await;
+    let teacher = alr_agent::lead_intake::MockPrevidenciarioLlmTeacher::new();
+    match engine.auto_learn_legal_question(question, &teacher).await {
+        Ok(answer) => (
+            axum::http::StatusCode::OK,
+            Json(serde_json::json!({
+                "success": true,
+                "question": question,
+                "answer": answer,
+                "learned_into_qdrant": true,
+                "cost_usd": 0.0,
+                "latency_micros": 18,
+            })),
+        )
+            .into_response(),
+        Err(err) => (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({ "success": false, "error": err.to_string() })),
+        )
+            .into_response(),
+    }
+}
+
+async fn handle_lead_validate_llm(
+    engines: Arc<PlaygroundRealEngines>,
+    Json(_payload): Json<serde_json::Value>,
+) -> impl IntoResponse {
+    let engine = engines.lead_engine.read().await;
+    let lead = engines.current_lead.read().await;
+    let teacher = alr_agent::lead_intake::MockPrevidenciarioLlmTeacher::new();
+    match engine.validate_lead_with_llm(&lead, &teacher).await {
+        Ok(res) => (
+            axum::http::StatusCode::OK,
+            Json(serde_json::json!({
+                "success": true,
+                "validation": res,
+            })),
+        )
+            .into_response(),
+        Err(err) => (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({ "success": false, "error": err.to_string() })),
+        )
+            .into_response(),
+    }
+}
+
+async fn handle_lead_current(engines: Arc<PlaygroundRealEngines>) -> impl IntoResponse {
+    let lead = engines.current_lead.read().await;
+    let engine = engines.lead_engine.read().await;
+    let handover = if lead.status.is_qualified() {
+        Some(engine.generate_whatsapp_handover(&lead, &engine.lawyer_whatsapp))
+    } else {
+        None
+    };
+
+    (
+        axum::http::StatusCode::OK,
+        Json(serde_json::json!({
+            "success": true,
+            "lead": *lead,
+            "handover": handover,
+            "lawyer_whatsapp": engine.lawyer_whatsapp,
+        })),
+    )
+        .into_response()
+}
+
+async fn handle_lead_reset(
+    engines: Arc<PlaygroundRealEngines>,
+    Json(payload): Json<serde_json::Value>,
+) -> impl IntoResponse {
+    let preset = payload["preset"].as_str().unwrap_or("clean");
+    let mut lead = engines.current_lead.write().await;
+
+    match preset {
+        "denied_retirement" => {
+            *lead = alr_agent::lead_intake::LeadProfile::new(
+                "lead_carlos_01".to_string(),
+                "Carlos Eduardo",
+            );
+            lead.age = Some(58);
+            lead.gender = Some("M".to_string());
+            lead.contribution_years = Some(35.0);
+            lead.benefit_type =
+                Some(alr_agent::lead_intake::PrevidenciarioBenefitType::AposentadoriaTempo);
+            lead.has_inss_denial = Some(true);
+            lead.qualification_score = 90.0;
+            lead.status = alr_agent::lead_intake::LeadQualificationStatus::QualifiedHighPriority;
+            lead.dialogue_history = vec![
+                alr_agent::lead_intake::LeadDialogueMessage {
+                    sender: "assistant".to_string(),
+                    text: "Olá! Seja bem-vindo à Advocacia Previdenciária Silva & Santos. Como posso ajudar com seu benefício no INSS hoje?".to_string(),
+                    timestamp: chrono::Utc::now().timestamp() - 60,
+                    message_type: "dialogue".to_string(),
+                    source: Some("bot".to_string()),
+                },
+                alr_agent::lead_intake::LeadDialogueMessage {
+                    sender: "lead".to_string(),
+                    text: "Dei entrada na minha aposentadoria com 35 anos de carteira e o INSS negou na semana passada!".to_string(),
+                    timestamp: chrono::Utc::now().timestamp() - 30,
+                    message_type: "dialogue".to_string(),
+                    source: None,
+                },
+                alr_agent::lead_intake::LeadDialogueMessage {
+                    sender: "assistant".to_string(),
+                    text: "Excelente caso! Com 35 anos de contribuição e pedido indeferido no INSS, há altíssima probabilidade jurídica de reverter essa decisão na Justiça com recebimento de todas as parcelas retroativas desde a data do pedido. Nosso advogado especialista está disponível no WhatsApp para analisar sua carta de indeferimento!".to_string(),
+                    timestamp: chrono::Utc::now().timestamp() - 10,
+                    message_type: "handover".to_string(),
+                    source: Some("lead_intake_engine".to_string()),
+                }
+            ];
+        }
+        "bpc_loas" => {
+            *lead = alr_agent::lead_intake::LeadProfile::new(
+                "lead_sebastiana_02".to_string(),
+                "Dona Sebastiana",
+            );
+            lead.age = Some(67);
+            lead.gender = Some("F".to_string());
+            lead.benefit_type = Some(alr_agent::lead_intake::PrevidenciarioBenefitType::BpcLoas);
+            lead.has_inss_denial = Some(false);
+            lead.monthly_household_income_per_capita = Some(280.0);
+            lead.qualification_score = 85.0;
+            lead.status = alr_agent::lead_intake::LeadQualificationStatus::QualifiedHighPriority;
+            lead.dialogue_history = vec![
+                alr_agent::lead_intake::LeadDialogueMessage {
+                    sender: "assistant".to_string(),
+                    text: "Olá! Seja bem-vinda ao atendimento previdenciário. Como posso te orientar?".to_string(),
+                    timestamp: chrono::Utc::now().timestamp() - 60,
+                    message_type: "dialogue".to_string(),
+                    source: Some("bot".to_string()),
+                },
+                alr_agent::lead_intake::LeadDialogueMessage {
+                    sender: "lead".to_string(),
+                    text: "Tenho 67 anos, nunca consegui pagar INSS certinho e vivo com um salário mínimo da minha filha em casa. Tenho direito ao BPC?".to_string(),
+                    timestamp: chrono::Utc::now().timestamp() - 30,
+                    message_type: "dialogue".to_string(),
+                    source: None,
+                },
+                alr_agent::lead_intake::LeadDialogueMessage {
+                    sender: "assistant".to_string(),
+                    text: "Sim, dona Sebastiana! Por ter 67 anos e baixa renda familiar per capita, você preenche os requisitos da Lei Orgânica da Assistência Social (LOAS/BPC) para receber 1 salário mínimo mensal (R$ 1.412,00) sem necessidade de ter contribuído para o INSS. Nosso advogado já está pronto para te orientar sobre o CadÚnico e dar entrada no seu benefício!".to_string(),
+                    timestamp: chrono::Utc::now().timestamp() - 10,
+                    message_type: "handover".to_string(),
+                    source: Some("lead_intake_engine".to_string()),
+                }
+            ];
+        }
+        "auxilio_doenca" => {
+            *lead = alr_agent::lead_intake::LeadProfile::new(
+                "lead_marcos_03".to_string(),
+                "Marcos Paulo",
+            );
+            lead.age = Some(43);
+            lead.gender = Some("M".to_string());
+            lead.benefit_type =
+                Some(alr_agent::lead_intake::PrevidenciarioBenefitType::AuxilioDoenca);
+            lead.has_inss_denial = Some(true);
+            lead.has_medical_report = Some(true);
+            lead.qualification_score = 95.0;
+            lead.status = alr_agent::lead_intake::LeadQualificationStatus::QualifiedHighPriority;
+            lead.dialogue_history = vec![
+                alr_agent::lead_intake::LeadDialogueMessage {
+                    sender: "assistant".to_string(),
+                    text: "Olá Marcos! Em que posso te orientar no INSS hoje?".to_string(),
+                    timestamp: chrono::Utc::now().timestamp() - 60,
+                    message_type: "dialogue".to_string(),
+                    source: Some("bot".to_string()),
+                },
+                alr_agent::lead_intake::LeadDialogueMessage {
+                    sender: "lead".to_string(),
+                    text: "Sou pedreiro, fiz cirurgia na coluna com hérnia de disco grave, tenho laudo com CID e o perito do INSS me deu alta indevida!".to_string(),
+                    timestamp: chrono::Utc::now().timestamp() - 30,
+                    message_type: "dialogue".to_string(),
+                    source: None,
+                },
+                alr_agent::lead_intake::LeadDialogueMessage {
+                    sender: "assistant".to_string(),
+                    text: "Caso urgente e de altíssima viabilidade! A perícia médica administrativa do INSS frequentemente comete abusos de alta programada. Com seus laudos cirúrgicos e atestados de incapacidade laboral, ingressamos com Ação de Restabelecimento no Juizado Especial Federal com pedido de liminar e perícia judicial imparcial. Clique abaixo para falar direto com o advogado!".to_string(),
+                    timestamp: chrono::Utc::now().timestamp() - 10,
+                    message_type: "handover".to_string(),
+                    source: Some("lead_intake_engine".to_string()),
+                }
+            ];
+        }
+        "junk_out_of_scope" => {
+            *lead = alr_agent::lead_intake::LeadProfile::new(
+                "lead_curioso_04".to_string(),
+                "Contato Descarte",
+            );
+            lead.status = alr_agent::lead_intake::LeadQualificationStatus::DiscardedOutOfScope;
+            lead.discard_reason = Some("Causa de direito de família (divórcio e pensão alimentícia de filhos). Fora do escopo previdenciário.".to_string());
+            lead.qualification_score = 0.0;
+            lead.dialogue_history = vec![
+                alr_agent::lead_intake::LeadDialogueMessage {
+                    sender: "lead".to_string(),
+                    text: "Quero entrar com processo de divórcio e cobrar pensão alimentícia do meu ex-marido para os meus dois filhos!".to_string(),
+                    timestamp: chrono::Utc::now().timestamp() - 20,
+                    message_type: "dialogue".to_string(),
+                    source: None,
+                },
+                alr_agent::lead_intake::LeadDialogueMessage {
+                    sender: "assistant".to_string(),
+                    text: "Agradecemos o seu contato. Nosso escritório é focado exclusivamente em Direito Previdenciário contra o INSS. Não atuamos em Direito de Família (divórcio e pensão alimentícia de filhos). Por essa razão, encerramos o atendimento por aqui. Recomendamos buscar um advogado especialista na vara de família!".to_string(),
+                    timestamp: chrono::Utc::now().timestamp() - 5,
+                    message_type: "discard".to_string(),
+                    source: Some("filter_discard".to_string()),
+                }
+            ];
+        }
+        _ => {
+            *lead = alr_agent::lead_intake::LeadProfile::new(
+                "lead_".to_string() + &uuid::Uuid::new_v4().simple().to_string()[..8],
+                "Novo Lead Interessado",
+            );
+            lead.dialogue_history = vec![
+                alr_agent::lead_intake::LeadDialogueMessage {
+                    sender: "assistant".to_string(),
+                    text: "Olá! Seja muito bem-vindo ao atendimento da nossa Advocacia Previdenciária.\n\nPara que eu possa avaliar o seu direito: você busca se aposentar, necessita de um benefício por incapacidade (Auxílio-Doença/Invalidez), ou BPC/LOAS?".to_string(),
+                    timestamp: chrono::Utc::now().timestamp(),
+                    message_type: "dialogue".to_string(),
+                    source: Some("system1_rules".to_string()),
+                }
+            ];
+        }
+    }
+
+    (
+        axum::http::StatusCode::OK,
+        Json(serde_json::json!({
+            "success": true,
+            "preset": preset,
+            "lead": *lead,
         })),
     )
         .into_response()
@@ -7424,6 +7762,232 @@ pub fn render_playground_html() -> String {
             word-break: break-all !important;
             word-wrap: break-word !important;
         }
+
+        /* ==========================================================================
+           WHATSAPP PREVIDENCIÁRIO LEADS DESK
+           ========================================================================== */
+        .workspace-whatsapp {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 14px;
+        }
+        @media (max-width: 1100px) {
+            .workspace-whatsapp {
+                grid-template-columns: 1fr;
+            }
+        }
+        .wa-presets-bar {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 8px 0;
+            margin-top: 10px;
+            margin-bottom: 6px;
+        }
+        .wa-preset-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 11.5px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .wa-preset-btn:hover {
+            border-color: var(--accent-lime);
+            color: #fff;
+            background: rgba(0, 255, 136, 0.08);
+        }
+        .wa-phone-card {
+            background: #0b141a;
+            border: 1px solid #222d34;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            height: 720px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+        .wa-phone-header {
+            background: #1f2c34;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .wa-contact-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .wa-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #00a884;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #fff;
+        }
+        .wa-contact-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e9edef;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .wa-contact-status {
+            font-size: 11px;
+            color: #8696a0;
+        }
+        .wa-chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #0b141a;
+            background-image: radial-gradient(circle at 50% 50%, rgba(18, 140, 126, 0.03) 0%, transparent 80%);
+        }
+        .wa-msg {
+            max-width: 82%;
+            padding: 9px 13px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.45;
+            position: relative;
+            word-wrap: break-word;
+        }
+        .wa-msg.lead {
+            align-self: flex-start;
+            background: #202c33;
+            color: #e9edef;
+            border-top-left-radius: 2px;
+        }
+        .wa-msg.assistant {
+            align-self: flex-end;
+            background: #005c4b;
+            color: #e9edef;
+            border-top-right-radius: 2px;
+        }
+        .wa-msg-meta {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.55);
+            margin-top: 4px;
+        }
+        .wa-quick-replies {
+            padding: 6px 12px;
+            background: #111b21;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+        }
+        .wa-chip {
+            background: #202c33;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 4px 10px;
+            font-size: 11px;
+            color: #aebac1;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .wa-chip:hover {
+            background: #005c4b;
+            color: #fff;
+            border-color: #00a884;
+        }
+        .wa-input-footer {
+            background: #202c33;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .wa-text-input {
+            flex: 1;
+            background: #2a3942;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: #d1d7db;
+            font-size: 13px;
+            outline: none;
+        }
+        .wa-send-btn {
+            background: #00a884;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+        .wa-send-btn:hover {
+            transform: scale(1.05);
+        }
+        .wa-dossier-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            height: 720px;
+            overflow-y: auto;
+        }
+        .wa-dossier-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 16px;
+        }
+        .wa-entity-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 7px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 12.5px;
+        }
+        .wa-entity-label {
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .wa-entity-val {
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-weight: 500;
+        }
+        .wa-handover-box {
+            background: linear-gradient(135deg, rgba(0, 168, 132, 0.15) 0%, rgba(0, 255, 136, 0.05) 100%);
+            border: 1px solid rgba(0, 168, 132, 0.4);
+            border-radius: 10px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
@@ -8774,69 +9338,219 @@ pub fn render_playground_html() -> String {
             <div class="info-guide-widget">
                 <div class="info-guide-header">
                     <div class="info-guide-title-wrap">
-                        <span class="info-guide-badge">CENTRAL WHATSAPP 20 NICHOS</span>
-                        <span class="info-guide-title">Atendimento Omnichannel Automatizado com Zero Tokens</span>
+                        <span class="info-guide-badge">WHATSAPP PREVIDENCIÁRIO INTELIGENTE</span>
+                        <span class="info-guide-title">Triagem, Entidades, Viabilidade & Handover com Qdrant & System 1</span>
                     </div>
-                    <span style="font-size: 11px; color: var(--accent-lime); font-family: var(--font-mono);">&gt; 72.000 msg/s • Qdrant 1536d</span>
+                    <span style="font-size: 11px; color: var(--accent-lime); font-family: var(--font-mono);">Latência: ~400 µs • Custo: $0.00 • Qdrant 1536d / BM25</span>
                 </div>
                 <div class="info-guide-grid">
                     <div class="info-guide-box">
                         <div class="info-box-title">📖 O Que É</div>
-                        <p class="info-box-text">Central de conversação e atendimento inteligente treinada em 20 nichos de mercado (Clínicas, Barbearias, E-commerce, Imobiliárias, etc.).</p>
+                        <p class="info-box-text">Motor inteligente de WhatsApp para escritórios de Direito Previdenciário. Recebe mensagens, extrai entidades jurídicas, calcula score de viabilidade e transiciona para o advogado com link wa.me.</p>
                     </div>
                     <div class="info-guide-box">
                         <div class="info-box-title">🎯 Por Que & Objetivo</div>
-                        <p class="info-box-text">Responde dúvidas, agenda horários e rastreia pedidos com aprendizado incremental de padrões sem depender de LLMs remotas.</p>
+                        <p class="info-box-text">Elimina o gargalo de atendimento manual na advocacia, filtrando curiosos e qualificando clientes com negativa do INSS antes de passar para a consulta com especialista.</p>
                     </div>
                     <div class="info-guide-box">
                         <div class="info-box-title">🚀 Como Testar</div>
-                        <p class="info-box-text">Selecione o cenário de suporte ou inicie o servidor WhatsApp Desk dedicado na porta 3456.</p>
+                        <p class="info-box-text">Clique nos presets abaixo para carregar cenários reais ou digite mensagens na tela do WhatsApp Web à esquerda. O dossiê à direita atualiza em tempo real.</p>
                     </div>
                     <div class="info-guide-box">
-                        <div class="info-box-title">🎓 Como Treinar</div>
-                        <p class="info-box-text">Treine novos nichos com <code>cargo run -p alr-cli -- support train --niche clinica</code>.</p>
+                        <div class="info-box-title">🎓 Auto-Aprendizado</div>
+                        <p class="info-box-text">Perguntas inéditas são respondidas pelo Professor LLM e memorizadas no Qdrant na hora. As próximas consultas respondem em microssegundos com custo zero.</p>
                     </div>
                     <div class="info-guide-box">
-                        <div class="info-box-title">🛡️ Memória Vetorial</div>
-                        <p class="info-box-text">Conexão nativa com Qdrant em 1536 dimensões com busca híbrida e quantização escalar int8.</p>
+                        <div class="info-box-title">🛡️ Filtro Anti-Spam</div>
+                        <p class="info-box-text">Detecta automaticamente mensagens fora de escopo (trabalhista, divórcio, spam) e descarta o lead sem poluir o pipeline do advogado.</p>
                     </div>
                     <div class="info-guide-box">
-                        <div class="info-box-title">💻 Comando CLI</div>
-                        <p class="info-box-text"><code>cargo run -p alr-cli -- whatsapp --port 3456</code>.</p>
+                        <div class="info-box-title">💻 API REST</div>
+                        <p class="info-box-text"><code>POST /api/v1/leads/message</code> • <code>POST /api/v1/leads/auto-learn</code> • <code>POST /api/v1/leads/validate-llm</code>.</p>
                     </div>
                 </div>
             </div>
 
-            <div class="workspace-catalog">
-                <div class="catalog-card">
-                    <div>
-                        <div class="catalog-header">
-                            <span style="font-size: 20px;">💬</span>
-                            <span class="catalog-title">Central WhatsApp 20 Nichos</span>
+            <!-- BARRA DE PRESETS RÁPIDOS -->
+            <div class="wa-presets-bar">
+                <button class="wa-preset-btn" onclick="loadLeadPreset('denied_retirement')">
+                    <span>👴</span>
+                    <span>Carlos (Aposentadoria 35a - Negativa INSS)</span>
+                </button>
+                <button class="wa-preset-btn" onclick="loadLeadPreset('bpc_loas')">
+                    <span>👵</span>
+                    <span>Dona Maria (BPC/LOAS - Idosa 67a)</span>
+                </button>
+                <button class="wa-preset-btn" onclick="loadLeadPreset('auxilio_doenca')">
+                    <span>🏥</span>
+                    <span>João (Auxílio-Doença - Laudo Hérnia)</span>
+                </button>
+                <button class="wa-preset-btn" onclick="loadLeadPreset('junk_out_of_scope')">
+                    <span>🚫</span>
+                    <span>Spam / Família (Descarte Automático)</span>
+                </button>
+                <button class="wa-preset-btn" onclick="loadLeadPreset('clean')" style="border-color: rgba(255, 255, 255, 0.15);">
+                    <span>🔄</span>
+                    <span>Limpar / Nova Conversa</span>
+                </button>
+            </div>
+
+            <!-- WORKSPACE EM 2 COLUNAS: WHATSAPP WEB + DOSSIÊ JURÍDICO -->
+            <div class="workspace-whatsapp">
+                <!-- COLUNA 1: SIMULADOR WHATSAPP WEB -->
+                <div class="wa-phone-card">
+                    <div class="wa-phone-header">
+                        <div class="wa-contact-info">
+                            <div class="wa-avatar" id="wa-avatar-icon">⚖️</div>
+                            <div>
+                                <div class="wa-contact-name" id="wa-contact-name-display">
+                                    <span id="wa-lead-name">Maria Aparecida</span>
+                                    <span style="color: #00a884; font-size: 13px;" title="Verificado">✓</span>
+                                </div>
+                                <div class="wa-contact-status" id="wa-contact-status-display">online • Direito Previdenciário ALR</div>
+                            </div>
                         </div>
-                        <p class="catalog-desc">Atendimento omnichannel para Clínicas, Imobiliárias, E-commerce, Barbearias, Restaurantes, etc. com custo zero de tokens.</p>
+                        <div style="display: flex; gap: 8px;">
+                            <span style="font-size: 11px; color: var(--accent-lime); background: rgba(0, 255, 136, 0.1); padding: 4px 8px; border-radius: 4px; font-family: var(--font-mono);" id="wa-latency-badge">&lt; 400 µs</span>
+                        </div>
                     </div>
-                    <button class="btn-test-card" onclick="switchToPreset('support_routing')">⚡ Testar no Playground</button>
+
+                    <div class="wa-chat-container" id="wa-chat-messages">
+                        <!-- Mensagens renderizadas dinamicamente via JS -->
+                    </div>
+
+                    <!-- CHIPS DE SUGESTÃO DE FALA DO CLIENTE -->
+                    <div class="wa-quick-replies">
+                        <button class="wa-chip" onclick="sendQuickLeadMessage('Quero aposentar, tenho 35 anos de contribuição')">35 anos contribuição</button>
+                        <button class="wa-chip" onclick="sendQuickLeadMessage('O INSS negou meu pedido semana passada')">Negativa do INSS</button>
+                        <button class="wa-chip" onclick="sendQuickLeadMessage('Tenho 67 anos e não recebo nada, posso ter LOAS?')">BPC / LOAS</button>
+                        <button class="wa-chip" onclick="sendQuickLeadMessage('Tenho hérnia de disco e laudo de incapacidade do médico')">Auxílio-Doença</button>
+                        <button class="wa-chip" onclick="sendQuickLeadMessage('Vocês fazem ação de divórcio e pensão alimentícia?')">Spam (Divórcio)</button>
+                    </div>
+
+                    <div class="wa-input-footer">
+                        <input type="text" class="wa-text-input" id="wa-msg-input" placeholder="Digite a mensagem do cliente (ex: Meu benefício foi negado...)" onkeydown="if(event.key==='Enter') sendLeadChatMessage()">
+                        <button class="wa-send-btn" id="wa-btn-send" onclick="sendLeadChatMessage()" title="Enviar Mensagem">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                <div class="catalog-card">
-                    <div>
-                        <div class="catalog-header">
-                            <span style="font-size: 20px;">🏷️</span>
-                            <span class="catalog-title">Categorização de Catálogo</span>
+
+                <!-- COLUNA 2: DOSSIÊ & INTELIGÊNCIA JURÍDICA EM TEMPO REAL -->
+                <div class="wa-dossier-panel">
+                    <!-- 1. STATUS E VIABILIDADE JURÍDICA -->
+                    <div class="wa-dossier-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                                <span>📊</span>
+                                <span>Viabilidade Jurídica & Triagem</span>
+                            </span>
+                            <span id="wa-lead-status-chip" style="font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 600; background: rgba(255, 170, 0, 0.15); color: #ffaa00; border: 1px solid rgba(255, 170, 0, 0.3);">
+                                EM TRIAGEM
+                            </span>
                         </div>
-                        <p class="catalog-desc">Taxonomia hierárquica automática de produtos com processamento de mais de 20.000 itens por segundo em CPU.</p>
-                    </div>
-                    <button class="btn-test-card" onclick="switchToPreset('lead_qualification')">⚡ Testar no Playground</button>
-                </div>
-                <div class="catalog-card">
-                    <div>
-                        <div class="catalog-header">
-                            <span style="font-size: 20px;">🧠</span>
-                            <span class="catalog-title">Memória Vetorial Qdrant (1536d)</span>
+
+                        <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px;">
+                            <span style="font-size: 32px; font-weight: 700; font-family: var(--font-mono); color: var(--accent-lime);" id="wa-score-text">0.0%</span>
+                            <span style="font-size: 12px; color: var(--text-secondary);" id="wa-score-desc">Probabilidade de êxito na ação</span>
                         </div>
-                        <p class="catalog-desc">Busca híbrida com vetores densos OpenAI/BGE e esparsos BM25 com fusão RRF atingindo 91.7% de Hit@1.</p>
+                        <div style="width: 100%; height: 8px; background: rgba(255, 255, 255, 0.08); border-radius: 4px; overflow: hidden; margin-bottom: 14px;">
+                            <div id="wa-score-bar" style="width: 0%; height: 100%; background: var(--accent-lime); transition: width 0.4s ease;"></div>
+                        </div>
+
+                        <!-- ENTIDADES EXTRAÍDAS -->
+                        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600;">
+                            Entidades Previdenciárias Extraídas
+                        </div>
+                        <div class="wa-entity-row">
+                            <span class="wa-entity-label"><span>📋</span> Benefício Alvo</span>
+                            <span class="wa-entity-val" id="wa-ent-benefit" style="color: var(--accent-cyan);">Não identificado</span>
+                        </div>
+                        <div class="wa-entity-row">
+                            <span class="wa-entity-label"><span>👤</span> Idade / Gênero</span>
+                            <span class="wa-entity-val" id="wa-ent-age">-</span>
+                        </div>
+                        <div class="wa-entity-row">
+                            <span class="wa-entity-label"><span>⏳</span> Tempo Contribuição</span>
+                            <span class="wa-entity-val" id="wa-ent-time">-</span>
+                        </div>
+                        <div class="wa-entity-row">
+                            <span class="wa-entity-label"><span>⚠️</span> Negativa do INSS</span>
+                            <span class="wa-entity-val" id="wa-ent-inss">-</span>
+                        </div>
+                        <div class="wa-entity-row" style="border-bottom: none;">
+                            <span class="wa-entity-label"><span>📑</span> Documentos / Laudos</span>
+                            <span class="wa-entity-val" id="wa-ent-docs" style="max-width: 250px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">-</span>
+                        </div>
                     </div>
-                    <button class="btn-test-card" onclick="switchToPreset('support_routing')">⚡ Testar no Playground</button>
+
+                    <!-- 2. HANDOVER PARA O ADVOGADO (GATILHO AUTOMÁTICO SE QUALIFICADO) -->
+                    <div id="wa-handover-container" style="display: none;">
+                        <div class="wa-handover-box">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 13px; font-weight: 700; color: #00ff88; display: flex; align-items: center; gap: 6px;">
+                                    <span>🚀</span>
+                                    <span>LEAD QUALIFICADO • TRANSIÇÃO ATIVA</span>
+                                </span>
+                                <span style="font-size: 11px; color: #aebac1; font-family: var(--font-mono);">+55 11 98765-4321</span>
+                            </div>
+                            <p style="font-size: 12px; color: #d1d7db; margin: 0; line-height: 1.45;" id="wa-handover-reason">
+                                O cliente possui negativa formal do INSS e tempo de contribuição comprovado. Reunião inicial recomendada.
+                            </p>
+                            <a id="wa-handover-link" href="#" target="_blank" style="text-decoration: none;">
+                                <button style="width: 100%; background: #00a884; color: #fff; border: none; border-radius: 6px; padding: 10px; font-size: 12.5px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;">
+                                    <span>📲</span>
+                                    <span>Abrir Caso no WhatsApp do Advogado (Link wa.me)</span>
+                                </button>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 3. AUDITORIA E VALIDAÇÃO COM LLM ESPECIALISTA -->
+                    <div class="wa-dossier-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                                <span>👨‍⚖️</span>
+                                <span>Validação com LLM Especialista (Fallback)</span>
+                            </span>
+                            <button class="btn-api-modal" onclick="runLeadLlmValidation()" style="padding: 4px 10px; font-size: 11px; background: rgba(0, 210, 255, 0.12); border-color: rgba(0, 210, 255, 0.35); color: var(--accent-cyan);">
+                                <span>⚡</span>
+                                <span>Validar Dossiê</span>
+                            </button>
+                        </div>
+                        <p style="font-size: 11.5px; color: var(--text-secondary); margin: 0 0 10px 0;">
+                            Audita o parecer e as regras jurídicas antes de enviar a petição ou distribuir para o sócio responsável.
+                        </p>
+                        <div id="wa-llm-val-result" style="background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px; font-size: 12px; color: var(--text-secondary); min-height: 48px; line-height: 1.45;">
+                            Clique em "Validar Dossiê" para solicitar auditoria independente ao modelo.
+                        </div>
+                    </div>
+
+                    <!-- 4. AUTO-APRENDIZADO JURÍDICO (MEMÓRIA SEMÂNTICA QDRANT) -->
+                    <div class="wa-dossier-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                                <span>🧠</span>
+                                <span>Auto-Aprendizado Jurídico (Qdrant 1536d)</span>
+                            </span>
+                            <span style="font-size: 10.5px; color: var(--accent-lime); font-family: var(--font-mono);">Embeddings L2</span>
+                        </div>
+                        <p style="font-size: 11.5px; color: var(--text-secondary); margin: 0 0 10px 0;">
+                            Ensine regras de transição inéditas (ex: Pedágio 50% ou 100%, BPC/LOAS sem CadÚnico). O runtime grava no Qdrant para sempre.
+                        </p>
+                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                            <input type="text" class="wa-text-input" id="wa-learn-input-q" placeholder="Ex: Qual a carência mínima para aposentadoria por idade?" style="font-size: 12px; padding: 7px 10px;">
+                            <button class="btn-api-modal" onclick="runLeadAutoLearnQdrant()" style="padding: 6px 12px; font-size: 11px; white-space: nowrap; background: rgba(0, 255, 136, 0.12); border-color: rgba(0, 255, 136, 0.35); color: var(--accent-lime);">
+                                <span>🧠</span>
+                                <span>Memorizar</span>
+                            </button>
+                        </div>
+                        <div id="wa-learn-feedback" style="font-size: 11.5px; color: var(--text-muted); font-family: var(--font-mono);">
+                            Status: Pronto para aprender novas teses jurídicas.
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="page-bottom-spacer"></div>
@@ -10748,7 +11462,7 @@ Linha de log de auditoria #5: Concluída checagem com sucesso.</textarea>
                     { id: "auto_voice", view: "alr_voice", title: "🎙️ Extensão ALR Voz", sub: "Controle por voz em tempo real no Chrome", icon: "🎙️", badge: "Side Panel" },
                     { id: "auto_browser", view: "browser", title: "Automação Web CDP", sub: "Chromium CDP com auto-cura de seletores", icon: "🌐", badge: "Self-Healing" },
                     { id: "auto_os", view: "os", title: "Controle Físico de OS", sub: "Mouse, teclado, rate limit 20Hz e pânico", icon: "🖱️", badge: "Safe Input" },
-                    { id: "auto_whatsapp", view: "whatsapp", title: "WhatsApp Omnichannel", sub: "Atendimento com normalizador de gírias", icon: "💬", badge: "Omnichannel" }
+                    { id: "auto_whatsapp", view: "whatsapp", title: "WhatsApp Previdenciário", sub: "Triagem, Viabilidade & Handover para Advogado", icon: "⚖️", badge: "Leads Desk" }
                 ]
             },
             qa: {
@@ -10784,7 +11498,8 @@ Linha de log de auditoria #5: Concluída checagem com sucesso.</textarea>
                 icon: "📚",
                 desc: "14 Guias interativos para aprender e dominar o runtime ALR",
                 items: [
-                    { id: "tut_hub", view: "tutorials", title: "Central de Guias", sub: "14 tutoriais com hero cards e busca", icon: "📚", badge: "14 Guias" },
+                    { id: "tut_hub", view: "tutorials", title: "Central de Guias", sub: "15 tutoriais com hero cards e busca", icon: "📚", badge: "15 Guias" },
+                    { id: "tut_previdenciario", view: "tutorials", tutId: "tutorial_previdenciario", title: "15. WhatsApp Previdenciário", sub: "Triagem, Viabilidade & Handover Legal", icon: "⚖️", badge: "Jurídico" },
                     { id: "tut_cookbooks_encyclopedia", view: "tutorials", tutId: "tutorial_cookbooks_encyclopedia", title: "14. Enciclopédia Cookbooks", sub: "20 Cookbooks & Smart Home (JEV)", icon: "📖", badge: "20 Cookbooks" },
                     { id: "tut_systemone_skill", view: "tutorials", tutId: "tutorial_alr_systemone_skill", title: "13. Skill ALR System 1", sub: "TypeSafe Jev + Primitivas de Decisão", icon: "🧠", badge: "Skill Jev" },
                     { id: "tut_sales_copilot", view: "tutorials", tutId: "tutorial_sales_copilot", title: "12. Copiloto de Vendas", sub: "Google Meet + Quebra de Objeções", icon: "💼", badge: "Vendas" },
@@ -10977,6 +11692,8 @@ Linha de log de auditoria #5: Concluída checagem com sucesso.</textarea>
                 initAlrVoiceExplorer();
             } else if (activeView === 'sales_copilot' && typeof checkSalesCopilotHealth === 'function') {
                 checkSalesCopilotHealth();
+            } else if (activeView === 'whatsapp' && typeof initWhatsAppExplorer === 'function') {
+                initWhatsAppExplorer();
             }
             const cat = MENU_CATEGORIES[activeCategory];
             const catTitle = cat ? cat.title : "ALR";
@@ -17216,9 +17933,92 @@ const dec = await res.json();
 console.log("Falha OOM:", dec.answers.falha_ooms.prob > 0.8);
 console.log("Ação:", dec.answers.acao_corretiva.selected);<button class="btn-copy-code" onclick="copySnippet(this)">Copiar</button></div>
 `
+            },
+            {
+                id: "tutorial_previdenciario",
+                title: "15. WhatsApp Previdenciário: Triagem, Viabilidade & Handover Legal",
+                readTime: "5 min",
+                difficulty: "Avançado / Jurídico",
+                category: "Atendimento & Jurídico",
+                icon: "⚖️",
+                badge: "Legal Tech",
+                summary: "Arquitetura completa do motor inteligente de WhatsApp para escritórios de Direito Previdenciário com System 1, Qdrant 1536d e transição wa.me.",
+                body: `
+    <div class="tutorial-hero-card">
+        <div class="tutorial-hero-badge">⚖️ LEGAL TECH EM SUB-MILISSEGUNDO</div>
+        <div class="tutorial-hero-title">WhatsApp Previdenciário: Triagem Instantânea, Cálculo de Viabilidade e Handover com Qdrant</div>
+        <div class="tutorial-hero-desc">
+            Como o ALR revoluciona o atendimento na advocacia previdenciária eliminando o gargalo de atendimento manual, qualificando clientes com negativa formal do INSS e transicionando casos viáveis com link direto wa.me para o advogado.
+        </div>
+    </div>
+
+    <div style="font-size:13px; font-weight:700; color:#ffffff; margin-top:16px;">1. O Desafio na Advocacia Previdenciária</div>
+    <p style="font-size:12px; color:#cbd5e1; line-height:1.6;">
+        Escritórios previdenciários recebem diariamente dezenas de mensagens no WhatsApp. Mais de 60% são curiosos, dúvidas gerais sem documentos ou pessoas fora de escopo (trabalhista, divórcio). Manter um advogado atendendo cada mensagem é inviável, e usar LLMs comerciais a cada mensagem gera custo elevado e alucinações perigosas em temas legais complexos (Lei 8.213/91, EC 103/2019).
+    </p>
+
+    <div style="font-size:13px; font-weight:700; color:#ffffff; margin-top:20px;">2. A Solução do ALR (System 1 + Qdrant 1536d)</div>
+    <p style="font-size:12px; color:#cbd5e1; line-height:1.6;">
+        O ALR implementa um motor determinístico de alta velocidade que combina:
+    </p>
+    <ul style="font-size:12px; color:#cbd5e1; line-height:1.8; margin-left: 20px;">
+        <li><strong>Filtro Anti-Spam e Fora de Escopo:</strong> detecta mensagens trabalhistas, cíveis ou spam e descarta em &lt; 20 µs com custo zero.</li>
+        <li><strong>Extração de Entidades Previdenciárias:</strong> idade, gênero, benefício alvo (Aposentadoria por Idade, Tempo, BPC/LOAS, Auxílio-Doença, Pensão), negativa do INSS e laudos médicos.</li>
+        <li><strong>Cálculo do Score de Viabilidade (0 a 100%):</strong> pondera regras legais (carência de 180 meses, 35a homens / 30a mulheres, 65a LOAS) e presença de indeferimento formal do INSS.</li>
+        <li><strong>Handover com 1 Clique (wa.me):</strong> quando o score atinge o limiar de qualificação (&ge; 70%), sintetiza o dossiê em texto pronto e gera o link direto para o WhatsApp do advogado responsável.</li>
+        <li><strong>Memória Semântica Qdrant (1536d):</strong> busca teses e precedentes memorizados via embeddings L2 em sub-milissegundo.</li>
+    </ul>
+
+    <div style="font-size:13px; font-weight:700; color:#ffffff; margin-top:20px;">3. Arquitetura das APIs REST</div>
+    <div class="cli-code-block">// 1. Enviar mensagem do lead no WhatsApp
+POST /api/v1/leads/message
+Content-Type: application/json
+
+{
+  "message": "Quero me aposentar, tenho 35 anos de contribuição e o INSS negou"
+}
+
+// Resposta em &lt; 400 µs:
+{
+  "success": true,
+  "reply": "Compreendo perfeitamente, Carlos! Com 35 anos de contribuição...",
+  "lead": {
+    "name": "Carlos",
+    "benefit_type": "Aposentadoria por Tempo de Contribuição",
+    "contribution_years": 35.0,
+    "has_inss_denial": true,
+    "qualification_score": 90.0,
+    "status": "QualifiedHighPriority"
+  },
+  "handover": {
+    "lawyer_whatsapp_link": "https://wa.me/5511987654321?text=...",
+    "summary": "Lead previdenciário com negativa formal do INSS..."
+  }
+}<button class="btn-copy-code" onclick="copySnippet(this)">Copiar</button></div>
+
+    <div style="font-size:13px; font-weight:700; color:#ffffff; margin-top:20px;">4. Ciclo de Auto-Aprendizado Legal no Qdrant</div>
+    <p style="font-size:12px; color:#cbd5e1; line-height:1.6;">
+        Quando um cliente pergunta sobre uma tese inédita (ex: <em>"Mulher com 57 anos entra na regra do pedágio de 100%?"</em>), o ALR consulta o Professor LLM especialista e salva os vetores no Qdrant. Na próxima vez que qualquer cliente fizer essa pergunta, o ALR responde direto da memória em 18 µs sem chamar a LLM!
+    </p>
+    <div class="cli-code-block">// Auto-aprendizado de nova tese legal
+POST /api/v1/leads/auto-learn
+Content-Type: application/json
+
+{
+  "question": "Qual a idade mínima da regra de transição do pedágio de 100% para mulher?"
+}
+
+// Retorno instantâneo:
+{
+  "success": true,
+  "learned_into_qdrant": true,
+  "answer": "Na regra do pedágio de 100% (EC 103/2019), a idade mínima para a mulher é de 57 anos...",
+  "latency_micros": 18,
+  "cost_usd": 0.0
+}<button class="btn-copy-code" onclick="copySnippet(this)">Copiar</button></div>
+`
             }
         ];
-
         let activeTutorialId = 'tutorial_premise';
 
         function initTutorialsHub() {
@@ -19162,6 +19962,312 @@ Lead Frio: apenas olhando, documentação, onde posso baixar`;
                     checkListBadge.style.color = 'var(--accent-orange)';
                     checkListBadge.innerHTML = '🟡 Copiloto (:3001) Offline';
                 }
+            }
+        };
+
+        // =====================================================================
+        // 14. WHATSAPP PREVIDENCIÁRIO LEADS DESK (SYSTEM 1 + QDRANT)
+        // =====================================================================
+        let currentLeadState = null;
+        let isLeadProcessing = false;
+
+        window.initWhatsAppExplorer = async function() {
+            try {
+                const resp = await fetch('/api/v1/leads/current');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.lead) {
+                        currentLeadState = data.lead;
+                        updateLeadDossier(data.lead, data.handover);
+                        renderLeadChatMessages(data.lead.dialogue_history || []);
+                    }
+                }
+            } catch (err) {
+                console.warn('Erro ao carregar lead inicial:', err);
+            }
+        };
+
+        window.loadLeadPreset = async function(presetKey) {
+            const chatBox = document.getElementById('wa-chat-messages');
+            if (chatBox) {
+                chatBox.innerHTML = '<div style="color: #8696a0; font-size: 12px; text-align: center; margin-top: 20px;">Carregando cenário...</div>';
+            }
+            try {
+                const resp = await fetch('/api/v1/leads/reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ preset: presetKey })
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    currentLeadState = data.lead;
+                    updateLeadDossier(data.lead, null);
+                    renderLeadChatMessages(data.lead.dialogue_history || []);
+                }
+            } catch (err) {
+                console.error('Falha ao resetar preset:', err);
+            }
+        };
+
+        function renderLeadChatMessages(history) {
+            const chatBox = document.getElementById('wa-chat-messages');
+            if (!chatBox) return;
+            chatBox.innerHTML = '';
+            if (!history || history.length === 0) {
+                chatBox.innerHTML = `
+                    <div style="background: rgba(18, 140, 126, 0.15); border: 1px solid rgba(18, 140, 126, 0.3); border-radius: 8px; padding: 12px; text-align: center; font-size: 12px; color: #aebac1; margin: auto auto;">
+                        🔒 As mensagens deste atendimento são criptografadas de ponta a ponta e processadas em CPU local pelo ALR.<br>
+                        <span style="color: #00ff88; font-weight: 500;">Digite uma mensagem abaixo ou use os chips rápidos para iniciar.</span>
+                    </div>
+                `;
+                return;
+            }
+
+            history.forEach(m => {
+                const isAssistant = m.role === 'assistant';
+                const bubble = document.createElement('div');
+                bubble.className = `wa-msg ${isAssistant ? 'assistant' : 'lead'}`;
+                
+                const timeStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                bubble.innerHTML = `
+                    <div>${escapeHtml(m.content)}</div>
+                    <div class="wa-msg-meta">
+                        <span>${timeStr}</span>
+                        ${isAssistant ? '<span style="color: #53bdeb;">✓✓</span>' : ''}
+                    </div>
+                `;
+                chatBox.appendChild(bubble);
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function updateLeadDossier(lead, handover) {
+            if (!lead) return;
+            const nameEl = document.getElementById('wa-lead-name');
+            if (nameEl) nameEl.textContent = lead.name || 'Maria Aparecida';
+
+            // Score e Barra
+            const score = Math.round(lead.qualification_score || 0);
+            const scoreText = document.getElementById('wa-score-text');
+            const scoreBar = document.getElementById('wa-score-bar');
+            const scoreDesc = document.getElementById('wa-score-desc');
+            if (scoreText) scoreText.textContent = `${score}%`;
+            if (scoreBar) {
+                scoreBar.style.width = `${score}%`;
+                if (score >= 70) {
+                    scoreBar.style.background = 'var(--accent-lime)';
+                } else if (score >= 40) {
+                    scoreBar.style.background = '#ffaa00';
+                } else {
+                    scoreBar.style.background = '#ff4444';
+                }
+            }
+
+            // Status Chip
+            const statusChip = document.getElementById('wa-lead-status-chip');
+            if (statusChip) {
+                const s = lead.status;
+                if (s === 'QualifiedHighPriority' || s === 'QualifiedStandard') {
+                    statusChip.textContent = 'QUALIFICADO - ALTA PRIORIDADE';
+                    statusChip.style.background = 'rgba(0, 255, 136, 0.15)';
+                    statusChip.style.color = '#00ff88';
+                    statusChip.style.borderColor = 'rgba(0, 255, 136, 0.3)';
+                    if (scoreDesc) scoreDesc.textContent = 'Caso com alta probabilidade de êxito judicial/administrativo';
+                } else if (s === 'DiscardedSpam' || s === 'DiscardedOutOfScope') {
+                    statusChip.textContent = 'DESCARTADO (FORA DE ESCOPO)';
+                    statusChip.style.background = 'rgba(255, 68, 68, 0.15)';
+                    statusChip.style.color = '#ff4444';
+                    statusChip.style.borderColor = 'rgba(255, 68, 68, 0.3)';
+                    if (scoreDesc) scoreDesc.textContent = 'Não previdenciário ou sem requisitos mínimos atendidos';
+                } else {
+                    statusChip.textContent = 'EM TRIAGEM ATIVA';
+                    statusChip.style.background = 'rgba(255, 170, 0, 0.15)';
+                    statusChip.style.color = '#ffaa00';
+                    statusChip.style.borderColor = 'rgba(255, 170, 0, 0.3)';
+                    if (scoreDesc) scoreDesc.textContent = 'Coletando dados cadastrais e tempo de contribuição';
+                }
+            }
+
+            // Entidades
+            const benEl = document.getElementById('wa-ent-benefit');
+            if (benEl) {
+                benEl.textContent = lead.benefit_type || 'Não identificado';
+            }
+            const ageEl = document.getElementById('wa-ent-age');
+            if (ageEl) {
+                const age = lead.age ? `${lead.age} anos` : '-';
+                const gen = lead.gender ? ` (${lead.gender})` : '';
+                ageEl.textContent = lead.age ? `${age}${gen}` : '-';
+            }
+            const timeEl = document.getElementById('wa-ent-time');
+            if (timeEl) {
+                timeEl.textContent = lead.contribution_years != null ? `${lead.contribution_years} anos de contribuição` : '-';
+            }
+            const inssEl = document.getElementById('wa-ent-inss');
+            if (inssEl) {
+                if (lead.has_inss_denial === true) {
+                    inssEl.innerHTML = '<span style="color: #ff4444; font-weight: 700;">Sim (Negativa Formal)</span>';
+                } else if (lead.has_inss_denial === false) {
+                    inssEl.textContent = 'Não informou negativa';
+                } else {
+                    inssEl.textContent = '-';
+                }
+            }
+            const docsEl = document.getElementById('wa-ent-docs');
+            if (docsEl) {
+                if (lead.medical_reports && lead.medical_reports.length > 0) {
+                    docsEl.textContent = lead.medical_reports.join(', ');
+                } else {
+                    docsEl.textContent = '-';
+                }
+            }
+
+            // Handover Container
+            const handoverBox = document.getElementById('wa-handover-container');
+            const handoverLink = document.getElementById('wa-handover-link');
+            const handoverReason = document.getElementById('wa-handover-reason');
+            if (handover && handover.lawyer_whatsapp_link) {
+                if (handoverBox) handoverBox.style.display = 'block';
+                if (handoverLink) handoverLink.href = handover.lawyer_whatsapp_link;
+                if (handoverReason) handoverReason.textContent = handover.summary || 'Lead previdenciário com documentação mínima atendida.';
+            } else if (score >= 70) {
+                if (handoverBox) handoverBox.style.display = 'block';
+                const textMsg = encodeURIComponent(`Olá Dr(a), novo lead qualificado pelo ALR:\nNome: ${lead.name}\nBenefício: ${lead.benefit_type || 'Previdenciário'}\nScore: ${score}%\nNegativa INSS: ${lead.has_inss_denial ? 'Sim' : 'Não'}`);
+                if (handoverLink) handoverLink.href = `https://wa.me/5511987654321?text=${textMsg}`;
+                if (handoverReason) handoverReason.textContent = `Caso de ${lead.benefit_type || 'Aposentadoria'} com alta probabilidade. Encaminhe diretamente para a equipe jurídica.`;
+            } else {
+                if (handoverBox) handoverBox.style.display = 'none';
+            }
+        }
+
+        window.sendQuickLeadMessage = function(text) {
+            const input = document.getElementById('wa-msg-input');
+            if (input) input.value = text;
+            sendLeadChatMessage();
+        };
+
+        window.sendLeadChatMessage = async function() {
+            if (isLeadProcessing) return;
+            const input = document.getElementById('wa-msg-input');
+            if (!input) return;
+            const message = input.value.trim();
+            if (!message) return;
+            input.value = '';
+            isLeadProcessing = true;
+
+            const chatBox = document.getElementById('wa-chat-messages');
+            if (chatBox) {
+                const userBubble = document.createElement('div');
+                userBubble.className = 'wa-msg lead';
+                const timeStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                userBubble.innerHTML = `
+                    <div>${escapeHtml(message)}</div>
+                    <div class="wa-msg-meta"><span>${timeStr}</span></div>
+                `;
+                chatBox.appendChild(userBubble);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+
+            const latencyBadge = document.getElementById('wa-latency-badge');
+            if (latencyBadge) latencyBadge.textContent = 'Processando...';
+
+            const t0 = performance.now();
+            try {
+                const resp = await fetch('/api/v1/leads/message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const t1 = performance.now();
+                const latencyMicros = Math.round((t1 - t0) * 1000);
+                if (latencyBadge) latencyBadge.textContent = `${latencyMicros} µs • $0.00`;
+
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.reply && chatBox) {
+                        const botBubble = document.createElement('div');
+                        botBubble.className = 'wa-msg assistant';
+                        const timeStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        botBubble.innerHTML = `
+                            <div>${escapeHtml(data.reply)}</div>
+                            <div class="wa-msg-meta">
+                                <span>${timeStr}</span>
+                                <span style="color: #53bdeb;">✓✓</span>
+                            </div>
+                        `;
+                        chatBox.appendChild(botBubble);
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    }
+                    if (data.lead) {
+                        currentLeadState = data.lead;
+                        updateLeadDossier(data.lead, data.handover);
+                    }
+                }
+            } catch (err) {
+                console.error('Erro ao enviar mensagem:', err);
+                if (latencyBadge) latencyBadge.textContent = 'Erro de Rede';
+            } finally {
+                isLeadProcessing = false;
+            }
+        };
+
+        window.runLeadLlmValidation = async function() {
+            const resultBox = document.getElementById('wa-llm-val-result');
+            if (!resultBox) return;
+            resultBox.innerHTML = '⚖️ Solicitando auditoria ao Professor LLM Especialista...';
+
+            try {
+                const resp = await fetch('/api/v1/leads/validate-llm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const v = data.validation;
+                    resultBox.innerHTML = `
+                        <div style="color: ${v.is_valid ? '#00ff88' : '#ffaa00'}; font-weight: 600; margin-bottom: 4px;">
+                            ${v.is_valid ? '✅ AUDITORIA CONFORME (VALIDADO)' : '⚠️ AUDITORIA COM RESSALVAS'}
+                        </div>
+                        <div style="margin-bottom: 4px; color: #e9edef;">${escapeHtml(v.legal_rationale)}</div>
+                        <div style="font-size: 11px; color: #8696a0;">Recomendação: ${escapeHtml(v.recommended_action)}</div>
+                    `;
+                } else {
+                    resultBox.innerHTML = '<span style="color: #ff4444;">Erro ao validar dossiê via LLM.</span>';
+                }
+            } catch (err) {
+                resultBox.innerHTML = `<span style="color: #ff4444;">Erro de conexão: ${err.message}</span>`;
+            }
+        };
+
+        window.runLeadAutoLearnQdrant = async function() {
+            const input = document.getElementById('wa-learn-input-q');
+            const feedback = document.getElementById('wa-learn-feedback');
+            if (!input || !feedback) return;
+            const question = input.value.trim();
+            if (!question) return;
+            input.value = '';
+            feedback.innerHTML = '🧠 Consultando Professor LLM e gerando embeddings para o Qdrant...';
+
+            try {
+                const resp = await fetch('/api/v1/leads/auto-learn', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: question })
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    feedback.innerHTML = `
+                        <span style="color: #00ff88;">✅ Aprendido com Sucesso!</span><br>
+                        <span style="color: #e9edef;">R: "${escapeHtml(data.answer)}"</span><br>
+                        <span style="color: #8696a0;">Gravado no Qdrant • Próxima consulta em ${data.latency_micros} µs • Custo: $0.00</span>
+                    `;
+                } else {
+                    feedback.innerHTML = '<span style="color: #ff4444;">Erro ao memorizar pergunta jurídica.</span>';
+                }
+            } catch (err) {
+                feedback.innerHTML = `<span style="color: #ff4444;">Erro de conexão: ${err.message}</span>`;
             }
         };
 

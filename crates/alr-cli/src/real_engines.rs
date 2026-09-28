@@ -6,6 +6,7 @@ use alr_agent::domain_cases::{
     BrowserActionSupervisor, CustomerWorkflowEngine, DroneTelemetryEvaluator,
     MediaSegmentClassifier, SilentApiFailureDetector,
 };
+use alr_agent::lead_intake::{LeadIntakeEngine, LeadProfile};
 use alr_agent::recipes::{
     AmountExtractor, CitationChecker, CitationVerdict, DateExtractionRecipe, EntityAligner,
     EntityAlignmentReport, ExtractedAmount, FeatureExtractorRecipe, FunctionCallingRecipe,
@@ -113,6 +114,8 @@ pub struct PlaygroundRealEngines {
     pub tool_offloader: Arc<ToolResultOffloader>,
     pub context_compactor: Arc<ContextCompactor>,
     pub background_task_manager: Arc<BackgroundTaskManager>,
+    pub lead_engine: Arc<tokio::sync::RwLock<LeadIntakeEngine>>,
+    pub current_lead: Arc<tokio::sync::RwLock<LeadProfile>>,
 }
 
 impl Default for PlaygroundRealEngines {
@@ -183,6 +186,11 @@ impl PlaygroundRealEngines {
             tool_offloader: Arc::new(ToolResultOffloader::default()),
             context_compactor: Arc::new(ContextCompactor::default()),
             background_task_manager: Arc::new(BackgroundTaskManager::default()),
+            lead_engine: Arc::new(tokio::sync::RwLock::new(LeadIntakeEngine::default())),
+            current_lead: Arc::new(tokio::sync::RwLock::new(LeadProfile::new(
+                "lead_prev_01".to_string(),
+                "Maria Aparecida (Lead Previdenciário)",
+            ))),
         }
     }
 

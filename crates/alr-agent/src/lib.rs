@@ -8,6 +8,7 @@ pub mod systemone;
 pub mod browser_agent;
 pub mod categorizer;
 pub mod conflict;
+pub mod lead_intake;
 pub mod learning;
 pub mod r#loop;
 pub mod marketing_ops;
@@ -30,7 +31,6 @@ pub mod support_state;
 pub mod support_tool;
 pub mod tools;
 pub mod trust;
-
 pub use background_tasks::{
     BackgroundTaskManager, BackgroundTaskRecord, BackgroundTaskState, TaskSubmissionReceipt,
     WakeupNotification,
@@ -53,6 +53,11 @@ pub use domain_cases::{
     DroneRiskEvaluation, DroneTelemetryEvaluator, DroneTelemetrySnapshot, HttpResponseProbe,
     MediaSegmentClassification, MediaSegmentClassifier, MediaSegmentType, SilentApiFailureDetector,
     SilentFailureVerdict,
+};
+pub use lead_intake::{
+    LeadDialogueMessage, LeadHandoverReport, LeadIntakeEngine, LeadProfile,
+    LeadQualificationStatus, LeadValidationResult, PrevidenciarioBenefitType,
+    PrevidenciarioRuleEngine,
 };
 pub use marketing_ops::{
     AdFormat, AdPromise, AdsConvertingTerm, AnchorType, CannibalizationAction,

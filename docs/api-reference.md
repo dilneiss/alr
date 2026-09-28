@@ -18,8 +18,9 @@ O **Autonomous Learning Runtime (ALR)** expõe uma arquitetura de APIs de altís
 8. [Workbench CSV em Lote, E-Commerce & Otimizador de Rotas (VRP-TW)](#-8-workbench-csv-em-lote-e-commerce--otimizador-de-rotas-vrp-tw)
 9. [Visão Computacional, Câmera CCTV, Controle OS, Browser & Auto-QA](#-9-visão-computacional-câmera-cctv-controle-os-browser--auto-qa)
 10. [Explorador e Inspetor de Bancos de Dados (SQLite WAL & Qdrant Vetorial)](#-10-explorador-e-inspetor-de-bancos-de-dados-sqlite-wal--qdrant-vetorial)
-11. [API da Mesa de Operações Quantitativa — Trading Desk (Porta 3800)](#-11-api-da-mesa-de-operações-quantitativa--trading-desk-porta-3800)
-12. [Servidor Model Context Protocol — MCP (JSON-RPC 2.0)](#-12-servidor-model-context-protocol--mcp-json-rpc-20)
+21. [API da Mesa de Operações Quantitativa — Trading Desk (Porta 3800)](#-11-api-da-mesa-de-operações-quantitativa--trading-desk-porta-3800)
+22. [Servidor Model Context Protocol — MCP (JSON-RPC 2.0)](#-12-servidor-model-context-protocol--mcp-json-rpc-20)
+23. [API do WhatsApp Previdenciário: Triagem, Viabilidade & Handover Legal](#-13-api-do-whatsapp-previdenciário-triagem-viabilidade--handover-legal)
 
 ---
 
@@ -375,3 +376,65 @@ curl -X POST http://localhost:4000/mcp \
     }
   }'
 ```
+
+---
+
+## ⚖️ 13. API do WhatsApp Previdenciário: Triagem, Viabilidade & Handover Legal
+
+Motor inteligente para escritórios de advocacia previdenciária rodando nativamente no ALR com latência de sub-milissegundo, extração de entidades (Lei 8.213/91, EC 103/2019), cálculo do score de viabilidade judicial/administrativa e transição direta com link `wa.me` para o advogado responsável.
+
+### 13.1. Enviar Mensagem do Lead (`POST /api/v1/leads/message`)
+Processa a mensagem do cliente, atualiza o dossiê de entidades em tempo real e retorna a resposta formatada com o link de transição caso o lead atinja o limiar de qualificação ($\ge 70\%$).
+
+```bash
+curl -X POST http://localhost:3000/api/v1/leads/message \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Quero me aposentar, tenho 35 anos de contribuição e o INSS negou"
+  }'
+```
+
+**Resposta (`200 OK` em sub-milissegundo):**
+```json
+{
+  "success": true,
+  "reply": "Compreendo perfeitamente, Carlos! Com 35 anos de contribuição, seu direito à Aposentadoria por Tempo de Contribuição é muito forte e a negativa formal do INSS abre caminho direto para nossa atuação judicial com tutela de urgência. Vou encaminhar agora mesmo seu caso ao nosso advogado especialista!",
+  "lead": {
+    "id": "lead_carlos_01",
+    "name": "Carlos",
+    "benefit_type": "Aposentadoria por Tempo de Contribuição",
+    "contribution_years": 35.0,
+    "has_inss_denial": true,
+    "qualification_score": 90.0,
+    "status": "QualifiedHighPriority"
+  },
+  "handover": {
+    "lawyer_whatsapp_link": "https://wa.me/5511987654321?text=Ol%C3%A1%20Dr(a)...",
+    "summary": "Lead previdenciário com negativa formal do INSS e 35 anos de contribuição."
+  }
+}
+```
+
+### 13.2. Auto-Aprendizado de Teses Legais no Qdrant (`POST /api/v1/leads/auto-learn`)
+Quando uma dúvida inédita sobre regras de transição ou carência é apresentada, o ALR consulta o Professor LLM especialista e cristaliza a resposta com embeddings vetoriais de 1536 dimensões no Qdrant. As consultas subsequentes respondem diretamente da memória em $\sim 18\text{ µs}$ com custo zero ($\$0.00$).
+
+```bash
+curl -X POST http://localhost:3000/api/v1/leads/auto-learn \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Qual a idade mínima da regra de transição do pedágio de 100% para mulher?"
+  }'
+```
+
+### 13.3. Validação do Dossiê com LLM Especialista (`POST /api/v1/leads/validate-llm`)
+Audita formalmente as premissas jurídicas do dossiê extraído antes da distribuição da ação ou do agendamento com o sócio:
+
+```bash
+curl -X POST http://localhost:3000/api/v1/leads/validate-llm \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+### 13.4. Inspecionar e Resetar Lead (`GET /api/v1/leads/current` & `POST /api/v1/leads/reset`)
+- `GET /api/v1/leads/current`: Retorna o estado atual do lead em atendimento.
+- `POST /api/v1/leads/reset`: Reseta para um cenário demonstrativo (`denied_retirement`, `bpc_loas`, `auxilio_doenca`, `junk_out_of_scope` ou `clean`).
