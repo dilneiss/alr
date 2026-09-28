@@ -81,7 +81,14 @@
       border: 1px solid rgba(51, 65, 85, 0.6);
     }
 
-    /* Responsive Cockpit Layout for Laptop (1366x768, 1280x800) & Mobile (< 1200px) */
+    /* Chart Canvas Sizing - Fixed compact height across all resolutions (Prevents screen overflow) */
+    #chart-canvas-box {
+      height: 380px !important;
+      max-height: 390px !important;
+      min-height: 320px !important;
+    }
+
+    /* Responsive Cockpit Layout for Laptop & Mobile (< 1200px) */
     @media (max-width: 1199px) {
       #main-cockpit-grid {
         display: flex !important;
@@ -89,10 +96,6 @@
       }
       #chart-column-container {
         width: 100% !important;
-      }
-      #chart-canvas-box {
-        min-height: 380px !important;
-        height: 420px !important;
       }
       #position-column-container {
         width: 100% !important;
@@ -105,8 +108,8 @@
     /* Mobile Screens (< 640px) */
     @media (max-width: 640px) {
       #chart-canvas-box {
-        min-height: 320px !important;
-        height: 350px !important;
+        height: 320px !important;
+        min-height: 300px !important;
       }
     }
 
@@ -477,8 +480,8 @@
             </div>
           </div>
 
-          <!-- HTML5 Canvas 60 FPS Candlestick -->
-          <div id="chart-canvas-box" class="relative w-full aspect-[16/9] min-h-[380px] bg-navy-950 rounded-lg overflow-hidden border border-navy-800 flex items-center justify-center">
+          <!-- HTML5 Canvas 60 FPS Candlestick (Constrained Compact Height) -->
+          <div id="chart-canvas-box" class="relative w-full h-[380px] min-h-[320px] max-h-[390px] bg-navy-950 rounded-lg overflow-hidden border border-navy-800 flex items-center justify-center">
             <canvas id="candlestick-canvas" class="w-full h-full block"></canvas>
             <div id="chart-loading-overlay" class="absolute inset-0 bg-navy-950/80 flex items-center justify-center text-xs text-slate-400">
               <div class="flex flex-col items-center gap-2">
@@ -487,60 +490,60 @@
               </div>
             </div>
           </div>
-          <!-- Technical Indicators Bar -->
+          <!-- Technical Indicators Bar (Linha 1: Indicadores Clássicos) -->
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 ultra-tech-bar gap-2 pt-1 text-xs">
-            <div class="p-2 rounded bg-navy-900 border border-navy-800">
-              <div class="text-[10px] uppercase text-slate-400">RSI (14)</div>
+            <div class="p-2.5 rounded-lg bg-navy-900/90 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">RSI (14)</div>
               <div id="stat-rsi" class="mono font-semibold text-slate-200 mt-0.5">50.00</div>
             </div>
-            <div class="p-2 rounded bg-navy-900 border border-navy-800">
-              <div class="text-[10px] uppercase text-slate-400">SuperTrend</div>
+            <div class="p-2.5 rounded-lg bg-navy-900/90 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">SuperTrend</div>
               <div id="stat-supertrend" class="mono font-semibold text-slate-200 mt-0.5">$0.00 (Alta)</div>
             </div>
-            <div class="p-2 rounded bg-navy-900 border border-navy-800">
-              <div class="text-[10px] uppercase text-slate-400">ADX (Tendência)</div>
+            <div class="p-2.5 rounded-lg bg-navy-900/90 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">ADX (Tendência)</div>
               <div id="stat-adx" class="mono font-semibold text-slate-200 mt-0.5">25.0 (Forte)</div>
             </div>
-            <div class="p-2 rounded bg-navy-900 border border-navy-800">
-              <div class="text-[10px] uppercase text-slate-400">Donchian (Low/High)</div>
+            <div class="p-2.5 rounded-lg bg-navy-900/90 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Donchian (Low/High)</div>
               <div id="stat-donchian" class="mono font-semibold text-slate-200 mt-0.5">-- / --</div>
             </div>
-            <div class="p-2 rounded bg-navy-900 border border-navy-800">
-              <div class="text-[10px] uppercase text-slate-400">Bollinger Bandwidth</div>
+            <div class="p-2.5 rounded-lg bg-navy-900/90 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Bollinger Bandwidth</div>
               <div id="stat-bollinger" class="mono font-semibold text-slate-200 mt-0.5">0.00% (Normal)</div>
             </div>
-            <div class="p-2 rounded bg-navy-900 border border-navy-800">
-              <div class="text-[10px] uppercase text-slate-400">Volatilidade ATR (14)</div>
+            <div class="p-2.5 rounded-lg bg-navy-900/90 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Volatilidade ATR (14)</div>
               <div id="stat-atr" class="mono font-semibold text-slate-200 mt-0.5">$0.00</div>
+            </div>
           </div>
-          <!-- Advanced Technical Indicators Bar (Fase 38 - Quant Fortress) -->
+          <!-- Advanced Technical Indicators Bar (Linha 2: Quant Fortress) -->
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 ultra-tech-bar gap-2 pt-1 text-xs">
-            <div class="p-2 rounded bg-navy-900 border border-navy-800">
-              <div class="text-[10px] uppercase text-slate-400">VWAP Institucional</div>
+            <div class="p-2.5 rounded-lg bg-navy-900/90 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">VWAP Institucional</div>
               <div id="stat-vwap" class="mono font-semibold text-cyan-300 mt-0.5">$0.00</div>
             </div>
-            <div class="p-2 rounded bg-navy-900 border border-navy-800">
-              <div class="text-[10px] uppercase text-slate-400">TTM Squeeze (Keltner)</div>
+            <div class="p-2.5 rounded-lg bg-navy-900/90 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">TTM Squeeze (Keltner)</div>
               <div id="stat-squeeze" class="mono font-semibold text-slate-200 mt-0.5"><span class="text-slate-400 text-xs">Normal</span></div>
             </div>
-            <div class="p-2 rounded bg-navy-900 border border-navy-800">
-              <div class="text-[10px] uppercase text-slate-400">MFI (Fluxo de Capital)</div>
+            <div class="p-2.5 rounded-lg bg-navy-900/90 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">MFI (Fluxo de Capital)</div>
               <div id="stat-mfi" class="mono font-semibold text-slate-200 mt-0.5">50.00</div>
             </div>
-            <div class="p-2 rounded bg-navy-900 border border-navy-800">
-              <div class="text-[10px] uppercase text-slate-400">Estocástico %K / %D</div>
+            <div class="p-2.5 rounded-lg bg-navy-900/90 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Estocástico %K / %D</div>
               <div id="stat-stoch" class="mono font-semibold text-slate-200 mt-0.5">50.0 / 50.0</div>
             </div>
-            <div class="p-2 rounded bg-navy-900 border border-navy-800">
-              <div class="text-[10px] uppercase text-slate-400">Order Book Imbalance</div>
+            <div class="p-2.5 rounded-lg bg-navy-900/90 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Order Book Imbalance</div>
               <div id="stat-obi" class="mono font-semibold text-slate-200 mt-0.5">0.0%</div>
             </div>
-            <div class="p-2 rounded bg-navy-900 border border-navy-800">
-              <div class="text-[10px] uppercase text-slate-400">Fear & Greed Index</div>
+            <div class="p-2.5 rounded-lg bg-navy-900/90 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Fear & Greed Index</div>
               <div id="stat-fear-greed" class="mono font-semibold text-slate-200 mt-0.5">50 (Neutro)</div>
             </div>
           </div>
-      </div>
 
       <!-- Position Cockpit & Transparent Risk Explanations (4 cols) -->
       <!-- Position Cockpit & Transparent Risk Explanations (4 cols) -->
@@ -960,139 +963,152 @@
   </dialog>
 
   <!-- Modal de Snapshot de Indicadores e Pesos na Entrada do Trade -->
-  <dialog id="tradeSnapshotModal" class="bg-navy-900 text-white rounded-2xl p-4 sm:p-6 border border-cyan-500/40 shadow-2xl backdrop:bg-black/80 max-w-4xl w-[95vw] sm:w-[90vw] max-h-[90vh] overflow-y-auto text-xs m-auto" onclick="if (event.target === this) this.close()">
-    <!-- Modal Header -->
-    <div class="flex items-center justify-between border-b border-navy-800 pb-3 mb-4">
-      <div class="flex items-center gap-2.5">
-        <div class="w-3 h-3 rounded-full bg-cyan-400 pulse-green flex-shrink-0"></div>
+  <dialog id="tradeSnapshotModal" class="bg-navy-900 text-white rounded-2xl p-5 sm:p-6 border border-cyan-500/40 shadow-2xl backdrop:bg-black/80 max-w-4xl w-[95vw] sm:w-[90vw] max-h-[90vh] overflow-y-auto overflow-x-hidden text-xs m-auto" onclick="if (event.target === this) this.close()">
+    <div class="flex flex-col gap-4 w-full">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b border-navy-800 pb-3 w-full">
+        <div class="flex items-center gap-2.5">
+          <div class="w-3 h-3 rounded-full bg-cyan-400 pulse-green flex-shrink-0"></div>
+          <div>
+            <h3 class="font-bold text-sm text-white flex items-center gap-2">
+              <span>Snapshot de Indicadores & Pesos na Entrada do Trade</span>
+              <span id="snap-asset-badge" class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">BTC-USDT</span>
+            </h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">Auditoria imutável das condições matemáticas e pesos no momento exato do disparo da ordem</p>
+          </div>
+        </div>
+        <button onclick="document.getElementById('tradeSnapshotModal').close()" class="w-8 h-8 rounded-lg bg-navy-800 hover:bg-navy-700 text-slate-300 hover:text-white flex items-center justify-center text-lg font-bold transition flex-shrink-0">&times;</button>
+      </div>
+
+      <!-- Metadata Ribbon: Asset, Action, Timestamp, Executed Price -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl bg-navy-950/80 border border-navy-800 w-full">
         <div>
-          <h3 class="font-bold text-sm text-white flex items-center gap-2">
-            <span>Snapshot de Indicadores & Pesos na Entrada do Trade</span>
-            <span id="snap-asset-badge" class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">BTC-USDT</span>
-          </h3>
-          <p class="text-[11px] text-slate-400 mt-0.5">Auditoria imutável das condições matemáticas e pesos no momento exato do disparo da ordem</p>
+          <div class="text-[10px] uppercase font-bold text-slate-400">Ativo</div>
+          <div id="snap-asset" class="font-bold text-white mono text-xs mt-0.5">--</div>
+        </div>
+        <div>
+          <div class="text-[10px] uppercase font-bold text-slate-400">Ação / Lado</div>
+          <div id="snap-action" class="font-bold text-emerald-400 mono text-xs mt-0.5">--</div>
+        </div>
+        <div>
+          <div class="text-[10px] uppercase font-bold text-slate-400">Preço Executado</div>
+          <div id="snap-price" class="font-bold text-cyan-300 mono text-xs mt-0.5">--</div>
+        </div>
+        <div>
+          <div class="text-[10px] uppercase font-bold text-slate-400">Data / Hora da Entrada</div>
+          <div id="snap-time" class="mono text-slate-300 text-xs mt-0.5">--</div>
+        </div>
       </div>
-      <button onclick="document.getElementById('tradeSnapshotModal').close()" class="w-8 h-8 rounded-lg bg-navy-800 hover:bg-navy-700 text-slate-300 hover:text-white flex items-center justify-center text-lg font-bold transition">&times;</button>
-    </div>
 
-    <!-- Metadata Ribbon: Asset, Action, Timestamp, Executed Price -->
-    <div class="snap-grid-adaptive p-3 rounded-xl bg-navy-950/80 border border-navy-800 mb-4">
-      <div>
-        <div class="text-[10px] uppercase font-bold text-slate-400">Ativo</div>
-        <div id="snap-asset" class="font-bold text-white mono text-xs mt-0.5">--</div>
+      <!-- Section 1: Valores dos Indicadores no Momento da Entrada -->
+      <div class="flex flex-col gap-2 w-full">
+        <div class="flex items-center gap-2 pb-1 border-b border-navy-800">
+          <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <h4 class="font-bold text-xs uppercase tracking-wider text-slate-200">1. Valores dos Indicadores no Momento da Entrada</h4>
+        </div>
+        <div id="snap-indicators-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 w-full">
+          <!-- RSI -->
+          <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800 flex flex-col justify-between">
+            <div class="text-[10px] uppercase text-slate-400">RSI (14)</div>
+            <div id="snap-ind-rsi" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+          </div>
+          <!-- ADX -->
+          <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800 flex flex-col justify-between">
+            <div class="text-[10px] uppercase text-slate-400">ADX (14) & DIs</div>
+            <div id="snap-ind-adx" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+          </div>
+          <!-- VWAP -->
+          <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800 flex flex-col justify-between">
+            <div class="text-[10px] uppercase text-slate-400">VWAP Institucional</div>
+            <div id="snap-ind-vwap" class="mono font-bold text-cyan-300 text-xs mt-0.5">--</div>
+          </div>
+          <!-- Ichimoku Cloud -->
+          <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800 flex flex-col justify-between">
+            <div class="text-[10px] uppercase text-slate-400">Ichimoku Nuvem</div>
+            <div id="snap-ind-ichimoku" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+          </div>
+          <!-- Bollinger Bandwidth -->
+          <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800 flex flex-col justify-between">
+            <div class="text-[10px] uppercase text-slate-400">Bollinger Bandwidth</div>
+            <div id="snap-ind-bb" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+          </div>
+          <!-- MFI -->
+          <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800 flex flex-col justify-between">
+            <div class="text-[10px] uppercase text-slate-400">MFI (Fluxo de Capital)</div>
+            <div id="snap-ind-mfi" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+          </div>
+          <!-- Stoch %K/%D -->
+          <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800 flex flex-col justify-between">
+            <div class="text-[10px] uppercase text-slate-400">Estocástico %K / %D</div>
+            <div id="snap-ind-stoch" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+          </div>
+          <!-- Parabolic SAR -->
+          <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800 flex flex-col justify-between">
+            <div class="text-[10px] uppercase text-slate-400">PSAR / ATR</div>
+            <div id="snap-ind-psar" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+          </div>
+          <!-- Order Book Imbalance -->
+          <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800 flex flex-col justify-between">
+            <div class="text-[10px] uppercase text-slate-400">Order Book Imbalance</div>
+            <div id="snap-ind-obi" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+          </div>
+          <!-- Fear & Greed / Sentimento -->
+          <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800 flex flex-col justify-between">
+            <div class="text-[10px] uppercase text-slate-400">Fear & Greed / News</div>
+            <div id="snap-ind-fear-greed" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+          </div>
+          <!-- Ponto de Controle (POC) -->
+          <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800 flex flex-col justify-between">
+            <div class="text-[10px] uppercase text-slate-400">Ponto de Controle (POC)</div>
+            <div id="snap-ind-poc" class="mono font-bold text-cyan-300 text-xs mt-0.5">--</div>
+          </div>
+          <!-- Volatilidade de Parkinson -->
+          <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800 flex flex-col justify-between">
+            <div class="text-[10px] uppercase text-slate-400">Volatilidade Parkinson</div>
+            <div id="snap-ind-parkinson" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+          </div>
+        </div>
       </div>
-      <div>
-        <div class="text-[10px] uppercase font-bold text-slate-400">Ação / Lado</div>
-        <div id="snap-action" class="font-bold text-emerald-400 mono text-xs mt-0.5">--</div>
-      </div>
-      <div>
-        <div class="text-[10px] uppercase font-bold text-slate-400">Preço Executado</div>
-        <div id="snap-price" class="font-bold text-cyan-300 mono text-xs mt-0.5">--</div>
-      </div>
-      <div>
-        <div class="text-[10px] uppercase font-bold text-slate-400">Data / Hora da Entrada</div>
-        <div id="snap-time" class="mono text-slate-300 text-xs mt-0.5">--</div>
-      </div>
-    </div>
 
-    <!-- Section 1: Valores dos Indicadores no Momento da Entrada -->
-    <div class="mb-5">
-      <div class="flex items-center gap-2 mb-2.5 pb-1 border-b border-navy-800">
-        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-        <h4 class="font-bold text-xs uppercase tracking-wider text-slate-200">1. Valores dos Indicadores no Momento da Entrada</h4>
-      </div>
-      <div id="snap-indicators-grid" class="snap-grid-adaptive">
-        <!-- RSI -->
-        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
-          <div class="text-[10px] uppercase text-slate-400">RSI (14)</div>
-          <div id="snap-ind-rsi" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+      <!-- Section 2: Pesos Ativos dos Fatores -->
+      <div class="flex flex-col gap-2 w-full">
+        <div class="flex items-center gap-2 pb-1 border-b border-navy-800">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 18h12l3-18H3z"/></svg>
+          <h4 class="font-bold text-xs uppercase tracking-wider text-slate-200">2. Pesos Ativos dos Fatores (Learned Weight Multipliers)</h4>
         </div>
-        <!-- ADX -->
-        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
-          <div class="text-[10px] uppercase text-slate-400">ADX (14) & DIs</div>
-          <div id="snap-ind-adx" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
-        </div>
-        <!-- VWAP -->
-        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
-          <div class="text-[10px] uppercase text-slate-400">VWAP Institucional</div>
-          <div id="snap-ind-vwap" class="mono font-bold text-cyan-300 text-xs mt-0.5">--</div>
-        </div>
-        <!-- Ichimoku Cloud -->
-        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
-          <div class="text-[10px] uppercase text-slate-400">Ichimoku Kumo Cloud</div>
-          <div id="snap-ind-ichimoku" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
-        </div>
-        <!-- Bollinger Bandwidth -->
-        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
-          <div class="text-[10px] uppercase text-slate-400">Bollinger Bandwidth</div>
-          <div id="snap-ind-bb" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
-        </div>
-        <!-- MFI -->
-        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
-          <div class="text-[10px] uppercase text-slate-400">MFI (Fluxo de Dinheiro)</div>
-          <div id="snap-ind-mfi" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
-        </div>
-        <!-- Stoch %K/%D -->
-        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
-          <div class="text-[10px] uppercase text-slate-400">Estocástico %K / %D</div>
-          <div id="snap-ind-stoch" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
-        </div>
-        <!-- Parabolic SAR -->
-        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
-          <div class="text-[10px] uppercase text-slate-400">PSAR / Volatilidade ATR</div>
-          <div id="snap-ind-psar" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
-        </div>
-        <!-- Order Book Imbalance -->
-        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
-          <div class="text-[10px] uppercase text-slate-400">Order Book Imbalance</div>
-          <div id="snap-ind-obi" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
-        </div>
-        <!-- Fear & Greed / Sentimento -->
-        <div class="p-2.5 rounded-lg bg-navy-950 border border-navy-800">
-          <div class="text-[10px] uppercase text-slate-400">Fear & Greed / News</div>
-          <div id="snap-ind-fear-greed" class="mono font-bold text-slate-200 text-xs mt-0.5">--</div>
+        <div class="overflow-x-auto max-h-56 overflow-y-auto rounded-lg border border-navy-800 bg-navy-950 w-full">
+          <table class="w-full text-left text-xs">
+            <thead class="text-[10px] uppercase font-bold text-slate-400 border-b border-navy-800 sticky top-0 bg-navy-900">
+              <tr>
+                <th class="py-2 px-3">Fator Quantitativo</th>
+                <th class="py-2 px-3">Multiplicador de Peso</th>
+                <th class="py-2 px-3">Intensidade do Fator</th>
+              </tr>
+            </thead>
+            <tbody id="snap-weights-tbody" class="divide-y divide-navy-800/60 mono text-slate-300">
+              <tr>
+                <td colspan="3" class="text-center py-4 text-slate-500">Nenhum peso registrado.</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
-    </div>
 
-    <!-- Section 2: Pesos Ativos dos Fatores -->
-    <div class="mb-5">
-      <div class="flex items-center gap-2 mb-2.5 pb-1 border-b border-navy-800">
-        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 18h12l3-18H3z"/></svg>
-        <h4 class="font-bold text-xs uppercase tracking-wider text-slate-200">2. Pesos Ativos dos Fatores (Learned Weight Multipliers)</h4>
+      <!-- Section 3: Fatores Ativos de Confluência -->
+      <div class="flex flex-col gap-2 w-full">
+        <div class="flex items-center gap-2 pb-1 border-b border-navy-800">
+          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <h4 class="font-bold text-xs uppercase tracking-wider text-slate-200">3. Fatores Ativos de Confluência (Motivos que Autorizaram o Trade)</h4>
+        </div>
+        <div id="snap-confluence-chips" class="flex flex-wrap gap-2 p-3 rounded-xl bg-navy-950 border border-navy-800 min-h-[50px] items-center w-full">
+          <span class="text-slate-500 text-xs">Nenhum fator de confluência registrado.</span>
+        </div>
       </div>
-      <div class="overflow-x-auto max-h-56 overflow-y-auto rounded-lg border border-navy-800 bg-navy-950">
-        <table class="w-full text-left text-xs">
-          <thead class="text-[10px] uppercase font-bold text-slate-400 border-b border-navy-800 sticky top-0 bg-navy-900">
-            <tr>
-              <th class="py-2 px-3">Fator Quantitativo</th>
-              <th class="py-2 px-3">Multiplicador de Peso</th>
-              <th class="py-2 px-3">Intensidade do Fator</th>
-            </tr>
-          </thead>
-          <tbody id="snap-weights-tbody" class="divide-y divide-navy-800/60 mono text-slate-300">
-            <tr>
-              <td colspan="3" class="text-center py-4 text-slate-500">Nenhum peso registrado.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
 
-    <!-- Section 3: Fatores Ativos de Confluência -->
-    <div class="mb-4">
-      <div class="flex items-center gap-2 mb-2.5 pb-1 border-b border-navy-800">
-        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        <h4 class="font-bold text-xs uppercase tracking-wider text-slate-200">3. Fatores Ativos de Confluência (Motivos que Autorizaram o Trade)</h4>
+      <!-- Modal Footer -->
+      <div class="flex justify-end pt-3 border-t border-navy-800 w-full">
+        <button onclick="document.getElementById('tradeSnapshotModal').close()" class="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition active:scale-95">Fechar Visualizador</button>
       </div>
-      <div id="snap-confluence-chips" class="flex flex-wrap gap-2 p-3 rounded-xl bg-navy-950 border border-navy-800 min-h-[50px] items-center">
-        <span class="text-slate-500 text-xs">Nenhum fator de confluência registrado.</span>
-      </div>
-    </div>
-
-    <!-- Modal Footer -->
-    <div class="flex justify-end pt-3 border-t border-navy-800">
-      <button onclick="document.getElementById('tradeSnapshotModal').close()" class="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition active:scale-95">Fechar Visualizador</button>
     </div>
   </dialog>
 
@@ -1685,11 +1701,11 @@
             const pnlSign = p.pnl >= 0 ? '+' : '';
             const isSelected = a.asset === selectedAsset;
             return `
-              <button onclick="selectAsset('${a.asset}')" class="px-2 py-0.5 rounded text-xs font-bold transition flex items-center gap-1 ${
-                isSelected ? 'bg-cyan-500 text-navy-950 shadow-sm' : 'bg-navy-850 hover:bg-navy-800 text-slate-200 border border-slate-700'
+              <button onclick="selectAsset('${a.asset}')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm ${
+                isSelected ? 'bg-cyan-500/20 text-cyan-200 border-2 border-cyan-400 ring-2 ring-cyan-500/30' : 'bg-navy-900 hover:bg-navy-800 text-slate-300 border border-navy-700'
               }">
-                <span>${a.asset.replace('-USDT', '')}:</span>
-                <span class="${p.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${pnlSign}${fmtUSD(p.pnl)}</span>
+                <span class="font-bold text-white">${a.asset.replace('-USDT', '')}:</span>
+                <span class="mono font-bold ${p.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${pnlSign}${fmtUSD(p.pnl)}</span>
               </button>
             `;
           }).join('');
@@ -2422,7 +2438,12 @@
         document.getElementById('snap-ind-obi').textContent = `${(obiVal * 100).toFixed(1)}% (${obiVal >= 0 ? 'Compra' : 'Venda'})`;
         const fgVal = snapshot.news_sentiment_score || 0;
         document.getElementById('snap-ind-fear-greed').textContent = `${fgVal >= 0 ? '+' : ''}${fgVal.toFixed(2)}`;
-
+        if (document.getElementById('snap-ind-poc')) {
+          document.getElementById('snap-ind-poc').textContent = snapshot.poc_price > 0 ? fmtUSD(snapshot.poc_price) : '--';
+        }
+        if (document.getElementById('snap-ind-parkinson')) {
+          document.getElementById('snap-ind-parkinson').textContent = snapshot.parkinson_volatility > 0 ? `${(snapshot.parkinson_volatility * 100).toFixed(2)}%` : '--';
+        }
         // Section 2: Weights Table
         const weightsTbody = document.getElementById('snap-weights-tbody');
         const weightsMap = snapshot.factor_weights || {};
