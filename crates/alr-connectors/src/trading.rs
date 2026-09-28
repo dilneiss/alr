@@ -5028,8 +5028,7 @@ impl Default for StrategyProfile {
 
 impl StrategyProfile {
     pub fn default_profiles() -> Vec<Self> {
-        let mut profiles = Vec::with_capacity(400);
-
+        let mut profiles = Vec::with_capacity(200);
         // ==========================================
         // PARTE 1: 200 PERFIS DE CRIPTOMOEDAS (CRYPTO)
         // ==========================================
@@ -5090,7 +5089,7 @@ impl StrategyProfile {
             market: MarketCategory::Crypto,
         });
 
-        // 1.3 15 Famílias x 10 Variações = 150 Perfis Sistemáticos de Cripto
+        // 1.3 15 Famílias x 4 Variações = 60 Perfis Sistemáticos de Cripto
         let crypto_families: [(&str, &str, f64, f64); 15] = [
             ("trend_flow", "Trend Flow Multiplier", 2.6, 2.2),
             ("momentum_surge", "Momentum Surge Hunter", 2.8, 2.0),
@@ -5119,19 +5118,12 @@ impl StrategyProfile {
             ),
         ];
 
-        let crypto_variations: [(&str, &str, usize, f64, f64, f64); 10] = [
+        let crypto_variations: [(&str, &str, usize, f64, f64, f64); 4] = [
             ("conservative", "Conservador", 3, 0.74, 1.8, 3.5),
             ("aggressive", "Agressivo", 2, 0.67, 1.2, 2.2),
             ("tight_stop", "Stop Curto", 2, 0.71, 1.0, 1.8),
             ("runner", "Trend Runner", 3, 0.72, 2.2, 4.5),
-            ("ultra_scalper", "Ultra Scalper", 2, 0.68, 0.9, 1.6),
-            ("swing_trend", "Swing Trend", 3, 0.75, 2.4, 4.8),
-            ("breakout_heavy", "Breakout Heavy", 2, 0.70, 1.4, 2.8),
-            ("contrarian_fade", "Contrarian Fade", 2, 0.73, 1.3, 2.5),
-            ("volume_expansion", "Volume Expansion", 3, 0.71, 1.6, 3.2),
-            ("mean_rebound", "Mean Rebound", 2, 0.69, 1.1, 2.0),
         ];
-
         for (f_id, f_name, w1, w2) in crypto_families {
             for (v_id, v_name, min_conf, min_prob, sl_mult, tp_mult) in crypto_variations {
                 let id = format!("{}_{}", f_id, v_id);
@@ -5157,8 +5149,8 @@ impl StrategyProfile {
             }
         }
 
-        // 1.4 30 Clones Genéticos Mutantes de Cripto (Total Cripto = 18 + 2 + 150 + 30 = 200!)
-        for i in 1..=30 {
+        // 1.4 20 Clones Genéticos Mutantes de Cripto (Total Cripto = 18 + 2 + 60 + 20 = 100)
+        for i in 1..=20 {
             let id = format!("genetic_mutant_{:02}", i);
             let name = format!("Genetic Mutant Challenger #{:02}", i);
             let desc = format!("Clone evolutivo dinâmico #{} mutando a cada 50 velas", i);
@@ -5205,7 +5197,7 @@ impl StrategyProfile {
         profiles.push(Self::profile_fx_usd_cad_oil_flow_reversal());
         profiles.push(Self::profile_fx_eur_gbp_cross_reversion());
 
-        // 2.2 15 Famílias x 10 Variações = 150 Perfis Sistemáticos de Forex
+        // 2.2 15 Famílias x 4 Variações = 60 Perfis Sistemáticos de Forex
         let forex_families: [(&str, &str, f64, f64); 15] = [
             ("fx_london_breakout", "London Session Breakout", 2.9, 2.1),
             ("fx_asian_range_squeeze", "Asian Range Squeeze", 3.1, 2.3),
@@ -5254,26 +5246,12 @@ impl StrategyProfile {
             ),
         ];
 
-        let forex_variations: [(&str, &str, usize, f64, f64, f64); 10] = [
+        let forex_variations: [(&str, &str, usize, f64, f64, f64); 4] = [
             ("conservative", "Conservador", 3, 0.74, 1.8, 3.5),
             ("aggressive", "Agressivo", 2, 0.67, 1.2, 2.2),
             ("tight_stop", "Stop Curto", 2, 0.71, 1.0, 1.8),
             ("runner", "Trend Runner", 3, 0.72, 2.2, 4.5),
-            ("pip_scalper", "Micro Pip Scalper", 2, 0.68, 0.8, 1.5),
-            ("swing_macro", "Swing Macro FX", 3, 0.75, 2.5, 5.0),
-            ("session_breakout", "Session Breakout", 2, 0.70, 1.4, 2.8),
-            ("range_reversion", "Range Reversion", 2, 0.73, 1.3, 2.4),
-            (
-                "spread_arbitrage",
-                "Spread & Volatility Arb",
-                3,
-                0.71,
-                1.5,
-                3.0,
-            ),
-            ("momentum_surge", "Forex Momentum Surge", 2, 0.69, 1.1, 2.0),
         ];
-
         for (f_id, f_name, w1, w2) in forex_families {
             for (v_id, v_name, min_conf, min_prob, sl_mult, tp_mult) in forex_variations {
                 let id = format!("{}_{}", f_id, v_id);
@@ -5302,8 +5280,8 @@ impl StrategyProfile {
             }
         }
 
-        // 2.3 40 Clones Genéticos Mutantes de Forex (Total Forex = 10 + 150 + 40 = 200!)
-        for i in 1..=40 {
+        // 2.3 30 Clones Genéticos Mutantes de Forex (Total Forex = 10 + 60 + 30 = 100)
+        for i in 1..=30 {
             let id = format!("fx_genetic_mutant_{:02}", i);
             let name = format!("Forex Genetic Challenger #{:02}", i);
             let desc = format!(

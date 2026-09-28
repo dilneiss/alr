@@ -1593,6 +1593,10 @@
 
     // Client Error Logger: envia falhas para o backend persistir em logs/trading_desk.log
     function logClientError(message, details = null) {
+      const msgStr = String(message || '');
+      if (msgStr.includes('Failed to fetch') || msgStr.includes('ERR_INSUFFICIENT_RESOURCES') || msgStr.includes('NetworkError') || msgStr.includes('Failed to load resource')) {
+        return; // Ignora falhas de rede transitórias para não sobrecarregar sockets do navegador
+      }
       console.warn('[ALR Client Log]:', message, details);
       fetch('/api/v1/desk/client-log', {
         method: 'POST',
@@ -1600,7 +1604,7 @@
         body: JSON.stringify({
           level: 'ERROR',
           module: 'BROWSER_JS',
-          message: String(message),
+          message: msgStr,
           details: details ? String(details) : null
         })
       }).catch(() => {});
@@ -1615,17 +1619,25 @@
       logClientError(`Unhandled Promise Rejection: ${event.reason}`, event.reason?.stack);
     });
 
-    // Safe Fetch JSON wrapper: valida content-type para nunca quebrar com Unexpected token '<'
+    // Safe Fetch JSON wrapper: com timeout de segurança e validação de Content-Type
     async function safeFetchJson(url, options = {}) {
-      const res = await fetch(url, options);
-      const contentType = res.headers.get('content-type') || '';
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      try {
+        const res = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timeoutId);
+        const contentType = res.headers.get('content-type') || '';
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        if (!contentType.includes('application/json')) {
+          throw new Error(`Resposta inválida (Content-Type: ${contentType}). O backend Rust ALR na porta 3800 não está respondendo com a API REST.`);
+        }
+        return await res.json();
+      } catch (err) {
+        clearTimeout(timeoutId);
+        throw err;
       }
-      if (!contentType.includes('application/json')) {
-        throw new Error(`Resposta inválida (Content-Type: ${contentType}). O backend Rust ALR na porta 3800 não está respondendo com a API REST.`);
-      }
-      return await res.json();
     }
 
     // Connection Status Manager
@@ -4353,25 +4365,52 @@
     }
 
     // =========================================================================
-    // INITIALIZATION
+    // INITIALIZATION & RESILIENT SEQUENTIAL POLLING (ZERO RESOURCE EXHAUSTION)
     // =========================================================================
+    let isPrimaryPolling = false;
+    async function startPrimaryPollingLoop() {
+      if (isPrimaryPolling) return;
+      isPrimaryPolling = true;
+      try {
+        if (currentViewMode === 'graph') {
+          await pollGraphTopology();
+        } else {
+          await pollDeskStatus();
+        }
+      } catch (err) {
+        // Pausa breve em caso de lentidão transitória
+      } finally {
+        isPrimaryPolling = false;
+        setTimeout(startPrimaryPollingLoop, 2000);
+      }
+    }
+
+    let isSecondaryPolling = false;
+    async function startSecondaryPollingLoop() {
+      if (isSecondaryPolling) return;
+      isSecondaryPolling = true;
+      try {
+        if (currentViewMode === 'classic') {
+          await pollArenaStatus();
+          await pollLogs();
+        }
+      } catch (err) {
+      } finally {
+        isSecondaryPolling = false;
+        setTimeout(startSecondaryPollingLoop, 7000);
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       // Restore persisted view mode
       switchView(currentViewMode);
 
       fetchCandles(selectedAsset);
-      pollDeskStatus();
-      pollLogs();
-      pollArenaStatus();
-      pollGraphTopology();
       runSizingComparison();
 
-      setInterval(pollDeskStatus, 1200);     // 1.2-second live polling
-      setInterval(pollLogs, 2500);           // 2.5-second live log polling
-      setInterval(runSizingComparison, 5000);// 5-second sizing comparison refresh
-      setInterval(pollArenaStatus, 4000);    // 4-second arena refresh
-      setInterval(pollGraphTopology, 1800);  // 1.8-second graph topology refresh
-
+      // Inicia polling sequencial encadeado (sem sobreposição de requisições)
+      startPrimaryPollingLoop();
+      setTimeout(startSecondaryPollingLoop, 1500);
       // Recalculate SVG lines smoothly on window resize
       window.addEventListener('resize', () => {
         if (currentViewMode === 'graph' && window.lastGraphTopologyData) {
