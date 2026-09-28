@@ -610,6 +610,12 @@ pub struct TechnicalIndicators {
     pub news_fear_greed_index: f64,
     pub adxr_14: f64,
     pub order_book_imbalance: f64,
+    pub poc_price: f64,
+    pub value_area_high: f64,
+    pub value_area_low: f64,
+    pub parkinson_volatility: f64,
+    pub btc_dump_shield_active: bool,
+    pub mtf_alignment_bullish: bool,
 }
 
 impl Default for TechnicalIndicators {
@@ -670,6 +676,12 @@ impl Default for TechnicalIndicators {
             news_fear_greed_index: 50.0,
             adxr_14: 25.0,
             order_book_imbalance: 0.0,
+            poc_price: 0.0,
+            value_area_high: 0.0,
+            value_area_low: 0.0,
+            parkinson_volatility: 0.015,
+            btc_dump_shield_active: false,
+            mtf_alignment_bullish: true,
         }
     }
 }
@@ -733,6 +745,12 @@ impl TechnicalIndicators {
             news_fear_greed_index: 58.0,
             adxr_14: 25.0,
             order_book_imbalance: 0.10,
+            poc_price: price,
+            value_area_high: price * 1.01,
+            value_area_low: price * 0.99,
+            parkinson_volatility: 0.015,
+            btc_dump_shield_active: false,
+            mtf_alignment_bullish: true,
         }
     }
     pub fn is_bollinger_squeeze(&self, threshold: f64) -> bool {
@@ -802,6 +820,11 @@ impl TechnicalIndicators {
             Self::calculate_news_sentiment(candles, rsi_14, volume_ratio);
         let adxr_14 = Self::calculate_adxr(candles, 14, adx_14);
         let order_book_imbalance = Self::calculate_order_book_imbalance(candles);
+        let (poc_price, value_area_high, value_area_low) =
+            Self::calculate_point_of_control(candles, 24);
+        let parkinson_volatility = Self::calculate_parkinson_volatility(candles, 20);
+        let mtf_alignment_bullish = Self::calculate_mtf_alignment(candles);
+        let btc_dump_shield_active = false;
 
         Ok(Self {
             rsi_14,
@@ -875,6 +898,12 @@ impl TechnicalIndicators {
             news_fear_greed_index,
             adxr_14,
             order_book_imbalance,
+            poc_price,
+            value_area_high,
+            value_area_low,
+            parkinson_volatility,
+            btc_dump_shield_active,
+            mtf_alignment_bullish,
         })
     }
 
@@ -1701,6 +1730,114 @@ impl TechnicalIndicators {
         let net_seller_pressure = upper_wick + if c.close < c.open { body } else { 0.0 };
         ((net_buyer_pressure - net_seller_pressure) / denom).clamp(-1.0, 1.0)
     }
+    /// 11. Point of Control (POC) e Value Area (VA 70%) por Volume Profile
+    pub fn calculate_point_of_control(candles: &[Candle], buckets_count: usize) -> (f64, f64, f64) {
+        if candles.is_empty() {
+            return (0.0, 0.0, 0.0);
+        }
+        let min_p = candles.iter().map(|c| c.low).fold(f64::INFINITY, f64::min);
+        let max_p = candles
+            .iter()
+            .map(|c| c.high)
+            .fold(f64::NEG_INFINITY, f64::max);
+        let range = max_p - min_p;
+        if range.abs() < 1e-6 || buckets_count == 0 {
+            let last = candles.last().unwrap().close;
+            return (last, last * 1.01, last * 0.99);
+        }
+
+        let mut bucket_vol = vec![0.0; buckets_count];
+        let mut total_vol = 0.0;
+
+        for c in candles {
+            let tp = (c.high + c.low + c.close) / 3.0;
+            let ratio = ((tp - min_p) / range).clamp(0.0, 0.9999);
+            let b_idx = (ratio * buckets_count as f64).floor() as usize;
+            let v = c.volume.max(0.0001);
+            bucket_vol[b_idx] += v;
+            total_vol += v;
+        }
+
+        let mut max_b_idx = 0;
+        let mut max_b_vol = 0.0;
+        for (i, &v) in bucket_vol.iter().enumerate() {
+            if v > max_b_vol {
+                max_b_vol = v;
+                max_b_idx = i;
+            }
+        }
+
+        let step = range / buckets_count as f64;
+        let poc = min_p + (max_b_idx as f64 + 0.5) * step;
+
+        let target_va_vol = total_vol * 0.70;
+        let mut current_va_vol = max_b_vol;
+        let mut low_idx = max_b_idx;
+        let mut high_idx = max_b_idx;
+
+        while current_va_vol < target_va_vol && (low_idx > 0 || high_idx + 1 < buckets_count) {
+            let next_low_vol = if low_idx > 0 {
+                bucket_vol[low_idx - 1]
+            } else {
+                0.0
+            };
+            let next_high_vol = if high_idx + 1 < buckets_count {
+                bucket_vol[high_idx + 1]
+            } else {
+                0.0
+            };
+
+            if next_high_vol >= next_low_vol && high_idx + 1 < buckets_count {
+                high_idx += 1;
+                current_va_vol += next_high_vol;
+            } else if low_idx > 0 {
+                low_idx -= 1;
+                current_va_vol += next_low_vol;
+            } else {
+                break;
+            }
+        }
+
+        let va_high = min_p + (high_idx as f64 + 1.0) * step;
+        let va_low = min_p + (low_idx as f64) * step;
+        (poc, va_high, va_low)
+    }
+
+    /// 12. Volatilidade de Parkinson (Amplitude High/Low)
+    pub fn calculate_parkinson_volatility(candles: &[Candle], period: usize) -> f64 {
+        if candles.is_empty() || period == 0 {
+            return 0.015;
+        }
+        let window = if candles.len() > period {
+            &candles[candles.len() - period..]
+        } else {
+            candles
+        };
+
+        let mut sum_sq_ln = 0.0;
+        for c in window {
+            if c.low > 0.0 && c.high >= c.low {
+                let ln_ratio = (c.high / c.low).ln();
+                sum_sq_ln += ln_ratio * ln_ratio;
+            }
+        }
+
+        let count = window.len() as f64;
+        let factor = 1.0 / (4.0 * 2.0_f64.ln() * count);
+        (factor * sum_sq_ln).sqrt().clamp(0.0001, 1.0)
+    }
+
+    /// 13. Alinhamento Multi-Timeframe (MTF 1m/5m/15m)
+    pub fn calculate_mtf_alignment(candles: &[Candle]) -> bool {
+        if candles.len() < 15 {
+            return true;
+        }
+        let len = candles.len();
+        let last_c = candles[len - 1].close;
+        let c_5m = candles[len - 5].close;
+        let c_15m = candles[len - 15].close;
+        last_c >= c_5m && c_5m >= c_15m
+    }
 }
 
 /// Política rígida de controle de risco financeiro (RiskControlPolicy / RiskPolicy)
@@ -1919,6 +2056,8 @@ impl AdaptiveTradeLearner {
             "STOCH_PSAR_ALIGNMENT",
             "ORDER_BOOK_IMBALANCE",
             "EXTREME_FEAR_CONTRARIAN",
+            "POC_VOLUME_SUPPORT",
+            "MTF_ALIGNMENT_BULLISH",
         ];
         for factor in default_factors {
             weights.insert(factor.to_string(), 1.0);
@@ -2057,17 +2196,37 @@ impl AdaptiveTradeLearner {
                 let w = self.factor_weights.entry(key).or_insert(1.0);
                 *w = (*w - penalty_delta).max(0.20);
             }
-
             if self.recent_loss_signatures.len() >= 30 {
                 self.recent_loss_signatures.remove(0);
             }
             self.recent_loss_signatures.push(state_sig.to_string());
         }
+
+        // Calibração probabilística via Regressão Logística SGD com regularização L2 (Ridge)
+        let target = if realized_pnl > 0.0 { 1.0 } else { 0.0 };
+        let lr = self.learning_rate * 0.25;
+        let l2_reg = 0.01;
+
+        for factor_str in factors {
+            let key = self.canonical_factor_key(factor_str);
+            if let Some(w) = self.factor_weights.get_mut(&key) {
+                let current_prob = 1.0 / (1.0 + (-0.5 * *w).exp());
+                let error = target - current_prob;
+                let grad = error - l2_reg * (*w - 1.0);
+                *w = (*w + lr * grad).clamp(0.20, 3.50);
+            }
+        }
     }
 
     fn canonical_factor_key(&self, factor_str: &str) -> String {
         let f = factor_str.to_uppercase();
-        if f.contains("TREND_BULLISH") {
+        if f.contains("VWAP") {
+            "INSTITUTIONAL_VWAP_SUPPORT".to_string()
+        } else if f.contains("POC") {
+            "POC_VOLUME_SUPPORT".to_string()
+        } else if f.contains("MTF") {
+            "MTF_ALIGNMENT_BULLISH".to_string()
+        } else if f.contains("TREND_BULLISH") {
             "TREND_BULLISH_CONFLUENCE".to_string()
         } else if f.contains("MOMENTUM_OVERSOLD") {
             "MOMENTUM_OVERSOLD_BOUNCE".to_string()
@@ -2081,7 +2240,7 @@ impl AdaptiveTradeLearner {
             "ADX_STRONG_TREND".to_string()
         } else if f.contains("MACRO_TREND") {
             "MACRO_TREND_ABOVE_EMA50".to_string()
-        } else if f.contains("SUPPORT") || f.contains("HAMMER") {
+        } else if f.contains("DONCHIAN") || f.contains("SUPPORT") || f.contains("HAMMER") {
             "SUPPORT_DONCHIAN_BOUNCE".to_string()
         } else if f.contains("ENGULFING") {
             "PRICE_ACTION_BULLISH_ENGULFING".to_string()
@@ -2089,8 +2248,6 @@ impl AdaptiveTradeLearner {
             "ICHIMOKU_CLOUD_BULLISH".to_string()
         } else if f.contains("DIVERGENCE") {
             "RSI_BULLISH_DIVERGENCE".to_string()
-        } else if f.contains("VWAP") {
-            "INSTITUTIONAL_VWAP_SUPPORT".to_string()
         } else if f.contains("SQUEEZE") {
             "TTM_VOLATILITY_SQUEEZE".to_string()
         } else if f.contains("MFI") {
@@ -2190,6 +2347,7 @@ pub struct CryptoTraderEngine {
     pub approval_threshold_capital: f64,
     pub daily_pnl: f64,
     pub learner: AdaptiveTradeLearner,
+    pub btc_dump_shield_active: bool,
 }
 
 impl CryptoTraderEngine {
@@ -2214,6 +2372,7 @@ impl CryptoTraderEngine {
             approval_threshold_capital: 10_000.0,
             daily_pnl: 0.0,
             learner: AdaptiveTradeLearner::new(),
+            btc_dump_shield_active: false,
         }
     }
 
@@ -2232,7 +2391,9 @@ impl CryptoTraderEngine {
     }
 
     pub fn compute_indicators(&self) -> Option<TechnicalIndicators> {
-        TechnicalIndicators::calculate(&self.candles).ok()
+        let mut ind = TechnicalIndicators::calculate(&self.candles).ok()?;
+        ind.btc_dump_shield_active = self.btc_dump_shield_active;
+        Some(ind)
     }
 
     pub fn portfolio_value(&self, current_price: f64) -> f64 {
@@ -2443,6 +2604,8 @@ impl CryptoTraderEngine {
         let w_stoch_psar = self.learner.get_factor_weight("STOCH_PSAR_ALIGNMENT");
         let w_obi = self.learner.get_factor_weight("ORDER_BOOK_IMBALANCE");
         let w_fear = self.learner.get_factor_weight("EXTREME_FEAR_CONTRARIAN");
+        let w_poc = self.learner.get_factor_weight("POC_VOLUME_SUPPORT");
+        let w_mtf = self.learner.get_factor_weight("MTF_ALIGNMENT_BULLISH");
         // Pilar 1: Tendência Principal (EMA9 x EMA21 + SuperTrend)
         let trend_up = indicators.ema_9 > indicators.ema_21;
         let trend_down = indicators.ema_9 < indicators.ema_21;
@@ -2610,7 +2773,8 @@ impl CryptoTraderEngine {
             buy_logits += 2.5 * w_ichi;
         } else if indicators.ichimoku_is_below_cloud {
             factors.push("ICHIMOKU_BEARISH_CLOUD_BARRIER (Preço abaixo da Nuvem de Ichimoku - Compras Proibidas)".to_string());
-            hold_logits += 3.5; // Bloqueio total: comprar abaixo da nuvem gera perdas sistemáticas
+            hold_logits += 8.0;
+            buy_logits = -10.0; // Bloqueio total: comprar abaixo da nuvem gera perdas sistemáticas
         } else {
             factors.push("ICHIMOKU_INSIDE_CLOUD_CHOP (Preço dentro da Nuvem Kumo)".to_string());
             hold_logits += 1.6;
@@ -2690,6 +2854,45 @@ impl CryptoTraderEngine {
                 indicators.news_fear_greed_index
             ));
             buy_logits += 1.8 * w_fear;
+        }
+
+        // Pilar 18: Proteção de Mercado do Bitcoin (BTC Dump Shield)
+        if self.asset != "BTC-USDT" && self.asset != "BTCUSDT" && indicators.btc_dump_shield_active
+        {
+            factors.push(
+                "BTC_MARKET_DUMP_SHIELD (Bitcoin em queda severa bloqueia compras em altcoins)"
+                    .to_string(),
+            );
+            hold_logits += 8.0;
+            buy_logits = -10.0;
+        }
+
+        // Pilar 19: Volume Profile & Ponto de Controle (POC)
+        if indicators.poc_price > 0.0
+            && current_price >= indicators.poc_price
+            && current_price <= indicators.value_area_high
+        {
+            factors.push(format!(
+                "POC_VOLUME_SUPPORT (Preço {:.2} sustentado no POC {:.2})",
+                current_price, indicators.poc_price
+            ));
+            buy_logits += 1.8 * w_poc;
+        }
+
+        // Pilar 20: Filtro de Volatilidade de Parkinson
+        if indicators.parkinson_volatility < 0.004 {
+            factors.push(
+                "PARKINSON_LOW_VOLATILITY_PENALTY (Mercado sem liquidez e sem amplitude)"
+                    .to_string(),
+            );
+            hold_logits += 2.0;
+        }
+
+        // Pilar 21: Confluência Multi-Timeframe (MTF)
+        if indicators.mtf_alignment_bullish {
+            factors
+                .push("MTF_ALIGNMENT_BULLISH (Alinhamento simultâneo 1m + 5m + 15m)".to_string());
+            buy_logits += 2.0 * w_mtf;
         }
         // Normalização Softmax
         let max_l = buy_logits.max(sell_logits).max(hold_logits);
@@ -3459,6 +3662,37 @@ impl SqliteTradingStore {
                 cooldown_candles INTEGER NOT NULL,
                 updated_at TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS trading_promotions (
+                id TEXT PRIMARY KEY,
+                timestamp INTEGER NOT NULL,
+                old_champion_id TEXT NOT NULL,
+                new_champion_id TEXT NOT NULL,
+                reason TEXT NOT NULL,
+                is_manual INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS trading_arena_state (
+                strategy_id TEXT PRIMARY KEY,
+                is_champion INTEGER NOT NULL DEFAULT 0,
+                virtual_balance REAL NOT NULL,
+                initial_balance REAL NOT NULL DEFAULT 1000.0,
+                total_trades INTEGER NOT NULL DEFAULT 0,
+                wins INTEGER NOT NULL DEFAULT 0,
+                losses INTEGER NOT NULL DEFAULT 0,
+                win_rate_pct REAL NOT NULL DEFAULT 0.0,
+                net_pnl_usd REAL NOT NULL DEFAULT 0.0,
+                return_pct REAL NOT NULL DEFAULT 0.0,
+                profit_factor REAL NOT NULL DEFAULT 1.0,
+                gross_profit_usd REAL NOT NULL DEFAULT 0.0,
+                gross_loss_usd REAL NOT NULL DEFAULT 0.0,
+                max_drawdown_pct REAL NOT NULL DEFAULT 0.0,
+                peak_balance_usd REAL NOT NULL DEFAULT 1000.0,
+                sharpe_ratio REAL NOT NULL DEFAULT 0.0,
+                factor_weights TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
             "#,
         )?;
 
@@ -3820,6 +4054,214 @@ impl SqliteTradingStore {
 
         Ok(())
     }
+    pub fn save_promotion(&self, event: &PromotionEvent) -> Result<()> {
+        let conn = self.conn.lock();
+        let id = format!("promo_{}", uuid::Uuid::new_v4());
+        let created_at = chrono::Utc::now().to_rfc3339();
+        conn.execute(
+            r#"
+            INSERT INTO trading_promotions (id, timestamp, old_champion_id, new_champion_id, reason, is_manual, created_at)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+            "#,
+            params![
+                id,
+                event.timestamp,
+                event.old_champion_id,
+                event.new_champion_id,
+                event.reason,
+                if event.is_manual { 1 } else { 0 },
+                created_at,
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn load_promotions(&self, limit: usize) -> Result<Vec<PromotionEvent>> {
+        let conn = self.conn.lock();
+        let mut stmt = conn.prepare(
+            "SELECT timestamp, old_champion_id, new_champion_id, reason, is_manual FROM trading_promotions ORDER BY timestamp DESC LIMIT ?1",
+        )?;
+        let rows = stmt.query_map([limit as i64], |row| {
+            let is_manual_i: i64 = row.get(4).unwrap_or(0);
+            Ok(PromotionEvent {
+                timestamp: row.get(0)?,
+                old_champion_id: row.get(1)?,
+                new_champion_id: row.get(2)?,
+                reason: row.get(3)?,
+                is_manual: is_manual_i > 0,
+            })
+        })?;
+
+        let mut events = Vec::new();
+        for r in rows {
+            events.push(r?);
+        }
+        Ok(events)
+    }
+
+    pub fn save_arena_state(&self, arena: &StrategyArena) -> Result<()> {
+        let conn = self.conn.lock();
+        let updated_at = chrono::Utc::now().to_rfc3339();
+
+        for comp in &arena.competitors {
+            let weights_json =
+                serde_json::to_string(&comp.profile.factor_weights).unwrap_or_default();
+            conn.execute(
+                r#"
+                INSERT INTO trading_arena_state (
+                    strategy_id, is_champion, virtual_balance, initial_balance,
+                    total_trades, wins, losses, win_rate_pct, net_pnl_usd,
+                    return_pct, profit_factor, gross_profit_usd, gross_loss_usd,
+                    max_drawdown_pct, peak_balance_usd, sharpe_ratio, factor_weights, updated_at
+                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)
+                ON CONFLICT(strategy_id) DO UPDATE SET
+                    is_champion=excluded.is_champion,
+                    virtual_balance=excluded.virtual_balance,
+                    total_trades=excluded.total_trades,
+                    wins=excluded.wins,
+                    losses=excluded.losses,
+                    win_rate_pct=excluded.win_rate_pct,
+                    net_pnl_usd=excluded.net_pnl_usd,
+                    return_pct=excluded.return_pct,
+                    profit_factor=excluded.profit_factor,
+                    gross_profit_usd=excluded.gross_profit_usd,
+                    gross_loss_usd=excluded.gross_loss_usd,
+                    max_drawdown_pct=excluded.max_drawdown_pct,
+                    peak_balance_usd=excluded.peak_balance_usd,
+                    sharpe_ratio=excluded.sharpe_ratio,
+                    factor_weights=excluded.factor_weights,
+                    updated_at=excluded.updated_at
+                "#,
+                params![
+                    comp.profile.id,
+                    if comp.is_champion { 1 } else { 0 },
+                    comp.virtual_balance_usd,
+                    comp.initial_balance_usd,
+                    comp.total_trades as i64,
+                    comp.wins as i64,
+                    comp.losses as i64,
+                    comp.win_rate_pct,
+                    comp.net_pnl_usd,
+                    comp.return_pct,
+                    comp.profit_factor,
+                    comp.gross_profit_usd,
+                    comp.gross_loss_usd,
+                    comp.max_drawdown_pct,
+                    comp.peak_balance_usd,
+                    comp.sharpe_ratio,
+                    weights_json,
+                    updated_at,
+                ],
+            )?;
+        }
+        Ok(())
+    }
+
+    pub fn load_arena_state(&self, arena: &mut StrategyArena) -> Result<()> {
+        let conn = self.conn.lock();
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT strategy_id, is_champion, virtual_balance, initial_balance,
+                   total_trades, wins, losses, win_rate_pct, net_pnl_usd,
+                   return_pct, profit_factor, gross_profit_usd, gross_loss_usd,
+                   max_drawdown_pct, peak_balance_usd, sharpe_ratio, factor_weights
+            FROM trading_arena_state
+            "#,
+        )?;
+        let rows = stmt.query_map([], |row| {
+            let strategy_id: String = row.get(0)?;
+            let is_champion_i: i64 = row.get(1)?;
+            let virtual_balance: f64 = row.get(2)?;
+            let initial_balance: f64 = row.get(3)?;
+            let total_trades: i64 = row.get(4)?;
+            let wins: i64 = row.get(5)?;
+            let losses: i64 = row.get(6)?;
+            let win_rate_pct: f64 = row.get(7)?;
+            let net_pnl_usd: f64 = row.get(8)?;
+            let return_pct: f64 = row.get(9)?;
+            let profit_factor: f64 = row.get(10)?;
+            let gross_profit_usd: f64 = row.get(11)?;
+            let gross_loss_usd: f64 = row.get(12)?;
+            let max_drawdown_pct: f64 = row.get(13)?;
+            let peak_balance_usd: f64 = row.get(14)?;
+            let sharpe_ratio: f64 = row.get(15)?;
+            let factor_weights_json: String = row.get(16)?;
+
+            Ok((
+                strategy_id,
+                is_champion_i > 0,
+                virtual_balance,
+                initial_balance,
+                total_trades as usize,
+                wins as usize,
+                losses as usize,
+                win_rate_pct,
+                net_pnl_usd,
+                return_pct,
+                profit_factor,
+                gross_profit_usd,
+                gross_loss_usd,
+                max_drawdown_pct,
+                peak_balance_usd,
+                sharpe_ratio,
+                factor_weights_json,
+            ))
+        })?;
+
+        let mut champ_found = None;
+        for r in rows {
+            let (
+                id,
+                is_champ,
+                v_bal,
+                init_bal,
+                total,
+                wins,
+                losses,
+                wr,
+                pnl,
+                ret,
+                pf,
+                gp,
+                gl,
+                dd,
+                peak,
+                sharpe,
+                w_json,
+            ) = r?;
+            if is_champ {
+                champ_found = Some(id.clone());
+            }
+            if let Some(comp) = arena.competitors.iter_mut().find(|c| c.profile.id == id) {
+                comp.is_champion = is_champ;
+                comp.virtual_balance_usd = v_bal;
+                comp.initial_balance_usd = init_bal;
+                comp.total_trades = total;
+                comp.wins = wins;
+                comp.losses = losses;
+                comp.win_rate_pct = wr;
+                comp.net_pnl_usd = pnl;
+                comp.return_pct = ret;
+                comp.profit_factor = pf;
+                comp.gross_profit_usd = gp;
+                comp.gross_loss_usd = gl;
+                comp.max_drawdown_pct = dd;
+                comp.peak_balance_usd = peak;
+                comp.sharpe_ratio = sharpe;
+                if let Ok(weights) = serde_json::from_str::<HashMap<String, f64>>(&w_json) {
+                    if !weights.is_empty() {
+                        comp.profile.factor_weights = weights;
+                    }
+                }
+            }
+        }
+
+        if let Some(champ) = champ_found {
+            arena.champion_profile_id = champ;
+        }
+
+        Ok(())
+    }
 }
 
 /// Regime macro de mercado diagnosticado pelo System 2
@@ -4085,6 +4527,18 @@ pub struct AssetDeskStatus {
     pub adxr_14: f64,
     #[serde(default)]
     pub order_book_imbalance: f64,
+    #[serde(default)]
+    pub poc_price: f64,
+    #[serde(default)]
+    pub value_area_high: f64,
+    #[serde(default)]
+    pub value_area_low: f64,
+    #[serde(default)]
+    pub parkinson_volatility: f64,
+    #[serde(default)]
+    pub btc_dump_shield_active: bool,
+    #[serde(default)]
+    pub mtf_alignment_bullish: bool,
 }
 
 /// Snapshot global da mesa de operações para o Dashboard Web (Axum API)
@@ -4158,11 +4612,23 @@ impl StrategyProfile {
     pub fn default_profiles() -> Vec<Self> {
         vec![
             Self::profile_trend_supertrend_heavy(),
+            Self::profile_trend_macro_momentum(),
+            Self::profile_trend_breakout_accelerator(),
             Self::profile_mean_reversion_rsi_donchian(),
-            Self::profile_ichimoku_kumo_breakout(),
+            Self::profile_mean_reversion_support_bounce(),
+            Self::profile_mean_reversion_contrarian_fear(),
             Self::profile_volatility_squeeze_scalper(),
+            Self::profile_volatility_bandwidth_expansion(),
+            Self::profile_volatility_atr_chandelier(),
             Self::profile_institutional_vwap_mfi(),
-            Self::profile_balanced_adaptive_jev(),
+            Self::profile_institutional_obi_depth(),
+            Self::profile_institutional_volume_profile(),
+            Self::profile_genetic_challenger_alpha(),
+            Self::profile_genetic_challenger_beta(),
+            Self::profile_genetic_challenger_gamma(),
+            Self::profile_genetic_challenger_delta(),
+            Self::profile_genetic_challenger_epsilon(),
+            Self::profile_genetic_challenger_zeta(),
         ]
     }
 
@@ -4303,6 +4769,281 @@ impl StrategyProfile {
             use_partial_tp: true,
         }
     }
+    pub fn profile_trend_macro_momentum() -> Self {
+        let mut w = HashMap::new();
+        w.insert("MACRO_TREND_ABOVE_EMA50".to_string(), 3.0);
+        w.insert("MOMENTUM_STEADY_EXPANSION".to_string(), 2.6);
+        w.insert("MTF_ALIGNMENT_BULLISH".to_string(), 2.4);
+        w.insert("TREND_BULLISH_CONFLUENCE".to_string(), 2.0);
+        w.insert("VOLUME_SURGE_CONFIRMATION".to_string(), 1.7);
+        Self {
+            id: "trend_macro_momentum".to_string(),
+            name: "Macro Trend & Momentum (Tendência Estrutural)".to_string(),
+            description:
+                "Surfa tendências macro acima da EMA50 com confirmação de momentum sustentado e MTF"
+                    .to_string(),
+            factor_weights: w,
+            min_confluence: 3,
+            min_probability: 0.71,
+            stop_loss_atr_mult: 2.2,
+            take_profit_atr_mult: 4.0,
+            use_partial_tp: true,
+        }
+    }
+
+    pub fn profile_trend_breakout_accelerator() -> Self {
+        let mut w = HashMap::new();
+        w.insert("VOLUME_SURGE_CONFIRMATION".to_string(), 3.2);
+        w.insert("VOLATILITY_EXPANSION_UPPER".to_string(), 2.8);
+        w.insert("ADX_STRONG_TREND".to_string(), 2.5);
+        w.insert("TREND_BULLISH_CONFLUENCE".to_string(), 2.1);
+        Self {
+            id: "trend_breakout_accelerator".to_string(),
+            name: "Breakout Accelerator (Acelerador de Rompimento)".to_string(),
+            description: "Entradas velozes em explosões de volume e rompimento de máximas Donchian"
+                .to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.70,
+            stop_loss_atr_mult: 1.6,
+            take_profit_atr_mult: 3.0,
+            use_partial_tp: true,
+        }
+    }
+
+    pub fn profile_mean_reversion_support_bounce() -> Self {
+        let mut w = HashMap::new();
+        w.insert("SUPPORT_DONCHIAN_BOUNCE".to_string(), 3.2);
+        w.insert("PRICE_ACTION_HAMMER".to_string(), 2.8);
+        w.insert("MOMENTUM_OVERSOLD_BOUNCE".to_string(), 2.5);
+        w.insert("POC_VOLUME_SUPPORT".to_string(), 2.2);
+        Self {
+            id: "mean_reversion_support_bounce".to_string(),
+            name: "Support Bounce Specialist (Repique em Suporte)".to_string(),
+            description:
+                "Entrada em testes de suporte e martelos de reversão imediata com risco mínimo"
+                    .to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.69,
+            stop_loss_atr_mult: 1.4,
+            take_profit_atr_mult: 2.4,
+            use_partial_tp: true,
+        }
+    }
+
+    pub fn profile_mean_reversion_contrarian_fear() -> Self {
+        let mut w = HashMap::new();
+        w.insert("EXTREME_FEAR_CONTRARIAN".to_string(), 3.5);
+        w.insert("RSI_BULLISH_DIVERGENCE".to_string(), 2.8);
+        w.insert("MOMENTUM_OVERSOLD_BOUNCE".to_string(), 2.5);
+        w.insert("PRICE_ACTION_BULLISH_ENGULFING".to_string(), 2.0);
+        Self {
+            id: "mean_reversion_contrarian_fear".to_string(),
+            name: "Contrarian Fear Exploiter (Pânico & Capitulação)".to_string(),
+            description:
+                "Aproveita vendas forçadas e liquidações quando o mercado entra em medo extremo"
+                    .to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.70,
+            stop_loss_atr_mult: 1.8,
+            take_profit_atr_mult: 3.2,
+            use_partial_tp: true,
+        }
+    }
+
+    pub fn profile_volatility_bandwidth_expansion() -> Self {
+        let mut w = HashMap::new();
+        w.insert("VOLATILITY_EXPANSION_UPPER".to_string(), 3.2);
+        w.insert("ADX_STRONG_TREND".to_string(), 2.6);
+        w.insert("VOLUME_SURGE_CONFIRMATION".to_string(), 2.2);
+        w.insert("TREND_BULLISH_CONFLUENCE".to_string(), 1.8);
+        Self {
+            id: "volatility_bandwidth_expansion".to_string(),
+            name: "Bandwidth Expansion (Expansão de Volatilidade)".to_string(),
+            description:
+                "Captura o início do alargamento das Bandas de Bollinger acima de 4% de amplitude"
+                    .to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.70,
+            stop_loss_atr_mult: 1.5,
+            take_profit_atr_mult: 2.6,
+            use_partial_tp: true,
+        }
+    }
+
+    pub fn profile_volatility_atr_chandelier() -> Self {
+        let mut w = HashMap::new();
+        w.insert("VOLATILITY_EXPANSION_UPPER".to_string(), 2.8);
+        w.insert("TREND_BULLISH_CONFLUENCE".to_string(), 2.4);
+        w.insert("STOCH_PSAR_ALIGNMENT".to_string(), 2.2);
+        w.insert("ORDER_BOOK_IMBALANCE".to_string(), 1.8);
+        Self {
+            id: "volatility_atr_chandelier".to_string(),
+            name: "ATR Chandelier Scalper (Trailing Ágil)".to_string(),
+            description:
+                "Trades curtos com Stop Chandelier móvel para proteger ganhos em tempo real"
+                    .to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.68,
+            stop_loss_atr_mult: 1.2,
+            take_profit_atr_mult: 2.2,
+            use_partial_tp: true,
+        }
+    }
+
+    pub fn profile_institutional_obi_depth() -> Self {
+        let mut w = HashMap::new();
+        w.insert("ORDER_BOOK_IMBALANCE".to_string(), 3.4);
+        w.insert("INSTITUTIONAL_VWAP_SUPPORT".to_string(), 2.6);
+        w.insert("VOLUME_SURGE_CONFIRMATION".to_string(), 2.2);
+        w.insert("PRICE_ACTION_BULLISH_ENGULFING".to_string(), 1.8);
+        Self {
+            id: "institutional_obi_depth".to_string(),
+            name: "Order Book Imbalance Hunter (Liquidez L2)".to_string(),
+            description: "Rastreia agressão compradora no book de ofertas e paredes de liquidez institucional".to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.71,
+            stop_loss_atr_mult: 1.4,
+            take_profit_atr_mult: 2.5,
+            use_partial_tp: true,
+        }
+    }
+
+    pub fn profile_institutional_volume_profile() -> Self {
+        let mut w = HashMap::new();
+        w.insert("POC_VOLUME_SUPPORT".to_string(), 3.3);
+        w.insert("INSTITUTIONAL_VWAP_SUPPORT".to_string(), 2.7);
+        w.insert("MFI_INSTITUTIONAL_INFLOW".to_string(), 2.3);
+        w.insert("MTF_ALIGNMENT_BULLISH".to_string(), 1.9);
+        Self {
+            id: "institutional_volume_profile".to_string(),
+            name: "Volume Profile & POC (Ponto de Controle)".to_string(),
+            description: "Opera suportes e alvos baseados nas maiores concentrações de volume negociado por preço".to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.72,
+            stop_loss_atr_mult: 1.6,
+            take_profit_atr_mult: 2.8,
+            use_partial_tp: true,
+        }
+    }
+
+    pub fn profile_genetic_challenger_alpha() -> Self {
+        let mut w = Self::profile_trend_supertrend_heavy().factor_weights;
+        w.insert("POC_VOLUME_SUPPORT".to_string(), 2.1);
+        w.insert("TTM_VOLATILITY_SQUEEZE".to_string(), 1.9);
+        Self {
+            id: "genetic_challenger_alpha".to_string(),
+            name: "Genetic Challenger Alpha (Mutante Tendência/POC)".to_string(),
+            description:
+                "Clone evolutivo que combina tendência forte com suporte no Ponto de Controle (POC)"
+                    .to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.69,
+            stop_loss_atr_mult: 1.7,
+            take_profit_atr_mult: 3.1,
+            use_partial_tp: true,
+        }
+    }
+
+    pub fn profile_genetic_challenger_beta() -> Self {
+        let mut w = Self::profile_mean_reversion_rsi_donchian().factor_weights;
+        w.insert("INSTITUTIONAL_VWAP_SUPPORT".to_string(), 2.3);
+        w.insert("ORDER_BOOK_IMBALANCE".to_string(), 2.0);
+        Self {
+            id: "genetic_challenger_beta".to_string(),
+            name: "Genetic Challenger Beta (Mutante Reversão/VWAP)".to_string(),
+            description:
+                "Clone evolutivo combinando reversão com ancoragem no VWAP e agressão no book"
+                    .to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.69,
+            stop_loss_atr_mult: 1.5,
+            take_profit_atr_mult: 2.6,
+            use_partial_tp: true,
+        }
+    }
+
+    pub fn profile_genetic_challenger_gamma() -> Self {
+        let mut w = Self::profile_volatility_squeeze_scalper().factor_weights;
+        w.insert("MTF_ALIGNMENT_BULLISH".to_string(), 2.4);
+        w.insert("RSI_BULLISH_DIVERGENCE".to_string(), 2.1);
+        Self {
+            id: "genetic_challenger_gamma".to_string(),
+            name: "Genetic Challenger Gamma (Mutante Squeeze/MTF)".to_string(),
+            description: "Clone evolutivo combinando compressão TTM com confirmação em múltiplos tempos gráficos".to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.70,
+            stop_loss_atr_mult: 1.4,
+            take_profit_atr_mult: 2.4,
+            use_partial_tp: true,
+        }
+    }
+
+    pub fn profile_genetic_challenger_delta() -> Self {
+        let mut w = Self::profile_institutional_vwap_mfi().factor_weights;
+        w.insert("POC_VOLUME_SUPPORT".to_string(), 2.5);
+        w.insert("TTM_VOLATILITY_SQUEEZE".to_string(), 1.8);
+        Self {
+            id: "genetic_challenger_delta".to_string(),
+            name: "Genetic Challenger Delta (Mutante Fluxo/POC)".to_string(),
+            description:
+                "Clone evolutivo calibrando fluxo MFI e VWAP com zonas de alto volume por preço"
+                    .to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.71,
+            stop_loss_atr_mult: 1.6,
+            take_profit_atr_mult: 2.8,
+            use_partial_tp: true,
+        }
+    }
+
+    pub fn profile_genetic_challenger_epsilon() -> Self {
+        let mut w = Self::profile_balanced_adaptive_jev().factor_weights;
+        w.insert("MTF_ALIGNMENT_BULLISH".to_string(), 2.2);
+        w.insert("POC_VOLUME_SUPPORT".to_string(), 2.0);
+        Self {
+            id: "genetic_challenger_epsilon".to_string(),
+            name: "Genetic Challenger Epsilon (Mutante Balanceado/MTF)".to_string(),
+            description:
+                "Clone evolutivo balanceado com amplificação em alinhamento de curto e médio prazo"
+                    .to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.68,
+            stop_loss_atr_mult: 1.7,
+            take_profit_atr_mult: 2.9,
+            use_partial_tp: true,
+        }
+    }
+
+    pub fn profile_genetic_challenger_zeta() -> Self {
+        let mut w = Self::profile_trend_breakout_accelerator().factor_weights;
+        w.insert("EXTREME_FEAR_CONTRARIAN".to_string(), 2.4);
+        w.insert("ORDER_BOOK_IMBALANCE".to_string(), 2.0);
+        Self {
+            id: "genetic_challenger_zeta".to_string(),
+            name: "Genetic Challenger Zeta (Mutante Rompimento/Contrarian)".to_string(),
+            description:
+                "Clone evolutivo focado em aceleração rápida após absorção de vendas forçadas"
+                    .to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.70,
+            stop_loss_atr_mult: 1.5,
+            take_profit_atr_mult: 2.7,
+            use_partial_tp: true,
+        }
+    }
 }
 
 /// Rastreamento de performance de uma estratégia concorrente em conta virtual paralela
@@ -4358,6 +5099,8 @@ pub struct PromotionEvent {
     pub old_champion_id: String,
     pub new_champion_id: String,
     pub reason: String,
+    #[serde(default)]
+    pub is_manual: bool,
 }
 
 /// Arena Multi-Estratégia ao Vivo (Champion vs Challengers com simulação paralela)
@@ -4586,6 +5329,10 @@ impl StrategyArena {
             }
         }
 
+        if self.total_cycles_evaluated.is_multiple_of(50) {
+            self.mutate_genetic_challengers();
+        }
+
         if self.total_cycles_evaluated.is_multiple_of(20) {
             return self.evaluate_promotion();
         }
@@ -4610,11 +5357,11 @@ impl StrategyArena {
             if i == current_champ_idx {
                 continue;
             }
-            if comp.total_trades >= 3 {
+            if comp.total_trades >= 5 && comp.win_rate_pct >= 50.0 && comp.net_pnl_usd > champ_pnl {
                 let challenger_score = comp.sharpe_ratio * 0.5
                     + (comp.win_rate_pct / 100.0) * 0.3
                     + (comp.net_pnl_usd / 100.0) * 0.2;
-                if challenger_score > best_score && comp.win_rate_pct >= 50.0 {
+                if challenger_score > best_score {
                     best_score = challenger_score;
                     best_challenger_idx = Some(i);
                 }
@@ -4642,6 +5389,7 @@ impl StrategyArena {
                     "Estratégia '{}' superou o campeão anterior com Win Rate de {:.1}% e PnL de +${:.2}",
                     new_name, win_rate, pnl
                 ),
+                is_manual: false,
             };
             self.promotion_history.push(event);
             return Some(new_id);
@@ -4671,12 +5419,56 @@ impl StrategyArena {
             old_champion_id: old_id,
             new_champion_id: profile_id.to_string(),
             reason: format!("Promoção manual da estratégia '{}' para Campeã Ativa", name),
+            is_manual: true,
         };
         self.promotion_history.push(event);
         Ok(format!(
             "Estratégia '{}' promovida com sucesso para Campeã Ativa!",
             name
         ))
+    }
+    pub fn mutate_genetic_challengers(&mut self) {
+        let mut ranked_base: Vec<(String, HashMap<String, f64>, f64)> = self
+            .competitors
+            .iter()
+            .filter(|c| !c.profile.id.starts_with("genetic_"))
+            .map(|c| {
+                (
+                    c.profile.id.clone(),
+                    c.profile.factor_weights.clone(),
+                    c.net_pnl_usd,
+                )
+            })
+            .collect();
+        ranked_base.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
+
+        let top_weights = if !ranked_base.is_empty() {
+            ranked_base[0].1.clone()
+        } else {
+            return;
+        };
+
+        let seed_val = (self.total_cycles_evaluated % 100) as f64 * 0.01;
+
+        for comp in self
+            .competitors
+            .iter_mut()
+            .filter(|c| c.profile.id.starts_with("genetic_"))
+        {
+            comp.profile.factor_weights = top_weights.clone();
+            let mut keys: Vec<String> = comp.profile.factor_weights.keys().cloned().collect();
+            keys.sort();
+            for (idx, k) in keys.iter().enumerate() {
+                if let Some(w) = comp.profile.factor_weights.get_mut(k) {
+                    let delta = if (idx + self.total_cycles_evaluated).is_multiple_of(2) {
+                        0.15 + seed_val * 0.10
+                    } else {
+                        -0.12 - seed_val * 0.08
+                    };
+                    *w = (*w + delta).clamp(0.40, 3.50);
+                }
+            }
+        }
     }
 }
 
@@ -4723,6 +5515,7 @@ pub struct MultiAssetTraderEngine {
     pub executions_log: Vec<TradeExecution>,
     pub learner: AdaptiveTradeLearner,
     pub strategy_arena: StrategyArena,
+    pub btc_dump_shield_active: bool,
 }
 
 impl MultiAssetTraderEngine {
@@ -4770,6 +5563,7 @@ impl MultiAssetTraderEngine {
             executions_log: Vec::new(),
             learner: AdaptiveTradeLearner::new(),
             strategy_arena: StrategyArena::new(),
+            btc_dump_shield_active: false,
         }
     }
 
@@ -4839,6 +5633,41 @@ impl MultiAssetTraderEngine {
             }
         }
 
+        // 2. Restaura pesos aprendidos do AdaptiveTradeLearner
+        let _ = store.load_learned_weights(&mut self.learner);
+        for eng in self.engines.values_mut() {
+            eng.learner = self.learner.clone();
+        }
+
+        // 3. Restaura estado completo da StrategyArena e histórico de promoções
+        let _ = store.load_arena_state(&mut self.strategy_arena);
+        if let Ok(promos) = store.load_promotions(50) {
+            if !promos.is_empty() {
+                self.strategy_arena.promotion_history = promos;
+            }
+        }
+
+        // 4. Se a arena possuir uma campeã salva, sincroniza os pesos no robô real
+        let champ_id = self.strategy_arena.champion_profile_id.clone();
+        if let Some(comp) = self
+            .strategy_arena
+            .competitors
+            .iter_mut()
+            .find(|c| c.profile.id == champ_id)
+        {
+            if !self.learner.factor_weights.is_empty() {
+                for (factor, w) in &self.learner.factor_weights {
+                    comp.profile.factor_weights.insert(factor.clone(), *w);
+                }
+            } else {
+                for (factor, &w) in &comp.profile.factor_weights {
+                    self.learner.factor_weights.insert(factor.clone(), w);
+                    for eng in self.engines.values_mut() {
+                        eng.learner.factor_weights.insert(factor.clone(), w);
+                    }
+                }
+            }
+        }
         Ok(restored)
     }
 
@@ -4980,12 +5809,25 @@ impl MultiAssetTraderEngine {
             }
         }
 
-        if let Some(engine) = self.engines.get(asset) {
-            if let Some(inds) = engine.compute_indicators() {
-                self.strategy_arena.on_candle(asset, &candle, &inds);
-            }
+        if asset == "BTC-USDT" || asset == "BTCUSDT" {
+            let is_dumping =
+                if let Some(ind) = self.engines.get(asset).and_then(|e| e.compute_indicators()) {
+                    ind.rsi_14 < 32.0 || (ind.vwap > 0.0 && candle.close < ind.vwap_lower)
+                } else {
+                    false
+                };
+            self.btc_dump_shield_active = is_dumping;
+        } else if let Some(engine) = self.engines.get_mut(asset) {
+            engine.btc_dump_shield_active = self.btc_dump_shield_active;
         }
 
+        if let Some(engine) = self.engines.get(asset) {
+            if let Some(inds) = engine.compute_indicators() {
+                if let Some(new_champ) = self.strategy_arena.on_candle(asset, &candle, &inds) {
+                    let _ = self.promote_strategy(&new_champ);
+                }
+            }
+        }
         Ok(exec)
     }
 
@@ -5174,6 +6016,12 @@ impl MultiAssetTraderEngine {
                     news_fear_greed_index: indicators.news_fear_greed_index,
                     adxr_14: indicators.adxr_14,
                     order_book_imbalance: indicators.order_book_imbalance,
+                    poc_price: indicators.poc_price,
+                    value_area_high: indicators.value_area_high,
+                    value_area_low: indicators.value_area_low,
+                    parkinson_volatility: indicators.parkinson_volatility,
+                    btc_dump_shield_active: indicators.btc_dump_shield_active,
+                    mtf_alignment_bullish: indicators.mtf_alignment_bullish,
                 });
             }
         }
@@ -5375,11 +6223,31 @@ impl MultiAssetTraderEngine {
         }
     }
 
-    /// Promove manualmente uma estratégia para Campeã Ativa na Strategy Arena
+    /// Promove uma estratégia para Campeã Ativa na Strategy Arena, injeta pesos e persiste no SQLite
     pub fn promote_strategy(&mut self, profile_id: &str) -> Result<String> {
-        self.strategy_arena.promote(profile_id)
+        let msg = self.strategy_arena.promote(profile_id)?;
+        if let Some(comp) = self
+            .strategy_arena
+            .competitors
+            .iter()
+            .find(|c| c.profile.id == profile_id)
+        {
+            for (factor, &w) in &comp.profile.factor_weights {
+                self.learner.factor_weights.insert(factor.clone(), w);
+                for eng in self.engines.values_mut() {
+                    eng.learner.factor_weights.insert(factor.clone(), w);
+                }
+            }
+        }
+        if let Some(store) = &self.store {
+            if let Some(last_event) = self.strategy_arena.promotion_history.last() {
+                let _ = store.save_promotion(last_event);
+            }
+            let _ = store.save_arena_state(&self.strategy_arena);
+            let _ = store.save_learned_weights(&self.learner);
+        }
+        Ok(msg)
     }
-
     /// Otimizador e Backtest Histórico de até 90 Dias
     pub fn run_backtest_90d(&self, asset: &str, days: usize) -> BacktestReport {
         let candles_count = (days * 24).max(60);

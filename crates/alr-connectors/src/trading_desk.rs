@@ -343,6 +343,21 @@ pub async fn get_trade_snapshot_handler(
     Json(trade.and_then(|t| t.indicator_snapshot))
 }
 
+/// Handler para listar o histórico perpétuo de eventos de promoção de estratégia
+pub async fn get_promotion_history_handler(
+    State(state): State<TradingDeskState>,
+) -> Json<Vec<crate::trading::PromotionEvent>> {
+    let engine = state.engine.read();
+    if let Some(store) = &engine.store {
+        if let Ok(promos) = store.load_promotions(100) {
+            if !promos.is_empty() {
+                return Json(promos);
+            }
+        }
+    }
+    Json(engine.strategy_arena.promotion_history.clone())
+}
+
 /// Cria o Router Axum completo com todas as rotas do Trading Desk (usando logger padrão)
 pub fn create_trading_desk_router(
     engine: Arc<parking_lot::RwLock<MultiAssetTraderEngine>>,
@@ -391,6 +406,10 @@ pub fn create_trading_desk_router_with_logger(
         .route(
             "/api/v1/desk/trade-snapshot",
             get(get_trade_snapshot_handler),
+        )
+        .route(
+            "/api/v1/desk/promotion-history",
+            get(get_promotion_history_handler),
         )
         .route(
             "/static/alr-logo.webp",

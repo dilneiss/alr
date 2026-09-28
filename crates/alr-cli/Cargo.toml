@@ -171,6 +171,11 @@ path = "../../tests/phase37_ichimoku_and_advanced_intelligence_tests.rs"
 [[test]]
 name = "phase38_advanced_quant_fortress_tests"
 path = "../../tests/phase38_advanced_quant_fortress_tests.rs"
+
+[[test]]
+name = "phase39_quant_fortress_persistence_and_expansion_tests"
+path = "../../tests/phase39_quant_fortress_persistence_and_expansion_tests.rs"
+
 [dependencies]
 alr-core = { workspace = true }
 alr-memory = { workspace = true }

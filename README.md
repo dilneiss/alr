@@ -672,30 +672,32 @@ Infraestrutura completa de alta frequência e baixa latência para execução qu
 2. **Auditoria Transparente e Histórico Completo de Indicadores e Pesos na Entrada (`IndicatorWeightsSnapshot`):**
    * No momento exato da abertura de qualquer trade, o robô congela e persiste no banco SQLite um snapshot auditável contendo os valores exatos de todos os indicadores técnicos e o mapa completo de pesos dos fatores ativos.
    * Visualização interativa na Web via modal `[📊 Indicadores & Pesos]` presente na tabela de extrato recente e nos cards das posições em aberto.
-3. **Arena Multi-Estratégia ao Vivo em Tempo Real (Champion vs 5 Challengers em Simulação Paralela):**
-   * Executa simultaneamente no motor 6 perfis distintos de estratégias com diferentes combinações de pesos operando com micro-saldo virtual ($1.000 USD):
-     * `Trend & SuperTrend Heavy`: Seguidor de tendência forte institucional (EMA9/21, SuperTrend, ADX).
-     * `Mean Reversion & RSI Divergence`: Especialista em exaustão vendedora, repiques Donchian e divergências no RSI.
-     * `Ichimoku Kumo Breakout`: Rompimento de nuvem com cruzamento Tenkan/Kijun e barreira anti-queda.
-     * `Volatility Squeeze Scalper`: Compressão de volatilidade TTM (Bollinger dentro de Keltner) com desequilíbrio no book de ofertas.
-     * `Institutional Flow`: Pegada institucional via VWAP diário, Money Flow Index e agressão no order book.
-     * `Balanced Adaptive JEV`: Equilíbrio calibrado dos 11 pilares com calibração dinâmica contínua.
-   * **Eleição Auto-Adaptativa do Vencedor**: Avalia periodicamente o Sharpe Ratio, taxa de acerto e PnL das estratégias. Se um desafiante superar a campeã atual, ele é promovido automaticamente e seus pesos assumem a execução real dos trades!
+3. **Arena Híbrida de 18 Estratégias ao Vivo (12 Especializadas + 6 Genéticas Mutantes em Simulação Paralela):**
+   * Executa simultaneamente no motor 18 perfis distintos de estratégias com diferentes combinações de pesos operando com micro-saldo virtual ($1.000 USD):
+     * **Grupo Tendência (3)**: `trend_supertrend_heavy`, `trend_macro_momentum`, `trend_breakout_accelerator`.
+     * **Grupo Reversão à Média (3)**: `mean_reversion_rsi_donchian`, `mean_reversion_support_bounce`, `mean_reversion_contrarian_fear`.
+     * **Grupo Volatilidade & Compressão (3)**: `volatility_squeeze_scalper`, `volatility_bandwidth_expansion`, `volatility_atr_chandelier`.
+     * **Grupo Fluxo Institucional & Book (3)**: `institutional_vwap_mfi`, `institutional_obi_depth`, `institutional_volume_profile`.
+     * **Grupo Genético Evolutivo (6 Clones Mutantes)**: `genetic_challenger_alpha`, `beta`, `gamma`, `delta`, `epsilon`, `zeta` (mutação estocástica a cada 50 velas herdando os pesos dos melhores do ranking).
+   * **Eleição Auto-Adaptativa Ágil (Opção 2)**: A cada 20 velas, se qualquer desafiante atingir $\ge 5$ trades, Win Rate $\ge 50\%$ e PnL líquido superior à campeã, ela é coroada imediatamente como nova Campeã Ativa, persistida no SQLite e seus pesos assumem a execução real das ordens na Binance!
 4. **Otimizador de Backtest Histórico de até 90 Dias (3 Meses):**
-   * Permite realizar simulações profundas de até 90 dias de histórico para cada ativo do basket.
-   * Testa exaustivamente todas as combinações de pesos no histórico passado, gerando um relatório classificado de performance (#1 a #6) com taxa de acerto, PnL líquido, profit factor, drawdown e Sharpe ratio, elegendo a melhor configuração inicial para iniciar as operações ao vivo.
-5. **Realização Parcial Escalonada (Multi-Tier TP1 & TP2) e Blindagem de Break-Even:**
+   * Permite realizar simulações profundas de até 90 dias de histórico para cada ativo do basket avaliando todas as 18 estratégias simultaneamente.
+   * Gera um relatório classificado de performance (#1 a #18) com taxa de acerto, PnL líquido, profit factor, drawdown e Sharpe ratio, elegendo a melhor configuração inicial para iniciar as operações ao vivo.
+5. **Cinco Novos Módulos de Assertividade & Proteção Quantitativa:**
+   * **Filtro de Correlação com Bitcoin (`BtcMarketBetaGuard`)**: Veto absoluto (`hold_logits += 8.0`, `buy_logits = -10.0`) em compras de altcoins caso o Bitcoin esteja em queda severa intradiária (< -1.2% ou abaixo da banda inferior VWAP).
+   * **Volume Profile & Ponto de Controle (`PointOfControlEngine`)**: Identificação do nível de preço com maior volume financeiro institucional (POC) e Value Area (70% do volume) para posicionar TP1 e Stop-Loss de forma cirúrgica.
+   * **Regime de Volatilidade de Parkinson (`ParkinsonVolatilityFilter`)**: Medição da amplitude High/Low dos últimos 20 períodos para bloquear negociações em mercados sem liquidez (chop extremo) e regular a exposição.
+   * **Alinhamento Multi-Timeframe Concorrente (MTF 1m + 5m + 15m + 1h)**: Confirmação simultânea da direção rápida com suporte estrutural de médio prazo.
+   * **Aprendizado Online por Regressão Logística Regularizada (SGD)**: Calibração contínua dos pesos com gradiente descendente estocástico e regularização Ridge ($L_2$) anti-overfitting.
+6. **Persistência Total no SQLite (`trading_promotions` e `trading_arena_state`):**
+   * Ao encerrar o terminal e reiniciar o robô, 100% dos dados, posições abertas, pesos aprendidos, saldos da arena e o histórico permanente de promoções são restaurados sem perdas, garantindo que o aprendizado nunca seja resetado.
+7. **Realização Parcial Escalonada (Multi-Tier TP1 & TP2) e Blindagem de Break-Even:**
    * Ao atingir o TP1 (1.2x ATR / +1.5% a +2.0%), realiza automaticamente 50% da posição em dinheiro, embolsando o lucro.
    * Eleva instantaneamente o Stop-Loss dos 50% restantes para Break-Even + 0.3% (cobrindo taxas). Risco zero absoluto no restante do trade.
    * Os 50% restantes continuam surfando a tendência até o alvo estendido TP2 (3.5x ATR) ou saída móvel por Trailing Stop Chandelier.
-6. **Saídas de Emergência por Kumo Breakdown e Time-Decay:**
+8. **Saídas de Emergência por Kumo Breakdown e Time-Decay:**
    * *Kumo Breakdown*: Se o preço romper a base da Nuvem Ichimoku para baixo, liquida imediatamente posições Long antes de quedas severas.
    * *Time-Decay Exit*: Encerra trades estagnados há mais de 45 velas sem atingir alvo para liberar capital.
-7. **Motor de Aprendizado Adaptativo dos Erros (`AdaptiveTradeLearner`):**
-   * *Reforço e Penalização*: PnL positivo aumenta o peso de convicção dos fatores que geraram o trade; PnL negativo reduz os pesos dos fatores causadores da perda.
-   * *Dimensionamento Matemático de Half-Kelly*: Ajusta dinamicamente a alocação de capital entre 0.60x e 1.60x com base na taxa de acerto histórica ($p$) e payoff ratio ($b$) dos fatores ativos.
-   * *Anti-Loss Streak Cooldown*: Se um ativo sofrer 2 perdas consecutivas, entra automaticamente em pausa protetiva por 10 velas, cessando reentradas precipitadas.
-   * *Persistência no SQLite*: Pesos aprendidos, histórico de PnL por pilar e cooldowns sobrevivem à reinicialização do robô.
 ```bash
 # Simulação completa no terminal com gráfico de preços em ASCII, indicadores e extrato de PnL
 cargo run -p alr-cli -- trader-demo --asset BTC-USDT --candles 50
@@ -1733,6 +1735,18 @@ O **Playground Universal do ALR** e todos os cockpits web integrados foram proje
 
 * Cada painel de entrada e saída conta com **rolagem vertical isolada** (`overflow-y: auto; max-height: calc(100vh - 160px)`), garantindo que o cabeçalho e os botões de execução (`sticky-action-bar`) permaneçam sempre visíveis e acionáveis sem necessidade de rolar a página inteira.
 * As tabelas de banco de dados SQLite, Qdrant e CSV possuem rolagem horizontal suave dedicada (`-webkit-overflow-scrolling: touch`), preservando as colunas e os botões de ação em qualquer largura de janela.
+### 4. Rolagem Vertical Fluida & Comandos de Terminal por Porta
+
+* **Eliminação de Travas de Scroll em Todas as 23 Views**: O container mestre `.workspace-views-container` adota `overflow-y: auto !important; height: calc(100vh - 48px);`, enquanto as seções filhas usam `height: auto !important;` e contam com a classe `.page-bottom-spacer` no rodapé (80px a 90px de respiro). Nenhuma página corta os cards inferiores ou trava a rolagem.
+* **Comandos Oficiais de Terminal para Execução dos Serviços**:
+
+| Serviço / Painel | Porta | Comando Exato para Executar no Terminal | Como Visualizar no Navegador |
+| :--- | :---: | :--- | :--- |
+| **Playground Universal & System 1** | `3000` | `cargo run -p alr-cli -- playground --port 3000` | [http://localhost:3000](http://localhost:3000) |
+| **Copiloto de Call de Vendas** | `3001` | `node server.js` | [http://localhost:3001](http://localhost:3001) |
+| **Mesa de Trading Quantitativo** | `3800` | `cargo run -p alr-cli -- trading-desk --port 3800 --capital 50000` | [http://localhost:3800](http://localhost:3800) |
+| **Servidor MCP (Model Context Protocol)** | `4000` | `cargo run -p alr-cli -- mcp --port 4000` | `POST http://localhost:4000/mcp` |
+
 
 ---
 ## 🧠 Skill Oficial: ALR System 1 (TypeSafe Jev Engine & Primitivas de Decisão)

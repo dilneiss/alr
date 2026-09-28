@@ -2976,9 +2976,13 @@ pub fn render_playground_html() -> String {
             min-height: 0;
             display: flex;
             flex-direction: column;
-            overflow-y: auto;
+            overflow-y: auto !important;
             overflow-x: hidden;
+            height: calc(100vh - 48px);
+            max-height: calc(100vh - 48px);
             position: relative;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
         }
         .header-actions {
             display: flex;
@@ -3228,21 +3232,33 @@ pub fn render_playground_html() -> String {
             flex: 1;
             display: flex;
             justify-content: center;
-            overflow: hidden;
-            padding: 10px 16px;
+            overflow-y: auto !important;
+            overflow-x: hidden;
+            padding: 12px 16px;
+            height: calc(100vh - 48px);
+            min-height: 0;
         }
 
         .view-section {
             width: 100%;
-            height: 100%;
+            height: auto !important;
+            min-height: 100%;
             display: none;
             flex-direction: column;
-            overflow-y: auto;
-            gap: 14px;
+            overflow: visible !important;
+            gap: 16px;
+            padding-bottom: 90px; /* Garante que os últimos cards nunca sejam cortados */
         }
 
         .view-section.active {
             display: flex;
+        }
+
+        .page-bottom-spacer {
+            height: 80px;
+            width: 100%;
+            flex-shrink: 0;
+            pointer-events: none;
         }
 
         /* WIDGET INFORMATIVO & GUIA OPERACIONAL COMPLETO */
@@ -3333,8 +3349,9 @@ pub fn render_playground_html() -> String {
             gap: 16px;
             width: 100%;
             max-width: 1700px;
-            height: 100%;
-            overflow: hidden;
+            min-height: calc(100vh - 190px);
+            height: auto;
+            overflow: visible;
         }
 
         .panel {
@@ -3430,19 +3447,27 @@ pub fn render_playground_html() -> String {
             gap: 12px;
         }
 
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #253344 #06090d;
+        }
+
+        .workspace-views-container::-webkit-scrollbar,
+        .workspace-wrap::-webkit-scrollbar,
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.2);
+            background: #06090d;
         }
         ::-webkit-scrollbar-thumb {
-            background: #202936;
-            border-radius: 3px;
+            background: #253344;
+            border-radius: 4px;
+            border: 1px solid #141f2d;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #2e3a4d;
+            background: var(--accent-lime);
         }
 
         .type-description {
@@ -4119,8 +4144,9 @@ pub fn render_playground_html() -> String {
             gap: 16px;
             width: 100%;
             max-width: 1540px;
-            height: 100%;
-            overflow: hidden;
+            height: auto;
+            min-height: 100%;
+            overflow: visible;
         }
 
         .games-sidebar {
@@ -4510,7 +4536,8 @@ pub fn render_playground_html() -> String {
             gap: 0;
             width: 100%;
             max-width: 1700px;
-            height: 100%;
+            height: calc(100vh - 260px);
+            min-height: 520px;
             overflow: hidden;
         }
 
@@ -5087,8 +5114,9 @@ pub fn render_playground_html() -> String {
             gap: 16px;
             width: 100%;
             max-width: 1540px;
-            height: 100%;
-            overflow: hidden;
+            height: auto;
+            min-height: 100%;
+            overflow: visible;
         }
 
         .vision-left-panel {
@@ -5231,8 +5259,9 @@ pub fn render_playground_html() -> String {
             gap: 16px;
             width: 100%;
             max-width: 1540px;
-            height: 100%;
-            overflow: hidden;
+            height: auto;
+            min-height: 100%;
+            overflow: visible;
         }
 
         .cctv-viewport-panel {
@@ -5310,8 +5339,9 @@ pub fn render_playground_html() -> String {
             gap: 16px;
             width: 100%;
             max-width: 1540px;
-            height: 100%;
-            overflow: hidden;
+            height: auto;
+            min-height: 100%;
+            overflow: visible;
         }
 
         .ecom-presets-row {
@@ -5473,8 +5503,9 @@ pub fn render_playground_html() -> String {
             gap: 16px;
             width: 100%;
             max-width: 1540px;
-            height: 100%;
-            overflow: hidden;
+            height: calc(100vh - 270px);
+            min-height: 520px;
+            overflow: visible;
         }
 
         /* Hub Hero Bar: Visual, Modern & Scannable */
@@ -6055,8 +6086,9 @@ pub fn render_playground_html() -> String {
             gap: 16px;
             width: 100%;
             max-width: 1540px;
-            height: 100%;
-            overflow: hidden;
+            height: auto;
+            min-height: 100%;
+            overflow: visible;
         }
 
         .routes-map-panel {
@@ -6245,8 +6277,9 @@ pub fn render_playground_html() -> String {
             gap: 16px;
             width: 100%;
             max-width: 1540px;
-            height: 100%;
-            overflow: hidden;
+            height: auto;
+            min-height: 100%;
+            overflow: visible;
         }
 
         .workbench-table-wrap {
@@ -6290,8 +6323,9 @@ pub fn render_playground_html() -> String {
             gap: 14px;
             width: 100%;
             max-width: 1540px;
-            height: 100%;
-            overflow: hidden;
+            height: auto !important;
+            min-height: 100%;
+            overflow: visible !important;
         }
 
         .recipes-subnav-tabs {
@@ -6352,8 +6386,9 @@ pub fn render_playground_html() -> String {
             gap: 16px;
             width: 100%;
             max-width: 1540px;
-            height: 100%;
-            overflow: hidden;
+            height: auto;
+            min-height: 100%;
+            overflow: visible;
         }
 
         .a2a-agent-card {
@@ -7146,13 +7181,17 @@ pub fn render_playground_html() -> String {
             .workspace-games,
             .workspace-routes,
             .workspace-vision,
+            .workspace-cctv,
+            .workspace-recipes,
+            .workspace-database,
+            .db-workspace,
             .workspace-qa,
             .workspace-trading,
             .recipe-content-grid {
                 display: flex;
                 flex-direction: column;
-                height: auto;
-                overflow-y: auto;
+                height: auto !important;
+                overflow-y: visible !important;
                 gap: 10px;
             }
 
@@ -7730,6 +7769,7 @@ pub fn render_playground_html() -> String {
                 </div>
 
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- 2. VIEW: ARENA DE JOGOS AUTÔNOMOS (8 JOGOS COM AUTO-RETRY E CONTROLE DE VELOCIDADE) -->
@@ -7795,6 +7835,7 @@ pub fn render_playground_html() -> String {
                     </div>
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- 3. VIEW: CONTROLE FÍSICO DE OS (MOUSE & TECLADO NATIVO) -->
@@ -7878,11 +7919,12 @@ pub fn render_playground_html() -> String {
                     </div>
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
 
         <!-- VIEW: COPILOTO DE CALL DE VENDAS (GOOGLE MEET + JEV SYSTEM 1) -->
-        <div class="view-section" id="view-sales_copilot">
+        <div class="view-section" id="view-sales_copilot" style="padding-bottom: 90px;">
             <div class="info-guide-widget">
                 <div class="info-guide-header">
                     <div class="info-guide-title-wrap">
@@ -7890,6 +7932,9 @@ pub fn render_playground_html() -> String {
                         <span class="info-guide-title">💼 Copiloto de Call de Vendas — Google Meet + Decisões Tipadas JEV System 1</span>
                     </div>
                     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <span id="copilot-top-status-badge" class="status-chip" style="background: rgba(249, 115, 22, 0.15); border-color: rgba(249, 115, 22, 0.4); color: var(--accent-orange); font-size: 11px;">
+                            <span class="status-dot" style="background: var(--accent-orange);"></span>🟡 Checando Porta 3001...
+                        </span>
                         <a href="http://localhost:3001" target="_blank" class="btn-game-ctrl primary" style="text-decoration: none; padding: 5px 14px; font-size: 11px; display: inline-flex; align-items: center; gap: 6px;">
                             <span>🚀 Abrir Copiloto no Chrome (Porta 3001)</span>
                         </a>
@@ -7911,6 +7956,54 @@ pub fn render_playground_html() -> String {
                     <div class="info-guide-box">
                         <div class="info-box-title">🧠 Auto-Aprendizado por LLM</div>
                         <p class="info-box-text">Se a objeção for inédita, o Professor LLM formula a quebra na hora, memoriza no LearningLedger e passa a responder via System 1 em microssegundos sem novas chamadas.</p>
+                    </div>
+                </div>
+            </div>
+            <!-- BANNER DE DESTAQUE: COMANDOS EXATOS DE TERMINAL (PORTAS 3001 E 3000) -->
+            <div style="background: linear-gradient(90deg, rgba(249, 115, 22, 0.15) 0%, rgba(15, 23, 42, 0.95) 100%); border: 1.5px solid var(--accent-orange); border-radius: 10px; padding: 14px 18px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.4);">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 26px;">💻</span>
+                        <div>
+                            <div style="font-size: 13.5px; font-weight: 800; color: #ffffff; letter-spacing: 0.01em;">COMANDOS PARA EXECUTAR O COPILOTO NO TERMINAL:</div>
+                            <div style="font-size: 11.5px; color: var(--accent-orange); font-family: var(--font-mono); margin-top: 2px;">
+                                Inicie o servidor web do Copiloto (porta 3001) e o runtime ALR (porta 3000) para operar em sub-milissegundo:
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span id="copilot-port3001-status" class="status-chip" style="background: rgba(249, 115, 22, 0.15); border-color: rgba(249, 115, 22, 0.4); color: var(--accent-orange); font-size: 11.5px; padding: 5px 12px;">
+                            <span class="status-dot" style="background: var(--accent-orange);"></span>🟡 Porta 3001 Offline: execute 'node server.js' no terminal
+                        </span>
+                        <a href="http://localhost:3001" target="_blank" class="btn-game-ctrl primary" style="text-decoration: none; padding: 7px 16px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); border: none;">
+                            <span>🚀 Abrir http://localhost:3001</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 10px;">
+                    <!-- Terminal 1: Copiloto Web (Porta 3001) -->
+                    <div style="background: #06090f; border: 1px solid rgba(249, 115, 22, 0.4); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                        <div>
+                            <div style="font-size: 11px; font-weight: 800; color: var(--accent-orange); text-transform: uppercase;">1. Servidor Web do Copiloto (Porta 3001):</div>
+                            <div style="font-size: 11px; color: #94a3b8; margin-top: 1px;">Rode este comando no terminal para iniciar o servidor web do Copiloto:</div>
+                        </div>
+                        <div class="cli-code-block" style="margin: 0; padding: 7px 14px; font-size: 13px; font-weight: 700; color: var(--accent-lime); background: #05080c; border: 1px solid var(--accent-orange);">
+                            node server.js
+                            <button class="btn-copy-code" onclick="copySnippet(this)">Copiar</button>
+                        </div>
+                    </div>
+
+                    <!-- Terminal 2: Motor ALR System 1 (Porta 3000) -->
+                    <div style="background: #06090f; border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                        <div>
+                            <div style="font-size: 11px; font-weight: 800; color: var(--accent-cyan); text-transform: uppercase;">2. Motor Cognitivo ALR (Porta 3000):</div>
+                            <div style="font-size: 11px; color: #94a3b8; margin-top: 1px;">Rode este comando para manter o runtime Rust &lt; 20 µs ativo:</div>
+                        </div>
+                        <div class="cli-code-block" style="margin: 0; padding: 7px 14px; font-size: 11.5px; font-weight: 700; color: var(--accent-lime); background: #05080c; border: 1px solid rgba(56, 189, 248, 0.4);">
+                            cargo run -p alr-cli -- playground --port 3000
+                            <button class="btn-copy-code" onclick="copySnippet(this)">Copiar</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -8017,9 +8110,12 @@ pub fn render_playground_html() -> String {
                                 </div>
                             </div>
                         </div>
-                        <button class="btn-game-ctrl" style="padding: 6px 14px; font-size: 11px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: var(--accent-cyan);" onclick="window.open('http://localhost:3001', '_blank')">
-                            Testar Conexão do Copiloto &rarr;
-                        </button>
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <span id="copilot-checklist-status" style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-orange); font-weight: 600;">🟡 Porta 3001: Verificando...</span>
+                            <button class="btn-game-ctrl" style="padding: 6px 14px; font-size: 11px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: var(--accent-cyan);" onclick="window.open('http://localhost:3001', '_blank')">
+                                Testar Conexão do Copiloto &rarr;
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -8227,6 +8323,8 @@ pub fn render_playground_html() -> String {
                     <p style="font-size: 11.5px; color: var(--text-dim); margin-top: 4px;">Executa 20 falas reais em sequência contra a nossa API do ALR, validando latência (&lt; 1 ms) e custo $0.00.</p>
                 </div>
             </div>
+            <!-- Espaçador inferior para garantir rolagem completa e visibilidade dos Cards 5 e 6 -->
+            <div class="page-bottom-spacer" style="height: 90px; min-height: 90px; width: 100%; clear: both;"></div>
         </div>
 
         <!-- VIEW: EXTENSÃO GOOGLE CHROME - ALR VOZ -->
@@ -8317,6 +8415,7 @@ pub fn render_playground_html() -> String {
                     </div>
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
         <!-- 4. VIEW: AUTOMAÇÃO WEB REAL (CHROMIUM CDP) -->
         <div class="view-section" id="view-browser">
@@ -8388,6 +8487,7 @@ pub fn render_playground_html() -> String {
                     <button class="btn-test-card" onclick="simulateBrowserAction('price_compare')">⚡ Executar Comparação Web</button>
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- 5. VIEW: MARKETING OPS & SEO (9 TAREFAS JEV) -->
@@ -8490,6 +8590,7 @@ pub fn render_playground_html() -> String {
                     <button class="btn-test-card" onclick="switchToPreset('landing_page_match')">⚡ Testar no Playground</button>
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- 6. VIEW: SEGURANÇA, RISCO & VISÃO -->
@@ -8592,6 +8693,7 @@ pub fn render_playground_html() -> String {
                     <button class="btn-test-card" onclick="switchToPreset('support_routing')">⚡ Testar no Playground</button>
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- 7. VIEW: TRADING QUANTITATIVO -->
@@ -8664,6 +8766,7 @@ pub fn render_playground_html() -> String {
                     <button class="btn-test-card" onclick="switchToPreset('crypto_trading')">⚡ Testar no Playground</button>
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- 8. VIEW: WHATSAPP DESK -->
@@ -8736,6 +8839,7 @@ pub fn render_playground_html() -> String {
                     <button class="btn-test-card" onclick="switchToPreset('support_routing')">⚡ Testar no Playground</button>
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- VIEW: QA & TEST AUTOMATION (WEB & PROGRAMAS) -->
@@ -8842,6 +8946,7 @@ println!("✓ Exit code 0, zero panics e sem memory leaks!");</code></pre>
                 </div>
                 <div id="qa-assertions-list" style="display: flex; flex-direction: column; gap: 8px; font-family: var(--font-mono); font-size: 11px;"></div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- VIEW: EXPLORADOR DE BANCOS DE DADOS (SQLITE & QDRANT) -->
@@ -8988,6 +9093,7 @@ println!("✓ Exit code 0, zero panics e sem memory leaks!");</code></pre>
                     </div>
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- VIEW: VISÃO & ATRIBUTOS DE PRODUTOS / ERROS DE TELA -->
@@ -9100,6 +9206,7 @@ println!("✓ Exit code 0, zero panics e sem memory leaks!");</code></pre>
                     </div>
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- VIEW: CÂMERA CCTV COM TRIPWIRE REAL -->
@@ -9179,6 +9286,7 @@ println!("✓ Exit code 0, zero panics e sem memory leaks!");</code></pre>
                     </div>
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- VIEW: E-COMMERCE CATALOG CATEGORIZER -->
@@ -9338,6 +9446,7 @@ println!("✓ Exit code 0, zero panics e sem memory leaks!");</code></pre>
                     </div>
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- VIEW: OTIMIZADOR DE ROTAS URBANAS (MAPA REAL, CEP, 50 ENTREGAS & VRP DINÂMICO) -->
@@ -9491,6 +9600,7 @@ println!("✓ Exit code 0, zero panics e sem memory leaks!");</code></pre>
                     </div>
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- VIEW: WORKBENCH CSV & BATCH DECISOR EM CPU -->
@@ -9586,6 +9696,7 @@ Geral: nota fiscal, cnpj, dúvida, suporte</textarea>
                     </div>
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- VIEW: RECIPES ESPECIALIZADAS DO JEV -->
@@ -9662,6 +9773,7 @@ Geral: nota fiscal, cnpj, dúvida, suporte</textarea>
                     </div>
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- VIEW: DOMÍNIOS ESPECIALIZADOS DO JEV (5 CASOS REAIS) -->
@@ -9727,6 +9839,7 @@ Geral: nota fiscal, cnpj, dúvida, suporte</textarea>
                     </div>
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- VIEW: CONTEXT OFFLOADING & BACKGROUND TASKS (AGENTSCOPE) -->
@@ -9788,6 +9901,7 @@ Linha de log de auditoria #5: Concluída checagem com sucesso.</textarea>
                     </div>
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- VIEW: PROTOCOLO A2A (AGENT-TO-AGENT), HITL & DIFF -->
@@ -9884,6 +9998,7 @@ Linha de log de auditoria #5: Concluída checagem com sucesso.</textarea>
                     </div>
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- VIEW: CENTRAL DE CONHECIMENTO & TUTORIAIS INTERATIVOS -->
@@ -9956,6 +10071,7 @@ Linha de log de auditoria #5: Concluída checagem com sucesso.</textarea>
                     <!-- Conteúdo dinâmico do tutorial -->
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         <!-- VIEW: DOCUMENTAÇÃO COMPLETA DA API (REST, SYSTEM 1 & MCP) -->
@@ -10008,10 +10124,11 @@ Linha de log de auditoria #5: Concluída checagem com sucesso.</textarea>
                 </div>
 
                 <!-- Lista de Cards de Endpoints -->
-                <div id="api-endpoints-catalogue" style="display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - 270px); overflow-y: auto; padding-right: 4px;">
+                <div id="api-endpoints-catalogue" style="display: flex; flex-direction: column; gap: 10px; padding-right: 4px;">
                     <!-- Renderizado dinamicamente via JS com mais de 35 endpoints -->
                 </div>
             </div>
+            <div class="page-bottom-spacer"></div>
         </div>
 
         </div>
@@ -10858,6 +10975,8 @@ Linha de log de auditoria #5: Concluída checagem com sucesso.</textarea>
                 initApiDocsExplorer(item.apiFilter);
             } else if (activeView === 'alr_voice' && typeof initAlrVoiceExplorer === 'function') {
                 initAlrVoiceExplorer();
+            } else if (activeView === 'sales_copilot' && typeof checkSalesCopilotHealth === 'function') {
+                checkSalesCopilotHealth();
             }
             const cat = MENU_CATEGORIES[activeCategory];
             const catTitle = cat ? cat.title : "ALR";
@@ -18984,6 +19103,76 @@ Lead Frio: apenas olhando, documentação, onde posso baixar`;
                 if (feedback) feedback.textContent = `Erro no replay: ${err.message}`;
             }
         };
+
+        // =====================================================================
+        // Checagem em Tempo Real do Servidor do Copiloto de Vendas (Porta 3001)
+        // =====================================================================
+        window.checkSalesCopilotHealth = async function() {
+            const badge = document.getElementById('copilot-port3001-status');
+            const topBadge = document.getElementById('copilot-top-status-badge');
+            const checkListBadge = document.getElementById('copilot-checklist-status');
+            if (!badge && !topBadge && !checkListBadge) return;
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2000);
+                const resp = await fetch('http://localhost:3001/api/health', {
+                    method: 'GET',
+                    mode: 'cors',
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                if (resp.ok) {
+                    const onlineHtml = '<span class="status-dot" style="background: var(--accent-green);"></span>🟢 Copiloto Online na Porta 3001';
+                    if (badge) {
+                        badge.style.background = 'rgba(16, 185, 129, 0.15)';
+                        badge.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                        badge.style.color = 'var(--accent-green)';
+                        badge.innerHTML = onlineHtml;
+                    }
+                    if (topBadge) {
+                        topBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+                        topBadge.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                        topBadge.style.color = 'var(--accent-green)';
+                        topBadge.innerHTML = onlineHtml;
+                    }
+                    if (checkListBadge) {
+                        checkListBadge.style.color = 'var(--accent-lime)';
+                        checkListBadge.innerHTML = '🟢 Copiloto (:3001) Online';
+                    }
+                } else {
+                    throw new Error('HTTP ' + resp.status);
+                }
+            } catch (_) {
+                const offlineHtml = '<span class="status-dot" style="background: var(--accent-orange);"></span>🟡 Porta 3001 Offline: execute \'node server.js\' no terminal';
+                if (badge) {
+                    badge.style.background = 'rgba(249, 115, 22, 0.15)';
+                    badge.style.borderColor = 'rgba(249, 115, 22, 0.4)';
+                    badge.style.color = 'var(--accent-orange)';
+                    badge.innerHTML = offlineHtml;
+                }
+                if (topBadge) {
+                    topBadge.style.background = 'rgba(249, 115, 22, 0.15)';
+                    topBadge.style.borderColor = 'rgba(249, 115, 22, 0.4)';
+                    topBadge.style.color = 'var(--accent-orange)';
+                    topBadge.innerHTML = offlineHtml;
+                }
+                if (checkListBadge) {
+                    checkListBadge.style.color = 'var(--accent-orange)';
+                    checkListBadge.innerHTML = '🟡 Copiloto (:3001) Offline';
+                }
+            }
+        };
+
+        try {
+            window.checkSalesCopilotHealth();
+            setInterval(() => {
+                if (activeView === 'sales_copilot' || document.getElementById('copilot-port3001-status')) {
+                    window.checkSalesCopilotHealth();
+                }
+            }, 5000);
+        } catch (_) {}
 
         (function initSidebarState() {
             try {

@@ -730,6 +730,16 @@
           </button>
         </div>
       </div>
+      <!-- Category Filter Tabs -->
+      <div class="flex items-center gap-1.5 flex-wrap text-[11px] pb-1">
+        <span class="text-slate-500 font-semibold mr-1">Filtrar:</span>
+        <button onclick="setArenaCategory('all')" id="tab-arena-all" class="px-2.5 py-1 rounded-lg bg-cyan-600 text-white font-bold transition">Todas (18)</button>
+        <button onclick="setArenaCategory('trend')" id="tab-arena-trend" class="px-2.5 py-1 rounded-lg bg-navy-900 hover:bg-navy-800 text-slate-300 font-semibold transition border border-navy-800">Tendência (3)</button>
+        <button onclick="setArenaCategory('mean_reversion')" id="tab-arena-mean_reversion" class="px-2.5 py-1 rounded-lg bg-navy-900 hover:bg-navy-800 text-slate-300 font-semibold transition border border-navy-800">Reversão (3)</button>
+        <button onclick="setArenaCategory('volatility')" id="tab-arena-volatility" class="px-2.5 py-1 rounded-lg bg-navy-900 hover:bg-navy-800 text-slate-300 font-semibold transition border border-navy-800">Volatilidade (3)</button>
+        <button onclick="setArenaCategory('institutional')" id="tab-arena-institutional" class="px-2.5 py-1 rounded-lg bg-navy-900 hover:bg-navy-800 text-slate-300 font-semibold transition border border-navy-800">Institucional (3)</button>
+        <button onclick="setArenaCategory('genetic')" id="tab-arena-genetic" class="px-2.5 py-1 rounded-lg bg-navy-900 hover:bg-navy-800 text-slate-300 font-semibold transition border border-navy-800">Genéticas (6)</button>
+      </div>
 
       <!-- Competitors Table -->
       <div class="overflow-x-auto">
@@ -2273,9 +2283,11 @@
             <div>MFI: <span class="text-slate-200">${mfiVal}</span></div>
             <div>Stoch: <span class="text-slate-200">${stochVal}</span></div>
             <div>OBI: <span class="${(a.order_book_imbalance || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${obiPct}</span></div>
+            <div>POC: <span class="text-cyan-300">${a.poc_price ? fmtUSD(a.poc_price) : '--'}</span></div>
+            <div>Park: <span class="text-slate-200">${a.parkinson_volatility ? (a.parkinson_volatility * 100).toFixed(1) + '%' : '--'}</span></div>
             <div class="col-span-2 flex items-center justify-between text-[9px] text-slate-500 pt-0.5 border-t border-navy-800/40">
               <span>F&G: <strong class="text-slate-300">${fgVal}</strong></span>
-              ${a.ttm_squeeze ? '<span class="text-rose-400 font-bold">Squeeze</span>' : '<span class="text-slate-600">Vol Normal</span>'}
+              <span>BTC Guard: ${a.btc_dump_shield_active ? '<strong class="text-rose-400 font-bold">Bloqueado</strong>' : '<strong class="text-emerald-400">Ativo</strong>'}</span>
             </div>
           </div>
         `;
@@ -2477,8 +2489,23 @@
         showToast(`Erro ao promover estratégia: ${err.message}`, 'error');
       }
     }
+    let currentArenaCategory = 'all';
 
-    // Polling da Arena Multi-Estratégia
+    function setArenaCategory(cat) {
+      currentArenaCategory = cat;
+      ['all', 'trend', 'mean_reversion', 'volatility', 'institutional', 'genetic'].forEach(c => {
+        const btn = document.getElementById(`tab-arena-${c}`);
+        if (!btn) return;
+        if (c === cat) {
+          btn.className = 'px-2.5 py-1 rounded-lg bg-cyan-600 text-white font-bold transition';
+        } else {
+          btn.className = 'px-2.5 py-1 rounded-lg bg-navy-900 hover:bg-navy-800 text-slate-300 font-semibold transition border border-navy-800';
+        }
+      });
+      if (deskState?.strategy_arena) {
+        renderStrategyArena(deskState.strategy_arena);
+      }
+    }
     async function pollArenaStatus() {
       try {
         const arena = await safeFetchJson('/api/v1/desk/strategy-arena');
@@ -2503,9 +2530,20 @@
         champTitle.textContent = arena.champion_profile_id || 'trend_supertrend_heavy';
       }
 
-      const competitors = arena.competitors || [];
+      let competitors = arena.competitors || [];
       if (countBadge) {
         countBadge.textContent = `${competitors.length} Perfis Concorrentes`;
+      }
+
+      if (currentArenaCategory !== 'all') {
+        competitors = competitors.filter(c => {
+          if (currentArenaCategory === 'trend') return c.profile.id.startsWith('trend_');
+          if (currentArenaCategory === 'mean_reversion') return c.profile.id.startsWith('mean_reversion_');
+          if (currentArenaCategory === 'volatility') return c.profile.id.startsWith('volatility_');
+          if (currentArenaCategory === 'institutional') return c.profile.id.startsWith('institutional_');
+          if (currentArenaCategory === 'genetic') return c.profile.id.startsWith('genetic_');
+          return true;
+        });
       }
 
       if (tbody) {

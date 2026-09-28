@@ -321,7 +321,10 @@ const server = http.createServer((req, res) => {
 
   // ROTA 2: Healthcheck e Informações do Backend (sem expor a chave)
   if (pathname === '/api/health' && req.method === 'GET') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    });
     res.end(JSON.stringify({
       status: 'ok',
       service: 'ALR Copiloto de Call de Vendas',

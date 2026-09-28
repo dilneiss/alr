@@ -783,6 +783,12 @@ fn test_intelligent_crypto_trader_confluence_and_kelly_sizing() {
         news_fear_greed_index: 68.0,
         adxr_14: 26.0,
         order_book_imbalance: 0.25,
+        poc_price: 64500.0,
+        value_area_high: 65200.0,
+        value_area_low: 63800.0,
+        parkinson_volatility: 0.018,
+        btc_dump_shield_active: false,
+        mtf_alignment_bullish: true,
     };
 
     let decision_bull = trader.evaluate_intelligent_decision(&bull_indicators, 64850.0);
@@ -861,6 +867,12 @@ fn test_intelligent_crypto_trader_confluence_and_kelly_sizing() {
         news_fear_greed_index: 50.0,
         adxr_14: 18.0,
         order_book_imbalance: 0.0,
+        poc_price: 64000.0,
+        value_area_high: 64200.0,
+        value_area_low: 63800.0,
+        parkinson_volatility: 0.010,
+        btc_dump_shield_active: false,
+        mtf_alignment_bullish: false,
     };
 
     let decision_squeeze = trader.evaluate_intelligent_decision(&squeeze_indicators, 64000.0);
