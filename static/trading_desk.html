@@ -722,12 +722,16 @@
             <p class="text-[11px] text-slate-400 mt-0.5">Execução paralela contínua de estratégias quantitativas em carteiras virtuais independentes com auto-promoção da melhor performance.</p>
           </div>
         </div>
-        <div class="flex items-center gap-3 text-xs">
-          <div class="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-navy-950 border border-navy-800">
-            <span class="text-slate-400 text-[11px]">Campeã Atual:</span>
-            <span id="arena-active-champion-title" class="mono font-bold text-emerald-400 text-xs">trend_supertrend_heavy</span>
+        <div class="flex flex-wrap items-center gap-2.5 text-xs">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="text-slate-400 text-[11px] font-semibold flex items-center gap-1">
+              <span>🏆 Campeãs por Criptomoeda:</span>
+            </span>
+            <div id="arena-asset-champions-strip" class="flex flex-wrap items-center gap-1.5">
+              <span class="text-slate-500 text-[11px]">Carregando moedas...</span>
+            </div>
           </div>
-          <button onclick="pollArenaStatus()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold transition border border-slate-700 flex items-center gap-1 active:scale-95" title="Atualizar dados da Arena ao vivo">
+          <button onclick="pollArenaStatus()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold transition border border-slate-700 flex items-center gap-1 active:scale-95 ml-auto" title="Atualizar dados da Arena ao vivo">
             <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             Atualizar Arena
           </button>
@@ -764,17 +768,16 @@
         <table class="w-full text-left text-xs">
           <thead class="text-[11px] uppercase font-bold text-slate-400 border-b border-navy-800 bg-navy-900 sticky top-0 z-10">
             <tr>
-              <th class="py-2.5 px-3 w-16">Rank</th>
-              <th class="py-2.5 px-3">Perfil da Estratégia</th>
-              <th class="py-2.5 px-3">Papel</th>
-              <th class="py-2.5 px-3">Saldo Virtual ($)</th>
-              <th class="py-2.5 px-3">Win Rate %</th>
-              <th class="py-2.5 px-3">PnL Líquido USD</th>
-              <th class="py-2.5 px-3">Profit Factor</th>
-              <th class="py-2.5 px-3">Sharpe Ratio</th>
-              <th class="py-2.5 px-3">Posição Atual</th>
-              <th class="py-2.5 px-3 text-right">Ação</th>
-            </tr>
+              <th class="py-2.5 px-3 w-20 min-w-[76px] whitespace-nowrap">Rank</th>
+              <th class="py-2.5 px-3 min-w-[220px]">Perfil da Estratégia</th>
+              <th class="py-2.5 px-3 whitespace-nowrap">Papel / Produção</th>
+              <th class="py-2.5 px-3 whitespace-nowrap">Saldo Virtual ($)</th>
+              <th class="py-2.5 px-3 whitespace-nowrap">Win Rate %</th>
+              <th class="py-2.5 px-3 whitespace-nowrap">PnL Líquido USD</th>
+              <th class="py-2.5 px-3 whitespace-nowrap">Profit Factor</th>
+              <th class="py-2.5 px-3 whitespace-nowrap">Sharpe Ratio</th>
+              <th class="py-2.5 px-3 whitespace-nowrap">Posição Atual</th>
+              <th class="py-2.5 px-3 text-right whitespace-nowrap">Ação por Cripto</th>
           </thead>
           <tbody id="arena-competitors-body" class="divide-y divide-navy-800/60 mono text-slate-300">
             <tr>
@@ -2540,6 +2543,18 @@
       }
     }
 
+    function selectArenaAssetFromBadge(asset) {
+      const select = document.getElementById('arena-asset-select');
+      if (select) {
+        if (select.value === asset) {
+          select.value = 'ALL';
+        } else {
+          select.value = asset;
+        }
+        changeArenaAsset();
+      }
+    }
+
     async function promoteAssetStrategy(asset, profileId) {
       if (!confirm(`Deseja promover o perfil "${profileId}" como Campeã exclusiva do ativo ${asset}? Ele passará a guiar todas as decisões deste ativo.`)) return;
       try {
@@ -2592,17 +2607,29 @@
       if (!arena) return;
       const tbody = document.getElementById('arena-competitors-body');
       const countBadge = document.getElementById('arena-competitors-badge');
-      const champTitle = document.getElementById('arena-active-champion-title');
+      const champStrip = document.getElementById('arena-asset-champions-strip');
       const promoList = document.getElementById('arena-promotion-history-list');
       const promoCount = document.getElementById('arena-promo-count');
 
       const isPerAsset = currentArenaAsset !== 'ALL';
-      const activeChampId = isPerAsset
-        ? (arena.asset_champions?.[currentArenaAsset] || arena.champion_profile_id || 'trend_supertrend_heavy')
-        : (arena.champion_profile_id || 'trend_supertrend_heavy');
+      const assetChamps = arena.asset_champions || {};
 
-      if (champTitle) {
-        champTitle.textContent = isPerAsset ? `[${currentArenaAsset.replace('-USDT','')}] ${activeChampId}` : activeChampId;
+      // Renderiza as campeãs ativas de cada criptomoeda no cabeçalho
+      if (champStrip) {
+        const assets = ['BTC-USDT', 'ETH-USDT', 'SOL-USDT', 'BNB-USDT', 'XRP-USDT', 'ADA-USDT', 'DOGE-USDT'];
+        champStrip.innerHTML = assets.map(a => {
+          const cId = assetChamps[a] || 'trend_supertrend_heavy';
+          const isCurrent = currentArenaAsset === a;
+          const shortCoin = a.replace('-USDT', '');
+          return `
+            <div onclick="selectArenaAssetFromBadge('${a}')" class="px-2 py-0.5 rounded text-[10px] mono cursor-pointer transition border flex items-center gap-1 ${
+              isCurrent ? 'bg-amber-500/25 border-amber-400 text-amber-200 ring-1 ring-amber-400/50' : 'bg-navy-950 hover:bg-navy-900 border-navy-800 text-slate-300'
+            }" title="Clique para filtrar a Arena pelo ${shortCoin} (ou clique novamente para ver todas)">
+              <span class="font-bold text-white">${shortCoin}:</span>
+              <span class="text-emerald-400 font-semibold truncate max-w-[110px]">${cId}</span>
+            </div>
+          `;
+        }).join('');
       }
 
       let competitors = arena.competitors || [];
@@ -2651,17 +2678,30 @@
           tbody.innerHTML = `<tr><td colspan="10" class="text-center py-6 text-slate-500">Nenhum competidor registrado nesta categoria.</td></tr>`;
         } else {
           tbody.innerHTML = competitors.map((c, index) => {
-            const isChamp = c.profile.id === activeChampId;
-            const roleBadge = isChamp
-              ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">👑 CAMPEÃ</span>`
-              : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">⚡ DESAFIANTE</span>`;
+            // Descobre para quais ativos esta estratégia é a Campeã Ativa
+            const wonAssets = Object.entries(assetChamps)
+              .filter(([_, champId]) => champId === c.profile.id)
+              .map(([asset]) => asset.replace('-USDT', ''));
+
+            const isChampForAny = wonAssets.length > 0;
+            const isChampForSelected = isPerAsset && (assetChamps[currentArenaAsset] === c.profile.id);
+            const isChamp = isPerAsset ? isChampForSelected : isChampForAny;
+
+            let roleBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 whitespace-nowrap">⚡ DESAFIANTE</span>`;
+            if (isPerAsset) {
+              if (isChampForSelected) {
+                roleBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap">👑 CAMPEÃ (${currentArenaAsset.replace('-USDT','')})</span>`;
+              }
+            } else if (isChampForAny) {
+              roleBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 whitespace-nowrap inline-flex items-center gap-1">👑 CAMPEÃ (${wonAssets.join(', ')})</span>`;
+            }
 
             const rankNum = index + 1;
             const rankBadge = rankNum === 1
-              ? `<span class="px-2 py-0.5 rounded font-black text-xs bg-amber-500/25 text-amber-300 border border-amber-500/40 animate-pulse">#1 TOP</span>`
+              ? `<span class="px-2 py-0.5 rounded font-black text-xs bg-amber-500/25 text-amber-300 border border-amber-500/40 whitespace-nowrap inline-flex items-center gap-1 shadow-sm shadow-amber-500/20">🏆 #1</span>`
               : rankNum <= 3
-              ? `<span class="px-1.5 py-0.5 rounded font-bold text-[11px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">#${rankNum}</span>`
-              : `<span class="text-slate-500 font-mono text-[11px]">#${rankNum}</span>`;
+              ? `<span class="px-1.5 py-0.5 rounded font-bold text-[11px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 whitespace-nowrap inline-flex items-center">#${rankNum}</span>`
+              : `<span class="text-slate-500 font-mono text-[11px] whitespace-nowrap">#${rankNum}</span>`;
 
             let pnl = c.net_pnl_usd || 0;
             let trades = c.total_trades || 0;
@@ -2681,40 +2721,52 @@
             const pnlClass = pnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
             const retSign = (c.return_pct || 0) >= 0 ? '+' : '';
 
-            let posText = '<span class="text-slate-500">Neutra / Caixa</span>';
+            let posText = '<span class="text-slate-500 whitespace-nowrap">Neutra / Caixa</span>';
             if (isPerAsset && c.asset_positions?.[currentArenaAsset]) {
               const cp = c.asset_positions[currentArenaAsset];
-              posText = `<span class="font-bold text-white">${cp.asset}</span> <span class="text-[10px] text-cyan-400 uppercase">(${cp.side})</span>`;
+              posText = `<span class="font-bold text-white whitespace-nowrap">${cp.asset}</span> <span class="text-[10px] text-cyan-400 uppercase">(${cp.side})</span>`;
             } else if (c.current_position) {
               const cp = c.current_position;
-              posText = `<span class="font-bold text-white">${cp.asset}</span> <span class="text-[10px] text-cyan-400 uppercase">(${cp.side})</span>`;
+              posText = `<span class="font-bold text-white whitespace-nowrap">${cp.asset}</span> <span class="text-[10px] text-cyan-400 uppercase">(${cp.side})</span>`;
             }
 
-            const actionBtn = isChamp
-              ? `<span class="px-2 py-1 text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 rounded border border-emerald-500/20">Em Produção</span>`
-              : isPerAsset
-              ? `<button onclick="promoteAssetStrategy('${currentArenaAsset}', '${c.profile.id}')" class="px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[10px] transition active:scale-95 shadow flex items-center gap-1">
-                   <span>Promover no ${currentArenaAsset.replace('-USDT','')}</span>
-                 </button>`
-              : `<button onclick="promoteStrategy('${c.profile.id}')" class="px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[10px] transition active:scale-95 shadow flex items-center gap-1">
-                   <span>Promover Global</span>
-                 </button>`;
+            // Ação por criptomoeda
+            const targetCoin = isPerAsset ? currentArenaAsset : selectedAsset;
+            const isAlreadyActiveForTarget = (assetChamps[targetCoin] === c.profile.id);
+
+            let actionBtn = '';
+            if (isAlreadyActiveForTarget) {
+              actionBtn = `<span class="px-2.5 py-1 text-[10px] text-emerald-300 font-bold bg-emerald-500/20 rounded border border-emerald-500/30 whitespace-nowrap inline-flex items-center gap-1">✓ Em Produção (${targetCoin.replace('-USDT','')})</span>`;
+            } else if (wonAssets.length > 0 && !isPerAsset) {
+              actionBtn = `<div class="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
+                <span class="text-[10px] text-emerald-400 font-semibold">Ativa: ${wonAssets.join(',')}</span>
+                <button onclick="promoteAssetStrategy('${targetCoin}', '${c.profile.id}')" class="px-2 py-0.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[10px] transition active:scale-95 shadow whitespace-nowrap">
+                  Definir no ${targetCoin.replace('-USDT','')}
+                </button>
+              </div>`;
+            } else {
+              actionBtn = `<button onclick="promoteAssetStrategy('${targetCoin}', '${c.profile.id}')" class="px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[10px] transition active:scale-95 shadow whitespace-nowrap inline-flex items-center gap-1 ml-auto">
+                <span>Promover no ${targetCoin.replace('-USDT','')}</span>
+              </button>`;
+            }
+
+            const rowHighlight = isChamp ? (isChampForSelected ? 'bg-amber-500/10' : 'bg-emerald-500/5') : '';
 
             return `
-              <tr class="hover:bg-navy-800/40 transition ${isChamp ? 'bg-amber-500/5' : ''}">
-                <td class="py-2.5 px-3 font-mono font-bold">${rankBadge}</td>
+              <tr class="hover:bg-navy-800/40 transition ${rowHighlight}">
+                <td class="py-2.5 px-3 font-mono font-bold whitespace-nowrap">${rankBadge}</td>
                 <td class="py-2.5 px-3">
                   <div class="font-bold text-white text-xs">${c.profile.name}</div>
                   <div class="text-[10px] text-slate-400">${c.profile.id} • ${c.profile.description ? c.profile.description.substring(0, 50) + '...' : ''}</div>
                 </td>
-                <td class="py-2.5 px-3">${roleBadge}</td>
-                <td class="py-2.5 px-3 font-bold text-white">${fmtUSD(c.virtual_balance_usd || 1000)}</td>
-                <td class="py-2.5 px-3 font-semibold text-slate-300">${wr.toFixed(1)}% <span class="text-[10px] text-slate-500">(${wins}W/${losses}L)</span></td>
-                <td class="py-2.5 px-3 font-bold ${pnlClass}">${pnlSign}${fmtUSD(pnl)} <span class="text-[10px]">(${retSign}${(c.return_pct || 0).toFixed(2)}%)</span></td>
-                <td class="py-2.5 px-3 font-semibold text-slate-200">${(c.profit_factor || 1.0).toFixed(2)}</td>
-                <td class="py-2.5 px-3 font-semibold ${c.sharpe_ratio >= 1.5 ? 'text-emerald-400' : 'text-slate-300'}">${(c.sharpe_ratio || 0).toFixed(2)}</td>
-                <td class="py-2.5 px-3">${posText}</td>
-                <td class="py-2.5 px-3 text-right">${actionBtn}</td>
+                <td class="py-2.5 px-3 whitespace-nowrap">${roleBadge}</td>
+                <td class="py-2.5 px-3 font-bold text-white whitespace-nowrap">${fmtUSD(c.virtual_balance_usd || 1000)}</td>
+                <td class="py-2.5 px-3 font-semibold text-slate-300 whitespace-nowrap">${wr.toFixed(1)}% <span class="text-[10px] text-slate-500">(${wins}W/${losses}L)</span></td>
+                <td class="py-2.5 px-3 font-bold whitespace-nowrap ${pnlClass}">${pnlSign}${fmtUSD(pnl)} <span class="text-[10px]">(${retSign}${(c.return_pct || 0).toFixed(2)}%)</span></td>
+                <td class="py-2.5 px-3 font-semibold text-slate-200 whitespace-nowrap">${(c.profit_factor || 1.0).toFixed(2)}</td>
+                <td class="py-2.5 px-3 font-semibold whitespace-nowrap ${c.sharpe_ratio >= 1.5 ? 'text-emerald-400' : 'text-slate-300'}">${(c.sharpe_ratio || 0).toFixed(2)}</td>
+                <td class="py-2.5 px-3 whitespace-nowrap">${posText}</td>
+                <td class="py-2.5 px-3 text-right whitespace-nowrap">${actionBtn}</td>
               </tr>
             `;
           }).join('');
