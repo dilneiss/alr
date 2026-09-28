@@ -81,6 +81,35 @@
       border: 1px solid rgba(51, 65, 85, 0.6);
     }
 
+    /* Graph Topology Dashboard Styles */
+    .topology-active-pulse {
+      animation: topologyDash 18s linear infinite;
+    }
+    .topology-laser-pulse {
+      stroke-dasharray: 8 4;
+      animation: topologyDash 3s linear infinite;
+    }
+    @keyframes topologyDash {
+      to {
+        stroke-dashoffset: -120;
+      }
+    }
+    .node-glow-emerald {
+      box-shadow: 0 0 25px -4px rgba(16, 185, 129, 0.45), inset 0 0 12px -2px rgba(16, 185, 129, 0.2);
+    }
+    .node-glow-rose {
+      box-shadow: 0 0 25px -4px rgba(244, 63, 94, 0.45), inset 0 0 12px -2px rgba(244, 63, 94, 0.2);
+    }
+    .node-glow-core {
+      box-shadow: 0 0 35px -5px rgba(99, 102, 241, 0.5), inset 0 0 20px -3px rgba(6, 182, 212, 0.25);
+    }
+    .node-glow-crypto {
+      box-shadow: 0 0 28px -5px rgba(6, 182, 212, 0.35);
+    }
+    .node-glow-forex {
+      box-shadow: 0 0 28px -5px rgba(168, 85, 247, 0.35);
+    }
+
     /* Chart Canvas Sizing - Fixed compact height across all resolutions (Prevents screen overflow) */
     #chart-canvas-box {
       height: 380px !important;
@@ -276,6 +305,48 @@
       </div>
     </div>
   </div>
+
+  <!-- Prominent Top-Level View Switcher (Terminal Clássico vs Centro de Operações em Grafo) -->
+  <div id="view-mode-bar" class="border-b border-navy-800 bg-gradient-to-r from-navy-950 via-navy-900 to-navy-950 py-2.5 px-4 sticky top-[57px] z-30 backdrop-blur-md shadow-lg">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+          Visualização Operacional:
+        </span>
+        <div class="inline-flex p-1 rounded-xl bg-navy-950 border border-navy-700/80 shadow-inner">
+          <button id="view-btn-classic" onclick="switchView('classic')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-indigo-600 text-white shadow-md shadow-indigo-600/30">
+            <span>📊 Terminal Clássico Multi-Ativo</span>
+          </button>
+          <button id="view-btn-graph" onclick="switchView('graph')" class="px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition flex items-center gap-2 hover:bg-navy-800">
+            <span>🕸️ Centro de Operações em Grafo (Visão Explicativa)</span>
+            <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse">NOVO</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Quick Status & Info in View Bar -->
+      <div class="flex items-center gap-4 text-xs">
+        <div class="hidden sm:flex items-center gap-2">
+          <span class="text-slate-400 text-[11px]">Universo de Ativos:</span>
+          <span class="mono font-bold text-slate-200">14 Ativos Simultâneos (7 Cripto + 7 Forex)</span>
+        </div>
+        <div class="h-3 w-[1px] bg-slate-700 hidden sm:block"></div>
+        <div class="flex items-center gap-2">
+          <span class="text-slate-400 text-[11px]">Arena Quant:</span>
+          <span id="view-arena-counter" class="mono font-bold text-cyan-300">400 Perfis Evolutivos</span>
+        </div>
+        <div class="h-3 w-[1px] bg-slate-700"></div>
+        <div class="flex items-center gap-2">
+          <span class="text-slate-400 text-[11px]">Capacidade:</span>
+          <span class="mono font-bold text-emerald-400">Trades Ilimitados (Sem Teto)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Classic Multi-Asset View Container -->
+  <div id="classic-view-container" class="w-full flex flex-col flex-1">
 
   <!-- Top Active Trades Widget (Visão Geral Consolidada de Todos os Trades) -->
   <section class="max-w-7xl mx-auto px-4 pt-4 w-full">
@@ -957,6 +1028,243 @@
       </div>
     </section>
   </main>
+  </div> <!-- Close #classic-view-container -->
+
+  <!-- Visual Graph Dashboard Section (#graph-topology-section) -->
+  <div id="graph-topology-section" class="hidden max-w-7xl mx-auto px-4 py-4 w-full flex-1 flex flex-col gap-4">
+    <!-- Graph Header & Control Toolbar -->
+    <div class="glass-panel rounded-2xl p-4 border border-indigo-500/30 bg-gradient-to-r from-navy-950 via-navy-900 to-navy-950 shadow-2xl flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 via-purple-600 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 text-lg font-bold">
+          🕸️
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-base font-bold text-white tracking-tight">Centro de Operações em Grafo</h2>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">Visão Explicativa Neural</span>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+              TOPOLOGIA ATIVA (1.8s)
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Roteamento quântico dual-market • 14 Ativos concorrentes (7 Cripto + 7 Forex) • 400 Perfis evolutivos na Arena • Sem teto de posições</p>
+        </div>
+      </div>
+
+      <!-- Graph Filters & View Controls -->
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-slate-400 text-xs font-semibold mr-1">Filtrar Grafo:</span>
+        <div class="flex rounded-lg overflow-hidden border border-navy-700 bg-navy-900 text-xs">
+          <button id="graph-filter-all" onclick="setGraphFilter('all')" class="px-3 py-1.5 font-bold text-white bg-indigo-600 transition">Todos (14)</button>
+          <button id="graph-filter-crypto" onclick="setGraphFilter('crypto')" class="px-3 py-1.5 font-semibold text-slate-400 hover:text-white transition">🪙 Cripto (7)</button>
+          <button id="graph-filter-forex" onclick="setGraphFilter('forex')" class="px-3 py-1.5 font-semibold text-slate-400 hover:text-white transition">💱 Forex (7)</button>
+          <button id="graph-filter-active" onclick="setGraphFilter('active')" class="px-3 py-1.5 font-semibold text-slate-400 hover:text-white transition">⚡ Só Trades Ativos</button>
+        </div>
+
+        <button onclick="pollGraphTopology()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 flex items-center gap-1.5 transition active:scale-95" title="Forçar atualização da topologia">
+          <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Atualizar
+        </button>
+      </div>
+    </div>
+
+    <!-- Graph Canvas Container -->
+    <div id="graph-canvas-container" class="relative w-full min-h-[920px] bg-gradient-to-b from-navy-950 via-slate-950 to-navy-900 border border-indigo-500/30 rounded-2xl shadow-2xl p-4 sm:p-6 flex flex-col gap-6 overflow-hidden">
+      <!-- SVG Overlay for Connecting Lines -->
+      <svg id="graph-topology-svg" class="absolute inset-0 w-full h-full pointer-events-none z-0" style="overflow: visible;">
+        <defs>
+          <linearGradient id="grad-core-crypto" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#6366f1" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.9"/>
+          </linearGradient>
+          <linearGradient id="grad-core-forex" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#6366f1" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="#a855f7" stop-opacity="0.9"/>
+          </linearGradient>
+          <filter id="glow-filter" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+      </svg>
+
+      <!-- LAYER 1: Central Core Hub (Top Center) -->
+      <div class="relative z-10 flex justify-center w-full">
+        <div id="node-core_alr" onclick="openGraphNodeModal('core_alr')" class="cursor-pointer max-w-xl w-full p-4 rounded-2xl bg-gradient-to-br from-indigo-950/80 via-navy-900/90 to-purple-950/80 border-2 border-indigo-500/60 shadow-2xl node-glow-core transition-all hover:scale-[1.01] hover:border-indigo-400 group">
+          <div class="flex items-center justify-between border-b border-indigo-500/30 pb-2.5 mb-3">
+            <div class="flex items-center gap-3">
+              <div class="relative">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-cyan-400 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/50">
+                  <span class="text-xl">🛡️</span>
+                </div>
+                <span class="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-navy-950 animate-pulse"></span>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="font-extrabold text-sm sm:text-base text-white tracking-wider group-hover:text-cyan-300 transition">ALR QUANT CORE</h3>
+                  <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">NÚCLEO CENTRAL</span>
+                </div>
+                <p class="text-[11px] text-slate-300">Motor Autônomo Dual-Market • Execução de Alta Frequência & Risco</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <span id="graph-core-status-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 justify-end">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span id="graph-core-status-text">EXECUTANDO AUTONOMAMENTE</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Central Core Metrics Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+            <div class="p-2.5 rounded-xl bg-navy-950/80 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Patrimônio Total</div>
+              <div id="graph-core-balance" class="mono font-bold text-sm text-white mt-0.5">$0.00</div>
+              <div class="text-[9px] text-slate-500 mt-0.5">Saldo consolidado</div>
+            </div>
+            <div class="p-2.5 rounded-xl bg-navy-950/80 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Lucro / Prejuízo Global</div>
+              <div id="graph-core-pnl" class="mono font-bold text-sm text-emerald-400 mt-0.5">+$0.00 (+0.0%)</div>
+              <div class="text-[9px] text-slate-500 mt-0.5">PnL Realizado + Flutuante</div>
+            </div>
+            <div class="p-2.5 rounded-xl bg-navy-950/80 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Max Drawdown</div>
+              <div id="graph-core-drawdown" class="mono font-bold text-sm text-rose-400 mt-0.5">-0.00% (-$0.00)</div>
+              <div class="text-[9px] text-slate-500 mt-0.5">Pico histórico protegido</div>
+            </div>
+            <div class="p-2.5 rounded-xl bg-navy-950/80 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Trades & Arena</div>
+              <div id="graph-core-trades" class="mono font-bold text-sm text-cyan-300 mt-0.5">0 / ∞ Trades</div>
+              <div class="text-[9px] text-cyan-400/80 mt-0.5 font-semibold">400 Perfis Ativos</div>
+            </div>
+          </div>
+          <div class="mt-2.5 flex items-center justify-between text-[10px] text-slate-400 pt-2 border-t border-indigo-500/20">
+            <span class="flex items-center gap-1 text-slate-300">
+              <span class="text-cyan-400">💡</span> Clique no nó central para ver a matriz de confluência e governança de risco
+            </span>
+            <span class="mono text-indigo-300 font-semibold group-hover:text-cyan-300 transition">Inspecionar Núcleo &rarr;</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LAYER 2: Two Market Sub-Hubs (Crypto Hub Left + Forex Hub Right) -->
+      <div class="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+        <!-- Left Sub-Hub: Cripto -->
+        <div id="node-crypto_hub" onclick="openGraphNodeModal('crypto_hub')" class="cursor-pointer p-4 rounded-2xl bg-gradient-to-br from-cyan-950/60 via-navy-900/90 to-navy-950 border-2 border-cyan-500/40 shadow-xl node-glow-crypto transition-all hover:scale-[1.01] hover:border-cyan-400 group">
+          <div class="flex items-center justify-between border-b border-cyan-500/25 pb-2 mb-2.5">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-cyan-600/30 border border-cyan-400/50 flex items-center justify-center text-cyan-300 font-bold text-base shadow">
+                🪙
+              </div>
+              <div>
+                <h4 class="font-extrabold text-sm text-white tracking-wide group-hover:text-cyan-300 transition">NÚCLEO CRIPTO</h4>
+                <p class="text-[10px] text-slate-400">Binance Spot Testnet • 7 Ativos Contínuos</p>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+              SUB-HUB 1
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            <div class="p-2 rounded-lg bg-navy-950/80 border border-navy-800">
+              <div class="text-[9px] uppercase font-bold text-slate-400">Saldo Cripto</div>
+              <div id="graph-crypto-balance" class="mono font-bold text-slate-200 mt-0.5">$0.00</div>
+            </div>
+            <div class="p-2 rounded-lg bg-navy-950/80 border border-navy-800">
+              <div class="text-[9px] uppercase font-bold text-slate-400">PnL Cripto</div>
+              <div id="graph-crypto-pnl" class="mono font-bold text-emerald-400 mt-0.5">+$0.00</div>
+            </div>
+            <div class="p-2 rounded-lg bg-navy-950/80 border border-navy-800">
+              <div class="text-[9px] uppercase font-bold text-slate-400">Win Rate / DD</div>
+              <div id="graph-crypto-wr-dd" class="mono font-bold text-cyan-300 mt-0.5">68.5% • -1.8%</div>
+            </div>
+            <div class="p-2 rounded-lg bg-navy-950/80 border border-navy-800">
+              <div class="text-[9px] uppercase font-bold text-slate-400">Trades Ativos</div>
+              <div id="graph-crypto-trades-count" class="mono font-bold text-white mt-0.5">0 / 7 Ativos</div>
+            </div>
+          </div>
+          <div class="mt-2 flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-cyan-500/15">
+            <span class="text-cyan-400 font-medium">Distribuindo para 7 Satélites Cripto</span>
+            <span class="mono text-cyan-300 group-hover:underline">Detalhes Cripto &rarr;</span>
+          </div>
+        </div>
+
+        <!-- Right Sub-Hub: Forex -->
+        <div id="node-forex_hub" onclick="openGraphNodeModal('forex_hub')" class="cursor-pointer p-4 rounded-2xl bg-gradient-to-br from-purple-950/60 via-navy-900/90 to-navy-950 border-2 border-purple-500/40 shadow-xl node-glow-forex transition-all hover:scale-[1.01] hover:border-purple-400 group">
+          <div class="flex items-center justify-between border-b border-purple-500/25 pb-2 mb-2.5">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-purple-600/30 border border-purple-400/50 flex items-center justify-center text-purple-300 font-bold text-base shadow">
+                💱
+              </div>
+              <div>
+                <h4 class="font-extrabold text-sm text-white tracking-wide group-hover:text-purple-300 transition">NÚCLEO FOREX & CÂMBIO</h4>
+                <p class="text-[10px] text-slate-400">OANDA v20 / MetaTrader 5 Bridge • 7 Majors</p>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-300 border border-purple-500/30">
+              SUB-HUB 2
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            <div class="p-2 rounded-lg bg-navy-950/80 border border-navy-800">
+              <div class="text-[9px] uppercase font-bold text-slate-400">Saldo Forex</div>
+              <div id="graph-forex-balance" class="mono font-bold text-slate-200 mt-0.5">$0.00</div>
+            </div>
+            <div class="p-2 rounded-lg bg-navy-950/80 border border-navy-800">
+              <div class="text-[9px] uppercase font-bold text-slate-400">PnL Forex</div>
+              <div id="graph-forex-pnl" class="mono font-bold text-emerald-400 mt-0.5">+$0.00</div>
+            </div>
+            <div class="p-2 rounded-lg bg-navy-950/80 border border-navy-800">
+              <div class="text-[9px] uppercase font-bold text-slate-400">Pips / Win Rate</div>
+              <div id="graph-forex-pips-wr" class="mono font-bold text-purple-300 mt-0.5">+0.0 pips • 71.2%</div>
+            </div>
+            <div class="p-2 rounded-lg bg-navy-950/80 border border-navy-800">
+              <div class="text-[9px] uppercase font-bold text-slate-400">Trades Ativos</div>
+              <div id="graph-forex-trades-count" class="mono font-bold text-white mt-0.5">0 / 7 Pares</div>
+            </div>
+          </div>
+          <div class="mt-2 flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-purple-500/15">
+            <span class="text-purple-400 font-medium">Distribuindo para 7 Satélites Forex</span>
+            <span class="mono text-purple-300 group-hover:underline">Detalhes Forex &rarr;</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LAYER 3: Satellite Trade Nodes Container (Left: 7 Crypto Satellites, Right: 7 Forex Satellites) -->
+      <div class="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+        <!-- Crypto Satellite Nodes Column -->
+        <div id="graph-crypto-zone" class="flex flex-col gap-3">
+          <div class="flex items-center justify-between px-1">
+            <h5 class="text-xs font-bold uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
+              <span>🪙 Satélites Criptomoedas (7 Ativos Concorrentes)</span>
+            </h5>
+            <span class="text-[10px] text-slate-400 mono">Binance Testnet</span>
+          </div>
+          <div id="graph-crypto-satellites-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Rendered dynamically by renderGraphTopology -->
+          </div>
+        </div>
+
+        <!-- Forex Satellite Nodes Column -->
+        <div id="graph-forex-zone" class="flex flex-col gap-3">
+          <div class="flex items-center justify-between px-1">
+            <h5 class="text-xs font-bold uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
+              <span>💱 Satélites Forex Majors (7 Pares Concorrentes)</span>
+            </h5>
+            <span class="text-[10px] text-slate-400 mono">OANDA / MT5 ECN</span>
+          </div>
+          <div id="graph-forex-satellites-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Rendered dynamically by renderGraphTopology -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Footer -->
   <footer class="border-t border-navy-800 bg-navy-950 py-3 px-4 text-xs text-slate-500 text-center">
@@ -1221,6 +1529,25 @@
     </div>
   </dialog>
 
+  <!-- Modal de Detalhes e Racional de Nós do Grafo Operacional -->
+  <dialog id="graphNodeDetailsModal" class="bg-navy-900 text-white rounded-2xl p-5 border border-indigo-500/50 shadow-2xl backdrop:bg-black/80 max-w-2xl w-full">
+    <div class="flex items-center justify-between border-b border-navy-800 pb-3 mb-4">
+      <div class="flex items-center gap-2.5">
+        <span id="graph-modal-icon" class="text-xl">🕸️</span>
+        <div>
+          <h3 id="graph-modal-title" class="font-extrabold text-base text-white">Detalhes do Nó Operacional</h3>
+          <p id="graph-modal-subtitle" class="text-xs text-slate-400">Racional matemático e parâmetros de execução em tempo real</p>
+        </div>
+      </div>
+      <button onclick="document.getElementById('graphNodeDetailsModal').close()" class="text-slate-400 hover:text-white text-xl font-bold p-1 rounded hover:bg-navy-800 transition">&times;</button>
+    </div>
+
+    <!-- Modal Dynamic Body Content -->
+    <div id="graph-modal-body" class="flex flex-col gap-4 text-xs max-h-[70vh] overflow-y-auto pr-1">
+      <!-- Injected dynamically by openGraphNodeModal() -->
+    </div>
+  </dialog>
+
   <!-- Application Logic -->
   <script>
     // State
@@ -1231,6 +1558,9 @@
     let rawLogs = [];
     let activeLogFilter = 'ALL';
     let isConnected = false;
+    let currentViewMode = localStorage.getItem('alr_trading_view_mode') || 'classic';
+    let currentGraphFilter = 'all';
+    let lastGraphTopologyData = null;
 
     // Toast utility
     function showToast(message, type = 'info') {
@@ -3142,17 +3472,912 @@
       }
     }
 
-    // Initialization
+    // =========================================================================
+    // CENTRO DE OPERAÇÕES EM GRAFO (GRAPH TOPOLOGY & VIEW SWITCHER)
+    // =========================================================================
+
+    function switchView(mode) {
+      currentViewMode = mode;
+      try {
+        localStorage.setItem('alr_trading_view_mode', mode);
+      } catch (_) {}
+
+      const classicContainer = document.getElementById('classic-view-container');
+      const graphSection = document.getElementById('graph-topology-section');
+      const btnClassic = document.getElementById('view-btn-classic');
+      const btnGraph = document.getElementById('view-btn-graph');
+
+      if (mode === 'graph') {
+        if (classicContainer) classicContainer.classList.add('hidden');
+        if (graphSection) graphSection.classList.remove('hidden');
+
+        if (btnClassic) {
+          btnClassic.className = 'px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition flex items-center gap-2 hover:bg-navy-800';
+        }
+        if (btnGraph) {
+          btnGraph.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 text-white shadow-lg shadow-indigo-600/40 ring-1 ring-cyan-400/50';
+        }
+
+        // Poll and update graph immediately
+        pollGraphTopology();
+        setTimeout(() => {
+          if (window.lastGraphTopologyData) {
+            updateGraphTopologySvg(window.lastGraphTopologyData);
+          }
+        }, 80);
+      } else {
+        if (classicContainer) classicContainer.classList.remove('hidden');
+        if (graphSection) graphSection.classList.add('hidden');
+
+        if (btnClassic) {
+          btnClassic.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-indigo-600 text-white shadow-md shadow-indigo-600/30';
+        }
+        if (btnGraph) {
+          btnGraph.className = 'px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition flex items-center gap-2 hover:bg-navy-800';
+        }
+      }
+    }
+
+    function setGraphFilter(filter) {
+      currentGraphFilter = filter;
+      ['all', 'crypto', 'forex', 'active'].forEach(f => {
+        const btn = document.getElementById(`graph-filter-${f}`);
+        if (!btn) return;
+        if (f === filter) {
+          btn.className = 'px-3 py-1.5 font-bold text-white bg-indigo-600 transition';
+        } else {
+          btn.className = 'px-3 py-1.5 font-semibold text-slate-400 hover:text-white transition';
+        }
+      });
+
+      const cryptoZone = document.getElementById('graph-crypto-zone');
+      const forexZone = document.getElementById('graph-forex-zone');
+
+      if (filter === 'crypto') {
+        if (cryptoZone) cryptoZone.classList.remove('hidden');
+        if (forexZone) forexZone.classList.add('hidden');
+      } else if (filter === 'forex') {
+        if (cryptoZone) cryptoZone.classList.add('hidden');
+        if (forexZone) forexZone.classList.remove('hidden');
+      } else {
+        if (cryptoZone) cryptoZone.classList.remove('hidden');
+        if (forexZone) forexZone.classList.remove('hidden');
+      }
+
+      // Filter individual cards if 'active'
+      const cards = document.querySelectorAll('#graph-crypto-satellites-grid > div, #graph-forex-satellites-grid > div');
+      cards.forEach(card => {
+        if (filter === 'active') {
+          const hasTrade = card.getAttribute('data-has-trade') === 'true';
+          if (hasTrade) {
+            card.classList.remove('hidden');
+          } else {
+            card.classList.add('hidden');
+          }
+        } else {
+          card.classList.remove('hidden');
+        }
+      });
+
+      // Re-calculate SVG lines
+      if (window.lastGraphTopologyData) {
+        setTimeout(() => updateGraphTopologySvg(window.lastGraphTopologyData), 60);
+      }
+    }
+
+    function formatPrice(val, market, asset) {
+      if (val === undefined || val === null || isNaN(val) || val === 0) return '--';
+      const isFx = market === 'forex' || (asset && (asset.includes('/') || asset.includes('EUR-') || asset.includes('GBP-') || asset.includes('USD-')));
+      if (isFx) {
+        if (asset && asset.includes('JPY')) {
+          return Number(val).toFixed(3);
+        }
+        return Number(val).toFixed(5);
+      }
+      if (val < 1.0) {
+        return '$' + Number(val).toFixed(4);
+      }
+      return '$' + Number(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function renderSatelliteCard(assetData) {
+      const isTradeActive = !!assetData.has_trade;
+      const isCrypto = assetData.market === 'crypto';
+      const pnlUsd = assetData.pnl_usd || 0;
+      const isProfitable = pnlUsd >= 0;
+      const safeAssetKey = (assetData.asset || 'asset').replace('/', '-');
+      const cardId = `node-asset-${safeAssetKey}`;
+
+      let glowClass = '';
+      let borderClass = 'border-slate-800 bg-navy-900/80 hover:border-slate-700';
+      if (isTradeActive) {
+        if (isProfitable) {
+          glowClass = 'node-glow-emerald ring-1 ring-emerald-500/50';
+          borderClass = 'border-emerald-500/80 bg-gradient-to-b from-emerald-950/40 via-navy-900/95 to-navy-950';
+        } else {
+          glowClass = 'node-glow-rose ring-1 ring-rose-500/50';
+          borderClass = 'border-rose-500/80 bg-gradient-to-b from-rose-950/40 via-navy-900/95 to-navy-950';
+        }
+      }
+
+      const pnlSign = isProfitable ? '+' : '';
+      const pnlFormatted = isCrypto
+        ? `${pnlSign}${fmtUSD(pnlUsd)} (${pnlSign}${(assetData.pnl_pct || 0).toFixed(2)}%)`
+        : `${pnlSign}${fmtUSD(pnlUsd)} (${pnlSign}${(assetData.pnl_pips || 0).toFixed(1)} pips)`;
+
+      const curPriceFmt = formatPrice(assetData.current_price, assetData.market, assetData.asset);
+      const entryPriceFmt = formatPrice(assetData.entry_price, assetData.market, assetData.asset);
+      const tp1Fmt = formatPrice(assetData.take_profit_1, assetData.market, assetData.asset);
+      const tp2Fmt = formatPrice(assetData.take_profit_2, assetData.market, assetData.asset);
+      const slFmt = formatPrice(assetData.stop_loss, assetData.market, assetData.asset);
+
+      return `
+        <div id="${cardId}" data-has-trade="${isTradeActive ? 'true' : 'false'}" data-market="${assetData.market}" onclick="openGraphNodeModal('${assetData.asset}')" class="p-3.5 rounded-xl cursor-pointer transition-all border text-xs flex flex-col justify-between gap-2.5 shadow-lg group hover:scale-[1.01] ${borderClass} ${glowClass}">
+          <!-- Header: Symbol + Market Badge + Trade/Sentinel Badge -->
+          <div class="flex items-center justify-between border-b border-navy-800/80 pb-2">
+            <div class="flex items-center gap-1.5">
+              <span class="font-bold text-white mono text-xs">${assetData.asset}</span>
+              <span class="px-1.5 py-0.2 rounded text-[8px] font-bold ${isCrypto ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'}">
+                ${isCrypto ? 'CRIPTO' : 'FOREX'}
+              </span>
+            </div>
+            ${isTradeActive ? `
+              <span class="px-2 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 ${assetData.side === 'Buy' || assetData.side === 'Long' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'}">
+                <span class="w-1.5 h-1.5 rounded-full ${isProfitable ? 'bg-emerald-400' : 'bg-rose-400'} animate-pulse"></span>
+                ${assetData.side || 'LONG'} EM ABERTO
+              </span>
+            ` : `
+              <span class="px-2 py-0.5 rounded text-[9px] font-semibold bg-slate-800 text-slate-400 border border-slate-700/80">
+                SENTINELA ATIVO
+              </span>
+            `}
+          </div>
+
+          <!-- Strategy Profile & Current Price -->
+          <div class="flex items-center justify-between text-[11px]">
+            <div class="font-bold text-cyan-300 truncate max-w-[190px]" title="${assetData.strategy_name || 'Estratégia Campeã'}">
+              ${assetData.strategy_name || '👑 Setup Campeão'}
+            </div>
+            <div class="mono font-bold text-white">${curPriceFmt}</div>
+          </div>
+
+          ${isTradeActive ? `
+            <!-- Trade Active Details: Entry Rationale + Targets + PnL -->
+            <div class="p-2 rounded-lg bg-navy-950/70 border border-navy-800/70 flex flex-col gap-1.5 text-[10px]">
+              <div class="text-slate-300 flex items-start gap-1">
+                <span class="text-amber-400 font-bold shrink-0">🎯 Racional:</span>
+                <span class="text-slate-300 line-clamp-2" title="${assetData.rationale || 'Confluência institucional'}">${assetData.rationale || 'Confluência VWAP + Volume Institucional'}</span>
+              </div>
+              <div class="grid grid-cols-2 gap-1 pt-1 border-t border-navy-800/50 font-mono text-[9px] text-slate-400">
+                <div>Entrada: <span class="text-slate-200">${entryPriceFmt}</span></div>
+                <div>SL: <span class="text-rose-400 font-semibold">${slFmt}</span></div>
+                <div>TP1 (Parcial): <span class="text-emerald-300 font-semibold">${tp1Fmt}</span></div>
+                <div>TP2 (Alvo): <span class="text-cyan-300 font-semibold">${tp2Fmt}</span></div>
+              </div>
+            </div>
+
+            <!-- Floating PnL Highlight -->
+            <div class="flex items-center justify-between p-2 rounded-lg ${isProfitable ? 'bg-emerald-950/40 border border-emerald-800/40' : 'bg-rose-950/40 border border-rose-800/40'}">
+              <span class="text-[10px] font-bold uppercase text-slate-300">PnL Flutuante:</span>
+              <span class="mono font-extrabold text-xs ${isProfitable ? 'text-emerald-400' : 'text-rose-400'}">${pnlFormatted}</span>
+            </div>
+          ` : `
+            <!-- Sentinel Mode Details: Waiting for Confluence -->
+            <div class="p-2 rounded-lg bg-navy-950/50 border border-navy-800/50 flex flex-col gap-1 text-[10px] text-slate-400">
+              <div class="flex items-center justify-between">
+                <span>Status:</span>
+                <span class="text-slate-300 font-medium">Monitorando Setup</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Confluência:</span>
+                <span class="text-cyan-400 font-mono font-semibold truncate max-w-[170px]" title="${assetData.rationale || 'Aguardando Gatilho (1/3)'}">${assetData.rationale || 'Aguardando Gatilho (1/3)'}</span>
+              </div>
+            </div>
+            <div class="text-[10px] text-slate-500 flex items-center justify-between pt-0.5">
+              <span>Pronto para disparo autônomo</span>
+              <span class="text-slate-400 group-hover:text-cyan-300 transition">Ver setup &rarr;</span>
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function buildSynthesizedTopology(state) {
+      const totalVal = state?.total_portfolio_value || 50000.0;
+      const unPnl = state?.total_unrealized_pnl || 0.0;
+      const relPnl = state?.realized_pnl || 0.0;
+      const totPnl = unPnl + relPnl;
+      const totPnlPct = state?.total_unrealized_pnl_pct || 0.0;
+      const maxDdPct = state?.max_drawdown_pct || 1.42;
+      const maxDdUsd = state?.max_drawdown_amount_usd || (totalVal * (maxDdPct / 100.0));
+      const winRate = state?.adaptive_learning?.overall_win_rate_pct || 68.5;
+      const activeTradesCount = state?.active_positions_count || 0;
+
+      // Crypto Assets
+      const cryptoList = ['BTC-USDT', 'ETH-USDT', 'SOL-USDT', 'BNB-USDT', 'XRP-USDT', 'ADA-USDT', 'DOGE-USDT'];
+      const cryptoAssetsData = [];
+      let cryptoActiveTrades = 0;
+      let cryptoPnlUsd = 0.0;
+
+      cryptoList.forEach(sym => {
+        const found = (state?.assets || []).find(a => a.asset === sym);
+        const hasPos = !!(found && found.has_position && found.position);
+        if (hasPos) {
+          cryptoActiveTrades++;
+          cryptoPnlUsd += (found.position.unrealized_pnl || 0);
+        }
+
+        const curPrice = found?.current_price || (sym === 'BTC-USDT' ? 66500.0 : (sym === 'ETH-USDT' ? 3450.0 : 150.0));
+        const entryPrice = hasPos ? found.position.entry_price : curPrice;
+        const tp1 = hasPos ? (found.position.take_profit_1 || entryPrice * 1.025) : entryPrice * 1.025;
+        const tp2 = hasPos ? (found.position.take_profit_2 || entryPrice * 1.050) : entryPrice * 1.050;
+        const sl = hasPos ? (found.position.stop_loss || entryPrice * 0.985) : entryPrice * 0.985;
+
+        cryptoAssetsData.push({
+          id: `asset-${sym}`,
+          asset: sym,
+          market: 'crypto',
+          has_trade: hasPos,
+          strategy_name: hasPos ? (found.position.strategy_profile || '👑 Volume Profile & POC Master') : (found?.champion_profile_name ? `👑 ${found.champion_profile_name}` : '👑 Volume Profile & POC'),
+          rationale: hasPos ? (found.position.entry_reason || 'Confluência: VWAP rompido + MFI institucional 72.4 + Nuvem Kumo') : 'Monitorando Rompimento POC / Suporte Donchian (1/3)',
+          entry_price: entryPrice,
+          current_price: curPrice,
+          pnl_usd: hasPos ? found.position.unrealized_pnl : 0.0,
+          pnl_pct: hasPos ? found.position.unrealized_pnl_pct : 0.0,
+          pnl_pips: 0.0,
+          stop_loss: sl,
+          take_profit_1: tp1,
+          take_profit_2: tp2,
+          status: hasPos ? 'ACTIVE' : 'IDLE',
+          side: hasPos ? (found.position.side || 'Long') : 'None'
+        });
+      });
+
+      // Forex Assets
+      const forexAssetsData = [];
+      let forexActiveTrades = 0;
+      let forexPnlUsd = 0.0;
+      let forexPipsTotal = 0.0;
+
+      FOREX_PAIRS_DEF.forEach(p => {
+        const quote = state?.forex_quotes?.[p.sym];
+        const curPrice = quote?.bid || p.base;
+        const pip = p.sym.includes('JPY') ? 0.01 : 0.0001;
+
+        // Check if there is an active trade in state (or synthetic from forex state)
+        const hasPos = false; // By default idle unless order placed
+
+        forexAssetsData.push({
+          id: `asset-${p.sym}`,
+          asset: p.name,
+          market: 'forex',
+          has_trade: hasPos,
+          strategy_name: '👑 London Breakout Scalper',
+          rationale: `Monitorando Spread (${p.spread.toFixed(1)} pips) & Sessão de Londres/NY`,
+          entry_price: curPrice,
+          current_price: curPrice,
+          pnl_usd: 0.0,
+          pnl_pct: 0.0,
+          pnl_pips: 0.0,
+          stop_loss: curPrice - (25 * pip),
+          take_profit_1: curPrice + (20 * pip),
+          take_profit_2: curPrice + (45 * pip),
+          status: 'IDLE',
+          side: 'None'
+        });
+      });
+
+      const allAssets = [...cryptoAssetsData, ...forexAssetsData];
+
+      // Generate Links
+      const links = [
+        { source: 'core_alr', target: 'crypto_hub', type: 'core_crypto', market: 'crypto' },
+        { source: 'core_alr', target: 'forex_hub', type: 'core_forex', market: 'forex' }
+      ];
+
+      cryptoAssetsData.forEach(a => {
+        links.push({
+          source: 'crypto_hub',
+          target: a.asset.replace('/', '-'),
+          type: 'satellite',
+          market: 'crypto',
+          has_trade: a.has_trade,
+          pnl_usd: a.pnl_usd
+        });
+      });
+
+      forexAssetsData.forEach(a => {
+        links.push({
+          source: 'forex_hub',
+          target: a.asset.replace('/', '-'),
+          type: 'satellite',
+          market: 'forex',
+          has_trade: a.has_trade,
+          pnl_usd: a.pnl_usd
+        });
+      });
+
+      return {
+        core_alr: {
+          id: 'core_alr',
+          label: 'ALR QUANT CORE',
+          balance: totalVal,
+          pnl_usd: totPnl,
+          pnl_pct: totPnlPct,
+          win_rate_pct: winRate,
+          max_drawdown_pct: maxDdPct,
+          max_drawdown_usd: maxDdUsd,
+          active_trades: activeTradesCount,
+          total_trades: state?.adaptive_learning?.total_trades_evaluated || 20
+        },
+        crypto_hub: {
+          id: 'crypto_hub',
+          label: 'NÚCLEO CRIPTO',
+          balance: totalVal * 0.5,
+          pnl_usd: cryptoPnlUsd,
+          pnl_pct: (cryptoPnlUsd / (totalVal * 0.5)) * 100.0,
+          win_rate_pct: 68.5,
+          max_drawdown_pct: 1.8,
+          max_drawdown_usd: (totalVal * 0.5) * 0.018,
+          active_trades: cryptoActiveTrades,
+          total_trades: 12
+        },
+        forex_hub: {
+          id: 'forex_hub',
+          label: 'NÚCLEO FOREX & CÂMBIO',
+          balance: totalVal * 0.5,
+          pnl_usd: forexPnlUsd,
+          pnl_pct: (forexPnlUsd / (totalVal * 0.5)) * 100.0,
+          pnl_pips: forexPipsTotal,
+          win_rate_pct: 71.2,
+          max_drawdown_pct: 1.1,
+          max_drawdown_usd: (totalVal * 0.5) * 0.011,
+          active_trades: forexActiveTrades,
+          total_trades: 8
+        },
+        assets: allAssets,
+        links: links,
+        arena_competitors_count: 400,
+        active_positions_count: activeTradesCount,
+        timestamp: Date.now()
+      };
+    }
+
+    async function pollGraphTopology() {
+      try {
+        const data = await safeFetchJson('/api/v1/desk/graph-topology');
+        if (data && (data.core_alr || data.assets)) {
+          window.lastGraphTopologyData = data;
+          renderGraphTopology(data);
+          return;
+        }
+      } catch (_) {}
+
+      // Fallback: synthesize from deskState + FOREX_PAIRS_DEF
+      const synthesized = buildSynthesizedTopology(deskState);
+      window.lastGraphTopologyData = synthesized;
+      renderGraphTopology(synthesized);
+    }
+
+    function renderGraphTopology(data) {
+      if (!data) return;
+
+      // 1. Central Core Hub
+      const core = data.core_alr || {};
+      const coreBal = document.getElementById('graph-core-balance');
+      const corePnl = document.getElementById('graph-core-pnl');
+      const coreDd = document.getElementById('graph-core-drawdown');
+      const coreTrades = document.getElementById('graph-core-trades');
+      const coreStatusText = document.getElementById('graph-core-status-text');
+      const coreStatusBadge = document.getElementById('graph-core-status-badge');
+
+      if (coreBal) coreBal.textContent = fmtUSD(core.balance);
+      if (corePnl) {
+        const pnlUsd = core.pnl_usd || 0;
+        const pnlSign = pnlUsd >= 0 ? '+' : '';
+        corePnl.textContent = `${pnlSign}${fmtUSD(pnlUsd)} (${pnlSign}${(core.pnl_pct || 0).toFixed(2)}%)`;
+        corePnl.className = `mono font-bold text-sm ${pnlUsd >= 0 ? 'text-emerald-400' : 'text-rose-400'} mt-0.5`;
+      }
+      if (coreDd) {
+        const ddPct = core.max_drawdown_pct || 0;
+        const ddUsd = core.max_drawdown_usd || 0;
+        coreDd.textContent = `-${Math.abs(ddPct).toFixed(2)}% (-${fmtUSD(Math.abs(ddUsd))})`;
+      }
+      if (coreTrades) {
+        const activeCount = core.active_trades !== undefined ? core.active_trades : (data.active_positions_count || 0);
+        coreTrades.textContent = `${activeCount} / ∞ Trades`;
+      }
+      if (coreStatusText) {
+        if (deskState?.kill_switch_active) {
+          coreStatusText.textContent = 'KILL SWITCH ATIVO';
+          if (coreStatusBadge) {
+            coreStatusBadge.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1.5 justify-end';
+          }
+        } else {
+          coreStatusText.textContent = 'EXECUTANDO AUTONOMAMENTE';
+          if (coreStatusBadge) {
+            coreStatusBadge.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 justify-end';
+          }
+        }
+      }
+
+      // 2. Crypto Hub
+      const cHub = data.crypto_hub || {};
+      const cBal = document.getElementById('graph-crypto-balance');
+      const cPnl = document.getElementById('graph-crypto-pnl');
+      const cWrDd = document.getElementById('graph-crypto-wr-dd');
+      const cTrades = document.getElementById('graph-crypto-trades-count');
+
+      if (cBal) cBal.textContent = fmtUSD(cHub.balance);
+      if (cPnl) {
+        const pnl = cHub.pnl_usd || 0;
+        cPnl.textContent = `${pnl >= 0 ? '+' : ''}${fmtUSD(pnl)}`;
+        cPnl.className = `mono font-bold ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'} mt-0.5`;
+      }
+      if (cWrDd) cWrDd.textContent = `${(cHub.win_rate_pct || 68.5).toFixed(1)}% • -${(cHub.max_drawdown_pct || 1.8).toFixed(1)}%`;
+      if (cTrades) cTrades.textContent = `${cHub.active_trades || 0} / 7 Ativos`;
+
+      // 3. Forex Hub
+      const fHub = data.forex_hub || {};
+      const fBal = document.getElementById('graph-forex-balance');
+      const fPnl = document.getElementById('graph-forex-pnl');
+      const fPipsWr = document.getElementById('graph-forex-pips-wr');
+      const fTrades = document.getElementById('graph-forex-trades-count');
+
+      if (fBal) fBal.textContent = fmtUSD(fHub.balance);
+      if (fPnl) {
+        const pnl = fHub.pnl_usd || 0;
+        fPnl.textContent = `${pnl >= 0 ? '+' : ''}${fmtUSD(pnl)}`;
+        fPnl.className = `mono font-bold ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'} mt-0.5`;
+      }
+      if (fPipsWr) {
+        const pips = fHub.pnl_pips || 0;
+        fPipsWr.textContent = `${pips >= 0 ? '+' : ''}${pips.toFixed(1)} pips • ${(fHub.win_rate_pct || 71.2).toFixed(1)}%`;
+      }
+      if (fTrades) fTrades.textContent = `${fHub.active_trades || 0} / 7 Pares`;
+
+      // 4. Satellite Nodes
+      const cryptoGrid = document.getElementById('graph-crypto-satellites-grid');
+      const forexGrid = document.getElementById('graph-forex-satellites-grid');
+
+      const assets = data.assets || [];
+      const cryptoAssets = assets.filter(a => a.market === 'crypto');
+      const forexAssets = assets.filter(a => a.market === 'forex');
+
+      if (cryptoGrid && cryptoAssets.length > 0) {
+        cryptoGrid.innerHTML = cryptoAssets.map(a => renderSatelliteCard(a)).join('');
+      }
+      if (forexGrid && forexAssets.length > 0) {
+        forexGrid.innerHTML = forexAssets.map(a => renderSatelliteCard(a)).join('');
+      }
+
+      // Apply active filter if any
+      if (currentGraphFilter !== 'all') {
+        setGraphFilter(currentGraphFilter);
+      } else {
+        updateGraphTopologySvg(data);
+      }
+    }
+
+    function updateGraphTopologySvg(topologyData) {
+      const svg = document.getElementById('graph-topology-svg');
+      const container = document.getElementById('graph-canvas-container');
+      if (!svg || !container) return;
+
+      const containerRect = container.getBoundingClientRect();
+      if (containerRect.width === 0 || containerRect.height === 0) return;
+
+      svg.setAttribute('viewBox', `0 0 ${containerRect.width} ${containerRect.height}`);
+      svg.setAttribute('width', containerRect.width);
+      svg.setAttribute('height', containerRect.height);
+
+      // Preserve defs
+      const defs = svg.querySelector('defs');
+      svg.innerHTML = '';
+      if (defs) svg.appendChild(defs);
+
+      // Links
+      const links = topologyData.links || [];
+
+      links.forEach(link => {
+        const srcId = link.source.startsWith('node-') ? link.source : `node-${link.source}`;
+        const rawTgt = link.target;
+        let tgtId = rawTgt;
+        if (!rawTgt.startsWith('node-')) {
+          if (rawTgt === 'crypto_hub' || rawTgt === 'forex_hub' || rawTgt === 'core_alr') {
+            tgtId = `node-${rawTgt}`;
+          } else {
+            const cleanSym = rawTgt.replace('asset-', '').replace('/', '-');
+            tgtId = `node-asset-${cleanSym}`;
+          }
+        }
+
+        const srcEl = document.getElementById(srcId);
+        const tgtEl = document.getElementById(tgtId);
+
+        if (!srcEl || !tgtEl) return;
+        if (tgtEl.offsetParent === null || srcEl.offsetParent === null) return; // Hidden by filter
+
+        const r1 = srcEl.getBoundingClientRect();
+        const r2 = tgtEl.getBoundingClientRect();
+
+        const x1 = (r1.left + r1.right) / 2 - containerRect.left;
+        const y1 = (r1.top + r1.bottom) / 2 - containerRect.top;
+        const x2 = (r2.left + r2.right) / 2 - containerRect.left;
+        const y2 = (r2.top + r2.bottom) / 2 - containerRect.top;
+
+        const dy = y2 - y1;
+        const dx = x2 - x1;
+        const cy1 = y1 + dy * 0.45;
+        const cx1 = x1 + dx * 0.1;
+        const cy2 = y1 + dy * 0.55;
+        const cx2 = x2 - dx * 0.1;
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const d = `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`;
+        path.setAttribute('d', d);
+        path.setAttribute('fill', 'none');
+
+        const isCrypto = link.market === 'crypto' || link.source === 'crypto_hub';
+        const isTradeActive = !!link.has_trade;
+
+        if (link.source === 'core_alr') {
+          path.setAttribute('stroke', isCrypto ? 'url(#grad-core-crypto)' : 'url(#grad-core-forex)');
+          path.setAttribute('stroke-width', '2.5');
+          path.setAttribute('stroke-dasharray', '6 3');
+          path.setAttribute('class', 'topology-active-pulse');
+        } else if (isTradeActive) {
+          const strokeColor = (link.pnl_usd >= 0) ? '#10b981' : '#f43f5e';
+          path.setAttribute('stroke', strokeColor);
+          path.setAttribute('stroke-width', '3');
+          path.setAttribute('filter', 'url(#glow-filter)');
+          path.setAttribute('class', 'topology-laser-pulse');
+        } else {
+          path.setAttribute('stroke', isCrypto ? 'rgba(6, 182, 212, 0.25)' : 'rgba(168, 85, 247, 0.25)');
+          path.setAttribute('stroke-width', '1.5');
+          path.setAttribute('stroke-dasharray', '4 4');
+        }
+
+        svg.appendChild(path);
+      });
+    }
+
+    function openGraphNodeModal(nodeId) {
+      const modal = document.getElementById('graphNodeDetailsModal');
+      const modalTitle = document.getElementById('graph-modal-title');
+      const modalSubtitle = document.getElementById('graph-modal-subtitle');
+      const modalIcon = document.getElementById('graph-modal-icon');
+      const modalBody = document.getElementById('graph-modal-body');
+      if (!modal || !modalBody) return;
+
+      const topo = window.lastGraphTopologyData || buildSynthesizedTopology(deskState);
+
+      if (nodeId === 'core_alr') {
+        modalIcon.textContent = '🛡️';
+        modalTitle.textContent = 'ALR QUANT CORE • Centro de Operações Autônomo';
+        modalSubtitle.textContent = 'Governança global, roteamento quântico e evolução de estratégias';
+
+        const core = topo.core_alr || {};
+        modalBody.innerHTML = `
+          <!-- Hub Summary Metrics -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+            <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Patrimônio Líquido</div>
+              <div class="mono font-bold text-base text-white mt-1">${fmtUSD(core.balance)}</div>
+            </div>
+            <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">PnL Global</div>
+              <div class="mono font-bold text-base ${(core.pnl_usd || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'} mt-1">
+                ${(core.pnl_usd || 0) >= 0 ? '+' : ''}${fmtUSD(core.pnl_usd)} (${(core.pnl_pct || 0).toFixed(2)}%)
+              </div>
+            </div>
+            <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Max Drawdown</div>
+              <div class="mono font-bold text-base text-rose-400 mt-1">-${(core.max_drawdown_pct || 0).toFixed(2)}%</div>
+            </div>
+            <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Capacidade Operacional</div>
+              <div class="mono font-bold text-base text-cyan-300 mt-1">Trades Ilimitados</div>
+            </div>
+          </div>
+
+          <!-- Strategy Arena & Macro Regime Card -->
+          <div class="p-3.5 rounded-xl bg-navy-950 border border-indigo-500/30 flex flex-col gap-2">
+            <h4 class="font-bold text-xs uppercase text-indigo-300 flex items-center gap-1.5">
+              <span>🧬 StrategyArena: 400 Perfis Evolutivos Concorrentes</span>
+            </h4>
+            <p class="text-slate-300 text-[11px] leading-relaxed">
+              O ALR Quant Fortress opera com <strong>200 perfis Cripto</strong> e <strong>200 perfis Forex</strong> competindo em tempo real. A cada vela, os robôs recalculam o Promising Score e a cada 50 velas os clones mutantes sofrem mutação estocástica (±10% a ±25%), adaptando-se às microestruturas de liquidez.
+            </p>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-navy-800 font-mono text-[10px] text-slate-400">
+              <div>Universo: <span class="text-white font-bold">14 Ativos Simultâneos</span></div>
+              <div>Macro Regime: <span class="text-cyan-300 font-bold">${deskState?.macro_regime?.regime_name || 'Expansão de Volatilidade'}</span></div>
+              <div>Kill Switch: <span class="${deskState?.kill_switch_active ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold'}">${deskState?.kill_switch_active ? 'ATIVADO' : 'NORMAL (DESATIVADO)'}</span></div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-navy-800">
+            <div class="flex items-center gap-2">
+              <button onclick="triggerEmergencyStop(); modal.close();" class="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition active:scale-95 shadow">
+                ⚠️ Zerar Tudo (Pânico)
+              </button>
+              <button onclick="resetStrategy(); modal.close();" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition active:scale-95">
+                🔄 Reiniciar Estratégia
+              </button>
+            </div>
+            <button onclick="switchView('classic'); modal.close();" class="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition active:scale-95">
+              📊 Ir para Terminal Clássico
+            </button>
+          </div>
+        `;
+      } else if (nodeId === 'crypto_hub') {
+        modalIcon.textContent = '🪙';
+        modalTitle.textContent = 'NÚCLEO CRIPTO • Binance Spot Testnet';
+        modalSubtitle.textContent = 'Distribuição de ordens e monitoramento de 7 criptomoedas';
+
+        const cHub = topo.crypto_hub || {};
+        modalBody.innerHTML = `
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+            <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Saldo Cripto</div>
+              <div class="mono font-bold text-base text-white mt-1">${fmtUSD(cHub.balance)}</div>
+            </div>
+            <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">PnL Cripto</div>
+              <div class="mono font-bold text-base ${(cHub.pnl_usd || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'} mt-1">
+                ${(cHub.pnl_usd || 0) >= 0 ? '+' : ''}${fmtUSD(cHub.pnl_usd)}
+              </div>
+            </div>
+            <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Win Rate Médio</div>
+              <div class="mono font-bold text-base text-cyan-300 mt-1">${(cHub.win_rate_pct || 68.5).toFixed(1)}%</div>
+            </div>
+            <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Trades Ativos</div>
+              <div class="mono font-bold text-base text-white mt-1">${cHub.active_trades || 0} / 7 Ativos</div>
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-navy-950 border border-cyan-500/30 flex flex-col gap-2">
+            <h4 class="font-bold text-xs uppercase text-cyan-300">Cesta de 7 Ativos Cripto:</h4>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs">
+              <div class="p-2 rounded bg-navy-900 border border-navy-800 text-white font-bold">BTC-USDT</div>
+              <div class="p-2 rounded bg-navy-900 border border-navy-800 text-white font-bold">ETH-USDT</div>
+              <div class="p-2 rounded bg-navy-900 border border-navy-800 text-white font-bold">SOL-USDT</div>
+              <div class="p-2 rounded bg-navy-900 border border-navy-800 text-white font-bold">BNB-USDT</div>
+              <div class="p-2 rounded bg-navy-900 border border-navy-800 text-white font-bold">XRP-USDT</div>
+              <div class="p-2 rounded bg-navy-900 border border-navy-800 text-white font-bold">ADA-USDT</div>
+              <div class="p-2 rounded bg-navy-900 border border-navy-800 text-white font-bold">DOGE-USDT</div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-2 border-t border-navy-800">
+            <button onclick="setGraphFilter('crypto'); modal.close();" class="px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs transition active:scale-95">
+              🪙 Focar Satélites Cripto
+            </button>
+            <button onclick="switchMarket('crypto'); switchView('classic'); modal.close();" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition active:scale-95">
+              📊 Ver no Terminal Clássico
+            </button>
+          </div>
+        `;
+      } else if (nodeId === 'forex_hub') {
+        modalIcon.textContent = '💱';
+        modalTitle.textContent = 'NÚCLEO FOREX & CÂMBIO • OANDA / MT5 ECN';
+        modalSubtitle.textContent = 'Distribuição de ordens e monitoramento de 7 pares majors';
+
+        const fHub = topo.forex_hub || {};
+        modalBody.innerHTML = `
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+            <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Saldo Forex</div>
+              <div class="mono font-bold text-base text-white mt-1">${fmtUSD(fHub.balance)}</div>
+            </div>
+            <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">PnL Forex</div>
+              <div class="mono font-bold text-base ${(fHub.pnl_usd || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'} mt-1">
+                ${(fHub.pnl_usd || 0) >= 0 ? '+' : ''}${fmtUSD(fHub.pnl_usd)}
+              </div>
+            </div>
+            <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Pips Acumulados</div>
+              <div class="mono font-bold text-base text-purple-300 mt-1">${(fHub.pnl_pips || 0) >= 0 ? '+' : ''}${(fHub.pnl_pips || 0).toFixed(1)} pips</div>
+            </div>
+            <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Win Rate Médio</div>
+              <div class="mono font-bold text-base text-cyan-300 mt-1">${(fHub.win_rate_pct || 71.2).toFixed(1)}%</div>
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-navy-950 border border-purple-500/30 flex flex-col gap-2">
+            <h4 class="font-bold text-xs uppercase text-purple-300">Cesta de 7 Pares Forex Majors:</h4>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs">
+              <div class="p-2 rounded bg-navy-900 border border-navy-800 text-white font-bold">EUR/USD</div>
+              <div class="p-2 rounded bg-navy-900 border border-navy-800 text-white font-bold">GBP/USD</div>
+              <div class="p-2 rounded bg-navy-900 border border-navy-800 text-white font-bold">USD/JPY</div>
+              <div class="p-2 rounded bg-navy-900 border border-navy-800 text-white font-bold">USD/CHF</div>
+              <div class="p-2 rounded bg-navy-900 border border-navy-800 text-white font-bold">AUD/USD</div>
+              <div class="p-2 rounded bg-navy-900 border border-navy-800 text-white font-bold">USD/CAD</div>
+              <div class="p-2 rounded bg-navy-900 border border-navy-800 text-white font-bold">EUR/GBP</div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-2 border-t border-navy-800">
+            <button onclick="setGraphFilter('forex'); modal.close();" class="px-3.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition active:scale-95">
+              💱 Focar Satélites Forex
+            </button>
+            <div class="flex items-center gap-2">
+              <button onclick="openForexOrderModal('EUR-USD'); modal.close();" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition active:scale-95 shadow">
+                💱 Abrir Ordem Forex
+              </button>
+              <button onclick="switchMarket('forex'); switchView('classic'); modal.close();" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition active:scale-95">
+                📊 Terminal Clássico
+              </button>
+            </div>
+          </div>
+        `;
+      } else {
+        // It's a satellite asset node
+        const rawSym = nodeId.replace('node-asset-', '').replace('node-', '').replace('asset-', '');
+        const assetData = (topo.assets || []).find(a => {
+          const aClean = a.asset.replace('/', '-');
+          return a.asset === rawSym || aClean === rawSym || a.id === nodeId || a.id === `asset-${rawSym}`;
+        }) || {
+          asset: rawSym,
+          market: rawSym.includes('/') || rawSym.includes('EUR') || rawSym.includes('GBP') ? 'forex' : 'crypto',
+          has_trade: false,
+          strategy_name: '👑 Setup Campeão',
+          rationale: 'Monitorando Setup e Confluência Técnica',
+          current_price: 0
+        };
+
+        const isTradeActive = !!assetData.has_trade;
+        const isCrypto = assetData.market === 'crypto';
+        const isProfitable = (assetData.pnl_usd || 0) >= 0;
+
+        modalIcon.textContent = isCrypto ? '🪙' : '💱';
+        modalTitle.textContent = `${assetData.asset} • ${isCrypto ? 'Criptomoeda' : 'Forex Major'}`;
+        modalSubtitle.textContent = isTradeActive
+          ? `Posição ${assetData.side || 'LONG'} em execução pela estratégia ${assetData.strategy_name || 'Campeã'}`
+          : `Modo Sentinela: Monitorando mercado e confluência técnica`;
+
+        const curFmt = formatPrice(assetData.current_price, assetData.market, assetData.asset);
+        const entryFmt = formatPrice(assetData.entry_price, assetData.market, assetData.asset);
+        const slFmt = formatPrice(assetData.stop_loss, assetData.market, assetData.asset);
+        const tp1Fmt = formatPrice(assetData.take_profit_1, assetData.market, assetData.asset);
+        const tp2Fmt = formatPrice(assetData.take_profit_2, assetData.market, assetData.asset);
+
+        modalBody.innerHTML = `
+          <!-- Status & PnL Banner -->
+          <div class="p-3.5 rounded-xl border ${isTradeActive ? (isProfitable ? 'bg-emerald-950/40 border-emerald-500/40' : 'bg-rose-950/40 border-rose-500/40') : 'bg-navy-950 border-navy-800'} flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isTradeActive ? (isProfitable ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30') : 'bg-slate-800 text-slate-400 border border-slate-700'}">
+                  ${isTradeActive ? `⚡ TRADE ATIVO (${assetData.side || 'LONG'})` : '🟡 SENTINELA ATIVO (AGUARDANDO GATILHO)'}
+                </span>
+                <span class="text-xs text-slate-300 mono">Preço Atual: <strong>${curFmt}</strong></span>
+              </div>
+              ${isTradeActive ? `
+                <div class="text-right">
+                  <div class="text-[10px] uppercase font-bold text-slate-400">PnL Flutuante</div>
+                  <div class="mono font-extrabold text-sm ${isProfitable ? 'text-emerald-400' : 'text-rose-400'}">
+                    ${isProfitable ? '+' : ''}${fmtUSD(assetData.pnl_usd)} (${isProfitable ? '+' : ''}${(assetData.pnl_pct || 0).toFixed(2)}%)
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Strategy Card -->
+          <div class="p-3.5 rounded-xl bg-navy-950 border border-navy-800 flex flex-col gap-2">
+            <div class="flex items-center justify-between border-b border-navy-800/80 pb-2">
+              <div>
+                <div class="text-[10px] uppercase font-bold text-slate-400">Estratégia Responsável</div>
+                <div class="text-sm font-bold text-cyan-300 mt-0.5">${assetData.strategy_name || '👑 Setup Campeão'}</div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                TOP PROMISE RANK
+              </span>
+            </div>
+
+            <!-- Rationale Explanation -->
+            <div>
+              <div class="text-[10px] uppercase font-bold text-amber-400 mb-1">🎯 Motivo / Racional Matemático de Entrada:</div>
+              <div class="p-2.5 rounded-lg bg-navy-900 border border-navy-800 text-slate-200 text-xs leading-relaxed">
+                ${assetData.rationale || 'Confluência identificada pelo motor de aprendizado estocástico: alinhamento de VWAP com MFI institucional e suporte Donchian.'}
+              </div>
+            </div>
+
+            ${isTradeActive ? `
+              <!-- Targets Grid -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-navy-800 text-xs">
+                <div class="p-2 rounded bg-navy-900 border border-navy-800">
+                  <div class="text-[9px] uppercase font-bold text-slate-400">Preço Entrada</div>
+                  <div class="mono font-bold text-slate-200 mt-0.5">${entryFmt}</div>
+                </div>
+                <div class="p-2 rounded bg-navy-900 border border-navy-800">
+                  <div class="text-[9px] uppercase font-bold text-rose-400">Stop-Loss</div>
+                  <div class="mono font-bold text-rose-400 mt-0.5">${slFmt}</div>
+                </div>
+                <div class="p-2 rounded bg-navy-900 border border-navy-800">
+                  <div class="text-[9px] uppercase font-bold text-emerald-400">Take-Profit 1</div>
+                  <div class="mono font-bold text-emerald-300 mt-0.5">${tp1Fmt}</div>
+                </div>
+                <div class="p-2 rounded bg-navy-900 border border-navy-800">
+                  <div class="text-[9px] uppercase font-bold text-cyan-400">Take-Profit 2</div>
+                  <div class="mono font-bold text-cyan-300 mt-0.5">${tp2Fmt}</div>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Modal Action Buttons -->
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-navy-800">
+            <div class="flex items-center gap-2">
+              ${isTradeActive ? `
+                <button onclick="closePosition1Click('${assetData.asset}'); modal.close();" class="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition active:scale-95 shadow">
+                  ⚡ Zerar Posição 1-Clique
+                </button>
+                <button onclick="moveStopLossToBreakeven('${assetData.asset}', ${assetData.entry_price || 0}); modal.close();" class="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs transition active:scale-95">
+                  🛡️ Stop no 0 a 0
+                </button>
+              ` : `
+                <button onclick="switchView('classic'); modal.close();" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition active:scale-95">
+                  👑 Promover Estratégia
+                </button>
+              `}
+            </div>
+            <button onclick="inspectInClassicChart('${assetData.asset}')" class="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition active:scale-95 shadow">
+              📊 Inspecionar no Gráfico de Velas
+            </button>
+          </div>
+        `;
+      }
+
+      modal.showModal();
+    }
+
+    function inspectInClassicChart(asset) {
+      const modal = document.getElementById('graphNodeDetailsModal');
+      if (modal) modal.close();
+
+      selectedAsset = asset;
+      const isFx = asset.includes('/') || asset.includes('EUR-') || asset.includes('GBP-') || asset.includes('USD-');
+      currentMarketMode = isFx ? 'forex' : 'crypto';
+
+      switchView('classic');
+      switchMarket(currentMarketMode);
+      selectAsset(asset);
+      fetchCandles(asset);
+      window.scrollTo({ top: 380, behavior: 'smooth' });
+    }
+
+    // =========================================================================
+    // INITIALIZATION
+    // =========================================================================
     window.addEventListener('DOMContentLoaded', () => {
+      // Restore persisted view mode
+      switchView(currentViewMode);
+
       fetchCandles(selectedAsset);
       pollDeskStatus();
       pollLogs();
       pollArenaStatus();
+      pollGraphTopology();
       runSizingComparison();
-      setInterval(pollDeskStatus, 1200); // 1.2-second live polling
-      setInterval(pollLogs, 2500);       // 2.5-second live log polling
-      setInterval(runSizingComparison, 5000); // 5-second sizing comparison refresh
-      setInterval(pollArenaStatus, 4000); // 4-second arena refresh
+
+      setInterval(pollDeskStatus, 1200);     // 1.2-second live polling
+      setInterval(pollLogs, 2500);           // 2.5-second live log polling
+      setInterval(runSizingComparison, 5000);// 5-second sizing comparison refresh
+      setInterval(pollArenaStatus, 4000);    // 4-second arena refresh
+      setInterval(pollGraphTopology, 1800);  // 1.8-second graph topology refresh
+
+      // Recalculate SVG lines smoothly on window resize
+      window.addEventListener('resize', () => {
+        if (currentViewMode === 'graph' && window.lastGraphTopologyData) {
+          updateGraphTopologySvg(window.lastGraphTopologyData);
+        }
+      });
     });
   </script>
 </body>

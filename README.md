@@ -672,19 +672,28 @@ Infraestrutura completa de alta frequência e baixa latência para execução qu
 2. **Auditoria Transparente e Histórico Completo de Indicadores e Pesos na Entrada (`IndicatorWeightsSnapshot`):**
    * No momento exato da abertura de qualquer trade, o robô congela e persiste no banco SQLite um snapshot auditável contendo os valores exatos de todos os indicadores técnicos e o mapa completo de pesos dos fatores ativos.
    * Visualização interativa na Web via modal `[📊 Indicadores & Pesos]` presente na tabela de extrato recente e nos cards das posições em aberto.
-3. **Arena de 100 Perfis Concorrentes Simultâneos & Campeãs Especializadas por Criptomoeda:**
-   * Executa simultaneamente no motor **100 perfis de estratégias** com diferentes combinações de pesos e parâmetros de risco operando em micro-contas virtuais ($1.000 USD):
-     * **12 Perfis Fundamentais Nomeados**: Tendência Pesada, Momentum Estrutural, Acelerador de Rompimento, Reversão Donchian, Suporte Rápido, Pânico Contrarian, TTM Squeeze, Bandwidth Expansion, ATR Chandelier, VWAP & MFI, Order Book Depth e Volume Profile POC.
-     * **62 Variações Paramétricas de Família**: 15 famílias estratégicas com 4 perfis de risco cada (Conservador, Agressivo, Stop Curto e Trend Runner) mais 2 perfis de arbitragem estatística e HFT micro scalp.
-     * **26 Clones Genéticos Mutantes Evolutivos**: Mutam periodicamente a cada 50 velas herdando a base de pesos dos líderes do ranking e aplicando mutações estocásticas controladas.
-   * **Ordenação Dinâmica do Mais ao Menos Promissor (Ranking #1 a #100)**:
-     * O ranking é reordenado dinamicamente a cada vela pelo Score Promissor Composto ($\text{Sharpe} \times 0.40 + \text{Win Rate} \times 0.35 + \text{Retorno Líquido} \times 0.25 - \text{Drawdown} \times 0.20$). O competidor #1 recebe destaque dourado visual no topo da lista.
-   * **Campeã Especializada por Criptomoeda (Per-Asset Dynamic Champions)**:
-     * Nem toda estratégia funciona igual em todas as moedas: enquanto o Bitcoin exige ancoragem institucional no VWAP, o Dogecoin e XRP reagem melhor a rompimentos rápidos de Squeeze e reversão de pânico, e a Solana exige momentum acelerado.
-     * O motor rastreia o PnL e a taxa de acerto de cada estratégia **isoladamente para cada moeda**.
-     * Cada criptomoeda auto-aprova, auto-promove e elege a **sua própria Campeã Exclusiva**, gravada na tabela `trading_asset_champions` do SQLite e guiando as ordens reais daquele ativo!
-4. **Otimizador de Backtest Histórico de até 90 Dias (3 Meses):**
-   * Permite realizar simulações profundas de até 90 dias de histórico para cada ativo do basket avaliando todos os 100 perfis simultaneamente.
+3. **Arena de 400 Perfis Concorrentes Simultâneos (200 Cripto + 200 Forex) & Campeãs por Ativo:**
+   * Executa simultaneamente no motor **400 perfis de estratégias evolutivas** operando em micro-contas virtuais ($1.000 USD cada):
+     * **200 Perfis Especializados em Criptomoedas**: Focados em volume institucional, momentum estrutural, Ichimoku Kumo breakouts, confluência MTF, proteção contra dumps de BTC, Order Book Imbalance (OBI) e Point of Control (POC).
+     * **200 Perfis Especializados em Forex**: Calibrados com matemática de pips, rompimentos de sessões (London Breakout, Asian Range Squeeze, New York Continuation), reversão à média Donchian, scalping de spread curto e confluências de fluxo cambial.
+   * **Fim das Travas de Posição (Trades Ilimitados Simultâneos)**:
+     * O motor agora opera sem o limite artificial de 3 trades: é capaz de gerenciar posições ativas em todos os 14 ativos simultaneamente (7 pares de criptomoedas + 7 pares de moedas Forex).
+   * **Ordenação Dinâmica do Mais ao Menos Promissor (Ranking #1 a #400)**:
+     * O ranking é reordenado dinamicamente a cada vela pelo Score Promissor Composto ($\text{Sharpe} \times 0.40 + \text{Win Rate} \times 0.35 + \text{Retorno Líquido} \times 0.25 - \text{Drawdown} \times 0.20$).
+   * **Campeã Especializada por Criptomoeda e por Par de Câmbio (14 Campeãs Ativas)**:
+     * O motor rastreia o PnL, taxa de acerto e consistência de cada estratégia isoladamente para cada um dos 14 ativos, elegendo e auto-promovendo uma Campeã Exclusiva por moeda!
+4. **Dashboard Bonita & Explicativa em Grafo Topológico Interativo (`🕸️ Centro de Operações em Grafo`):**
+   * Visualização em rede conectada (*node-link graph*) com conectores SVG dinâmicos e layout em vidro escuro (*glassmorphism*):
+     * **Núcleo Central ALR**: Exibe Patrimônio Total, PnL Líquido Global, Win Rate consolidado e Max Drawdown (em percentual e em dólares).
+     * **Núcleos de Mercado**:
+       * **🪙 Núcleo Cripto**: Saldo alocado em cripto, PnL, Win Rate, Drawdown e contagem de posições.
+       * **💱 Núcleo Forex**: Saldo alocado em câmbio, PnL, Pips acumulados, Win Rate, Drawdown e contagem de posições.
+     * **Nós Satélites Explicativos (14 Ativos Conectados)**:
+       * Para cada trade ativo: exibe a **Estratégia Campeã em uso**, a **Razão Técnica / Rationale da entrada** (confluência de fatores), Preço de Entrada, Preço Atual, Nível de Stop-Loss, TP1 (Realização Parcial) e TP2 (Alvo Final), e Lucro/Prejuízo em tempo real ($ e pips).
+       * Para ativos neutros: nó em modo sentinela indicando a estratégia que está monitorando o mercado e o status atual da confluência.
+       * Clique em qualquer nó para abrir o modal de inspeção profunda de indicadores técnicos e acionar zeragem imediata ou breakeven.
+5. **Otimizador de Backtest Histórico de até 90 Dias (3 Meses):**
+   * Permite realizar simulações profundas de até 90 dias de histórico para cada ativo do basket avaliando todos os 400 perfis simultaneamente.
    * Gera um relatório classificado de performance (#1 a #100) com taxa de acerto, PnL líquido, profit factor, drawdown e Sharpe ratio, elegendo a melhor configuração inicial para iniciar as operações ao vivo.
    * **Filtro de Correlação com Bitcoin (`BtcMarketBetaGuard`)**: Veto absoluto (`hold_logits += 8.0`, `buy_logits = -10.0`) em compras de altcoins caso o Bitcoin esteja em queda severa intradiária (< -1.2% ou abaixo da banda inferior VWAP).
    * **Volume Profile & Ponto de Controle (`PointOfControlEngine`)**: Identificação do nível de preço com maior volume financeiro institucional (POC) e Value Area (70% do volume) para posicionar TP1 e Stop-Loss de forma cirúrgica.

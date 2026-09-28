@@ -16,7 +16,7 @@
 
 use crate::trading::{
     asset_baseline_price, generate_synthetic_candles, BacktestReport, Candle, DeskStatusSnapshot,
-    ForexConnector, ForexPipCalculator, ForexQuote, IndicatorWeightsSnapshot,
+    ForexConnector, ForexPipCalculator, ForexQuote, GraphTopologyData, IndicatorWeightsSnapshot,
     MultiAssetTraderEngine, OrderSide, StrategyArena, FOREX_MAJOR_BASKET,
 };
 use anyhow::Result;
@@ -297,6 +297,14 @@ pub async fn get_strategy_arena_handler(
     State(state): State<TradingDeskState>,
 ) -> Json<StrategyArena> {
     Json(state.engine.read().strategy_arena.clone())
+}
+
+/// Handler para consultar a topologia viva em grafo do Centro de Operações (Hubs e Ativos Concorrentes)
+pub async fn get_graph_topology_handler(
+    State(state): State<TradingDeskState>,
+) -> Json<GraphTopologyData> {
+    let engine = state.engine.read();
+    Json(engine.get_graph_topology())
 }
 
 /// Handler para execução do Otimizador e Backtest Histórico de até 90 Dias
@@ -580,6 +588,10 @@ pub fn create_trading_desk_router_with_logger(
             get(get_strategy_arena_handler),
         )
         .route(
+            "/api/v1/desk/graph-topology",
+            get(get_graph_topology_handler),
+        )
+        .route(
             "/api/v1/desk/run-backtest-90d",
             post(run_backtest_90d_handler),
         )
@@ -686,4 +698,91 @@ pub async fn run_trading_desk_server_with_logger(
     tracing::info!("ALR Live Trading Desk running at http://localhost:{}", port);
     axum::serve(listener, app).await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::trading::{MarketCategory, StrategyProfile, DUAL_MARKET_BASKET};
+
+    #[test]
+    fn test_strategy_profiles_and_dual_market_basket() {
+        assert_eq!(DUAL_MARKET_BASKET.len(), 14);
+        let profiles = StrategyProfile::default_profiles();
+        assert_eq!(profiles.len(), 400);
+
+        let crypto_count = profiles
+            .iter()
+            .filter(|p| p.market == MarketCategory::Crypto)
+            .count();
+        let forex_count = profiles
+            .iter()
+            .filter(|p| p.market == MarketCategory::Forex)
+            .count();
+
+        assert_eq!(
+            crypto_count, 200,
+            "Deve haver exatamente 200 perfis de Cripto"
+        );
+        assert_eq!(
+            forex_count, 200,
+            "Deve haver exatamente 200 perfis de Forex"
+        );
+
+        // Validação de IDs estritamente únicos
+        let mut ids = std::collections::HashSet::new();
+        for p in &profiles {
+            assert!(
+                ids.insert(&p.id),
+                "ID de estratégia duplicado detectado: {}",
+                p.id
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_graph_topology_endpoint() {
+        let engine = MultiAssetTraderEngine::new_dual_market(50_000.0);
+        assert_eq!(engine.config.max_concurrent_positions, 14);
+        assert_eq!(engine.config.basket.len(), 14);
+        assert_eq!(engine.strategy_arena.competitors.len(), 400);
+
+        let topology = engine.get_graph_topology();
+        assert_eq!(topology.arena_competitors_count, 400);
+        assert_eq!(topology.nodes.len(), 17);
+        assert_eq!(topology.links.len(), 16);
+        assert_eq!(topology.assets.len(), 14);
+        assert_eq!(topology.core_alr.id, "core_alr");
+        assert_eq!(topology.crypto_hub.id, "crypto_hub");
+        assert_eq!(topology.forex_hub.id, "forex_hub");
+
+        // Valida teste HTTP real via servidor efêmero
+        let shared_engine = Arc::new(parking_lot::RwLock::new(engine));
+        let router = create_trading_desk_router(shared_engine);
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind ephemeral port");
+        let local_addr = listener.local_addr().expect("local addr");
+
+        tokio::spawn(async move {
+            axum::serve(listener, router).await.unwrap();
+        });
+
+        let client = reqwest::Client::new();
+        let resp = client
+            .get(format!("http://{}/api/v1/desk/graph-topology", local_addr))
+            .send()
+            .await
+            .expect("GET /api/v1/desk/graph-topology");
+
+        assert_eq!(resp.status(), reqwest::StatusCode::OK);
+        let body: GraphTopologyData = resp.json().await.expect("deserialize GraphTopologyData");
+        assert_eq!(body.arena_competitors_count, 400);
+        assert_eq!(body.nodes.len(), 17);
+        assert_eq!(body.links.len(), 16);
+        assert_eq!(body.assets.len(), 14);
+        assert_eq!(body.core_alr.id, "core_alr");
+        assert_eq!(body.crypto_hub.id, "crypto_hub");
+        assert_eq!(body.forex_hub.id, "forex_hub");
+    }
 }

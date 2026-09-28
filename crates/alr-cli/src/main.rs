@@ -10,10 +10,11 @@ use alr_agent::{
 use alr_browser::{BrowserDriver, BrowserTarget, ChromiumCdpDriver, WebAppVersion};
 use alr_cli::playground_server::JevPlaygroundServer;
 use alr_connectors::trading::{
-    asset_baseline_price, generate_paper_market_snapshot, generate_synthetic_candles,
-    BinanceTestnetConnector, BybitOrderRequest, BybitTestnetConnector, Candle, CryptoTraderEngine,
-    ExchangeSimulationConfig, MultiAssetConfig, MultiAssetTraderEngine, OrderSide, RiskPolicy,
-    SqliteTradingStore, TechnicalIndicators, TradingAction, DEFAULT_MULTI_ASSET_BASKET,
+    asset_baseline_price, generate_forex_candles, generate_paper_market_snapshot,
+    generate_synthetic_candles, is_forex_symbol, BinanceTestnetConnector, BybitOrderRequest,
+    BybitTestnetConnector, Candle, CryptoTraderEngine, ExchangeSimulationConfig,
+    ForexPipCalculator, MultiAssetConfig, MultiAssetTraderEngine, OrderSide, RiskPolicy,
+    SqliteTradingStore, TechnicalIndicators, TradingAction, DUAL_MARKET_BASKET,
 };
 use alr_connectors::trading_desk::run_trading_desk_server_with_logger;
 use alr_connectors::trading_logger::TradingDeskLogger;
@@ -10768,15 +10769,16 @@ async fn run_multi_asset_trading_desk(
 
     let config = MultiAssetConfig {
         initial_capital: capital,
-        max_concurrent_positions: 3,
-        max_portfolio_risk_pct: 10.0,
-        max_risk_per_trade_pct: 2.0,
-        max_trade_allocation_usd: max_trade_usd,
+        max_concurrent_positions: 14,
+        max_portfolio_risk_pct: 12.0,
+        max_risk_per_trade_pct: 1.5,
+        max_trade_allocation_usd: if max_trade_usd > 0.0 {
+            max_trade_usd
+        } else {
+            1_000.0
+        },
         exchange_config,
-        basket: DEFAULT_MULTI_ASSET_BASKET
-            .iter()
-            .map(|s| s.to_string())
-            .collect(),
+        basket: DUAL_MARKET_BASKET.iter().map(|s| s.to_string()).collect(),
     };
 
     let mut multi_engine = MultiAssetTraderEngine::new(config).with_store(store.clone());
@@ -10794,24 +10796,30 @@ async fn run_multi_asset_trading_desk(
         );
     }
 
-    // 5. Aquece os 7 motores com velas históricas da Binance Spot Testnet ou sintéticas
-    println!("  • [CARREGANDO DADOS] Sincronizando klines dos 7 ativos da Binance Spot Testnet...");
-    for asset in DEFAULT_MULTI_ASSET_BASKET {
+    // 5. Aquece os 14 motores com velas históricas da Binance Spot Testnet ou sintéticas para os 7 cryptos, e cotações com pips para os 7 forex majors
+    println!("  • [CARREGANDO DADOS] Sincronizando klines dos 14 ativos simultâneos (7 Cryptos + 7 Forex Majors)...");
+    for asset in DUAL_MARKET_BASKET {
         if let Some(eng) = multi_engine.engines.get_mut(asset) {
-            let symbol_clean = asset.replace("-", "");
             let mut loaded_candles = Vec::new();
 
-            if let Some(ref conn) = binance_conn {
-                if let Ok(klines) = conn.get_klines(&symbol_clean, "1m", 40).await {
-                    if !klines.is_empty() {
-                        loaded_candles = klines;
+            if is_forex_symbol(asset) {
+                let base = asset_baseline_price(asset);
+                loaded_candles =
+                    generate_forex_candles(1337 + (base * 100.0) as u64, 40, base, asset);
+            } else {
+                let symbol_clean = asset.replace("-", "");
+                if let Some(conn) = &binance_conn {
+                    if let Ok(klines) = conn.get_klines(&symbol_clean, "1m", 40).await {
+                        if !klines.is_empty() {
+                            loaded_candles = klines;
+                        }
                     }
                 }
-            }
 
-            if loaded_candles.is_empty() {
-                let base = asset_baseline_price(asset);
-                loaded_candles = generate_synthetic_candles(1337 + base as u64, 40, base);
+                if loaded_candles.is_empty() {
+                    let base = asset_baseline_price(asset);
+                    loaded_candles = generate_synthetic_candles(1337 + base as u64, 40, base);
+                }
             }
 
             for c in loaded_candles {
@@ -10819,7 +10827,7 @@ async fn run_multi_asset_trading_desk(
             }
         }
     }
-    println!("  • [DADOS PRONTOS] Velas e indicadores carregados para todas as 7 moedas.");
+    println!("  • [DADOS PRONTOS] Velas e indicadores carregados para todos os 14 ativos (Crypto + Forex).");
 
     let shared_engine = Arc::new(parking_lot::RwLock::new(multi_engine));
 
@@ -10832,9 +10840,13 @@ async fn run_multi_asset_trading_desk(
 
     tokio::spawn(async move {
         let mut cycle: u64 = 0;
-        let basket = DEFAULT_MULTI_ASSET_BASKET;
-        let clean_symbols: Vec<String> = basket.iter().map(|s| s.replace("-", "")).collect();
-        let clean_symbols_refs: Vec<&str> = clean_symbols.iter().map(|s| s.as_str()).collect();
+        let basket = DUAL_MARKET_BASKET;
+        let crypto_symbols: Vec<String> = basket
+            .iter()
+            .filter(|&&s| !is_forex_symbol(s))
+            .map(|s| s.replace("-", ""))
+            .collect();
+        let crypto_symbols_refs: Vec<&str> = crypto_symbols.iter().map(|s| s.as_str()).collect();
 
         let mut prices: std::collections::HashMap<String, f64> = std::collections::HashMap::new();
         {
@@ -10855,106 +10867,123 @@ async fn run_multi_asset_trading_desk(
 
             let now = chrono::Utc::now().timestamp();
 
-            // Tenta consultar cotações reais da Binance Spot Testnet em lote
+            // Tenta consultar cotações reais da Binance Spot Testnet em lote para as moedas cripto
             let mut live_prices_map = std::collections::HashMap::new();
-            if let Some(ref conn) = binance_conn_clone {
-                if let Ok(batch) = conn.get_prices_batch(&clean_symbols_refs).await {
+            if let Some(conn) = &binance_conn_clone {
+                if let Ok(batch) = conn.get_prices_batch(&crypto_symbols_refs).await {
                     live_prices_map = batch;
                 }
             }
 
             for &asset in &basket {
-                let symbol_clean = asset.replace("-", "");
                 let cur = prices.get_mut(asset).unwrap();
 
-                let (open, close, high, low, vol) = if let Some(&real_p) =
-                    live_prices_map.get(&symbol_clean)
-                {
-                    let prev = *cur;
-                    *cur = real_p;
-                    let h = prev.max(real_p) * 1.0002;
-                    let l = prev.min(real_p) * 0.9998;
-                    (prev, real_p, h, l, 25.0)
-                } else {
-                    let wave = ((cycle as f64 * 0.2) + (asset.len() as f64)).sin() * 0.003;
-                    let noise =
-                        (((cycle * 17 + asset.len() as u64) % 100) as f64 - 49.0) / 100.0 * 0.004;
-                    let change = wave + noise;
+                let (open, close, high, low, vol) = if is_forex_symbol(asset) {
+                    let pip = ForexPipCalculator::pip_size(asset);
+                    let wave = ((cycle as f64 * 0.15) + (asset.len() as f64)).sin() * (pip * 3.0);
+                    let noise = (((cycle * 23 + asset.len() as u64) % 100) as f64 - 49.0) / 100.0
+                        * (pip * 1.8);
                     let open = *cur;
-                    let close = (open * (1.0 + change)).max(0.01);
-                    let high = open.max(close) * (1.0 + 0.0015);
-                    let low = open.min(close) * (1.0 - 0.0015);
-                    let vol = 10.0 + (((cycle * 7) % 50) as f64);
+                    let close = (open + wave + noise).max(pip * 10.0);
+                    let high = open.max(close) + (pip * 1.2);
+                    let low = (open.min(close) - (pip * 1.2)).max(pip * 5.0);
+                    let vol = 100.0 + (((cycle * 13) % 200) as f64);
                     *cur = close;
                     (open, close, high, low, vol)
+                } else {
+                    let symbol_clean = asset.replace("-", "");
+                    if let Some(&real_p) = live_prices_map.get(&symbol_clean) {
+                        let prev = *cur;
+                        *cur = real_p;
+                        let h = prev.max(real_p) * 1.0002;
+                        let l = prev.min(real_p) * 0.9998;
+                        (prev, real_p, h, l, 25.0)
+                    } else {
+                        let wave = ((cycle as f64 * 0.2) + (asset.len() as f64)).sin() * 0.003;
+                        let noise = (((cycle * 17 + asset.len() as u64) % 100) as f64 - 49.0)
+                            / 100.0
+                            * 0.004;
+                        let change = wave + noise;
+                        let open = *cur;
+                        let close = (open * (1.0 + change)).max(0.01);
+                        let high = open.max(close) * (1.0 + 0.0015);
+                        let low = open.min(close) * (1.0 - 0.0015);
+                        let vol = 10.0 + (((cycle * 7) % 50) as f64);
+                        *cur = close;
+                        (open, close, high, low, vol)
+                    }
                 };
 
                 let candle = Candle::new(now, open, high, low, close, vol);
                 let exec_opt = engine_for_loop.write().feed_candle(asset, candle);
 
-                // Se houver execução e estiver em live mode, despacha ordem para a Binance Testnet
-                if let Ok(Some(trade)) = exec_opt {
-                    if let Some(ref conn) = binance_conn_clone {
-                        if conn.is_live() {
-                            let side_str = match trade.action {
-                                TradingAction::Buy => match trade.side {
-                                    OrderSide::Long => "BUY",
-                                    OrderSide::Short => "SELL",
-                                },
-                                TradingAction::ClosePosition
-                                | TradingAction::Sell
-                                | TradingAction::PartialClose => match trade.side {
-                                    OrderSide::Long => "SELL",
-                                    OrderSide::Short => "BUY",
-                                },
-                                _ => "SELL",
-                            };
-                            let formatted_qty = BinanceTestnetConnector::format_binance_quantity(
-                                &symbol_clean,
-                                trade.quantity,
-                            );
-                            let conn_dispatch = conn.clone();
-                            let sym_dispatch = symbol_clean.clone();
-                            let logger_dispatch = logger_for_loop.clone();
-                            tokio::spawn(async move {
-                                match conn_dispatch
-                                    .place_order(
-                                        &sym_dispatch,
-                                        side_str,
-                                        "MARKET",
-                                        formatted_qty,
-                                        None,
-                                    )
-                                    .await
-                                {
-                                    Ok(ord_resp) => {
-                                        println!(
-                                            "  • {} Ordem Binance Testnet despachada com sucesso: {} {:.4} {} (ID: {})",
-                                            "[BINANCE LIVE]".green().bold(),
-                                            side_str.bold(),
+                // Se houver execução em crypto e estiver em live mode, despacha ordem para a Binance Testnet
+                if !is_forex_symbol(asset) {
+                    if let Ok(Some(trade)) = exec_opt {
+                        if let Some(conn) = &binance_conn_clone {
+                            if conn.is_live() {
+                                let symbol_clean = asset.replace("-", "");
+                                let side_str = match trade.action {
+                                    TradingAction::Buy => match trade.side {
+                                        OrderSide::Long => "BUY",
+                                        OrderSide::Short => "SELL",
+                                    },
+                                    TradingAction::ClosePosition
+                                    | TradingAction::Sell
+                                    | TradingAction::PartialClose => match trade.side {
+                                        OrderSide::Long => "SELL",
+                                        OrderSide::Short => "BUY",
+                                    },
+                                    _ => "SELL",
+                                };
+                                let formatted_qty =
+                                    BinanceTestnetConnector::format_binance_quantity(
+                                        &symbol_clean,
+                                        trade.quantity,
+                                    );
+                                let conn_dispatch = conn.clone();
+                                let sym_dispatch = symbol_clean.clone();
+                                let logger_dispatch = logger_for_loop.clone();
+                                tokio::spawn(async move {
+                                    match conn_dispatch
+                                        .place_order(
+                                            &sym_dispatch,
+                                            side_str,
+                                            "MARKET",
                                             formatted_qty,
-                                            sym_dispatch.cyan(),
-                                            ord_resp.order_id
-                                        );
-                                        logger_dispatch.trade(&sym_dispatch, &format!("Ordem {} executada na Binance Testnet: {:.4} (ID: {})", side_str, formatted_qty, ord_resp.order_id));
-                                    }
-                                    Err(err) => {
-                                        println!(
-                                            "  • {} Erro ao despachar ordem para Binance: {}",
-                                            "[BINANCE WARN]".yellow().bold(),
-                                            err
-                                        );
-                                        logger_dispatch.error(
-                                            "BINANCE_ORDER",
-                                            &format!(
-                                                "Erro ao despachar ordem para Binance: {}",
+                                            None,
+                                        )
+                                        .await
+                                    {
+                                        Ok(ord_resp) => {
+                                            println!(
+                                                "  • {} Ordem Binance Testnet despachada com sucesso: {} {:.4} {} (ID: {})",
+                                                "[BINANCE LIVE]".green().bold(),
+                                                side_str.bold(),
+                                                formatted_qty,
+                                                sym_dispatch.cyan(),
+                                                ord_resp.order_id
+                                            );
+                                            logger_dispatch.trade(&sym_dispatch, &format!("Ordem {} executada na Binance Testnet: {:.4} (ID: {})", side_str, formatted_qty, ord_resp.order_id));
+                                        }
+                                        Err(err) => {
+                                            println!(
+                                                "  • {} Erro ao despachar ordem para Binance: {}",
+                                                "[BINANCE WARN]".yellow().bold(),
                                                 err
-                                            ),
-                                            Some(&err.to_string()),
-                                        );
+                                            );
+                                            logger_dispatch.error(
+                                                "BINANCE_ORDER",
+                                                &format!(
+                                                    "Erro ao despachar ordem para Binance: {}",
+                                                    err
+                                                ),
+                                                Some(&err.to_string()),
+                                            );
+                                        }
                                     }
-                                }
-                            });
+                                });
+                            }
                         }
                     }
                 }

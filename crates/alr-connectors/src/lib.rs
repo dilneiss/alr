@@ -35,12 +35,13 @@ pub use trading::{
     BinanceOrderResponse, BinanceTestnetConnector, BybitOrderRequest, BybitOrderResponse,
     BybitTestnetConnector, BybitTicker, Candle, CandleTick, CryptoTraderEngine, DeskStatusSnapshot,
     ExchangeSimulationConfig, ForexConnector, ForexLotType, ForexPipCalculator, ForexPosition,
-    ForexQuote, JevTradingDecision, LlmMarketRegimeAdvisor, MacroRegimeReport, MarketCategory,
-    MarketRegime, MarketSnapshot, MetaTraderBridgeConnector, MetaTraderOrderResponse,
-    MultiAssetConfig, MultiAssetTraderEngine, OandaOrderResponse, OandaTestnetConnector, OrderBook,
-    OrderSide, RiskControlPolicy, RiskPolicy, RiskRationale, SqliteTradingStore,
-    TechnicalIndicators, TradingPosition, TradingSignal, DEFAULT_MULTI_ASSET_BASKET,
-    FOREX_MAJOR_BASKET,
+    ForexQuote, GraphTopologyAssetNode, GraphTopologyData, GraphTopologyHubData, GraphTopologyLink,
+    GraphTopologyNode, JevTradingDecision, LlmMarketRegimeAdvisor, MacroRegimeReport,
+    MarketCategory, MarketRegime, MarketSnapshot, MetaTraderBridgeConnector,
+    MetaTraderOrderResponse, MultiAssetConfig, MultiAssetTraderEngine, OandaOrderResponse,
+    OandaTestnetConnector, OrderBook, OrderSide, RiskControlPolicy, RiskPolicy, RiskRationale,
+    SqliteTradingStore, TechnicalIndicators, TradingPosition, TradingSignal,
+    DEFAULT_MULTI_ASSET_BASKET, DUAL_MARKET_BASKET, FOREX_MAJOR_BASKET,
 };
 pub use trading_desk::*;
 pub use trading_logger::*;

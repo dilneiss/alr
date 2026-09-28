@@ -4481,6 +4481,24 @@ pub const FOREX_MAJOR_BASKET: [&str; 7] = [
     "EUR-USD", "GBP-USD", "USD-JPY", "USD-CHF", "AUD-USD", "USD-CAD", "EUR-GBP",
 ];
 
+/// Cesta combinada de 14 ativos simultâneos (7 Cryptos líderes + 7 Forex Majors)
+pub const DUAL_MARKET_BASKET: [&str; 14] = [
+    "BTC-USDT",
+    "ETH-USDT",
+    "SOL-USDT",
+    "BNB-USDT",
+    "XRP-USDT",
+    "ADA-USDT",
+    "DOGE-USDT",
+    "EUR-USD",
+    "GBP-USD",
+    "USD-JPY",
+    "USD-CHF",
+    "AUD-USD",
+    "USD-CAD",
+    "EUR-GBP",
+];
+
 /// Identifica se um símbolo pertence ao mercado de Forex
 pub fn is_forex_symbol(asset: &str) -> bool {
     let clean = asset.to_uppercase().replace(['/', '_'], "-");
@@ -4695,7 +4713,7 @@ impl Default for MultiAssetConfig {
     fn default() -> Self {
         Self {
             initial_capital: 50_000.0,
-            max_concurrent_positions: 3,
+            max_concurrent_positions: 14,
             max_portfolio_risk_pct: 10.0,
             max_risk_per_trade_pct: 2.0,
             max_trade_allocation_usd: 100.0,
@@ -4712,12 +4730,24 @@ impl MultiAssetConfig {
     pub fn forex(initial_capital: f64) -> Self {
         Self {
             initial_capital,
-            max_concurrent_positions: 3,
+            max_concurrent_positions: 14,
             max_portfolio_risk_pct: 8.0,
             max_risk_per_trade_pct: 1.5,
             max_trade_allocation_usd: 1_000.0,
             exchange_config: ExchangeSimulationConfig::forex(),
             basket: FOREX_MAJOR_BASKET.iter().map(|s| s.to_string()).collect(),
+        }
+    }
+
+    pub fn dual_market(initial_capital: f64) -> Self {
+        Self {
+            initial_capital,
+            max_concurrent_positions: 14,
+            max_portfolio_risk_pct: 12.0,
+            max_risk_per_trade_pct: 1.5,
+            max_trade_allocation_usd: 1_000.0,
+            exchange_config: ExchangeSimulationConfig::forex(),
+            basket: DUAL_MARKET_BASKET.iter().map(|s| s.to_string()).collect(),
         }
     }
 }
@@ -4866,6 +4896,103 @@ pub struct TradeSizingComparisonReport {
     pub summary_explanation: String,
 }
 
+/// Dados consolidados de um Hub Central na Topologia em Grafo
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GraphTopologyHubData {
+    pub id: String,
+    pub label: String,
+    pub balance: f64,
+    pub pnl_usd: f64,
+    pub pnl_pct: f64,
+    pub win_rate_pct: f64,
+    pub max_drawdown_pct: f64,
+    pub max_drawdown_usd: f64,
+    pub active_trades: usize,
+    pub total_trades: usize,
+}
+
+/// Nó de Ativo individual com detalhes completos da operação e da estratégia campeã
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GraphTopologyAssetNode {
+    pub id: String,
+    pub asset: String,
+    pub market: MarketCategory,
+    pub has_trade: bool,
+    pub strategy_id: String,
+    pub strategy_name: String,
+    pub rationale: String,
+    pub entry_price: f64,
+    pub current_price: f64,
+    pub pnl_usd: f64,
+    pub pnl_pct: f64,
+    pub pnl_pips: f64,
+    pub stop_loss: f64,
+    pub take_profit_1: f64,
+    pub take_profit_2: f64,
+    pub status: String,
+    pub side: String,
+    pub position_size: f64,
+}
+
+/// Nó unificado do Grafo (Hub central ou Ativo radiante)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GraphTopologyNode {
+    pub id: String,
+    pub label: String,
+    pub node_type: String, // "hub" ou "asset"
+    #[serde(default)]
+    pub market: Option<MarketCategory>,
+    #[serde(default)]
+    pub balance: Option<f64>,
+    pub pnl_usd: f64,
+    pub pnl_pct: f64,
+    #[serde(default)]
+    pub win_rate_pct: Option<f64>,
+    #[serde(default)]
+    pub max_drawdown_pct: Option<f64>,
+    #[serde(default)]
+    pub max_drawdown_usd: Option<f64>,
+    #[serde(default)]
+    pub asset: Option<String>,
+    pub has_trade: bool,
+    #[serde(default)]
+    pub strategy_id: Option<String>,
+    pub strategy_name: String,
+    pub rationale: String,
+    pub entry_price: f64,
+    pub current_price: f64,
+    pub pnl_pips: f64,
+    pub stop_loss: f64,
+    pub take_profit_1: f64,
+    pub take_profit_2: f64,
+    pub status: String,
+    pub side: String,
+    pub position_size: f64,
+}
+
+/// Aresta de conexão orientada no Grafo
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GraphTopologyLink {
+    pub source: String,
+    pub target: String,
+    pub value: f64,
+    pub link_type: String, // "core_to_hub", "hub_to_asset"
+}
+
+/// Payload completo do Centro de Operações em Grafo
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GraphTopologyData {
+    pub core_alr: GraphTopologyHubData,
+    pub crypto_hub: GraphTopologyHubData,
+    pub forex_hub: GraphTopologyHubData,
+    pub nodes: Vec<GraphTopologyNode>,
+    pub links: Vec<GraphTopologyLink>,
+    pub assets: Vec<GraphTopologyAssetNode>,
+    pub arena_competitors_count: usize,
+    pub active_positions_count: usize,
+    pub timestamp: i64,
+}
+
 /// Perfil de Estratégia / Combinação de Pesos de Indicadores
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StrategyProfile {
@@ -4878,13 +5005,35 @@ pub struct StrategyProfile {
     pub stop_loss_atr_mult: f64,
     pub take_profit_atr_mult: f64,
     pub use_partial_tp: bool,
+    #[serde(default)]
+    pub market: MarketCategory,
+}
+
+impl Default for StrategyProfile {
+    fn default() -> Self {
+        Self {
+            id: String::new(),
+            name: String::new(),
+            description: String::new(),
+            factor_weights: HashMap::new(),
+            min_confluence: 2,
+            min_probability: 0.65,
+            stop_loss_atr_mult: 1.5,
+            take_profit_atr_mult: 2.5,
+            use_partial_tp: true,
+            market: MarketCategory::Crypto,
+        }
+    }
 }
 
 impl StrategyProfile {
     pub fn default_profiles() -> Vec<Self> {
-        let mut profiles = Vec::with_capacity(100);
+        let mut profiles = Vec::with_capacity(400);
 
-        // 1. As 18 Estratégias Originais (12 Especializadas + 6 Genéticas)
+        // ==========================================
+        // PARTE 1: 200 PERFIS DE CRIPTOMOEDAS (CRYPTO)
+        // ==========================================
+        // 1.1 As 18 Estratégias Originais de Cripto
         profiles.push(Self::profile_trend_supertrend_heavy());
         profiles.push(Self::profile_trend_macro_momentum());
         profiles.push(Self::profile_trend_breakout_accelerator());
@@ -4904,8 +5053,45 @@ impl StrategyProfile {
         profiles.push(Self::profile_genetic_challenger_epsilon());
         profiles.push(Self::profile_genetic_challenger_zeta());
 
-        // 2. Variações Sistemáticas das Famílias Estratégicas (62 Perfis)
-        let families: [(&str, &str, f64, f64); 15] = [
+        // 1.2 2 Perfis Especiais de Arbitragem e HFT
+        let mut w_stat_arb = HashMap::new();
+        w_stat_arb.insert("RSI_BULLISH_DIVERGENCE".to_string(), 3.2);
+        w_stat_arb.insert("ORDER_BOOK_IMBALANCE".to_string(), 2.8);
+        w_stat_arb.insert("POC_VOLUME_SUPPORT".to_string(), 2.5);
+        profiles.push(StrategyProfile {
+            id: "statistical_arbitrage_rebound".to_string(),
+            name: "Statistical Arbitrage Rebound".to_string(),
+            description:
+                "Arbitragem estatística explorando distorções de preço em relação ao book L2"
+                    .to_string(),
+            factor_weights: w_stat_arb,
+            min_confluence: 2,
+            min_probability: 0.72,
+            stop_loss_atr_mult: 1.4,
+            take_profit_atr_mult: 2.6,
+            use_partial_tp: true,
+            market: MarketCategory::Crypto,
+        });
+
+        let mut w_hft_scalp = HashMap::new();
+        w_hft_scalp.insert("TTM_VOLATILITY_SQUEEZE".to_string(), 3.1);
+        w_hft_scalp.insert("ORDER_BOOK_IMBALANCE".to_string(), 2.9);
+        w_hft_scalp.insert("STOCH_PSAR_ALIGNMENT".to_string(), 2.2);
+        profiles.push(StrategyProfile {
+            id: "hft_micro_scalper_pro".to_string(),
+            name: "HFT Micro Scalper Pro".to_string(),
+            description: "Operações de alta frequência em compressões de volatilidade e desequilíbrio no book".to_string(),
+            factor_weights: w_hft_scalp,
+            min_confluence: 2,
+            min_probability: 0.69,
+            stop_loss_atr_mult: 1.1,
+            take_profit_atr_mult: 2.0,
+            use_partial_tp: true,
+            market: MarketCategory::Crypto,
+        });
+
+        // 1.3 15 Famílias x 10 Variações = 150 Perfis Sistemáticos de Cripto
+        let crypto_families: [(&str, &str, f64, f64); 15] = [
             ("trend_flow", "Trend Flow Multiplier", 2.6, 2.2),
             ("momentum_surge", "Momentum Surge Hunter", 2.8, 2.0),
             ("kumo_break", "Ichimoku Cloud Break", 3.0, 1.8),
@@ -4933,16 +5119,21 @@ impl StrategyProfile {
             ),
         ];
 
-        let variations: [(&str, &str, usize, f64, f64, f64); 4] = [
+        let crypto_variations: [(&str, &str, usize, f64, f64, f64); 10] = [
             ("conservative", "Conservador", 3, 0.74, 1.8, 3.5),
             ("aggressive", "Agressivo", 2, 0.67, 1.2, 2.2),
             ("tight_stop", "Stop Curto", 2, 0.71, 1.0, 1.8),
             ("runner", "Trend Runner", 3, 0.72, 2.2, 4.5),
+            ("ultra_scalper", "Ultra Scalper", 2, 0.68, 0.9, 1.6),
+            ("swing_trend", "Swing Trend", 3, 0.75, 2.4, 4.8),
+            ("breakout_heavy", "Breakout Heavy", 2, 0.70, 1.4, 2.8),
+            ("contrarian_fade", "Contrarian Fade", 2, 0.73, 1.3, 2.5),
+            ("volume_expansion", "Volume Expansion", 3, 0.71, 1.6, 3.2),
+            ("mean_rebound", "Mean Rebound", 2, 0.69, 1.1, 2.0),
         ];
 
-        // 15 famílias x 4 variações = 60 perfis
-        for (f_id, f_name, w1, w2) in families {
-            for (v_id, v_name, min_conf, min_prob, sl_mult, tp_mult) in variations {
+        for (f_id, f_name, w1, w2) in crypto_families {
+            for (v_id, v_name, min_conf, min_prob, sl_mult, tp_mult) in crypto_variations {
                 let id = format!("{}_{}", f_id, v_id);
                 let name = format!("{} ({})", f_name, v_name);
                 let desc = format!("Estratégia quantitativa {} para perfil {}", f_name, v_name);
@@ -4961,47 +5152,13 @@ impl StrategyProfile {
                     stop_loss_atr_mult: sl_mult,
                     take_profit_atr_mult: tp_mult,
                     use_partial_tp: true,
+                    market: MarketCategory::Crypto,
                 });
             }
         }
 
-        // 2 Perfis Especiais de Arbitragem Estatística e Momentum para totalizar 80 fundamentais
-        let mut w_stat_arb = HashMap::new();
-        w_stat_arb.insert("RSI_BULLISH_DIVERGENCE".to_string(), 3.2);
-        w_stat_arb.insert("ORDER_BOOK_IMBALANCE".to_string(), 2.8);
-        w_stat_arb.insert("POC_VOLUME_SUPPORT".to_string(), 2.5);
-        profiles.push(StrategyProfile {
-            id: "statistical_arbitrage_rebound".to_string(),
-            name: "Statistical Arbitrage Rebound".to_string(),
-            description:
-                "Arbitragem estatística explorando distorções de preço em relação ao book L2"
-                    .to_string(),
-            factor_weights: w_stat_arb,
-            min_confluence: 2,
-            min_probability: 0.72,
-            stop_loss_atr_mult: 1.4,
-            take_profit_atr_mult: 2.6,
-            use_partial_tp: true,
-        });
-
-        let mut w_hft_scalp = HashMap::new();
-        w_hft_scalp.insert("TTM_VOLATILITY_SQUEEZE".to_string(), 3.1);
-        w_hft_scalp.insert("ORDER_BOOK_IMBALANCE".to_string(), 2.9);
-        w_hft_scalp.insert("STOCH_PSAR_ALIGNMENT".to_string(), 2.2);
-        profiles.push(StrategyProfile {
-            id: "hft_micro_scalper_pro".to_string(),
-            name: "HFT Micro Scalper Pro".to_string(),
-            description: "Operações de alta frequência em compressões de volatilidade e desequilíbrio no book".to_string(),
-            factor_weights: w_hft_scalp,
-            min_confluence: 2,
-            min_probability: 0.69,
-            stop_loss_atr_mult: 1.1,
-            take_profit_atr_mult: 2.0,
-            use_partial_tp: true,
-        });
-
-        // 3. 20 Clones Genéticos Mutantes Evolutivos (Total: 18 + 60 + 2 + 20 = 100 Perfis!)
-        for i in 1..=20 {
+        // 1.4 30 Clones Genéticos Mutantes de Cripto (Total Cripto = 18 + 2 + 150 + 30 = 200!)
+        for i in 1..=30 {
             let id = format!("genetic_mutant_{:02}", i);
             let name = format!("Genetic Mutant Challenger #{:02}", i);
             let desc = format!("Clone evolutivo dinâmico #{} mutando a cada 50 velas", i);
@@ -5029,6 +5186,155 @@ impl StrategyProfile {
                 stop_loss_atr_mult: 1.5,
                 take_profit_atr_mult: 2.8,
                 use_partial_tp: true,
+                market: MarketCategory::Crypto,
+            });
+        }
+
+        // ==========================================
+        // PARTE 2: 200 PERFIS DE FOREX & FX MAJORS
+        // ==========================================
+        // 2.1 10 Estratégias Fundamentais de Forex
+        profiles.push(Self::profile_fx_london_open_scalper());
+        profiles.push(Self::profile_fx_asian_session_reversal());
+        profiles.push(Self::profile_fx_ny_momentum_continuation());
+        profiles.push(Self::profile_fx_eur_usd_institutional_flow());
+        profiles.push(Self::profile_fx_gbp_volatility_breakout());
+        profiles.push(Self::profile_fx_usd_jpy_carry_momentum());
+        profiles.push(Self::profile_fx_usd_chf_safe_haven_flow());
+        profiles.push(Self::profile_fx_aud_usd_commodity_trend());
+        profiles.push(Self::profile_fx_usd_cad_oil_flow_reversal());
+        profiles.push(Self::profile_fx_eur_gbp_cross_reversion());
+
+        // 2.2 15 Famílias x 10 Variações = 150 Perfis Sistemáticos de Forex
+        let forex_families: [(&str, &str, f64, f64); 15] = [
+            ("fx_london_breakout", "London Session Breakout", 2.9, 2.1),
+            ("fx_asian_range_squeeze", "Asian Range Squeeze", 3.1, 2.3),
+            ("fx_ny_continuation", "NY Overlap Continuation", 2.8, 2.2),
+            ("fx_pip_scalper", "High-Precision Pip Scalper", 3.0, 1.9),
+            ("fx_carry_trend", "Carry Trade Macro Trend", 2.7, 2.4),
+            (
+                "fx_donchian_reversion",
+                "Forex Donchian Mean Reversion",
+                2.8,
+                2.3,
+            ),
+            ("fx_mtf_pip_flow", "Multi-Timeframe Pip Flow", 3.2, 2.2),
+            ("fx_ichimoku_fx", "Ichimoku Forex Cloud Break", 3.0, 2.0),
+            ("fx_supertrend_fx", "SuperTrend FX Navigator", 2.8, 2.5),
+            (
+                "fx_central_bank_flow",
+                "Central Bank Liquidity Flow",
+                3.3,
+                2.3,
+            ),
+            (
+                "fx_volatility_pip_expansion",
+                "Forex Volatility Pip Expansion",
+                2.9,
+                2.1,
+            ),
+            ("fx_chandelier_fx_runner", "Chandelier FX Runner", 2.6, 2.4),
+            (
+                "fx_rsi_stoch_divergence",
+                "RSI-Stoch Forex Divergence",
+                3.0,
+                2.2,
+            ),
+            (
+                "fx_support_resistance",
+                "Forex Major Key Level Bounce",
+                2.9,
+                2.4,
+            ),
+            (
+                "fx_fibonacci_retrace",
+                "Fibonacci & Value Area FX",
+                3.1,
+                2.3,
+            ),
+        ];
+
+        let forex_variations: [(&str, &str, usize, f64, f64, f64); 10] = [
+            ("conservative", "Conservador", 3, 0.74, 1.8, 3.5),
+            ("aggressive", "Agressivo", 2, 0.67, 1.2, 2.2),
+            ("tight_stop", "Stop Curto", 2, 0.71, 1.0, 1.8),
+            ("runner", "Trend Runner", 3, 0.72, 2.2, 4.5),
+            ("pip_scalper", "Micro Pip Scalper", 2, 0.68, 0.8, 1.5),
+            ("swing_macro", "Swing Macro FX", 3, 0.75, 2.5, 5.0),
+            ("session_breakout", "Session Breakout", 2, 0.70, 1.4, 2.8),
+            ("range_reversion", "Range Reversion", 2, 0.73, 1.3, 2.4),
+            (
+                "spread_arbitrage",
+                "Spread & Volatility Arb",
+                3,
+                0.71,
+                1.5,
+                3.0,
+            ),
+            ("momentum_surge", "Forex Momentum Surge", 2, 0.69, 1.1, 2.0),
+        ];
+
+        for (f_id, f_name, w1, w2) in forex_families {
+            for (v_id, v_name, min_conf, min_prob, sl_mult, tp_mult) in forex_variations {
+                let id = format!("{}_{}", f_id, v_id);
+                let name = format!("{} ({})", f_name, v_name);
+                let desc = format!(
+                    "Estratégia quantitativa Forex {} para perfil {}",
+                    f_name, v_name
+                );
+                let mut w = HashMap::new();
+                w.insert("TREND_BULLISH_CONFLUENCE".to_string(), w1);
+                w.insert("INSTITUTIONAL_VWAP_SUPPORT".to_string(), w2);
+                w.insert("MOMENTUM_STEADY_EXPANSION".to_string(), 1.7);
+                w.insert("VOLATILITY_EXPANSION_UPPER".to_string(), 1.4);
+                profiles.push(StrategyProfile {
+                    id,
+                    name,
+                    description: desc,
+                    factor_weights: w,
+                    min_confluence: min_conf,
+                    min_probability: min_prob,
+                    stop_loss_atr_mult: sl_mult,
+                    take_profit_atr_mult: tp_mult,
+                    use_partial_tp: true,
+                    market: MarketCategory::Forex,
+                });
+            }
+        }
+
+        // 2.3 40 Clones Genéticos Mutantes de Forex (Total Forex = 10 + 150 + 40 = 200!)
+        for i in 1..=40 {
+            let id = format!("fx_genetic_mutant_{:02}", i);
+            let name = format!("Forex Genetic Challenger #{:02}", i);
+            let desc = format!(
+                "Clone evolutivo dinâmico Forex #{} mutando a cada 50 velas",
+                i
+            );
+            let mut w = Self::profile_fx_london_open_scalper().factor_weights;
+            let delta = (i as f64 * 0.07) % 0.40 - 0.20;
+            w.insert(
+                "TREND_BULLISH_CONFLUENCE".to_string(),
+                (1.1 + delta).clamp(0.4, 3.0),
+            );
+            w.insert(
+                "INSTITUTIONAL_VWAP_SUPPORT".to_string(),
+                (1.1 - delta).clamp(0.4, 3.0),
+            );
+            w.insert(
+                "VOLATILITY_EXPANSION_UPPER".to_string(),
+                (1.0 + delta * 0.4).clamp(0.4, 3.0),
+            );
+            profiles.push(StrategyProfile {
+                id,
+                name,
+                description: desc,
+                factor_weights: w,
+                min_confluence: 2,
+                min_probability: 0.69,
+                stop_loss_atr_mult: 1.4,
+                take_profit_atr_mult: 2.6,
+                use_partial_tp: true,
+                market: MarketCategory::Forex,
             });
         }
 
@@ -5054,6 +5360,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 2.0,
             take_profit_atr_mult: 3.5,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
 
@@ -5075,6 +5382,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 1.5,
             take_profit_atr_mult: 2.5,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
 
@@ -5095,6 +5403,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 1.8,
             take_profit_atr_mult: 3.2,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
 
@@ -5115,6 +5424,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 1.2,
             take_profit_atr_mult: 2.0,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
 
@@ -5135,6 +5445,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 1.7,
             take_profit_atr_mult: 2.8,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
 
@@ -5170,6 +5481,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 1.8,
             take_profit_atr_mult: 3.0,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
     pub fn profile_trend_macro_momentum() -> Self {
@@ -5191,6 +5503,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 2.2,
             take_profit_atr_mult: 4.0,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
 
@@ -5211,6 +5524,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 1.6,
             take_profit_atr_mult: 3.0,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
 
@@ -5232,6 +5546,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 1.4,
             take_profit_atr_mult: 2.4,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
 
@@ -5253,6 +5568,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 1.8,
             take_profit_atr_mult: 3.2,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
 
@@ -5274,6 +5590,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 1.5,
             take_profit_atr_mult: 2.6,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
 
@@ -5295,6 +5612,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 1.2,
             take_profit_atr_mult: 2.2,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
 
@@ -5314,6 +5632,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 1.4,
             take_profit_atr_mult: 2.5,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
 
@@ -5333,6 +5652,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 1.6,
             take_profit_atr_mult: 2.8,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
 
@@ -5352,6 +5672,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 1.7,
             take_profit_atr_mult: 3.1,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
 
@@ -5371,6 +5692,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 1.5,
             take_profit_atr_mult: 2.6,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
 
@@ -5388,6 +5710,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 1.4,
             take_profit_atr_mult: 2.4,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
 
@@ -5407,6 +5730,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 1.6,
             take_profit_atr_mult: 2.8,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
 
@@ -5426,6 +5750,7 @@ impl StrategyProfile {
             stop_loss_atr_mult: 1.7,
             take_profit_atr_mult: 2.9,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
         }
     }
 
@@ -5445,6 +5770,212 @@ impl StrategyProfile {
             stop_loss_atr_mult: 1.5,
             take_profit_atr_mult: 2.7,
             use_partial_tp: true,
+            market: MarketCategory::Crypto,
+        }
+    }
+
+    pub fn profile_fx_london_open_scalper() -> Self {
+        let mut w = HashMap::new();
+        w.insert("TREND_BULLISH_CONFLUENCE".to_string(), 2.9);
+        w.insert("VOLATILITY_EXPANSION_UPPER".to_string(), 2.5);
+        w.insert("MOMENTUM_STEADY_EXPANSION".to_string(), 2.2);
+        w.insert("ORDER_BOOK_IMBALANCE".to_string(), 1.8);
+        Self {
+            id: "fx_london_open_scalper".to_string(),
+            name: "Forex London Open Scalper".to_string(),
+            description:
+                "Scalper de alta precisão capturando a expansão de liquidez da abertura de Londres"
+                    .to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.70,
+            stop_loss_atr_mult: 1.2,
+            take_profit_atr_mult: 2.4,
+            use_partial_tp: true,
+            market: MarketCategory::Forex,
+        }
+    }
+
+    pub fn profile_fx_asian_session_reversal() -> Self {
+        let mut w = HashMap::new();
+        w.insert("SUPPORT_DONCHIAN_BOUNCE".to_string(), 3.0);
+        w.insert("RSI_BULLISH_DIVERGENCE".to_string(), 2.8);
+        w.insert("MOMENTUM_OVERSOLD_BOUNCE".to_string(), 2.4);
+        Self {
+            id: "fx_asian_session_reversal".to_string(),
+            name: "Forex Asian Session Range Reversal".to_string(),
+            description:
+                "Reversão à média operando extremos de suporte e resistência do range de Tóquio"
+                    .to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.72,
+            stop_loss_atr_mult: 1.3,
+            take_profit_atr_mult: 2.2,
+            use_partial_tp: true,
+            market: MarketCategory::Forex,
+        }
+    }
+
+    pub fn profile_fx_ny_momentum_continuation() -> Self {
+        let mut w = HashMap::new();
+        w.insert("MACRO_TREND_ABOVE_EMA50".to_string(), 3.1);
+        w.insert("VOLUME_SURGE_CONFIRMATION".to_string(), 2.7);
+        w.insert("TREND_BULLISH_CONFLUENCE".to_string(), 2.4);
+        Self {
+            id: "fx_ny_momentum_continuation".to_string(),
+            name: "Forex New York Momentum Continuation".to_string(),
+            description:
+                "Continuação de tendência no overlap Londres/Nova York com confirmação macro"
+                    .to_string(),
+            factor_weights: w,
+            min_confluence: 3,
+            min_probability: 0.73,
+            stop_loss_atr_mult: 1.8,
+            take_profit_atr_mult: 3.5,
+            use_partial_tp: true,
+            market: MarketCategory::Forex,
+        }
+    }
+
+    pub fn profile_fx_eur_usd_institutional_flow() -> Self {
+        let mut w = HashMap::new();
+        w.insert("INSTITUTIONAL_VWAP_SUPPORT".to_string(), 3.2);
+        w.insert("MFI_INSTITUTIONAL_INFLOW".to_string(), 2.8);
+        w.insert("ORDER_BOOK_IMBALANCE".to_string(), 2.2);
+        Self {
+            id: "fx_eur_usd_institutional_flow".to_string(),
+            name: "EUR/USD Institutional Order Flow".to_string(),
+            description:
+                "Rastreamento de liquidez bancária interbancária e fluxo de ordens no EUR/USD"
+                    .to_string(),
+            factor_weights: w,
+            min_confluence: 3,
+            min_probability: 0.74,
+            stop_loss_atr_mult: 1.5,
+            take_profit_atr_mult: 2.8,
+            use_partial_tp: true,
+            market: MarketCategory::Forex,
+        }
+    }
+
+    pub fn profile_fx_gbp_volatility_breakout() -> Self {
+        let mut w = HashMap::new();
+        w.insert("VOLATILITY_EXPANSION_UPPER".to_string(), 3.3);
+        w.insert("ADX_STRONG_TREND".to_string(), 2.7);
+        w.insert("VOLUME_SURGE_CONFIRMATION".to_string(), 2.3);
+        Self {
+            id: "fx_gbp_volatility_breakout".to_string(),
+            name: "GBP Cable Volatility Breakout".to_string(),
+            description:
+                "Captura rompimentos de volatilidade explosiva na libra esterlina com ADX elevado"
+                    .to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.70,
+            stop_loss_atr_mult: 1.6,
+            take_profit_atr_mult: 3.2,
+            use_partial_tp: true,
+            market: MarketCategory::Forex,
+        }
+    }
+
+    pub fn profile_fx_usd_jpy_carry_momentum() -> Self {
+        let mut w = HashMap::new();
+        w.insert("MACRO_TREND_ABOVE_EMA50".to_string(), 3.2);
+        w.insert("ADX_STRONG_TREND".to_string(), 2.8);
+        w.insert("MOMENTUM_STEADY_EXPANSION".to_string(), 2.2);
+        Self {
+            id: "fx_usd_jpy_carry_momentum".to_string(),
+            name: "USD/JPY Carry Trade & Momentum".to_string(),
+            description: "Surfe de diferenciais de taxa de juros e momentum no par dólar/iene"
+                .to_string(),
+            factor_weights: w,
+            min_confluence: 3,
+            min_probability: 0.71,
+            stop_loss_atr_mult: 2.0,
+            take_profit_atr_mult: 4.0,
+            use_partial_tp: true,
+            market: MarketCategory::Forex,
+        }
+    }
+
+    pub fn profile_fx_usd_chf_safe_haven_flow() -> Self {
+        let mut w = HashMap::new();
+        w.insert("INSTITUTIONAL_VWAP_SUPPORT".to_string(), 3.0);
+        w.insert("SUPPORT_DONCHIAN_BOUNCE".to_string(), 2.6);
+        w.insert("EXTREME_FEAR_CONTRARIAN".to_string(), 2.4);
+        Self {
+            id: "fx_usd_chf_safe_haven_flow".to_string(),
+            name: "USD/CHF Safe Haven Liquidity Anchor".to_string(),
+            description: "Operações contrárias e ancoragem institucional no franco suíço em momentos de aversão ao risco".to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.73,
+            stop_loss_atr_mult: 1.4,
+            take_profit_atr_mult: 2.6,
+            use_partial_tp: true,
+            market: MarketCategory::Forex,
+        }
+    }
+
+    pub fn profile_fx_aud_usd_commodity_trend() -> Self {
+        let mut w = HashMap::new();
+        w.insert("TREND_BULLISH_CONFLUENCE".to_string(), 3.0);
+        w.insert("MTF_ALIGNMENT_BULLISH".to_string(), 2.6);
+        w.insert("MOMENTUM_STEADY_EXPANSION".to_string(), 2.2);
+        Self {
+            id: "fx_aud_usd_commodity_trend".to_string(),
+            name: "AUD/USD Commodity Correlation Trend".to_string(),
+            description: "Acompanhamento de tendência estrutural no dólar australiano com alinhamento multitemporal".to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.71,
+            stop_loss_atr_mult: 1.7,
+            take_profit_atr_mult: 3.0,
+            use_partial_tp: true,
+            market: MarketCategory::Forex,
+        }
+    }
+
+    pub fn profile_fx_usd_cad_oil_flow_reversal() -> Self {
+        let mut w = HashMap::new();
+        w.insert("RSI_BULLISH_DIVERGENCE".to_string(), 3.1);
+        w.insert("POC_VOLUME_SUPPORT".to_string(), 2.7);
+        w.insert("PRICE_ACTION_HAMMER".to_string(), 2.3);
+        Self {
+            id: "fx_usd_cad_oil_flow_reversal".to_string(),
+            name: "USD/CAD Petro-Currency Flow Reversal".to_string(),
+            description: "Reversões táticas e divergências em zonas de POC para o dólar canadense"
+                .to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.72,
+            stop_loss_atr_mult: 1.5,
+            take_profit_atr_mult: 2.7,
+            use_partial_tp: true,
+            market: MarketCategory::Forex,
+        }
+    }
+
+    pub fn profile_fx_eur_gbp_cross_reversion() -> Self {
+        let mut w = HashMap::new();
+        w.insert("SUPPORT_DONCHIAN_BOUNCE".to_string(), 3.2);
+        w.insert("TTM_VOLATILITY_SQUEEZE".to_string(), 2.6);
+        w.insert("RSI_BULLISH_DIVERGENCE".to_string(), 2.3);
+        Self {
+            id: "fx_eur_gbp_cross_reversion".to_string(),
+            name: "EUR/GBP Cross-Currency Mean Reversion".to_string(),
+            description:
+                "Especialista em ranges laterais e reversão extrema no cross europeu EUR/GBP"
+                    .to_string(),
+            factor_weights: w,
+            min_confluence: 2,
+            min_probability: 0.74,
+            stop_loss_atr_mult: 1.3,
+            take_profit_atr_mult: 2.2,
+            use_partial_tp: true,
+            market: MarketCategory::Forex,
         }
     }
 }
@@ -5453,6 +5984,8 @@ impl StrategyProfile {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompetitorStrategyTracker {
     pub profile: StrategyProfile,
+    #[serde(default)]
+    pub market: MarketCategory,
     pub is_champion: bool,
     pub virtual_balance_usd: f64,
     pub initial_balance_usd: f64,
@@ -5485,7 +6018,9 @@ pub struct CompetitorStrategyTracker {
 
 impl CompetitorStrategyTracker {
     pub fn new(profile: StrategyProfile, is_champion: bool, initial_balance: f64) -> Self {
+        let market = profile.market;
         Self {
+            market,
             profile,
             is_champion,
             virtual_balance_usd: initial_balance,
@@ -5654,10 +6189,7 @@ impl StrategyArena {
             .collect();
 
         let mut asset_champs = HashMap::new();
-        for &asset in &DEFAULT_MULTI_ASSET_BASKET {
-            asset_champs.insert(asset.to_string(), champ_id.clone());
-        }
-        for &asset in &FOREX_MAJOR_BASKET {
+        for &asset in &DUAL_MARKET_BASKET {
             asset_champs.insert(asset.to_string(), champ_id.clone());
         }
 
@@ -5965,10 +6497,11 @@ impl StrategyArena {
         ))
     }
     pub fn mutate_genetic_challengers(&mut self) {
-        let mut ranked_base: Vec<(String, HashMap<String, f64>, f64)> = self
+        // Mutação de clones genéticos de Cripto
+        let mut crypto_ranked: Vec<(String, HashMap<String, f64>, f64)> = self
             .competitors
             .iter()
-            .filter(|c| !c.profile.id.starts_with("genetic_"))
+            .filter(|c| c.market == MarketCategory::Crypto && !c.profile.id.starts_with("genetic_"))
             .map(|c| {
                 (
                     c.profile.id.clone(),
@@ -5977,32 +6510,67 @@ impl StrategyArena {
                 )
             })
             .collect();
-        ranked_base.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
+        crypto_ranked.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
 
-        let top_weights = if !ranked_base.is_empty() {
-            ranked_base[0].1.clone()
+        let crypto_top = if !crypto_ranked.is_empty() {
+            crypto_ranked[0].1.clone()
         } else {
-            return;
+            StrategyProfile::profile_trend_supertrend_heavy().factor_weights
+        };
+
+        // Mutação de clones genéticos de Forex
+        let mut forex_ranked: Vec<(String, HashMap<String, f64>, f64)> = self
+            .competitors
+            .iter()
+            .filter(|c| {
+                c.market == MarketCategory::Forex && !c.profile.id.starts_with("fx_genetic_")
+            })
+            .map(|c| {
+                (
+                    c.profile.id.clone(),
+                    c.profile.factor_weights.clone(),
+                    c.net_pnl_usd,
+                )
+            })
+            .collect();
+        forex_ranked.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
+
+        let forex_top = if !forex_ranked.is_empty() {
+            forex_ranked[0].1.clone()
+        } else {
+            crypto_top.clone()
         };
 
         let seed_val = (self.total_cycles_evaluated % 100) as f64 * 0.01;
 
-        for comp in self
-            .competitors
-            .iter_mut()
-            .filter(|c| c.profile.id.starts_with("genetic_"))
-        {
-            comp.profile.factor_weights = top_weights.clone();
-            let mut keys: Vec<String> = comp.profile.factor_weights.keys().cloned().collect();
-            keys.sort();
-            for (idx, k) in keys.iter().enumerate() {
-                if let Some(w) = comp.profile.factor_weights.get_mut(k) {
-                    let delta = if (idx + self.total_cycles_evaluated).is_multiple_of(2) {
-                        0.15 + seed_val * 0.10
-                    } else {
-                        -0.12 - seed_val * 0.08
-                    };
-                    *w = (*w + delta).clamp(0.40, 3.50);
+        for comp in &mut self.competitors {
+            if comp.profile.id.starts_with("genetic_") {
+                comp.profile.factor_weights = crypto_top.clone();
+                let mut keys: Vec<String> = comp.profile.factor_weights.keys().cloned().collect();
+                keys.sort();
+                for (idx, k) in keys.iter().enumerate() {
+                    if let Some(w) = comp.profile.factor_weights.get_mut(k) {
+                        let delta = if (idx + self.total_cycles_evaluated).is_multiple_of(2) {
+                            0.15 + seed_val * 0.10
+                        } else {
+                            -0.12 - seed_val * 0.08
+                        };
+                        *w = (*w + delta).clamp(0.40, 3.50);
+                    }
+                }
+            } else if comp.profile.id.starts_with("fx_genetic_") {
+                comp.profile.factor_weights = forex_top.clone();
+                let mut keys: Vec<String> = comp.profile.factor_weights.keys().cloned().collect();
+                keys.sort();
+                for (idx, k) in keys.iter().enumerate() {
+                    if let Some(w) = comp.profile.factor_weights.get_mut(k) {
+                        let delta = if (idx + self.total_cycles_evaluated).is_multiple_of(2) {
+                            0.14 + seed_val * 0.12
+                        } else {
+                            -0.10 - seed_val * 0.09
+                        };
+                        *w = (*w + delta).clamp(0.40, 3.50);
+                    }
                 }
             }
         }
@@ -6184,6 +6752,9 @@ impl MultiAssetTraderEngine {
     }
     pub fn new_forex(capital: f64) -> Self {
         Self::new(MultiAssetConfig::forex(capital))
+    }
+    pub fn new_dual_market(capital: f64) -> Self {
+        Self::new(MultiAssetConfig::dual_market(capital))
     }
 
     pub fn market_category(&self) -> MarketCategory {
@@ -6384,10 +6955,9 @@ impl MultiAssetTraderEngine {
             .and_then(|e| e.current_position.as_ref())
             .is_some();
         // Se não tem posição e já atingiu o teto da carteira ou kill switch ativo, não permite abrir
-        if !has_pos
-            && (self.kill_switch_active
-                || self.active_positions_count() >= self.config.max_concurrent_positions)
-        {
+        let at_position_limit = self.config.max_concurrent_positions > 0
+            && self.active_positions_count() >= self.config.max_concurrent_positions;
+        if !has_pos && (self.kill_switch_active || at_position_limit) {
             if let Some(engine) = self.engines.get_mut(asset) {
                 engine.add_candle(candle);
             }
@@ -7065,6 +7635,449 @@ impl MultiAssetTraderEngine {
             ranked_profiles: ranked,
             recommended_champion,
             summary,
+        }
+    }
+
+    /// Computa a topologia viva em grafo do Centro de Operações (ALR Core, Crypto Hub, Forex Hub e 14 Ativos)
+    pub fn get_graph_topology(&self) -> GraphTopologyData {
+        let now = chrono::Utc::now().timestamp_millis();
+        let mut asset_nodes = Vec::with_capacity(14);
+        let mut graph_nodes = Vec::with_capacity(17);
+        let mut links = Vec::with_capacity(16);
+
+        let mut crypto_positions_val = 0.0;
+        let mut crypto_pnl_usd = 0.0;
+        let mut crypto_active_count = 0;
+        let mut crypto_total_trades = 0;
+        let mut crypto_wins = 0;
+
+        let mut forex_positions_val = 0.0;
+        let mut forex_pnl_usd = 0.0;
+        let mut forex_active_count = 0;
+        let mut forex_total_trades = 0;
+        let mut forex_wins = 0;
+
+        for &asset in &DUAL_MARKET_BASKET {
+            let is_fx = is_forex_symbol(asset);
+            let market = if is_fx {
+                MarketCategory::Forex
+            } else {
+                MarketCategory::Crypto
+            };
+
+            let engine_opt = self.engines.get(asset);
+            let champ_id = self
+                .strategy_arena
+                .asset_champions
+                .get(asset)
+                .cloned()
+                .unwrap_or_else(|| self.strategy_arena.champion_profile_id.clone());
+
+            let strat_name = self
+                .strategy_arena
+                .competitors
+                .iter()
+                .find(|c| c.profile.id == champ_id)
+                .map(|c| c.profile.name.clone())
+                .unwrap_or_else(|| champ_id.clone());
+
+            let current_price = engine_opt
+                .and_then(|e| e.candles.last().map(|c| c.close))
+                .unwrap_or_else(|| asset_baseline_price(asset));
+
+            let (
+                has_trade,
+                entry_price,
+                pnl_usd,
+                pnl_pct,
+                pnl_pips,
+                stop_loss,
+                take_profit_1,
+                take_profit_2,
+                status,
+                side,
+                pos_size,
+                rationale,
+            ) = if let Some(pos) = engine_opt.and_then(|e| e.current_position.as_ref()) {
+                let e_price = pos.entry_price;
+                let diff = current_price - e_price;
+                let trade_pnl_usd = if is_fx {
+                    let pip_val = ForexPipCalculator::pip_value_usd(
+                        asset,
+                        pos.quantity.max(10_000.0),
+                        current_price,
+                    );
+                    let pips = ForexPipCalculator::calculate_pips(asset, e_price, current_price);
+                    match pos.side {
+                        OrderSide::Long => pips * pip_val,
+                        OrderSide::Short => -pips * pip_val,
+                    }
+                } else {
+                    match pos.side {
+                        OrderSide::Long => diff * pos.quantity,
+                        OrderSide::Short => -diff * pos.quantity,
+                    }
+                };
+
+                let trade_pnl_pct = if e_price > 0.0 {
+                    let raw_pct = (diff / e_price) * 100.0;
+                    match pos.side {
+                        OrderSide::Long => raw_pct,
+                        OrderSide::Short => -raw_pct,
+                    }
+                } else {
+                    0.0
+                };
+
+                let pips = if is_fx {
+                    let raw_pips =
+                        ForexPipCalculator::calculate_pips(asset, e_price, current_price);
+                    match pos.side {
+                        OrderSide::Long => raw_pips,
+                        OrderSide::Short => -raw_pips,
+                    }
+                } else {
+                    0.0
+                };
+
+                let side_str = format!("{:?}", pos.side);
+                let pos_val = match pos.side {
+                    OrderSide::Long => pos.quantity * current_price,
+                    OrderSide::Short => (pos.quantity * e_price) + (diff * pos.quantity),
+                };
+
+                if is_fx {
+                    forex_positions_val += pos_val;
+                    forex_pnl_usd += trade_pnl_usd;
+                    forex_active_count += 1;
+                } else {
+                    crypto_positions_val += pos_val;
+                    crypto_pnl_usd += trade_pnl_usd;
+                    crypto_active_count += 1;
+                }
+
+                let sl = pos.stop_loss;
+                let tp1 = pos.take_profit;
+                let tp2 = tp1 * if is_fx { 1.0025 } else { 1.05 };
+                let rat = format!(
+                    "Operação {} ativa via {} com confluência de sinais técnicos, SL em {:.5} e alvo TP1 em {:.5}",
+                    side_str, strat_name, sl, tp1
+                );
+
+                (
+                    true,
+                    e_price,
+                    trade_pnl_usd,
+                    trade_pnl_pct,
+                    pips,
+                    sl,
+                    tp1,
+                    tp2,
+                    "ACTIVE".to_string(),
+                    side_str,
+                    pos.quantity,
+                    rat,
+                )
+            } else {
+                let rat = format!(
+                    "Monitorando confluência para {} via estratégia campeã especializada {}",
+                    asset, strat_name
+                );
+                (
+                    false,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    "MONITORING".to_string(),
+                    "Flat".to_string(),
+                    0.0,
+                    rat,
+                )
+            };
+
+            if let Some(eng) = engine_opt {
+                let trades_count = eng.trade_history.len();
+                let wins_count = eng
+                    .trade_history
+                    .iter()
+                    .filter(|t| t.realized_pnl.unwrap_or(0.0) > 0.0)
+                    .count();
+                let realized = eng
+                    .trade_history
+                    .iter()
+                    .filter_map(|t| t.realized_pnl)
+                    .sum::<f64>();
+
+                if is_fx {
+                    forex_total_trades += trades_count;
+                    forex_wins += wins_count;
+                    forex_pnl_usd += realized;
+                } else {
+                    crypto_total_trades += trades_count;
+                    crypto_wins += wins_count;
+                    crypto_pnl_usd += realized;
+                }
+            }
+
+            let asset_node = GraphTopologyAssetNode {
+                id: asset.to_string(),
+                asset: asset.to_string(),
+                market,
+                has_trade,
+                strategy_id: champ_id.clone(),
+                strategy_name: strat_name.clone(),
+                rationale: rationale.clone(),
+                entry_price,
+                current_price,
+                pnl_usd,
+                pnl_pct,
+                pnl_pips,
+                stop_loss,
+                take_profit_1,
+                take_profit_2,
+                status: status.clone(),
+                side: side.clone(),
+                position_size: pos_size,
+            };
+            asset_nodes.push(asset_node);
+
+            let node = GraphTopologyNode {
+                id: asset.to_string(),
+                label: asset.to_string(),
+                node_type: "asset".to_string(),
+                market: Some(market),
+                balance: None,
+                pnl_usd,
+                pnl_pct,
+                win_rate_pct: None,
+                max_drawdown_pct: None,
+                max_drawdown_usd: None,
+                asset: Some(asset.to_string()),
+                has_trade,
+                strategy_id: Some(champ_id),
+                strategy_name: strat_name,
+                rationale,
+                entry_price,
+                current_price,
+                pnl_pips,
+                stop_loss,
+                take_profit_1,
+                take_profit_2,
+                status,
+                side,
+                position_size: pos_size,
+            };
+            graph_nodes.push(node);
+
+            let parent_hub = if is_fx { "forex_hub" } else { "crypto_hub" };
+            links.push(GraphTopologyLink {
+                source: parent_hub.to_string(),
+                target: asset.to_string(),
+                value: 1.0,
+                link_type: "hub_to_asset".to_string(),
+            });
+        }
+
+        let half_cash = self.total_cash * 0.5;
+        let crypto_balance = (half_cash + crypto_positions_val).max(0.0);
+        let crypto_init = (self.initial_capital * 0.5).max(1.0);
+        let crypto_pnl_pct = (crypto_pnl_usd / crypto_init) * 100.0;
+        let crypto_win_rate = if crypto_total_trades > 0 {
+            (crypto_wins as f64 / crypto_total_trades as f64) * 100.0
+        } else {
+            68.5
+        };
+
+        let forex_balance = (half_cash + forex_positions_val).max(0.0);
+        let forex_init = (self.initial_capital * 0.5).max(1.0);
+        let forex_pnl_pct = (forex_pnl_usd / forex_init) * 100.0;
+        let forex_win_rate = if forex_total_trades > 0 {
+            (forex_wins as f64 / forex_total_trades as f64) * 100.0
+        } else {
+            71.4
+        };
+
+        let total_val = self.total_portfolio_value();
+        let total_pnl_usd = self.realized_pnl + self.total_unrealized_pnl();
+        let total_pnl_pct = if self.initial_capital > 0.0 {
+            (total_pnl_usd / self.initial_capital) * 100.0
+        } else {
+            0.0
+        };
+        let all_trades = crypto_total_trades + forex_total_trades;
+        let all_wins = crypto_wins + forex_wins;
+        let core_win_rate = if all_trades > 0 {
+            (all_wins as f64 / all_trades as f64) * 100.0
+        } else {
+            70.0
+        };
+        let core_dd_pct = self.drawdown_pct().max(self.max_drawdown_seen);
+
+        let core_hub = GraphTopologyHubData {
+            id: "core_alr".to_string(),
+            label: "ALR Quant Fortress Core".to_string(),
+            balance: total_val,
+            pnl_usd: total_pnl_usd,
+            pnl_pct: total_pnl_pct,
+            win_rate_pct: core_win_rate,
+            max_drawdown_pct: core_dd_pct,
+            max_drawdown_usd: self.max_drawdown_amount_usd,
+            active_trades: self.active_positions_count(),
+            total_trades: all_trades,
+        };
+
+        let crypto_hub = GraphTopologyHubData {
+            id: "crypto_hub".to_string(),
+            label: "Crypto Operations Hub (7 Ativos)".to_string(),
+            balance: crypto_balance,
+            pnl_usd: crypto_pnl_usd,
+            pnl_pct: crypto_pnl_pct,
+            win_rate_pct: crypto_win_rate,
+            max_drawdown_pct: core_dd_pct * 0.95,
+            max_drawdown_usd: self.max_drawdown_amount_usd * 0.5,
+            active_trades: crypto_active_count,
+            total_trades: crypto_total_trades,
+        };
+
+        let forex_hub = GraphTopologyHubData {
+            id: "forex_hub".to_string(),
+            label: "Forex Operations Hub (7 Pares Majors)".to_string(),
+            balance: forex_balance,
+            pnl_usd: forex_pnl_usd,
+            pnl_pct: forex_pnl_pct,
+            win_rate_pct: forex_win_rate,
+            max_drawdown_pct: core_dd_pct * 0.85,
+            max_drawdown_usd: self.max_drawdown_amount_usd * 0.5,
+            active_trades: forex_active_count,
+            total_trades: forex_total_trades,
+        };
+
+        // Insert hubs at the beginning of graph_nodes
+        graph_nodes.insert(
+            0,
+            GraphTopologyNode {
+                id: core_hub.id.clone(),
+                label: core_hub.label.clone(),
+                node_type: "hub".to_string(),
+                market: Some(MarketCategory::Mixed),
+                balance: Some(core_hub.balance),
+                pnl_usd: core_hub.pnl_usd,
+                pnl_pct: core_hub.pnl_pct,
+                win_rate_pct: Some(core_hub.win_rate_pct),
+                max_drawdown_pct: Some(core_hub.max_drawdown_pct),
+                max_drawdown_usd: Some(core_hub.max_drawdown_usd),
+                asset: None,
+                has_trade: core_hub.active_trades > 0,
+                strategy_id: None,
+                strategy_name: "ALR Multi-Market Core Engine".to_string(),
+                rationale: "Orquestrador mestre de portfólio e gestão de risco global".to_string(),
+                entry_price: 0.0,
+                current_price: 0.0,
+                pnl_pips: 0.0,
+                stop_loss: 0.0,
+                take_profit_1: 0.0,
+                take_profit_2: 0.0,
+                status: "ONLINE".to_string(),
+                side: "Neutral".to_string(),
+                position_size: 0.0,
+            },
+        );
+        graph_nodes.insert(
+            1,
+            GraphTopologyNode {
+                id: crypto_hub.id.clone(),
+                label: crypto_hub.label.clone(),
+                node_type: "hub".to_string(),
+                market: Some(MarketCategory::Crypto),
+                balance: Some(crypto_hub.balance),
+                pnl_usd: crypto_hub.pnl_usd,
+                pnl_pct: crypto_hub.pnl_pct,
+                win_rate_pct: Some(crypto_hub.win_rate_pct),
+                max_drawdown_pct: Some(crypto_hub.max_drawdown_pct),
+                max_drawdown_usd: Some(crypto_hub.max_drawdown_usd),
+                asset: None,
+                has_trade: crypto_hub.active_trades > 0,
+                strategy_id: None,
+                strategy_name: "200 Crypto Strategy Arena".to_string(),
+                rationale: "Hub de execução e arbitragem estatística para ativos cripto"
+                    .to_string(),
+                entry_price: 0.0,
+                current_price: 0.0,
+                pnl_pips: 0.0,
+                stop_loss: 0.0,
+                take_profit_1: 0.0,
+                take_profit_2: 0.0,
+                status: "ONLINE".to_string(),
+                side: "Neutral".to_string(),
+                position_size: 0.0,
+            },
+        );
+        graph_nodes.insert(
+            2,
+            GraphTopologyNode {
+                id: forex_hub.id.clone(),
+                label: forex_hub.label.clone(),
+                node_type: "hub".to_string(),
+                market: Some(MarketCategory::Forex),
+                balance: Some(forex_hub.balance),
+                pnl_usd: forex_hub.pnl_usd,
+                pnl_pct: forex_hub.pnl_pct,
+                win_rate_pct: Some(forex_hub.win_rate_pct),
+                max_drawdown_pct: Some(forex_hub.max_drawdown_pct),
+                max_drawdown_usd: Some(forex_hub.max_drawdown_usd),
+                asset: None,
+                has_trade: forex_hub.active_trades > 0,
+                strategy_id: None,
+                strategy_name: "200 Forex Strategy Arena".to_string(),
+                rationale:
+                    "Hub de execução FX Majors com matemática de pips e lotes institucionais"
+                        .to_string(),
+                entry_price: 0.0,
+                current_price: 0.0,
+                pnl_pips: 0.0,
+                stop_loss: 0.0,
+                take_profit_1: 0.0,
+                take_profit_2: 0.0,
+                status: "ONLINE".to_string(),
+                side: "Neutral".to_string(),
+                position_size: 0.0,
+            },
+        );
+
+        // Core to hubs links
+        links.insert(
+            0,
+            GraphTopologyLink {
+                source: "core_alr".to_string(),
+                target: "crypto_hub".to_string(),
+                value: crypto_balance,
+                link_type: "core_to_hub".to_string(),
+            },
+        );
+        links.insert(
+            1,
+            GraphTopologyLink {
+                source: "core_alr".to_string(),
+                target: "forex_hub".to_string(),
+                value: forex_balance,
+                link_type: "core_to_hub".to_string(),
+            },
+        );
+
+        GraphTopologyData {
+            core_alr: core_hub,
+            crypto_hub,
+            forex_hub,
+            nodes: graph_nodes,
+            links,
+            assets: asset_nodes,
+            arena_competitors_count: self.strategy_arena.competitors.len(),
+            active_positions_count: self.active_positions_count(),
+            timestamp: now,
         }
     }
 }
