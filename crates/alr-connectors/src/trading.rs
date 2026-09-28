@@ -3693,6 +3693,12 @@ impl SqliteTradingStore {
                 factor_weights TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS trading_asset_champions (
+                asset TEXT PRIMARY KEY,
+                champion_profile_id TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
             "#,
         )?;
 
@@ -4262,6 +4268,37 @@ impl SqliteTradingStore {
 
         Ok(())
     }
+    pub fn save_asset_champion(&self, asset: &str, champion_id: &str) -> Result<()> {
+        let conn = self.conn.lock();
+        let updated_at = chrono::Utc::now().to_rfc3339();
+        conn.execute(
+            r#"
+            INSERT INTO trading_asset_champions (asset, champion_profile_id, updated_at)
+            VALUES (?1, ?2, ?3)
+            ON CONFLICT(asset) DO UPDATE SET
+                champion_profile_id = excluded.champion_profile_id,
+                updated_at = excluded.updated_at
+            "#,
+            params![asset, champion_id, updated_at],
+        )?;
+        Ok(())
+    }
+
+    pub fn load_asset_champions(&self) -> Result<HashMap<String, String>> {
+        let conn = self.conn.lock();
+        let mut stmt =
+            conn.prepare("SELECT asset, champion_profile_id FROM trading_asset_champions")?;
+        let rows = stmt.query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        })?;
+
+        let mut map = HashMap::new();
+        for r in rows {
+            let (asset, champ) = r?;
+            map.insert(asset, champ);
+        }
+        Ok(map)
+    }
 }
 
 /// Regime macro de mercado diagnosticado pelo System 2
@@ -4539,6 +4576,8 @@ pub struct AssetDeskStatus {
     pub btc_dump_shield_active: bool,
     #[serde(default)]
     pub mtf_alignment_bullish: bool,
+    #[serde(default)]
+    pub champion_profile_id: Option<String>,
 }
 
 /// Snapshot global da mesa de operações para o Dashboard Web (Axum API)
@@ -4610,26 +4649,157 @@ pub struct StrategyProfile {
 
 impl StrategyProfile {
     pub fn default_profiles() -> Vec<Self> {
-        vec![
-            Self::profile_trend_supertrend_heavy(),
-            Self::profile_trend_macro_momentum(),
-            Self::profile_trend_breakout_accelerator(),
-            Self::profile_mean_reversion_rsi_donchian(),
-            Self::profile_mean_reversion_support_bounce(),
-            Self::profile_mean_reversion_contrarian_fear(),
-            Self::profile_volatility_squeeze_scalper(),
-            Self::profile_volatility_bandwidth_expansion(),
-            Self::profile_volatility_atr_chandelier(),
-            Self::profile_institutional_vwap_mfi(),
-            Self::profile_institutional_obi_depth(),
-            Self::profile_institutional_volume_profile(),
-            Self::profile_genetic_challenger_alpha(),
-            Self::profile_genetic_challenger_beta(),
-            Self::profile_genetic_challenger_gamma(),
-            Self::profile_genetic_challenger_delta(),
-            Self::profile_genetic_challenger_epsilon(),
-            Self::profile_genetic_challenger_zeta(),
-        ]
+        let mut profiles = Vec::with_capacity(100);
+
+        // 1. As 18 Estratégias Originais (12 Especializadas + 6 Genéticas)
+        profiles.push(Self::profile_trend_supertrend_heavy());
+        profiles.push(Self::profile_trend_macro_momentum());
+        profiles.push(Self::profile_trend_breakout_accelerator());
+        profiles.push(Self::profile_mean_reversion_rsi_donchian());
+        profiles.push(Self::profile_mean_reversion_support_bounce());
+        profiles.push(Self::profile_mean_reversion_contrarian_fear());
+        profiles.push(Self::profile_volatility_squeeze_scalper());
+        profiles.push(Self::profile_volatility_bandwidth_expansion());
+        profiles.push(Self::profile_volatility_atr_chandelier());
+        profiles.push(Self::profile_institutional_vwap_mfi());
+        profiles.push(Self::profile_institutional_obi_depth());
+        profiles.push(Self::profile_institutional_volume_profile());
+        profiles.push(Self::profile_genetic_challenger_alpha());
+        profiles.push(Self::profile_genetic_challenger_beta());
+        profiles.push(Self::profile_genetic_challenger_gamma());
+        profiles.push(Self::profile_genetic_challenger_delta());
+        profiles.push(Self::profile_genetic_challenger_epsilon());
+        profiles.push(Self::profile_genetic_challenger_zeta());
+
+        // 2. Variações Sistemáticas das Famílias Estratégicas (62 Perfis)
+        let families: [(&str, &str, f64, f64); 15] = [
+            ("trend_flow", "Trend Flow Multiplier", 2.6, 2.2),
+            ("momentum_surge", "Momentum Surge Hunter", 2.8, 2.0),
+            ("kumo_break", "Ichimoku Cloud Break", 3.0, 1.8),
+            ("donchian_break", "Donchian Breakout Pro", 2.7, 2.1),
+            ("rsi_exhaustion", "RSI Exhaustion Bounce", 2.9, 2.5),
+            ("support_defense", "Support Wall Defense", 2.8, 2.4),
+            ("squeeze_breakout", "TTM Squeeze Momentum", 3.0, 2.2),
+            ("bandwidth_scalp", "Bandwidth Surge Scalp", 2.6, 2.0),
+            ("chandelier_runner", "Chandelier Trend Runner", 2.5, 2.3),
+            ("vwap_anchor", "VWAP Institutional Anchor", 2.9, 2.4),
+            ("order_book_flow", "Order Book Flow Shark", 3.2, 2.0),
+            ("volume_profile_poc", "Volume Profile Value Area", 3.1, 2.2),
+            ("parkinson_vol", "Parkinson Volatility Guard", 2.8, 2.0),
+            (
+                "mtf_confluence_pro",
+                "Multi-Timeframe Confluence Pro",
+                3.0,
+                2.4,
+            ),
+            (
+                "btc_dump_shield_pro",
+                "BTC Dump Shield Relative Strength",
+                3.4,
+                2.2,
+            ),
+        ];
+
+        let variations: [(&str, &str, usize, f64, f64, f64); 4] = [
+            ("conservative", "Conservador", 3, 0.74, 1.8, 3.5),
+            ("aggressive", "Agressivo", 2, 0.67, 1.2, 2.2),
+            ("tight_stop", "Stop Curto", 2, 0.71, 1.0, 1.8),
+            ("runner", "Trend Runner", 3, 0.72, 2.2, 4.5),
+        ];
+
+        // 15 famílias x 4 variações = 60 perfis
+        for (f_id, f_name, w1, w2) in families {
+            for (v_id, v_name, min_conf, min_prob, sl_mult, tp_mult) in variations {
+                let id = format!("{}_{}", f_id, v_id);
+                let name = format!("{} ({})", f_name, v_name);
+                let desc = format!("Estratégia quantitativa {} para perfil {}", f_name, v_name);
+                let mut w = HashMap::new();
+                w.insert("TREND_BULLISH_CONFLUENCE".to_string(), w1);
+                w.insert("INSTITUTIONAL_VWAP_SUPPORT".to_string(), w2);
+                w.insert("MOMENTUM_STEADY_EXPANSION".to_string(), 1.8);
+                w.insert("VOLATILITY_EXPANSION_UPPER".to_string(), 1.5);
+                profiles.push(StrategyProfile {
+                    id,
+                    name,
+                    description: desc,
+                    factor_weights: w,
+                    min_confluence: min_conf,
+                    min_probability: min_prob,
+                    stop_loss_atr_mult: sl_mult,
+                    take_profit_atr_mult: tp_mult,
+                    use_partial_tp: true,
+                });
+            }
+        }
+
+        // 2 Perfis Especiais de Arbitragem Estatística e Momentum para totalizar 80 fundamentais
+        let mut w_stat_arb = HashMap::new();
+        w_stat_arb.insert("RSI_BULLISH_DIVERGENCE".to_string(), 3.2);
+        w_stat_arb.insert("ORDER_BOOK_IMBALANCE".to_string(), 2.8);
+        w_stat_arb.insert("POC_VOLUME_SUPPORT".to_string(), 2.5);
+        profiles.push(StrategyProfile {
+            id: "statistical_arbitrage_rebound".to_string(),
+            name: "Statistical Arbitrage Rebound".to_string(),
+            description:
+                "Arbitragem estatística explorando distorções de preço em relação ao book L2"
+                    .to_string(),
+            factor_weights: w_stat_arb,
+            min_confluence: 2,
+            min_probability: 0.72,
+            stop_loss_atr_mult: 1.4,
+            take_profit_atr_mult: 2.6,
+            use_partial_tp: true,
+        });
+
+        let mut w_hft_scalp = HashMap::new();
+        w_hft_scalp.insert("TTM_VOLATILITY_SQUEEZE".to_string(), 3.1);
+        w_hft_scalp.insert("ORDER_BOOK_IMBALANCE".to_string(), 2.9);
+        w_hft_scalp.insert("STOCH_PSAR_ALIGNMENT".to_string(), 2.2);
+        profiles.push(StrategyProfile {
+            id: "hft_micro_scalper_pro".to_string(),
+            name: "HFT Micro Scalper Pro".to_string(),
+            description: "Operações de alta frequência em compressões de volatilidade e desequilíbrio no book".to_string(),
+            factor_weights: w_hft_scalp,
+            min_confluence: 2,
+            min_probability: 0.69,
+            stop_loss_atr_mult: 1.1,
+            take_profit_atr_mult: 2.0,
+            use_partial_tp: true,
+        });
+
+        // 3. 20 Clones Genéticos Mutantes Evolutivos (Total: 18 + 60 + 2 + 20 = 100 Perfis!)
+        for i in 1..=20 {
+            let id = format!("genetic_mutant_{:02}", i);
+            let name = format!("Genetic Mutant Challenger #{:02}", i);
+            let desc = format!("Clone evolutivo dinâmico #{} mutando a cada 50 velas", i);
+            let mut w = Self::profile_balanced_adaptive_jev().factor_weights;
+            let delta = (i as f64 * 0.08) % 0.40 - 0.20;
+            w.insert(
+                "TREND_BULLISH_CONFLUENCE".to_string(),
+                (1.0 + delta).clamp(0.4, 3.0),
+            );
+            w.insert(
+                "INSTITUTIONAL_VWAP_SUPPORT".to_string(),
+                (1.0 - delta).clamp(0.4, 3.0),
+            );
+            w.insert(
+                "POC_VOLUME_SUPPORT".to_string(),
+                (1.0 + delta * 0.5).clamp(0.4, 3.0),
+            );
+            profiles.push(StrategyProfile {
+                id,
+                name,
+                description: desc,
+                factor_weights: w,
+                min_confluence: 2,
+                min_probability: 0.69,
+                stop_loss_atr_mult: 1.5,
+                take_profit_atr_mult: 2.8,
+                use_partial_tp: true,
+            });
+        }
+
+        profiles
     }
 
     pub fn profile_trend_supertrend_heavy() -> Self {
@@ -5066,6 +5236,18 @@ pub struct CompetitorStrategyTracker {
     pub peak_balance_usd: f64,
     pub sharpe_ratio: f64,
     pub current_position: Option<TradingPosition>,
+    #[serde(default)]
+    pub asset_positions: HashMap<String, TradingPosition>,
+    #[serde(default)]
+    pub asset_pnl: HashMap<String, f64>,
+    #[serde(default)]
+    pub asset_trades: HashMap<String, usize>,
+    #[serde(default)]
+    pub asset_wins: HashMap<String, usize>,
+    #[serde(default)]
+    pub promising_score: f64,
+    #[serde(default)]
+    pub rank: usize,
 }
 
 impl CompetitorStrategyTracker {
@@ -5088,7 +5270,110 @@ impl CompetitorStrategyTracker {
             peak_balance_usd: initial_balance,
             sharpe_ratio: 0.0,
             current_position: None,
+            asset_positions: HashMap::new(),
+            asset_pnl: HashMap::new(),
+            asset_trades: HashMap::new(),
+            asset_wins: HashMap::new(),
+            promising_score: 0.0,
+            rank: 0,
         }
+    }
+
+    pub fn compute_promising_score(&self) -> f64 {
+        if self.total_trades == 0 {
+            return 0.0;
+        }
+        let pnl_score = (self.net_pnl_usd / self.initial_balance_usd.max(1.0)).clamp(-2.0, 5.0);
+        let wr_score = self.win_rate_pct / 100.0;
+        let sharpe_score = self.sharpe_ratio.clamp(-3.0, 5.0);
+        let dd_penalty = (self.max_drawdown_pct / 100.0).clamp(0.0, 1.0);
+        sharpe_score * 0.40 + wr_score * 0.35 + pnl_score * 0.25 - dd_penalty * 0.20
+    }
+
+    pub fn evaluate_entry_rules(
+        &self,
+        indicators: &TechnicalIndicators,
+        price: f64,
+    ) -> (bool, f64, f64) {
+        let mut buy_logits = 0.0f64;
+        let mut factors_matched = 0;
+
+        for (factor, &w) in &self.profile.factor_weights {
+            if factor == "TREND_BULLISH_CONFLUENCE"
+                && indicators.ema_9 > indicators.ema_21
+                && indicators.supertrend_direction >= 0
+            {
+                buy_logits += 2.0 * w;
+                factors_matched += 1;
+            } else if factor == "ADX_STRONG_TREND"
+                && indicators.adx_14 >= 22.0
+                && indicators.plus_di > indicators.minus_di
+            {
+                buy_logits += 1.8 * w;
+                factors_matched += 1;
+            } else if factor == "MACRO_TREND_ABOVE_EMA50"
+                && indicators.ema_50 > 0.0
+                && price > indicators.ema_50
+            {
+                buy_logits += 1.5 * w;
+                factors_matched += 1;
+            } else if factor == "RSI_BULLISH_DIVERGENCE" && indicators.rsi_bullish_divergence {
+                buy_logits += 2.5 * w;
+                factors_matched += 1;
+            } else if factor == "SUPPORT_DONCHIAN_BOUNCE"
+                && indicators.donchian_low_20 > 0.0
+                && price <= indicators.donchian_low_20 * 1.015
+            {
+                buy_logits += 2.2 * w;
+                factors_matched += 1;
+            } else if factor == "ICHIMOKU_CLOUD_BULLISH"
+                && indicators.ichimoku_is_above_cloud
+                && indicators.ichimoku_tk_cross_bullish
+            {
+                buy_logits += 2.6 * w;
+                factors_matched += 1;
+            } else if factor == "TTM_VOLATILITY_SQUEEZE" && indicators.ttm_squeeze {
+                buy_logits += 2.4 * w;
+                factors_matched += 1;
+            } else if factor == "INSTITUTIONAL_VWAP_SUPPORT"
+                && indicators.vwap > 0.0
+                && price >= indicators.vwap
+                && price <= indicators.vwap_upper
+            {
+                buy_logits += 2.0 * w;
+                factors_matched += 1;
+            } else if factor == "MFI_INSTITUTIONAL_INFLOW"
+                && indicators.mfi_14 >= 55.0
+                && indicators.mfi_14 <= 80.0
+            {
+                buy_logits += 1.8 * w;
+                factors_matched += 1;
+            } else if factor == "STOCH_PSAR_ALIGNMENT"
+                && indicators.psar_bullish
+                && indicators.stoch_k > indicators.stoch_d
+            {
+                buy_logits += 1.7 * w;
+                factors_matched += 1;
+            } else if (factor == "ORDER_BOOK_IMBALANCE" && indicators.order_book_imbalance > 0.15)
+                || (factor == "POC_VOLUME_SUPPORT"
+                    && indicators.poc_price > 0.0
+                    && price >= indicators.poc_price
+                    && price <= indicators.value_area_high)
+            {
+                buy_logits += 2.0 * w;
+                factors_matched += 1;
+            } else if factor == "MTF_ALIGNMENT_BULLISH" && indicators.mtf_alignment_bullish {
+                buy_logits += 2.2 * w;
+                factors_matched += 1;
+            }
+        }
+
+        let should_buy = factors_matched >= self.profile.min_confluence && buy_logits >= 4.0;
+        (
+            should_buy,
+            self.profile.stop_loss_atr_mult,
+            self.profile.take_profit_atr_mult,
+        )
     }
 }
 
@@ -5111,6 +5396,8 @@ pub struct StrategyArena {
     pub competitors: Vec<CompetitorStrategyTracker>,
     pub last_promotion_timestamp: Option<i64>,
     pub promotion_history: Vec<PromotionEvent>,
+    #[serde(default)]
+    pub asset_champions: HashMap<String, String>,
 }
 
 impl Default for StrategyArena {
@@ -5133,13 +5420,21 @@ impl StrategyArena {
             })
             .collect();
 
-        Self {
+        let mut asset_champs = HashMap::new();
+        for &asset in &DEFAULT_MULTI_ASSET_BASKET {
+            asset_champs.insert(asset.to_string(), champ_id.clone());
+        }
+
+        let mut arena = Self {
             champion_profile_id: champ_id,
             total_cycles_evaluated: 0,
             competitors,
             last_promotion_timestamp: None,
             promotion_history: Vec::new(),
-        }
+            asset_champions: asset_champs,
+        };
+        arena.sort_by_promise();
+        arena
     }
 
     pub fn on_candle(
@@ -5181,9 +5476,13 @@ impl StrategyArena {
                     comp.total_trades += 1;
                     comp.net_pnl_usd += pnl;
 
+                    *comp.asset_pnl.entry(asset.to_string()).or_insert(0.0) += pnl;
+                    *comp.asset_trades.entry(asset.to_string()).or_insert(0) += 1;
+
                     if pnl > 0.0 {
                         comp.wins += 1;
                         comp.gross_profit_usd += pnl;
+                        *comp.asset_wins.entry(asset.to_string()).or_insert(0) += 1;
                     } else {
                         comp.losses += 1;
                         comp.gross_loss_usd += pnl.abs();
@@ -5329,6 +5628,8 @@ impl StrategyArena {
             }
         }
 
+        self.sort_by_promise();
+
         if self.total_cycles_evaluated.is_multiple_of(50) {
             self.mutate_genetic_challengers();
         }
@@ -5469,6 +5770,75 @@ impl StrategyArena {
                 }
             }
         }
+    }
+    pub fn sort_by_promise(&mut self) {
+        for comp in &mut self.competitors {
+            comp.promising_score = comp.compute_promising_score();
+        }
+        self.competitors.sort_by(|a, b| {
+            b.promising_score
+                .partial_cmp(&a.promising_score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        for (i, comp) in self.competitors.iter_mut().enumerate() {
+            comp.rank = i + 1;
+        }
+    }
+
+    pub fn evaluate_asset_promotion(&mut self, asset: &str) -> Option<String> {
+        let current_champ = self
+            .asset_champions
+            .get(asset)
+            .cloned()
+            .unwrap_or_else(|| self.champion_profile_id.clone());
+        let champ_pnl = self
+            .competitors
+            .iter()
+            .find(|c| c.profile.id == current_champ)
+            .and_then(|c| c.asset_pnl.get(asset).copied())
+            .unwrap_or(0.0);
+
+        let mut best_id = None;
+        let mut best_score = -9999.0;
+
+        for comp in &self.competitors {
+            if comp.profile.id == current_champ {
+                continue;
+            }
+            let trades = comp.asset_trades.get(asset).copied().unwrap_or(0);
+            if trades >= 3 {
+                let wins = comp.asset_wins.get(asset).copied().unwrap_or(0);
+                let wr = (wins as f64 / trades as f64) * 100.0;
+                let pnl = comp.asset_pnl.get(asset).copied().unwrap_or(0.0);
+                if wr >= 50.0 && pnl > champ_pnl {
+                    let score = (wr / 100.0) * 0.5 + (pnl / 100.0) * 0.5;
+                    if score > best_score {
+                        best_score = score;
+                        best_id = Some(comp.profile.id.clone());
+                    }
+                }
+            }
+        }
+
+        if let Some(new_champ_id) = best_id {
+            let old_id = current_champ;
+            self.asset_champions
+                .insert(asset.to_string(), new_champ_id.clone());
+            self.last_promotion_timestamp = Some(chrono::Utc::now().timestamp());
+            let event = PromotionEvent {
+                timestamp: chrono::Utc::now().timestamp(),
+                old_champion_id: format!("{}:{}", asset, old_id),
+                new_champion_id: format!("{}:{}", asset, new_champ_id),
+                reason: format!(
+                    "Auto-promoção da melhor estratégia para o ativo '{}'",
+                    asset
+                ),
+                is_manual: false,
+            };
+            self.promotion_history.push(event);
+            return Some(new_champ_id);
+        }
+        None
     }
 }
 
@@ -5668,6 +6038,28 @@ impl MultiAssetTraderEngine {
                 }
             }
         }
+
+        // 5. Restaura as campeãs especializadas de cada criptomoeda
+        if let Ok(asset_champs) = store.load_asset_champions() {
+            for (asset, champ_id) in &asset_champs {
+                self.strategy_arena
+                    .asset_champions
+                    .insert(asset.clone(), champ_id.clone());
+                if let Some(comp) = self
+                    .strategy_arena
+                    .competitors
+                    .iter()
+                    .find(|c| &c.profile.id == champ_id)
+                {
+                    if let Some(eng) = self.engines.get_mut(asset) {
+                        for (factor, &w) in &comp.profile.factor_weights {
+                            eng.learner.factor_weights.insert(factor.clone(), w);
+                        }
+                    }
+                }
+            }
+        }
+
         Ok(restored)
     }
 
@@ -5825,6 +6217,9 @@ impl MultiAssetTraderEngine {
             if let Some(inds) = engine.compute_indicators() {
                 if let Some(new_champ) = self.strategy_arena.on_candle(asset, &candle, &inds) {
                     let _ = self.promote_strategy(&new_champ);
+                }
+                if let Some(new_asset_champ) = self.strategy_arena.evaluate_asset_promotion(asset) {
+                    let _ = self.promote_asset_strategy(asset, &new_asset_champ);
                 }
             }
         }
@@ -6022,6 +6417,7 @@ impl MultiAssetTraderEngine {
                     parkinson_volatility: indicators.parkinson_volatility,
                     btc_dump_shield_active: indicators.btc_dump_shield_active,
                     mtf_alignment_bullish: indicators.mtf_alignment_bullish,
+                    champion_profile_id: self.strategy_arena.asset_champions.get(asset).cloned(),
                 });
             }
         }
@@ -6247,6 +6643,63 @@ impl MultiAssetTraderEngine {
             let _ = store.save_learned_weights(&self.learner);
         }
         Ok(msg)
+    }
+    /// Promove uma estratégia para Campeã de um ativo específico, injeta pesos e persiste no SQLite
+    pub fn promote_asset_strategy(&mut self, asset: &str, profile_id: &str) -> Result<String> {
+        let name = self
+            .strategy_arena
+            .competitors
+            .iter()
+            .find(|c| c.profile.id == profile_id)
+            .map(|c| c.profile.name.clone())
+            .unwrap_or_else(|| profile_id.to_string());
+
+        let old_id = self
+            .strategy_arena
+            .asset_champions
+            .get(asset)
+            .cloned()
+            .unwrap_or_else(|| "default".to_string());
+
+        self.strategy_arena
+            .asset_champions
+            .insert(asset.to_string(), profile_id.to_string());
+
+        if let Some(comp) = self
+            .strategy_arena
+            .competitors
+            .iter()
+            .find(|c| c.profile.id == profile_id)
+        {
+            if let Some(eng) = self.engines.get_mut(asset) {
+                for (factor, &w) in &comp.profile.factor_weights {
+                    eng.learner.factor_weights.insert(factor.clone(), w);
+                }
+            }
+        }
+
+        let event = PromotionEvent {
+            timestamp: chrono::Utc::now().timestamp(),
+            old_champion_id: format!("{}:{}", asset, old_id),
+            new_champion_id: format!("{}:{}", asset, profile_id),
+            reason: format!(
+                "Auto-promoção da melhor estratégia '{}' para o ativo '{}'",
+                name, asset
+            ),
+            is_manual: false,
+        };
+        self.strategy_arena.promotion_history.push(event.clone());
+
+        if let Some(store) = &self.store {
+            let _ = store.save_promotion(&event);
+            let _ = store.save_asset_champion(asset, profile_id);
+            let _ = store.save_arena_state(&self.strategy_arena);
+        }
+
+        Ok(format!(
+            "Estratégia '{}' promovida para Campeã do ativo '{}'!",
+            name, asset
+        ))
     }
     /// Otimizador e Backtest Histórico de até 90 Dias
     pub fn run_backtest_90d(&self, asset: &str, days: usize) -> BacktestReport {

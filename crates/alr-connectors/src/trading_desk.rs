@@ -96,6 +96,12 @@ pub struct RunBacktestRequest {
 pub struct PromoteStrategyRequest {
     pub profile_id: String,
 }
+/// Requisição para promoção de estratégia campeã de um ativo específico
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PromoteAssetStrategyRequest {
+    pub asset: String,
+    pub profile_id: String,
+}
 
 /// Parâmetros de consulta para recuperar o snapshot de indicadores de um trade
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -321,6 +327,23 @@ pub async fn promote_strategy_handler(
         }),
     }
 }
+/// Handler para promover uma estratégia campeã de um ativo específico
+pub async fn promote_asset_strategy_handler(
+    State(state): State<TradingDeskState>,
+    Json(req): Json<PromoteAssetStrategyRequest>,
+) -> Json<ApiResponse> {
+    let mut engine = state.engine.write();
+    match engine.promote_asset_strategy(&req.asset, &req.profile_id) {
+        Ok(msg) => Json(ApiResponse {
+            success: true,
+            message: msg,
+        }),
+        Err(e) => Json(ApiResponse {
+            success: false,
+            message: e.to_string(),
+        }),
+    }
+}
 
 /// Handler para recuperar o snapshot de pesos e indicadores no momento da execução do trade
 pub async fn get_trade_snapshot_handler(
@@ -402,6 +425,10 @@ pub fn create_trading_desk_router_with_logger(
         .route(
             "/api/v1/desk/promote-strategy",
             post(promote_strategy_handler),
+        )
+        .route(
+            "/api/v1/desk/promote-asset-strategy",
+            post(promote_asset_strategy_handler),
         )
         .route(
             "/api/v1/desk/trade-snapshot",

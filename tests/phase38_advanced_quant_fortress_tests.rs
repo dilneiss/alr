@@ -260,11 +260,11 @@ fn test_90_day_historical_backtest_optimizer_ranks_profiles() {
         "90 dias com velas horárias (24h/dia) devem totalizar 2160 velas"
     );
 
-    // 2. Valida ranqueamento de todos os 18 perfis de estratégia
+    // 2. Valida ranqueamento de todos os 100 perfis de estratégia
     assert_eq!(
         report.ranked_profiles.len(),
-        18,
-        "Backtest deve testar e ranquear todos os 18 perfis predefinidos"
+        100,
+        "Backtest deve testar e ranquear todos os 100 perfis predefinidos"
     );
 
     // 3. Valida ordenação e ranqueamento determinístico
@@ -323,11 +323,11 @@ fn test_90_day_historical_backtest_optimizer_ranks_profiles() {
 fn test_realtime_strategy_arena_parallel_simulation_and_auto_promotion() {
     let mut arena = StrategyArena::new();
 
-    // 1. Valida inicialização com 18 competidores
+    // 1. Valida inicialização com 100 competidores
     assert_eq!(
         arena.competitors.len(),
-        18,
-        "Arena deve iniciar com os 18 perfis de estratégia concorrendo"
+        100,
+        "Arena deve iniciar com os 100 perfis de estratégia concorrendo"
     );
     assert_eq!(
         arena.champion_profile_id, "trend_supertrend_heavy",
@@ -457,8 +457,8 @@ async fn test_trading_desk_api_endpoints_arena_backtest_snapshot() {
     );
     assert_eq!(
         arena_data["competitors"].as_array().map(|v| v.len()),
-        Some(18),
-        "Arena deve listar 18 competidores via REST"
+        Some(100),
+        "Arena deve listar 100 competidores via REST"
     );
 
     // 2. POST /api/v1/desk/run-backtest-90d -> Dispara otimizador de 30 dias
@@ -482,8 +482,8 @@ async fn test_trading_desk_api_endpoints_arena_backtest_snapshot() {
     assert_eq!(report.days_tested, 30);
     assert_eq!(
         report.ranked_profiles.len(),
-        18,
-        "Relatório via API deve conter os 18 perfis ranqueados"
+        100,
+        "Relatório via API deve conter os 100 perfis ranqueados"
     );
     assert_eq!(report.ranked_profiles[0].score_rank, 1);
     assert!(!report.recommended_champion.is_empty());

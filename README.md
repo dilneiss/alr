@@ -672,18 +672,20 @@ Infraestrutura completa de alta frequência e baixa latência para execução qu
 2. **Auditoria Transparente e Histórico Completo de Indicadores e Pesos na Entrada (`IndicatorWeightsSnapshot`):**
    * No momento exato da abertura de qualquer trade, o robô congela e persiste no banco SQLite um snapshot auditável contendo os valores exatos de todos os indicadores técnicos e o mapa completo de pesos dos fatores ativos.
    * Visualização interativa na Web via modal `[📊 Indicadores & Pesos]` presente na tabela de extrato recente e nos cards das posições em aberto.
-3. **Arena Híbrida de 18 Estratégias ao Vivo (12 Especializadas + 6 Genéticas Mutantes em Simulação Paralela):**
-   * Executa simultaneamente no motor 18 perfis distintos de estratégias com diferentes combinações de pesos operando com micro-saldo virtual ($1.000 USD):
-     * **Grupo Tendência (3)**: `trend_supertrend_heavy`, `trend_macro_momentum`, `trend_breakout_accelerator`.
-     * **Grupo Reversão à Média (3)**: `mean_reversion_rsi_donchian`, `mean_reversion_support_bounce`, `mean_reversion_contrarian_fear`.
-     * **Grupo Volatilidade & Compressão (3)**: `volatility_squeeze_scalper`, `volatility_bandwidth_expansion`, `volatility_atr_chandelier`.
-     * **Grupo Fluxo Institucional & Book (3)**: `institutional_vwap_mfi`, `institutional_obi_depth`, `institutional_volume_profile`.
-     * **Grupo Genético Evolutivo (6 Clones Mutantes)**: `genetic_challenger_alpha`, `beta`, `gamma`, `delta`, `epsilon`, `zeta` (mutação estocástica a cada 50 velas herdando os pesos dos melhores do ranking).
-   * **Eleição Auto-Adaptativa Ágil (Opção 2)**: A cada 20 velas, se qualquer desafiante atingir $\ge 5$ trades, Win Rate $\ge 50\%$ e PnL líquido superior à campeã, ela é coroada imediatamente como nova Campeã Ativa, persistida no SQLite e seus pesos assumem a execução real das ordens na Binance!
+3. **Arena de 100 Perfis Concorrentes Simultâneos & Campeãs Especializadas por Criptomoeda:**
+   * Executa simultaneamente no motor **100 perfis de estratégias** com diferentes combinações de pesos e parâmetros de risco operando em micro-contas virtuais ($1.000 USD):
+     * **12 Perfis Fundamentais Nomeados**: Tendência Pesada, Momentum Estrutural, Acelerador de Rompimento, Reversão Donchian, Suporte Rápido, Pânico Contrarian, TTM Squeeze, Bandwidth Expansion, ATR Chandelier, VWAP & MFI, Order Book Depth e Volume Profile POC.
+     * **62 Variações Paramétricas de Família**: 15 famílias estratégicas com 4 perfis de risco cada (Conservador, Agressivo, Stop Curto e Trend Runner) mais 2 perfis de arbitragem estatística e HFT micro scalp.
+     * **26 Clones Genéticos Mutantes Evolutivos**: Mutam periodicamente a cada 50 velas herdando a base de pesos dos líderes do ranking e aplicando mutações estocásticas controladas.
+   * **Ordenação Dinâmica do Mais ao Menos Promissor (Ranking #1 a #100)**:
+     * O ranking é reordenado dinamicamente a cada vela pelo Score Promissor Composto ($\text{Sharpe} \times 0.40 + \text{Win Rate} \times 0.35 + \text{Retorno Líquido} \times 0.25 - \text{Drawdown} \times 0.20$). O competidor #1 recebe destaque dourado visual no topo da lista.
+   * **Campeã Especializada por Criptomoeda (Per-Asset Dynamic Champions)**:
+     * Nem toda estratégia funciona igual em todas as moedas: enquanto o Bitcoin exige ancoragem institucional no VWAP, o Dogecoin e XRP reagem melhor a rompimentos rápidos de Squeeze e reversão de pânico, e a Solana exige momentum acelerado.
+     * O motor rastreia o PnL e a taxa de acerto de cada estratégia **isoladamente para cada moeda**.
+     * Cada criptomoeda auto-aprova, auto-promove e elege a **sua própria Campeã Exclusiva**, gravada na tabela `trading_asset_champions` do SQLite e guiando as ordens reais daquele ativo!
 4. **Otimizador de Backtest Histórico de até 90 Dias (3 Meses):**
-   * Permite realizar simulações profundas de até 90 dias de histórico para cada ativo do basket avaliando todas as 18 estratégias simultaneamente.
-   * Gera um relatório classificado de performance (#1 a #18) com taxa de acerto, PnL líquido, profit factor, drawdown e Sharpe ratio, elegendo a melhor configuração inicial para iniciar as operações ao vivo.
-5. **Cinco Novos Módulos de Assertividade & Proteção Quantitativa:**
+   * Permite realizar simulações profundas de até 90 dias de histórico para cada ativo do basket avaliando todos os 100 perfis simultaneamente.
+   * Gera um relatório classificado de performance (#1 a #100) com taxa de acerto, PnL líquido, profit factor, drawdown e Sharpe ratio, elegendo a melhor configuração inicial para iniciar as operações ao vivo.
    * **Filtro de Correlação com Bitcoin (`BtcMarketBetaGuard`)**: Veto absoluto (`hold_logits += 8.0`, `buy_logits = -10.0`) em compras de altcoins caso o Bitcoin esteja em queda severa intradiária (< -1.2% ou abaixo da banda inferior VWAP).
    * **Volume Profile & Ponto de Controle (`PointOfControlEngine`)**: Identificação do nível de preço com maior volume financeiro institucional (POC) e Value Area (70% do volume) para posicionar TP1 e Stop-Loss de forma cirúrgica.
    * **Regime de Volatilidade de Parkinson (`ParkinsonVolatilityFilter`)**: Medição da amplitude High/Low dos últimos 20 períodos para bloquear negociações em mercados sem liquidez (chop extremo) e regular a exposição.

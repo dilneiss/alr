@@ -132,8 +132,8 @@ fn test_18_strategy_arena_simulation_and_adaptive_promotion() {
     let mut arena = StrategyArena::new();
     assert_eq!(
         arena.competitors.len(),
-        18,
-        "A Arena deve inicializar com exatamente 18 estratégias simultâneas"
+        100,
+        "A Arena deve inicializar com exatamente 100 estratégias simultâneas"
     );
 
     let genetic_count = arena
@@ -142,14 +142,14 @@ fn test_18_strategy_arena_simulation_and_adaptive_promotion() {
         .filter(|c| c.profile.id.starts_with("genetic_"))
         .count();
     assert_eq!(
-        genetic_count, 6,
-        "Devem existir 6 clones genéticos mutantes"
+        genetic_count, 26,
+        "Devem existir 26 clones genéticos mutantes"
     );
 
     let specialized_count = arena.competitors.len() - genetic_count;
     assert_eq!(
-        specialized_count, 12,
-        "Devem existir 12 perfis especializados fundamentais"
+        specialized_count, 74,
+        "Devem existir 74 perfis especializados fundamentais"
     );
 
     // Alimenta 50 velas para disparar a mutação genética
@@ -376,8 +376,8 @@ async fn test_trading_desk_api_endpoints_promotions_and_18_strategies() {
         .expect("Array competitors");
     assert_eq!(
         competitors.len(),
-        18,
-        "A API deve retornar exatamente 18 estratégias concorrentes"
+        100,
+        "A API deve retornar exatamente 100 estratégias concorrentes"
     );
 
     // Limpeza
