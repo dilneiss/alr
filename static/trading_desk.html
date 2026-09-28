@@ -1182,11 +1182,12 @@
                 <p class="text-xs text-slate-300">Motor Autônomo Dual-Market • Execução de Alta Frequência & Gestão de Risco</p>
               </div>
             </div>
-            <div class="text-right">
+            <div class="text-right flex flex-col items-end gap-1">
               <span id="graph-core-status-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 justify-end">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                 <span id="graph-core-status-text">EXECUTANDO AUTONOMAMENTE</span>
               </span>
+              <span id="graph-market-leader-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 hidden"></span>
             </div>
           </div>
 
@@ -1236,7 +1237,7 @@
                 <p class="text-[10px] text-slate-400">Binance Spot Testnet • 7 Ativos Contínuos</p>
               </div>
             </div>
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+            <span id="crypto-subhub-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
               SUB-HUB 1
             </span>
           </div>
@@ -1281,7 +1282,7 @@
                 <p class="text-[10px] text-slate-400">OANDA v20 / MetaTrader 5 Bridge • 7 Majors</p>
               </div>
             </div>
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-300 border border-purple-500/30">
+            <span id="forex-subhub-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-300 border border-purple-500/30">
               SUB-HUB 2
             </span>
           </div>
@@ -3872,12 +3873,18 @@
 
 
     function buildSynthesizedTopology(state) {
-      const totalVal = state?.total_portfolio_value || 50000.0;
+      const cryptoInit = state?.crypto_initial_capital || (state?.initial_capital ? state.initial_capital * 0.5 : 25000.0);
+      const forexInit = state?.forex_initial_capital || (state?.initial_capital ? state.initial_capital * 0.5 : 25000.0);
+
+      const cryptoRealized = state?.crypto_realized_pnl || 0.0;
+      const forexRealized = state?.forex_realized_pnl || 0.0;
+      const totalRealized = state?.realized_pnl != null ? state.realized_pnl : (cryptoRealized + forexRealized);
+
+      const totalVal = state?.total_portfolio_value || (cryptoInit + forexInit);
       const unPnl = state?.total_unrealized_pnl || 0.0;
-      const relPnl = state?.realized_pnl || 0.0;
-      const totPnl = unPnl + relPnl;
-      const totPnlPct = state?.total_unrealized_pnl_pct || 0.0;
-      const maxDdPct = state?.max_drawdown_pct || 1.42;
+      const totPnl = unPnl + totalRealized;
+      const totPnlPct = (cryptoInit + forexInit) > 0 ? (totPnl / (cryptoInit + forexInit)) * 100.0 : (state?.total_unrealized_pnl_pct || 0.0);
+      const maxDdPct = state?.max_drawdown_pct || 0.0;
       const maxDdUsd = state?.max_drawdown_amount_usd || (totalVal * (maxDdPct / 100.0));
       const winRate = state?.adaptive_learning?.overall_win_rate_pct || 68.5;
       const activeTradesCount = state?.active_positions_count || 0;
@@ -3932,10 +3939,12 @@
         const quote = state?.forex_quotes?.[p.sym];
         const curPrice = quote?.bid || p.base;
         const pip = p.sym.includes('JPY') ? 0.01 : 0.0001;
-
-        // Check if there is an active trade in state (or synthetic from forex state)
-        const hasPos = false; // By default idle unless order placed
-
+        const found = (state?.assets || []).find(a => a.asset === p.sym || a.asset === p.name);
+        const hasPos = !!(found && found.has_position && found.position);
+        if (hasPos) {
+          forexActiveTrades++;
+          forexPnlUsd += (found.position.unrealized_pnl || 0);
+        }
         forexAssetsData.push({
           id: `asset-${p.sym}`,
           asset: p.name,
@@ -3985,14 +3994,28 @@
           pnl_usd: a.pnl_usd
         });
       });
+      // Segregated Calculations for Hubs
+      const cryptoBal = state?.crypto_portfolio_value != null
+        ? state.crypto_portfolio_value
+        : Math.max(0.0, cryptoInit + cryptoRealized + cryptoPnlUsd);
+
+      const forexBal = state?.forex_portfolio_value != null
+        ? state.forex_portfolio_value
+        : Math.max(0.0, forexInit + forexRealized + forexPnlUsd);
+
+      const cryptoTotalPnl = cryptoRealized + cryptoPnlUsd;
+      const forexTotalPnl = forexRealized + forexPnlUsd;
+
+      const cryptoPnlPct = cryptoInit > 0 ? (cryptoTotalPnl / cryptoInit) * 100.0 : 0.0;
+      const forexPnlPct = forexInit > 0 ? (forexTotalPnl / forexInit) * 100.0 : 0.0;
 
       return {
         core_alr: {
           id: 'core_alr',
           label: 'ALR QUANT CORE',
-          balance: totalVal,
-          pnl_usd: totPnl,
-          pnl_pct: totPnlPct,
+          balance: cryptoBal + forexBal,
+          pnl_usd: cryptoTotalPnl + forexTotalPnl,
+          pnl_pct: (cryptoInit + forexInit) > 0 ? ((cryptoTotalPnl + forexTotalPnl) / (cryptoInit + forexInit)) * 100.0 : 0.0,
           win_rate_pct: winRate,
           max_drawdown_pct: maxDdPct,
           max_drawdown_usd: maxDdUsd,
@@ -4002,32 +4025,39 @@
         crypto_hub: {
           id: 'crypto_hub',
           label: 'NÚCLEO CRIPTO',
-          balance: totalVal * 0.5,
-          pnl_usd: cryptoPnlUsd,
-          pnl_pct: (cryptoPnlUsd / (totalVal * 0.5)) * 100.0,
-          win_rate_pct: 68.5,
-          max_drawdown_pct: 1.8,
-          max_drawdown_usd: (totalVal * 0.5) * 0.018,
-          active_trades: cryptoActiveTrades,
-          total_trades: 12
+          balance: cryptoBal,
+          pnl_usd: cryptoTotalPnl,
+          pnl_pct: cryptoPnlPct,
+          realized_pnl_usd: cryptoRealized,
+          unrealized_pnl_usd: cryptoPnlUsd,
+          win_rate_pct: state?.crypto_win_rate_pct || 68.5,
+          max_drawdown_pct: state?.crypto_max_drawdown_pct || 0.0,
+          max_drawdown_usd: state?.crypto_max_drawdown_usd || 0.0,
+          active_trades: state?.crypto_active_trades != null ? state.crypto_active_trades : cryptoActiveTrades,
+          total_trades: (state?.crypto_closed_trades || 0) + (state?.crypto_active_trades != null ? state.crypto_active_trades : cryptoActiveTrades),
+          closed_trades: state?.crypto_closed_trades || 0
         },
         forex_hub: {
           id: 'forex_hub',
           label: 'NÚCLEO FOREX & CÂMBIO',
-          balance: totalVal * 0.5,
-          pnl_usd: forexPnlUsd,
-          pnl_pct: (forexPnlUsd / (totalVal * 0.5)) * 100.0,
-          pnl_pips: forexPipsTotal,
-          win_rate_pct: 71.2,
-          max_drawdown_pct: 1.1,
-          max_drawdown_usd: (totalVal * 0.5) * 0.011,
-          active_trades: forexActiveTrades,
-          total_trades: 8
+          balance: forexBal,
+          pnl_usd: forexTotalPnl,
+          pnl_pct: forexPnlPct,
+          pnl_pips: state?.forex_total_pips != null ? state.forex_total_pips : forexPipsTotal,
+          realized_pnl_usd: forexRealized,
+          unrealized_pnl_usd: forexPnlUsd,
+          win_rate_pct: state?.forex_win_rate_pct || 71.2,
+          max_drawdown_pct: state?.forex_max_drawdown_pct || 0.0,
+          max_drawdown_usd: state?.forex_max_drawdown_usd || 0.0,
+          active_trades: state?.forex_active_trades != null ? state.forex_active_trades : forexActiveTrades,
+          total_trades: (state?.forex_closed_trades || 0) + (state?.forex_active_trades != null ? state.forex_active_trades : forexActiveTrades),
+          closed_trades: state?.forex_closed_trades || 0
         },
         assets: allAssets,
         links: links,
         arena_competitors_count: 400,
         active_positions_count: activeTradesCount,
+        market_leader: state?.market_leader || (Math.abs(cryptoPnlPct - forexPnlPct) < 0.001 ? 'Tie' : (cryptoPnlPct > forexPnlPct ? 'Crypto' : 'Forex')),
         timestamp: Date.now()
       };
     }
@@ -4169,6 +4199,34 @@
         fDd.textContent = `-${Math.abs(ddPct).toFixed(2)}% (-${fmtUSD(Math.abs(ddUsd))})`;
       }
       if (fTrades) fTrades.textContent = `${fHub.active_trades || 0} / 7 Pares em aberto`;
+      // 3.4 Market Leader Badge Comparison
+      const cPnlPct = cHub.pnl_pct || 0;
+      const fPnlPct = fHub.pnl_pct || 0;
+      const leaderBadge = document.getElementById('graph-market-leader-badge');
+      const cBadge = document.getElementById('crypto-subhub-badge');
+      const fBadge = document.getElementById('forex-subhub-badge');
+
+      if (leaderBadge) {
+        if (Math.abs(cPnlPct - fPnlPct) < 0.001) {
+          leaderBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
+          leaderBadge.textContent = '⚖️ Mercados Empatados';
+          leaderBadge.classList.remove('hidden');
+          if (cBadge) { cBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30'; cBadge.textContent = 'SUB-HUB 1'; }
+          if (fBadge) { fBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-300 border border-purple-500/30'; fBadge.textContent = 'SUB-HUB 2'; }
+        } else if (cPnlPct > fPnlPct) {
+          leaderBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm';
+          leaderBadge.textContent = `🏆 Cripto na Liderança (${cPnlPct >= 0 ? '+' : ''}${cPnlPct.toFixed(2)}%)`;
+          leaderBadge.classList.remove('hidden');
+          if (cBadge) { cBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse'; cBadge.textContent = '🏆 LÍDER'; }
+          if (fBadge) { fBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-300 border border-purple-500/30'; fBadge.textContent = 'SUB-HUB 2'; }
+        } else {
+          leaderBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm';
+          leaderBadge.textContent = `🏆 Forex na Liderança (${fPnlPct >= 0 ? '+' : ''}${fPnlPct.toFixed(2)}%)`;
+          leaderBadge.classList.remove('hidden');
+          if (fBadge) { fBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse'; fBadge.textContent = '🏆 LÍDER'; }
+          if (cBadge) { cBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30'; cBadge.textContent = 'SUB-HUB 1'; }
+        }
+      }
 
       // 3.5 Winning Setups List
       const winningList = document.getElementById('graph-winning-setups-list');
@@ -4409,20 +4467,24 @@
             <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
               <div class="text-[10px] uppercase font-bold text-slate-400">Saldo Cripto</div>
               <div class="mono font-bold text-base text-white mt-1">${fmtUSD(cHub.balance)}</div>
+              <div class="text-[9px] text-slate-500 mt-0.5">Capital Inicial: ${fmtUSD(cHub.initial_capital || 25000)}</div>
             </div>
             <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
               <div class="text-[10px] uppercase font-bold text-slate-400">PnL Cripto</div>
               <div class="mono font-bold text-base ${(cHub.pnl_usd || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'} mt-1">
-                ${(cHub.pnl_usd || 0) >= 0 ? '+' : ''}${fmtUSD(cHub.pnl_usd)}
+                ${(cHub.pnl_usd || 0) >= 0 ? '+' : ''}${fmtUSD(cHub.pnl_usd)} (${((cHub.pnl_pct || 0)).toFixed(2)}%)
               </div>
+              <div class="text-[9px] text-slate-500 mt-0.5">Fech: ${fmtUSD(cHub.realized_pnl_usd || 0)} • Aberto: ${fmtUSD(cHub.unrealized_pnl_usd || 0)}</div>
             </div>
             <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
-              <div class="text-[10px] uppercase font-bold text-slate-400">Win Rate Médio</div>
+              <div class="text-[10px] uppercase font-bold text-slate-400">Win Rate / Drawdown</div>
               <div class="mono font-bold text-base text-cyan-300 mt-1">${(cHub.win_rate_pct || 68.5).toFixed(1)}%</div>
+              <div class="text-[9px] text-rose-400 mt-0.5">Max DD: -${Math.abs(cHub.max_drawdown_pct || 0).toFixed(2)}%</div>
             </div>
             <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
-              <div class="text-[10px] uppercase font-bold text-slate-400">Trades Ativos</div>
+              <div class="text-[10px] uppercase font-bold text-slate-400">Trades Cripto</div>
               <div class="mono font-bold text-base text-white mt-1">${cHub.active_trades || 0} / 7 Ativos</div>
+              <div class="text-[9px] text-slate-500 mt-0.5">${cHub.closed_trades || 0} trades fechados</div>
             </div>
           </div>
 
@@ -4459,20 +4521,24 @@
             <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
               <div class="text-[10px] uppercase font-bold text-slate-400">Saldo Forex</div>
               <div class="mono font-bold text-base text-white mt-1">${fmtUSD(fHub.balance)}</div>
+              <div class="text-[9px] text-slate-500 mt-0.5">Capital Inicial: ${fmtUSD(fHub.initial_capital || 25000)}</div>
             </div>
             <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
               <div class="text-[10px] uppercase font-bold text-slate-400">PnL Forex</div>
               <div class="mono font-bold text-base ${(fHub.pnl_usd || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'} mt-1">
-                ${(fHub.pnl_usd || 0) >= 0 ? '+' : ''}${fmtUSD(fHub.pnl_usd)}
+                ${(fHub.pnl_usd || 0) >= 0 ? '+' : ''}${fmtUSD(fHub.pnl_usd)} (${((fHub.pnl_pct || 0)).toFixed(2)}%)
               </div>
+              <div class="text-[9px] text-slate-500 mt-0.5">Fech: ${fmtUSD(fHub.realized_pnl_usd || 0)} • Aberto: ${fmtUSD(fHub.unrealized_pnl_usd || 0)}</div>
             </div>
             <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
-              <div class="text-[10px] uppercase font-bold text-slate-400">Pips Acumulados</div>
+              <div class="text-[10px] uppercase font-bold text-slate-400">Pips / Drawdown</div>
               <div class="mono font-bold text-base text-purple-300 mt-1">${(fHub.pnl_pips || 0) >= 0 ? '+' : ''}${(fHub.pnl_pips || 0).toFixed(1)} pips</div>
+              <div class="text-[9px] text-rose-400 mt-0.5">Max DD: -${Math.abs(fHub.max_drawdown_pct || 0).toFixed(2)}%</div>
             </div>
             <div class="p-3 rounded-xl bg-navy-950 border border-navy-800">
-              <div class="text-[10px] uppercase font-bold text-slate-400">Win Rate Médio</div>
-              <div class="mono font-bold text-base text-cyan-300 mt-1">${(fHub.win_rate_pct || 71.2).toFixed(1)}%</div>
+              <div class="text-[10px] uppercase font-bold text-slate-400">Trades Forex</div>
+              <div class="mono font-bold text-base text-white mt-1">${fHub.active_trades || 0} / 7 Pares</div>
+              <div class="text-[9px] text-slate-500 mt-0.5">${fHub.closed_trades || 0} trades fechados • ${(fHub.win_rate_pct || 71.2).toFixed(1)}% WR</div>
             </div>
           </div>
 

@@ -4745,6 +4745,20 @@ impl Default for MultiAssetConfig {
 }
 
 impl MultiAssetConfig {
+    pub fn crypto(initial_capital: f64) -> Self {
+        Self {
+            initial_capital,
+            max_concurrent_positions: 14,
+            max_portfolio_risk_pct: 10.0,
+            max_risk_per_trade_pct: 2.0,
+            max_trade_allocation_usd: 1_000.0,
+            exchange_config: ExchangeSimulationConfig::binance(),
+            basket: DEFAULT_MULTI_ASSET_BASKET
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+        }
+    }
     pub fn forex(initial_capital: f64) -> Self {
         Self {
             initial_capital,
@@ -4983,6 +4997,50 @@ pub struct DeskStatusSnapshot {
     pub forex_quotes: HashMap<String, ForexQuote>,
     #[serde(default)]
     pub system_resources: Option<SystemResourceMetrics>,
+    #[serde(default)]
+    pub crypto_initial_capital: f64,
+    #[serde(default)]
+    pub crypto_portfolio_value: f64,
+    #[serde(default)]
+    pub crypto_cash_balance: f64,
+    #[serde(default)]
+    pub crypto_realized_pnl: f64,
+    #[serde(default)]
+    pub crypto_unrealized_pnl: f64,
+    #[serde(default)]
+    pub crypto_win_rate_pct: f64,
+    #[serde(default)]
+    pub crypto_max_drawdown_pct: f64,
+    #[serde(default)]
+    pub crypto_max_drawdown_usd: f64,
+    #[serde(default)]
+    pub crypto_active_trades: usize,
+    #[serde(default)]
+    pub crypto_closed_trades: usize,
+    #[serde(default)]
+    pub forex_initial_capital: f64,
+    #[serde(default)]
+    pub forex_portfolio_value: f64,
+    #[serde(default)]
+    pub forex_cash_balance: f64,
+    #[serde(default)]
+    pub forex_realized_pnl: f64,
+    #[serde(default)]
+    pub forex_unrealized_pnl: f64,
+    #[serde(default)]
+    pub forex_win_rate_pct: f64,
+    #[serde(default)]
+    pub forex_max_drawdown_pct: f64,
+    #[serde(default)]
+    pub forex_max_drawdown_usd: f64,
+    #[serde(default)]
+    pub forex_active_trades: usize,
+    #[serde(default)]
+    pub forex_closed_trades: usize,
+    #[serde(default)]
+    pub forex_total_pips: f64,
+    #[serde(default)]
+    pub market_leader: String,
 }
 /// Relatório analítico comparativo contrafactual de dimensionamento de trades ("What-If" Analysis)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -6833,6 +6891,19 @@ pub struct MultiAssetTraderEngine {
     pub engines: HashMap<String, CryptoTraderEngine>,
     pub total_cash: f64,
     pub initial_capital: f64,
+    pub crypto_initial_capital: f64,
+    pub crypto_cash: f64,
+    pub crypto_realized_pnl: f64,
+    pub crypto_peak_value: f64,
+    pub crypto_max_drawdown_pct: f64,
+    pub crypto_max_drawdown_usd: f64,
+    pub forex_initial_capital: f64,
+    pub forex_cash: f64,
+    pub forex_realized_pnl: f64,
+    pub forex_peak_value: f64,
+    pub forex_max_drawdown_pct: f64,
+    pub forex_max_drawdown_usd: f64,
+    pub forex_total_pips: f64,
     pub store: Option<SqliteTradingStore>,
     pub advisor: LlmMarketRegimeAdvisor,
     pub kill_switch_active: bool,
@@ -6849,20 +6920,50 @@ pub struct MultiAssetTraderEngine {
 impl MultiAssetTraderEngine {
     pub fn new(config: MultiAssetConfig) -> Self {
         let mut engines = HashMap::new();
-        let capital_per_asset = config.initial_capital / config.basket.len().max(1) as f64;
+        let initial_cap = config.initial_capital;
+
+        let has_crypto = config.basket.iter().any(|a| !is_forex_symbol(a));
+        let has_forex = config.basket.iter().any(|a| is_forex_symbol(a));
+
+        let (crypto_initial_capital, forex_initial_capital) = if has_crypto && has_forex {
+            (initial_cap * 0.5, initial_cap * 0.5)
+        } else if has_forex {
+            (0.0, initial_cap)
+        } else {
+            (initial_cap, 0.0)
+        };
+
+        let crypto_count = config
+            .basket
+            .iter()
+            .filter(|a| !is_forex_symbol(a))
+            .count()
+            .max(1);
+        let forex_count = config
+            .basket
+            .iter()
+            .filter(|a| is_forex_symbol(a))
+            .count()
+            .max(1);
 
         for asset in &config.basket {
+            let is_fx = is_forex_symbol(asset);
+            let capital_per_asset = if is_fx {
+                forex_initial_capital / forex_count as f64
+            } else {
+                crypto_initial_capital / crypto_count as f64
+            };
             let risk_policy = RiskPolicy {
                 max_risk_per_trade_pct: config.max_risk_per_trade_pct,
                 max_drawdown_pct: config.max_portfolio_risk_pct,
                 trailing_stop_pct: Some(1.5),
                 stop_loss_required: true,
-                daily_loss_limit: config.initial_capital * 0.05,
+                daily_loss_limit: initial_cap * 0.05,
                 kill_switch_active: false,
                 max_position_size: if config.max_trade_allocation_usd > 0.0 {
                     config.max_trade_allocation_usd
                 } else {
-                    config.initial_capital * 0.25
+                    capital_per_asset.max(initial_cap * 0.25)
                 },
                 daily_loss_current: 0.0,
             };
@@ -6875,12 +6976,24 @@ impl MultiAssetTraderEngine {
             engines.insert(asset.clone(), eng);
         }
 
-        let initial_cap = config.initial_capital;
         Self {
             config,
             engines,
             total_cash: initial_cap,
             initial_capital: initial_cap,
+            crypto_initial_capital,
+            crypto_cash: crypto_initial_capital,
+            crypto_realized_pnl: 0.0,
+            crypto_peak_value: crypto_initial_capital,
+            crypto_max_drawdown_pct: 0.0,
+            crypto_max_drawdown_usd: 0.0,
+            forex_initial_capital,
+            forex_cash: forex_initial_capital,
+            forex_realized_pnl: 0.0,
+            forex_peak_value: forex_initial_capital,
+            forex_max_drawdown_pct: 0.0,
+            forex_max_drawdown_usd: 0.0,
+            forex_total_pips: 0.0,
             store: None,
             advisor: LlmMarketRegimeAdvisor::new(),
             kill_switch_active: false,
@@ -6959,7 +7072,12 @@ impl MultiAssetTraderEngine {
         for pos in open_positions {
             if let Some(engine) = self.engines.get_mut(&pos.asset) {
                 let cost = pos.entry_price * pos.quantity;
-                self.total_cash = (self.total_cash - cost).max(0.0);
+                if is_forex_symbol(&pos.asset) {
+                    self.forex_cash = (self.forex_cash - cost).max(0.0);
+                } else {
+                    self.crypto_cash = (self.crypto_cash - cost).max(0.0);
+                }
+                self.total_cash = self.crypto_cash + self.forex_cash;
                 engine.cash_balance = (engine.cash_balance - cost).max(0.0);
 
                 // Garante que exista registro no extrato recente de ordens para cada posição em aberto
@@ -7062,33 +7180,92 @@ impl MultiAssetTraderEngine {
             .count()
     }
 
-    pub fn total_portfolio_value(&self) -> f64 {
-        let mut total = self.total_cash;
-        for engine in self.engines.values() {
-            if let Some(pos) = &engine.current_position {
-                let current_price = engine
-                    .candles
-                    .last()
-                    .map(|c| c.close)
-                    .unwrap_or(pos.entry_price);
-                let pos_val = match pos.side {
-                    OrderSide::Long => pos.quantity * current_price,
-                    OrderSide::Short => {
-                        let diff = pos.entry_price - current_price;
-                        (pos.quantity * pos.entry_price) + (diff * pos.quantity)
-                    }
-                };
-                total += pos_val;
+    pub fn crypto_portfolio_value(&self) -> f64 {
+        let mut val = self.crypto_cash;
+        for (asset, engine) in &self.engines {
+            if !is_forex_symbol(asset) {
+                if let Some(pos) = &engine.current_position {
+                    let cur = engine
+                        .candles
+                        .last()
+                        .map(|c| c.close)
+                        .unwrap_or(pos.entry_price);
+                    let pval = match pos.side {
+                        OrderSide::Long => pos.quantity * cur,
+                        OrderSide::Short => {
+                            (pos.quantity * pos.entry_price)
+                                + ((pos.entry_price - cur) * pos.quantity)
+                        }
+                    };
+                    val += pval;
+                }
             }
         }
-        total.max(0.0)
+        val.max(0.0)
+    }
+
+    pub fn forex_portfolio_value(&self) -> f64 {
+        let mut val = self.forex_cash;
+        for (asset, engine) in &self.engines {
+            if is_forex_symbol(asset) {
+                if let Some(pos) = &engine.current_position {
+                    let cur = engine
+                        .candles
+                        .last()
+                        .map(|c| c.close)
+                        .unwrap_or(pos.entry_price);
+                    let pval = match pos.side {
+                        OrderSide::Long => pos.quantity * cur,
+                        OrderSide::Short => {
+                            (pos.quantity * pos.entry_price)
+                                + ((pos.entry_price - cur) * pos.quantity)
+                        }
+                    };
+                    val += pval;
+                }
+            }
+        }
+        val.max(0.0)
+    }
+
+    pub fn total_portfolio_value(&self) -> f64 {
+        (self.crypto_portfolio_value() + self.forex_portfolio_value()).max(0.0)
+    }
+
+    pub fn crypto_unrealized_pnl(&self) -> f64 {
+        self.engines
+            .iter()
+            .filter(|(a, _)| !is_forex_symbol(a))
+            .filter_map(|(_, e)| e.current_position.as_ref().map(|p| p.pnl))
+            .sum()
+    }
+
+    pub fn forex_unrealized_pnl(&self) -> f64 {
+        self.engines
+            .iter()
+            .filter(|(a, _)| is_forex_symbol(a))
+            .filter_map(|(_, e)| e.current_position.as_ref().map(|p| p.pnl))
+            .sum()
     }
 
     pub fn total_unrealized_pnl(&self) -> f64 {
-        self.engines
-            .values()
-            .filter_map(|e| e.current_position.as_ref().map(|p| p.pnl))
-            .sum()
+        self.crypto_unrealized_pnl() + self.forex_unrealized_pnl()
+    }
+
+    pub fn crypto_drawdown_pct(&self) -> f64 {
+        if self.crypto_peak_value <= 0.0 {
+            return 0.0;
+        }
+        let cur = self.crypto_portfolio_value();
+        ((self.crypto_peak_value - cur) / self.crypto_peak_value * 100.0).max(0.0)
+    }
+
+    pub fn forex_drawdown_pct(&self) -> f64 {
+        if self.forex_peak_value <= 0.0 {
+            return 0.0;
+        }
+        let cur = self.forex_portfolio_value();
+        ((self.forex_peak_value - cur) / self.forex_peak_value * 100.0).max(0.0)
     }
 
     pub fn drawdown_pct(&self) -> f64 {
@@ -7098,6 +7275,50 @@ impl MultiAssetTraderEngine {
         let cur = self.total_portfolio_value();
         let dd = (self.peak_portfolio_value - cur) / self.peak_portfolio_value * 100.0;
         dd.max(0.0)
+    }
+
+    pub fn update_peaks_and_drawdowns(&mut self) {
+        let crypto_val = self.crypto_portfolio_value();
+        if crypto_val > self.crypto_peak_value {
+            self.crypto_peak_value = crypto_val;
+        }
+        let c_dd = self.crypto_drawdown_pct();
+        if c_dd > self.crypto_max_drawdown_pct {
+            self.crypto_max_drawdown_pct = c_dd;
+        }
+        let c_dd_usd = (self.crypto_peak_value - crypto_val).max(0.0);
+        if c_dd_usd > self.crypto_max_drawdown_usd {
+            self.crypto_max_drawdown_usd = c_dd_usd;
+        }
+
+        let forex_val = self.forex_portfolio_value();
+        if forex_val > self.forex_peak_value {
+            self.forex_peak_value = forex_val;
+        }
+        let f_dd = self.forex_drawdown_pct();
+        if f_dd > self.forex_max_drawdown_pct {
+            self.forex_max_drawdown_pct = f_dd;
+        }
+        let f_dd_usd = (self.forex_peak_value - forex_val).max(0.0);
+        if f_dd_usd > self.forex_max_drawdown_usd {
+            self.forex_max_drawdown_usd = f_dd_usd;
+        }
+
+        let cur_val = self.total_portfolio_value();
+        if cur_val > self.peak_portfolio_value {
+            self.peak_portfolio_value = cur_val;
+        }
+        let dd = self.drawdown_pct();
+        let dd_usd = (self.peak_portfolio_value - cur_val).max(0.0);
+        if dd > self.max_drawdown_seen {
+            self.max_drawdown_seen = dd;
+        }
+        if dd_usd > self.max_drawdown_amount_usd {
+            self.max_drawdown_amount_usd = dd_usd;
+        }
+        if dd >= self.config.max_portfolio_risk_pct {
+            self.kill_switch_active = true;
+        }
     }
 
     /// Alimentação de vela para um ativo específico com controle de capacidade da carteira
@@ -7126,10 +7347,16 @@ impl MultiAssetTraderEngine {
         let exec = engine.on_candle(candle.clone())?;
 
         if let Some(trade) = &exec {
+            let is_fx = is_forex_symbol(asset);
             match trade.action {
                 TradingAction::Buy => {
                     let cost = trade.price * trade.quantity + trade.fee;
-                    self.total_cash = (self.total_cash - cost).max(0.0);
+                    if is_fx {
+                        self.forex_cash = (self.forex_cash - cost).max(0.0);
+                    } else {
+                        self.crypto_cash = (self.crypto_cash - cost).max(0.0);
+                    }
+                    self.total_cash = self.crypto_cash + self.forex_cash;
                     if let Some(store) = &self.store {
                         if let Some(pos) = &engine.current_position {
                             let _ = store.save_position(pos, "OPEN");
@@ -7142,7 +7369,22 @@ impl MultiAssetTraderEngine {
                 | TradingAction::Sell
                 | TradingAction::PartialClose => {
                     let proceeds = (trade.price * trade.quantity) - trade.fee;
-                    self.total_cash += proceeds;
+                    if is_fx {
+                        self.forex_cash += proceeds;
+                        if let Some(pnl) = trade.realized_pnl {
+                            self.forex_realized_pnl += pnl;
+                            let pip_val =
+                                ForexPipCalculator::pip_value_usd(asset, 10_000.0, trade.price);
+                            let p = if pip_val > 0.0 { pnl / pip_val } else { pnl };
+                            self.forex_total_pips += p;
+                        }
+                    } else {
+                        self.crypto_cash += proceeds;
+                        if let Some(pnl) = trade.realized_pnl {
+                            self.crypto_realized_pnl += pnl;
+                        }
+                    }
+                    self.total_cash = self.crypto_cash + self.forex_cash;
                     if let Some(pnl) = trade.realized_pnl {
                         self.realized_pnl += pnl;
                     }
@@ -7164,22 +7406,8 @@ impl MultiAssetTraderEngine {
             }
         }
 
-        // Atualiza peak e drawdown
-        let cur_val = self.total_portfolio_value();
-        if cur_val > self.peak_portfolio_value {
-            self.peak_portfolio_value = cur_val;
-        }
-        let dd = self.drawdown_pct();
-        let dd_usd = (self.peak_portfolio_value - cur_val).max(0.0);
-        if dd > self.max_drawdown_seen {
-            self.max_drawdown_seen = dd;
-        }
-        if dd_usd > self.max_drawdown_amount_usd {
-            self.max_drawdown_amount_usd = dd_usd;
-        }
-        if dd >= self.config.max_portfolio_risk_pct {
-            self.kill_switch_active = true;
-        }
+        // Atualiza peaks e drawdowns segregados e globais
+        self.update_peaks_and_drawdowns();
 
         // Se a posição ainda estiver aberta, persiste a atualização de preço/trailing stop
         if let Some(store) = &self.store {
@@ -7233,8 +7461,23 @@ impl MultiAssetTraderEngine {
         let exec = engine.close_current_position(current_price, reason)?;
 
         if let Some(trade) = &exec {
+            let is_fx = is_forex_symbol(asset);
             let proceeds = (trade.price * trade.quantity) - trade.fee;
-            self.total_cash += proceeds;
+            if is_fx {
+                self.forex_cash += proceeds;
+                if let Some(pnl) = trade.realized_pnl {
+                    self.forex_realized_pnl += pnl;
+                    let pip_val = ForexPipCalculator::pip_value_usd(asset, 10_000.0, trade.price);
+                    let pips = if pip_val > 0.0 { pnl / pip_val } else { pnl };
+                    self.forex_total_pips += pips;
+                }
+            } else {
+                self.crypto_cash += proceeds;
+                if let Some(pnl) = trade.realized_pnl {
+                    self.crypto_realized_pnl += pnl;
+                }
+            }
+            self.total_cash = self.crypto_cash + self.forex_cash;
             if let Some(pnl) = trade.realized_pnl {
                 self.realized_pnl += pnl;
             }
@@ -7243,6 +7486,7 @@ impl MultiAssetTraderEngine {
                 let _ = store.save_execution(trade);
             }
             self.executions_log.push(trade.clone());
+            self.update_peaks_and_drawdowns();
         }
 
         Ok(exec)
@@ -7439,6 +7683,70 @@ impl MultiAssetTraderEngine {
             0.0
         };
 
+        let crypto_unrealized = self.crypto_unrealized_pnl();
+        let forex_unrealized = self.forex_unrealized_pnl();
+
+        let crypto_active_trades = self
+            .engines
+            .iter()
+            .filter(|(a, e)| !is_forex_symbol(a) && e.current_position.is_some())
+            .count();
+        let forex_active_trades = self
+            .engines
+            .iter()
+            .filter(|(a, e)| is_forex_symbol(a) && e.current_position.is_some())
+            .count();
+
+        let mut crypto_closed_trades = 0;
+        let mut crypto_wins = 0;
+        let mut forex_closed_trades = 0;
+        let mut forex_wins = 0;
+
+        for (asset, eng) in &self.engines {
+            let closed = eng.trade_history.len();
+            let wins = eng
+                .trade_history
+                .iter()
+                .filter(|t| t.realized_pnl.unwrap_or(0.0) > 0.0)
+                .count();
+            if is_forex_symbol(asset) {
+                forex_closed_trades += closed;
+                forex_wins += wins;
+            } else {
+                crypto_closed_trades += closed;
+                crypto_wins += wins;
+            }
+        }
+
+        let crypto_win_rate_pct = if crypto_closed_trades > 0 {
+            (crypto_wins as f64 / crypto_closed_trades as f64) * 100.0
+        } else {
+            0.0
+        };
+        let forex_win_rate_pct = if forex_closed_trades > 0 {
+            (forex_wins as f64 / forex_closed_trades as f64) * 100.0
+        } else {
+            0.0
+        };
+
+        let crypto_ret_pct = if self.crypto_initial_capital > 0.0 {
+            ((self.crypto_realized_pnl + crypto_unrealized) / self.crypto_initial_capital) * 100.0
+        } else {
+            0.0
+        };
+        let forex_ret_pct = if self.forex_initial_capital > 0.0 {
+            ((self.forex_realized_pnl + forex_unrealized) / self.forex_initial_capital) * 100.0
+        } else {
+            0.0
+        };
+        let market_leader = if (crypto_ret_pct - forex_ret_pct).abs() < 1e-4 {
+            "Tie".to_string()
+        } else if crypto_ret_pct > forex_ret_pct {
+            "Crypto".to_string()
+        } else {
+            "Forex".to_string()
+        };
+
         let recent_executions = self.executions_log.iter().rev().take(20).cloned().collect();
 
         DeskStatusSnapshot {
@@ -7464,6 +7772,28 @@ impl MultiAssetTraderEngine {
             market_category: self.market_category(),
             forex_quotes: self.get_forex_quotes(),
             system_resources: Some(self.get_system_resource_metrics()),
+            crypto_initial_capital: self.crypto_initial_capital,
+            crypto_portfolio_value: self.crypto_portfolio_value(),
+            crypto_cash_balance: self.crypto_cash,
+            crypto_realized_pnl: self.crypto_realized_pnl,
+            crypto_unrealized_pnl: crypto_unrealized,
+            crypto_win_rate_pct,
+            crypto_max_drawdown_pct: self.crypto_max_drawdown_pct,
+            crypto_max_drawdown_usd: self.crypto_max_drawdown_usd,
+            crypto_active_trades,
+            crypto_closed_trades,
+            forex_initial_capital: self.forex_initial_capital,
+            forex_portfolio_value: self.forex_portfolio_value(),
+            forex_cash_balance: self.forex_cash,
+            forex_realized_pnl: self.forex_realized_pnl,
+            forex_unrealized_pnl: forex_unrealized,
+            forex_win_rate_pct,
+            forex_max_drawdown_pct: self.forex_max_drawdown_pct,
+            forex_max_drawdown_usd: self.forex_max_drawdown_usd,
+            forex_active_trades,
+            forex_closed_trades,
+            forex_total_pips: self.forex_total_pips,
+            market_leader,
         }
     }
 
@@ -7830,7 +8160,6 @@ impl MultiAssetTraderEngine {
         let mut graph_nodes = Vec::with_capacity(17);
         let mut links = Vec::with_capacity(16);
 
-        let mut crypto_positions_val = 0.0;
         let mut crypto_unrealized_pnl = 0.0;
         let mut crypto_realized_pnl = 0.0;
         let mut crypto_active_count = 0;
@@ -7838,7 +8167,6 @@ impl MultiAssetTraderEngine {
         let mut crypto_wins = 0;
         let mut crypto_losses = 0;
 
-        let mut forex_positions_val = 0.0;
         let mut forex_unrealized_pnl = 0.0;
         let mut forex_realized_pnl = 0.0;
         let mut forex_total_pips = 0.0;
@@ -7931,18 +8259,12 @@ impl MultiAssetTraderEngine {
                 };
 
                 let side_str = format!("{:?}", pos.side);
-                let pos_val = match pos.side {
-                    OrderSide::Long => pos.quantity * current_price,
-                    OrderSide::Short => (pos.quantity * e_price) + (diff * pos.quantity),
-                };
 
                 if is_fx {
-                    forex_positions_val += pos_val;
                     forex_unrealized_pnl += trade_pnl_usd;
                     forex_total_pips += pips;
                     forex_active_count += 1;
                 } else {
-                    crypto_positions_val += pos_val;
                     crypto_unrealized_pnl += trade_pnl_usd;
                     crypto_active_count += 1;
                 }
@@ -8169,17 +8491,25 @@ impl MultiAssetTraderEngine {
             });
         }
 
-        let crypto_init = (self.initial_capital * 0.5).max(1.0);
-        let crypto_total_pnl = crypto_realized_pnl + crypto_unrealized_pnl;
-        let crypto_balance = (crypto_init + crypto_total_pnl).max(0.0);
-        let crypto_pnl_pct = (crypto_total_pnl / crypto_init) * 100.0;
+        let crypto_init = self.crypto_initial_capital.max(1.0);
+        let crypto_realized = if self.crypto_realized_pnl != 0.0 {
+            self.crypto_realized_pnl
+        } else {
+            crypto_realized_pnl
+        };
+        let crypto_total_pnl = crypto_realized + crypto_unrealized_pnl;
+        let crypto_balance = self.crypto_portfolio_value();
+        let crypto_pnl_pct = if crypto_init > 0.0 {
+            (crypto_total_pnl / crypto_init) * 100.0
+        } else {
+            0.0
+        };
         let crypto_win_rate = if crypto_closed_trades > 0 {
             (crypto_wins as f64 / crypto_closed_trades as f64) * 100.0
         } else {
             0.0
         };
-        let crypto_peak =
-            (crypto_init + crypto_realized_pnl.max(0.0) + crypto_positions_val).max(crypto_init);
+        let crypto_peak = self.crypto_peak_value.max(crypto_balance);
         let crypto_dd_usd = (crypto_peak - crypto_balance).max(0.0);
         let crypto_dd_pct = if crypto_peak > 0.0 {
             (crypto_dd_usd / crypto_peak * 100.0).clamp(0.0, 100.0)
@@ -8187,17 +8517,25 @@ impl MultiAssetTraderEngine {
             0.0
         };
 
-        let forex_init = (self.initial_capital * 0.5).max(1.0);
-        let forex_total_pnl = forex_realized_pnl + forex_unrealized_pnl;
-        let forex_balance = (forex_init + forex_total_pnl).max(0.0);
-        let forex_pnl_pct = (forex_total_pnl / forex_init) * 100.0;
+        let forex_init = self.forex_initial_capital.max(1.0);
+        let forex_realized = if self.forex_realized_pnl != 0.0 {
+            self.forex_realized_pnl
+        } else {
+            forex_realized_pnl
+        };
+        let forex_total_pnl = forex_realized + forex_unrealized_pnl;
+        let forex_balance = self.forex_portfolio_value();
+        let forex_pnl_pct = if forex_init > 0.0 {
+            (forex_total_pnl / forex_init) * 100.0
+        } else {
+            0.0
+        };
         let forex_win_rate = if forex_closed_trades > 0 {
             (forex_wins as f64 / forex_closed_trades as f64) * 100.0
         } else {
             0.0
         };
-        let forex_peak =
-            (forex_init + forex_realized_pnl.max(0.0) + forex_positions_val).max(forex_init);
+        let forex_peak = self.forex_peak_value.max(forex_balance);
         let forex_dd_usd = (forex_peak - forex_balance).max(0.0);
         let forex_dd_pct = if forex_peak > 0.0 {
             (forex_dd_usd / forex_peak * 100.0).clamp(0.0, 100.0)
@@ -8206,7 +8544,7 @@ impl MultiAssetTraderEngine {
         };
 
         let total_val = crypto_balance + forex_balance;
-        let total_realized = crypto_realized_pnl + forex_realized_pnl;
+        let total_realized = crypto_realized + forex_realized;
         let total_unrealized = crypto_unrealized_pnl + forex_unrealized_pnl;
         let total_pnl_usd = total_realized + total_unrealized;
         let total_pnl_pct = if self.initial_capital > 0.0 {
@@ -8254,7 +8592,7 @@ impl MultiAssetTraderEngine {
             balance: crypto_balance,
             pnl_usd: crypto_total_pnl,
             pnl_pct: crypto_pnl_pct,
-            realized_pnl_usd: crypto_realized_pnl,
+            realized_pnl_usd: crypto_realized,
             unrealized_pnl_usd: crypto_unrealized_pnl,
             win_rate_pct: crypto_win_rate,
             max_drawdown_pct: crypto_dd_pct,
@@ -8273,7 +8611,7 @@ impl MultiAssetTraderEngine {
             balance: forex_balance,
             pnl_usd: forex_total_pnl,
             pnl_pct: forex_pnl_pct,
-            realized_pnl_usd: forex_realized_pnl,
+            realized_pnl_usd: forex_realized,
             unrealized_pnl_usd: forex_unrealized_pnl,
             win_rate_pct: forex_win_rate,
             max_drawdown_pct: forex_dd_pct,
@@ -8283,7 +8621,7 @@ impl MultiAssetTraderEngine {
             closed_trades: forex_closed_trades,
             winning_trades: forex_wins,
             losing_trades: forex_losses,
-            pnl_pips: forex_total_pips,
+            pnl_pips: self.forex_total_pips.max(forex_total_pips),
         };
 
         // Top Setups Vencedores

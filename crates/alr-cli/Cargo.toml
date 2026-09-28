@@ -188,6 +188,10 @@ path = "../../tests/phase41_forex_trading_tests.rs"
 name = "phase43_lead_intake_previdenciario_tests"
 path = "../../tests/phase43_lead_intake_previdenciario_tests.rs"
 
+[[test]]
+name = "phase42_isolated_dual_market_accounting_tests"
+path = "../../tests/phase42_isolated_dual_market_accounting_tests.rs"
+
 [dependencies]
 alr-core = { workspace = true }
 alr-memory = { workspace = true }
