@@ -3,13 +3,15 @@
  * 
  * Garante que o backend real em Rust esteja rodando com a API REST ativa
  * antes de abrir o Google Chrome:
- * 1. Verifica se http://localhost:3800/api/v1/desk/status responde com JSON válido.
- * 2. Se não estiver rodando, inicia o executável Rust (target/debug/alr.exe trading-desk).
- * 3. Aguarda a confirmação de que os 7 pares da Binance foram carregados.
- * 4. Abre a janela do Google Chrome em tela cheia via Puppeteer.
+ * 1. Verifica se http://127.0.0.1:3800/api/v1/desk/status responde com JSON válido.
+ * 2. Se a porta já estiver em uso, aguarda sincronização em vez de colidir com os error 10048.
+ * 3. Se não estiver rodando, inicia o executável Rust (target/debug/alr.exe trading-desk).
+ * 4. Aguarda a confirmação de que os ativos foram carregados.
+ * 5. Abre a janela do Google Chrome via Puppeteer.
  */
 
 const http = require('http');
+const net = require('net');
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
@@ -19,7 +21,7 @@ const PORT = 3800;
 
 function checkBackendStatus(port) {
     return new Promise((resolve) => {
-        const req = http.get(`http://localhost:${port}/api/v1/desk/status`, (res) => {
+        const req = http.get(`http://127.0.0.1:${port}/api/v1/desk/status`, (res) => {
             const isJson = (res.headers['content-type'] || '').includes('application/json');
             if (res.statusCode === 200 && isJson) {
                 let body = '';
@@ -27,7 +29,7 @@ function checkBackendStatus(port) {
                 res.on('end', () => {
                     try {
                         const parsed = JSON.parse(body);
-                        resolve(parsed && Array.isArray(parsed.assets));
+                        resolve(parsed && (Array.isArray(parsed.assets) || parsed.total_portfolio_value != null));
                     } catch (_) {
                         resolve(false);
                     }
@@ -37,10 +39,29 @@ function checkBackendStatus(port) {
             }
         });
         req.on('error', () => resolve(false));
-        req.setTimeout(1200, () => {
+        req.setTimeout(2500, () => {
             req.abort();
             resolve(false);
         });
+    });
+}
+
+function checkPortInUse(port) {
+    return new Promise((resolve) => {
+        const socket = new net.Socket();
+        socket.setTimeout(1000);
+        socket.on('connect', () => {
+            socket.destroy();
+            resolve(true);
+        });
+        socket.on('timeout', () => {
+            socket.destroy();
+            resolve(false);
+        });
+        socket.on('error', () => {
+            resolve(false);
+        });
+        socket.connect(port, '127.0.0.1');
     });
 }
 
@@ -63,14 +84,35 @@ async function main() {
 
     console.log(`[1/3] Verificando se o Backend Rust ALR já está ativo na porta ${PORT}...`);
     let isRunning = await checkBackendStatus(PORT);
+    let portInUse = !isRunning ? await checkPortInUse(PORT) : true;
 
+    if (!isRunning && portInUse) {
+        console.log(`  -> Porta ${PORT} já está aberta por um processo existente. Aguardando sincronização...`);
+        const maxWaitMs = 15000;
+        const startTime = Date.now();
+        while (!isRunning && (Date.now() - startTime) < maxWaitMs) {
+            await delay(1000);
+            isRunning = await checkBackendStatus(PORT);
+            if (isRunning) break;
+            process.stdout.write('.');
+        }
+        console.log('');
+    }
+
+    let child = null;
     if (!isRunning) {
+        // Se a porta ainda estiver ocupada por um processo que não respondeu à API
+        if (portInUse) {
+            console.error(`\n❌ ERRO: A porta ${PORT} está ocupada por outro processo que não é o Trading Desk.`);
+            console.error(`Encerre o processo na porta ${PORT} ou defina outra porta antes de continuar.`);
+            return;
+        }
+
         console.log(`[2/3] Backend não detectado. Iniciando processo Rust ALR na Binance Spot Testnet...`);
 
         const rootDir = path.join(__dirname, '..');
         const exePath = path.join(rootDir, 'target', 'debug', 'alr.exe');
         
-        let child;
         if (fs.existsSync(exePath)) {
             console.log(`  -> Executando binário: ${exePath} trading-desk --port ${PORT} --exchange binance`);
             child = spawn(exePath, ['trading-desk', '--port', String(PORT), '--exchange', 'binance'], {
@@ -113,11 +155,28 @@ async function main() {
         console.log('');
     }
 
+    const cleanup = () => {
+        if (child && !child.killed) {
+            try {
+                child.kill('SIGINT');
+            } catch (_) {}
+        }
+    };
+    process.on('SIGINT', () => {
+        cleanup();
+        process.exit(0);
+    });
+    process.on('SIGTERM', () => {
+        cleanup();
+        process.exit(0);
+    });
+
     if (!isRunning) {
         console.error(`\n❌ ERRO: O backend Rust não respondeu com JSON na porta ${PORT} após 30 segundos.`);
         console.error(`Verifique os logs detalhados em: ${logFilePath}`);
         console.error(`Você pode iniciar manualmente via terminal com:`);
         console.error(`  cargo run -p alr-cli -- trading-desk --port ${PORT} --exchange binance\n`);
+        cleanup();
         return;
     }
 
@@ -132,11 +191,11 @@ async function main() {
         });
 
         const page = await browser.newPage();
-        await page.goto(`http://localhost:${PORT}/trading-desk`, { waitUntil: 'networkidle2' });
+        await page.goto(`http://127.0.0.1:${PORT}`, { waitUntil: 'networkidle2' });
         console.log("✓ Cockpit Interativo aberto na sua tela com dados ao vivo da Binance Spot Testnet!");
     } catch (err) {
         console.warn("Puppeteer não pôde iniciar o navegador automaticamente:", err.message);
-        console.log(`Acesse diretamente no seu navegador: http://localhost:${PORT}`);
+        console.log(`Acesse diretamente no seu navegador: http://127.0.0.1:${PORT}`);
     }
 }
 
