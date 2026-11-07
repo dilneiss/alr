@@ -1,0 +1,1082 @@
+[
+ {
+  "id": "p001",
+  "emoji": "🌱",
+  "nome": "Kit de ferramentas de jardinagem (5 peças)",
+  "desc": "Pá, ancinho, garfo, transplantador e tesoura de poda com cabos emborrachados e bolsa de lona.",
+  "preco": 129.9,
+  "categoria": "jardim",
+  "publico": "quem cuida de plantas"
+ },
+ {
+  "id": "p002",
+  "emoji": "🧤",
+  "nome": "Luvas de jardinagem com garras",
+  "desc": "Protegem as mãos dos espinhos e ajudam a cavar a terra sem ferramenta. Tamanho único.",
+  "preco": 39.9,
+  "categoria": "jardim",
+  "publico": "quem cuida de plantas"
+ },
+ {
+  "id": "p003",
+  "emoji": "🪴",
+  "nome": "Vaso autoirrigável 30 cm",
+  "desc": "Reservatório de água que mantém a planta hidratada por até 10 dias.",
+  "preco": 59.9,
+  "categoria": "jardim",
+  "publico": "todas as idades"
+ },
+ {
+  "id": "p004",
+  "emoji": "🌿",
+  "nome": "Horta vertical de parede com 12 bolsos",
+  "desc": "Feltro resistente para cultivar temperos e flores na varanda ou na parede da cozinha.",
+  "preco": 89.9,
+  "categoria": "jardim",
+  "publico": "quem mora em apartamento"
+ },
+ {
+  "id": "p005",
+  "emoji": "🌰",
+  "nome": "Kit de sementes de ervas aromáticas",
+  "desc": "Manjericão, alecrim, salsinha, cebolinha e hortelã, com guia de plantio passo a passo.",
+  "preco": 34.9,
+  "categoria": "jardim",
+  "publico": "iniciantes em horta"
+ },
+ {
+  "id": "p006",
+  "emoji": "🚿",
+  "nome": "Regador de metal 5 L estilo vintage",
+  "desc": "Bico removível de chuveirinho e acabamento verde-oliva; bonito até para decorar.",
+  "preco": 119.9,
+  "categoria": "jardim",
+  "publico": "adultos"
+ },
+ {
+  "id": "p007",
+  "emoji": "🌸",
+  "nome": "Orquídea phalaenopsis em vaso de cerâmica",
+  "desc": "Planta natural com duas hastes floridas, pronta para presentear.",
+  "preco": 139.9,
+  "categoria": "jardim",
+  "publico": "adultos"
+ },
+ {
+  "id": "p008",
+  "emoji": "🌵",
+  "nome": "Terrário de vidro com suculentas",
+  "desc": "Mini jardim montado com pedras e quatro suculentas; quase não precisa de cuidado.",
+  "preco": 149,
+  "categoria": "jardim",
+  "publico": "todas as idades"
+ },
+ {
+  "id": "p009",
+  "emoji": "🪱",
+  "nome": "Húmus de minhoca 5 kg",
+  "desc": "Adubo orgânico que fortalece hortas, vasos e canteiros.",
+  "preco": 29.9,
+  "categoria": "jardim",
+  "publico": "quem cuida de plantas"
+ },
+ {
+  "id": "p010",
+  "emoji": "💦",
+  "nome": "Mangueira expansível 15 m com esguicho",
+  "desc": "Leve, não dobra e tem 7 tipos de jato.",
+  "preco": 99.9,
+  "categoria": "jardim",
+  "publico": "quem tem quintal"
+ },
+ {
+  "id": "p011",
+  "emoji": "🌾",
+  "nome": "Cortador de grama elétrico 1.200 W",
+  "desc": "Corte ajustável em 5 alturas e cesto coletor de 30 litros.",
+  "preco": 689,
+  "categoria": "jardim",
+  "publico": "quem tem quintal grande"
+ },
+ {
+  "id": "p012",
+  "emoji": "🪑",
+  "nome": "Banco jardineiro dobrável com bolsa",
+  "desc": "Banquinho que vira apoio para ajoelhar, com bolsa lateral para as ferramentas.",
+  "preco": 219,
+  "categoria": "jardim",
+  "publico": "quem cuida de plantas"
+ },
+ {
+  "id": "p013",
+  "emoji": "⛺",
+  "nome": "Barraca iglu para 4 pessoas",
+  "desc": "Impermeável (coluna d'água de 2.000 mm), com sobreteto; monta em 10 minutos.",
+  "preco": 399,
+  "categoria": "camping",
+  "publico": "família"
+ },
+ {
+  "id": "p014",
+  "emoji": "🛌",
+  "nome": "Saco de dormir infantil térmico",
+  "desc": "Conforto até 0 °C, para crianças de até 1,40 m, com capuz e forro de fleece.",
+  "preco": 189.9,
+  "categoria": "camping",
+  "publico": "crianças"
+ },
+ {
+  "id": "p015",
+  "emoji": "🏔️",
+  "nome": "Saco de dormir adulto formato múmia",
+  "desc": "Conforto até -5 °C, enchimento de fibra oca e bolsa de compressão.",
+  "preco": 279.9,
+  "categoria": "camping",
+  "publico": "adultos"
+ },
+ {
+  "id": "p016",
+  "emoji": "🧊",
+  "nome": "Isolante térmico aluminizado",
+  "desc": "Colchonete que bloqueia o frio que sobe do chão da barraca.",
+  "preco": 69.9,
+  "categoria": "camping",
+  "publico": "todas as idades"
+ },
+ {
+  "id": "p017",
+  "emoji": "🔦",
+  "nome": "Lanterna de cabeça LED recarregável",
+  "desc": "300 lúmens, luz vermelha para a noite e bateria para 12 horas.",
+  "preco": 59.9,
+  "categoria": "camping",
+  "publico": "todas as idades"
+ },
+ {
+  "id": "p018",
+  "emoji": "🏮",
+  "nome": "Lampião LED de camping com power bank",
+  "desc": "Ilumina a barraca inteira e ainda carrega o celular.",
+  "preco": 99.9,
+  "categoria": "camping",
+  "publico": "família"
+ },
+ {
+  "id": "p019",
+  "emoji": "🔥",
+  "nome": "Fogareiro portátil a gás",
+  "desc": "Compacto, com acendedor automático e estojo de transporte.",
+  "preco": 149.9,
+  "categoria": "camping",
+  "publico": "adultos"
+ },
+ {
+  "id": "p020",
+  "emoji": "🏕️",
+  "nome": "Cadeira de camping dobrável",
+  "desc": "Aguenta 120 kg, tem porta-copo e fecha em uma bolsa.",
+  "preco": 129.9,
+  "categoria": "camping",
+  "publico": "adultos"
+ },
+ {
+  "id": "p021",
+  "emoji": "🍳",
+  "nome": "Kit de panelas de camping (4 peças)",
+  "desc": "Alumínio leve; as peças encaixam uma dentro da outra.",
+  "preco": 139.9,
+  "categoria": "camping",
+  "publico": "adultos"
+ },
+ {
+  "id": "p022",
+  "emoji": "🔪",
+  "nome": "Canivete multifunção 11 funções",
+  "desc": "Lâmina, abridor, tesoura e chave de fenda em aço inox.",
+  "preco": 89.9,
+  "categoria": "camping",
+  "publico": "adultos"
+ },
+ {
+  "id": "p023",
+  "emoji": "🧥",
+  "nome": "Jaqueta corta-vento infantil impermeável",
+  "desc": "Com capuz e forro de fleece para dias frios e chuvosos. De 4 a 12 anos.",
+  "preco": 159.9,
+  "categoria": "moda",
+  "publico": "crianças"
+ },
+ {
+  "id": "p024",
+  "emoji": "🧣",
+  "nome": "Kit gorro, luvas e cachecol infantil",
+  "desc": "Tricô macio com forro térmico, de 3 a 10 anos.",
+  "preco": 59.9,
+  "categoria": "moda",
+  "publico": "crianças"
+ },
+ {
+  "id": "p025",
+  "emoji": "🧦",
+  "nome": "Meias térmicas (3 pares)",
+  "desc": "Lã com poliamida; mantêm os pés quentes no inverno.",
+  "preco": 49.9,
+  "categoria": "moda",
+  "publico": "adultos"
+ },
+ {
+  "id": "p026",
+  "emoji": "🦺",
+  "nome": "Jaqueta puffer masculina",
+  "desc": "Leve, impermeável e dobrável dentro da própria bolsa.",
+  "preco": 299.9,
+  "categoria": "moda",
+  "publico": "homens"
+ },
+ {
+  "id": "p027",
+  "emoji": "👜",
+  "nome": "Bolsa transversal de couro feminina",
+  "desc": "Couro legítimo e alça regulável; cabe celular, carteira e chaves.",
+  "preco": 219.9,
+  "categoria": "moda",
+  "publico": "mulheres"
+ },
+ {
+  "id": "p028",
+  "emoji": "👚",
+  "nome": "Pijama de algodão feminino",
+  "desc": "Manga longa, tecido macio e respirável.",
+  "preco": 119.9,
+  "categoria": "moda",
+  "publico": "mulheres"
+ },
+ {
+  "id": "p029",
+  "emoji": "🥿",
+  "nome": "Pantufa de pelúcia",
+  "desc": "Solado antiderrapante, quentinha para o inverno.",
+  "preco": 59.9,
+  "categoria": "moda",
+  "publico": "adultos"
+ },
+ {
+  "id": "p030",
+  "emoji": "⌚",
+  "nome": "Relógio analógico clássico masculino",
+  "desc": "Pulseira de couro e resistência à água.",
+  "preco": 259.9,
+  "categoria": "moda",
+  "publico": "homens"
+ },
+ {
+  "id": "p031",
+  "emoji": "👕",
+  "nome": "Camiseta dry-fit de corrida",
+  "desc": "Tecido leve que seca rápido, com proteção UV.",
+  "preco": 59.9,
+  "categoria": "moda",
+  "publico": "quem corre"
+ },
+ {
+  "id": "p032",
+  "emoji": "👟",
+  "nome": "Tênis de corrida com amortecimento",
+  "desc": "Leve e confortável, indicado para quem está começando a correr.",
+  "preco": 349.9,
+  "categoria": "esporte",
+  "publico": "iniciantes"
+ },
+ {
+  "id": "p033",
+  "emoji": "🥤",
+  "nome": "Garrafa squeeze 750 ml",
+  "desc": "Livre de BPA, com trava contra vazamento.",
+  "preco": 29.9,
+  "categoria": "esporte",
+  "publico": "todas as idades"
+ },
+ {
+  "id": "p034",
+  "emoji": "🧘",
+  "nome": "Tapete de yoga antiderrapante 6 mm",
+  "desc": "Com alça de transporte; para yoga, pilates e alongamento.",
+  "preco": 99.9,
+  "categoria": "esporte",
+  "publico": "adultos"
+ },
+ {
+  "id": "p035",
+  "emoji": "💪",
+  "nome": "Kit elásticos de resistência (5 níveis)",
+  "desc": "Treino funcional em casa, com guia de exercícios.",
+  "preco": 59.9,
+  "categoria": "esporte",
+  "publico": "adultos"
+ },
+ {
+  "id": "p036",
+  "emoji": "🏋️",
+  "nome": "Par de halteres emborrachados 3 kg",
+  "desc": "Pegada confortável para treinar em casa.",
+  "preco": 119.9,
+  "categoria": "esporte",
+  "publico": "adultos"
+ },
+ {
+  "id": "p037",
+  "emoji": "⚽",
+  "nome": "Bola de futebol de campo tamanho 5",
+  "desc": "Costurada à mão, para jogos no gramado.",
+  "preco": 149.9,
+  "categoria": "esporte",
+  "publico": "todas as idades"
+ },
+ {
+  "id": "p038",
+  "emoji": "🏃",
+  "nome": "Pochete de corrida para celular",
+  "desc": "Elástica, não balança e tem saída para fone de ouvido.",
+  "preco": 49.9,
+  "categoria": "esporte",
+  "publico": "quem corre"
+ },
+ {
+  "id": "p039",
+  "emoji": "🌀",
+  "nome": "Rolo de liberação miofascial",
+  "desc": "Alivia a dor muscular depois do treino.",
+  "preco": 79.9,
+  "categoria": "esporte",
+  "publico": "quem treina"
+ },
+ {
+  "id": "p040",
+  "emoji": "🔌",
+  "nome": "Carregador turbo USB-C 30 W",
+  "desc": "Carrega o celular de 0 a 50% em 25 minutos; compatível com Android e iPhone.",
+  "preco": 89.9,
+  "categoria": "eletronicos",
+  "publico": "todas as idades"
+ },
+ {
+  "id": "p041",
+  "emoji": "🔗",
+  "nome": "Cabo USB-C trançado 2 m",
+  "desc": "Reforçado e compatível com carga rápida.",
+  "preco": 39.9,
+  "categoria": "eletronicos",
+  "publico": "todas as idades"
+ },
+ {
+  "id": "p042",
+  "emoji": "🔋",
+  "nome": "Power bank 20.000 mAh",
+  "desc": "Carrega o celular até 4 vezes; duas saídas USB.",
+  "preco": 149.9,
+  "categoria": "eletronicos",
+  "publico": "todas as idades"
+ },
+ {
+  "id": "p043",
+  "emoji": "🎧",
+  "nome": "Fone Bluetooth com cancelamento de ruído",
+  "desc": "Até 30 horas de bateria; ideal para viagens e para se concentrar.",
+  "preco": 499,
+  "categoria": "eletronicos",
+  "publico": "adultos"
+ },
+ {
+  "id": "p044",
+  "emoji": "🔊",
+  "nome": "Caixa de som Bluetooth à prova d'água",
+  "desc": "Som potente para piscina, praia e trilha.",
+  "preco": 229.9,
+  "categoria": "eletronicos",
+  "publico": "todas as idades"
+ },
+ {
+  "id": "p045",
+  "emoji": "⏱️",
+  "nome": "Smartwatch com GPS e monitor cardíaco",
+  "desc": "Mede ritmo, distância, sono e batimentos.",
+  "preco": 699,
+  "categoria": "eletronicos",
+  "publico": "quem treina"
+ },
+ {
+  "id": "p046",
+  "emoji": "💓",
+  "nome": "Pulseira fitness",
+  "desc": "Conta passos e calorias e monitora o sono; bateria de 14 dias.",
+  "preco": 199.9,
+  "categoria": "eletronicos",
+  "publico": "adultos"
+ },
+ {
+  "id": "p047",
+  "emoji": "🖱️",
+  "nome": "Mouse vertical ergonômico sem fio",
+  "desc": "Reduz a tensão no punho em longas jornadas no computador.",
+  "preco": 119.9,
+  "categoria": "eletronicos",
+  "publico": "quem trabalha no computador"
+ },
+ {
+  "id": "p048",
+  "emoji": "💻",
+  "nome": "Suporte ergonômico para notebook",
+  "desc": "Alumínio com 6 alturas; deixa a tela na altura dos olhos.",
+  "preco": 79.9,
+  "categoria": "eletronicos",
+  "publico": "quem trabalha no computador"
+ },
+ {
+  "id": "p049",
+  "emoji": "📖",
+  "nome": "Leitor de livros digitais 6 polegadas",
+  "desc": "Tela sem reflexo, luz ajustável e bateria que dura semanas.",
+  "preco": 549,
+  "categoria": "eletronicos",
+  "publico": "quem gosta de ler"
+ },
+ {
+  "id": "p050",
+  "emoji": "🍟",
+  "nome": "Air fryer digital 4 L",
+  "desc": "Frita sem óleo, com 8 programas prontos.",
+  "preco": 399,
+  "categoria": "cozinha",
+  "publico": "adultos"
+ },
+ {
+  "id": "p051",
+  "emoji": "☕",
+  "nome": "Cafeteira italiana (moka) 6 xícaras",
+  "desc": "Alumínio, para café forte feito no fogão.",
+  "preco": 119.9,
+  "categoria": "cozinha",
+  "publico": "adultos"
+ },
+ {
+  "id": "p052",
+  "emoji": "⚙️",
+  "nome": "Moedor de café manual",
+  "desc": "Mó de cerâmica com ajuste de moagem, do espresso à prensa francesa.",
+  "preco": 149.9,
+  "categoria": "cozinha",
+  "publico": "adultos"
+ },
+ {
+  "id": "p053",
+  "emoji": "🫖",
+  "nome": "Prensa francesa 600 ml",
+  "desc": "Vidro borossilicato e filtro de aço inox.",
+  "preco": 89.9,
+  "categoria": "cozinha",
+  "publico": "adultos"
+ },
+ {
+  "id": "p054",
+  "emoji": "🫘",
+  "nome": "Café especial em grãos 250 g",
+  "desc": "Torra média com notas de chocolate e caramelo, do sul de Minas.",
+  "preco": 54.9,
+  "categoria": "cozinha",
+  "publico": "adultos"
+ },
+ {
+  "id": "p055",
+  "emoji": "🧋",
+  "nome": "Caneca térmica 450 ml com tampa",
+  "desc": "Mantém a bebida quente por 6 horas e cabe no porta-copo do carro.",
+  "preco": 69.9,
+  "categoria": "cozinha",
+  "publico": "adultos"
+ },
+ {
+  "id": "p056",
+  "emoji": "🥗",
+  "nome": "Kit 5 marmitas de vidro com tampa",
+  "desc": "Vão ao micro-ondas e ao freezer; para levar comida de casa.",
+  "preco": 99.9,
+  "categoria": "cozinha",
+  "publico": "adultos"
+ },
+ {
+  "id": "p057",
+  "emoji": "🥄",
+  "nome": "Mixer de mão 3 em 1",
+  "desc": "Mixer, batedor e miniprocessador para sopas, vitaminas e molhos.",
+  "preco": 179.9,
+  "categoria": "cozinha",
+  "publico": "adultos"
+ },
+ {
+  "id": "p058",
+  "emoji": "🔪",
+  "nome": "Jogo de facas de chef (5 peças)",
+  "desc": "Aço inox com suporte de madeira.",
+  "preco": 189.9,
+  "categoria": "cozinha",
+  "publico": "adultos"
+ },
+ {
+  "id": "p059",
+  "emoji": "🍹",
+  "nome": "Liquidificador portátil USB",
+  "desc": "Faz vitaminas e shakes em 30 segundos; recarregável.",
+  "preco": 99.9,
+  "categoria": "cozinha",
+  "publico": "adultos"
+ },
+ {
+  "id": "p060",
+  "emoji": "🧉",
+  "nome": "Garrafa térmica de aço inox 1 L",
+  "desc": "Mantém bebidas quentes por 12 horas e geladas por 24 horas.",
+  "preco": 119.9,
+  "categoria": "cozinha",
+  "publico": "todas as idades"
+ },
+ {
+  "id": "p061",
+  "emoji": "😴",
+  "nome": "Máscara de dormir 3D blackout",
+  "desc": "Bloqueia toda a luz sem apertar os olhos.",
+  "preco": 39.9,
+  "categoria": "bem_estar",
+  "publico": "adultos"
+ },
+ {
+  "id": "p062",
+  "emoji": "🌫️",
+  "nome": "Difusor de aromas + óleo de lavanda",
+  "desc": "Difusor ultrassônico com luz ambiente e desligamento automático.",
+  "preco": 119.9,
+  "categoria": "bem_estar",
+  "publico": "adultos"
+ },
+ {
+  "id": "p063",
+  "emoji": "📻",
+  "nome": "Aparelho de ruído branco",
+  "desc": "20 sons relaxantes e timer; abafa os barulhos da rua.",
+  "preco": 159.9,
+  "categoria": "bem_estar",
+  "publico": "adultos"
+ },
+ {
+  "id": "p064",
+  "emoji": "🍵",
+  "nome": "Chá calmante (30 sachês)",
+  "desc": "Camomila, melissa e maracujá, sem cafeína.",
+  "preco": 24.9,
+  "categoria": "bem_estar",
+  "publico": "adultos"
+ },
+ {
+  "id": "p065",
+  "emoji": "🦶",
+  "nome": "Escalda-pés com sais relaxantes",
+  "desc": "Bacia com massageador e sais de lavanda.",
+  "preco": 69.9,
+  "categoria": "bem_estar",
+  "publico": "adultos"
+ },
+ {
+  "id": "p066",
+  "emoji": "💆",
+  "nome": "Massageador elétrico de pescoço e ombros",
+  "desc": "Aquecimento e 3 intensidades.",
+  "preco": 199.9,
+  "categoria": "bem_estar",
+  "publico": "adultos"
+ },
+ {
+  "id": "p067",
+  "emoji": "👂",
+  "nome": "Protetor auricular de silicone",
+  "desc": "Moldável; reduz o som de ronco e de vizinhos.",
+  "preco": 29.9,
+  "categoria": "bem_estar",
+  "publico": "adultos"
+ },
+ {
+  "id": "p068",
+  "emoji": "🌅",
+  "nome": "Luminária despertador nascer do sol",
+  "desc": "Acorda você com luz gradual e sons da natureza.",
+  "preco": 229.9,
+  "categoria": "bem_estar",
+  "publico": "adultos"
+ },
+ {
+  "id": "p069",
+  "emoji": "🌙",
+  "nome": "Cobertor pesado 7 kg",
+  "desc": "Distribui peso pelo corpo e ajuda a relaxar.",
+  "preco": 349,
+  "categoria": "bem_estar",
+  "publico": "adultos"
+ },
+ {
+  "id": "p070",
+  "emoji": "🕯️",
+  "nome": "Vela aromática de soja lavanda",
+  "desc": "40 horas de queima em pote de vidro reutilizável.",
+  "preco": 49.9,
+  "categoria": "bem_estar",
+  "publico": "adultos"
+ },
+ {
+  "id": "p071",
+  "emoji": "🛏️",
+  "nome": "Jogo de lençol 400 fios queen",
+  "desc": "Algodão egípcio, 4 peças.",
+  "preco": 229.9,
+  "categoria": "casa",
+  "publico": "adultos"
+ },
+ {
+  "id": "p072",
+  "emoji": "🛋️",
+  "nome": "Manta de fleece 1,50 × 2,00 m",
+  "desc": "Macia e quentinha, para o sofá ou a cama.",
+  "preco": 89.9,
+  "categoria": "casa",
+  "publico": "todas as idades"
+ },
+ {
+  "id": "p073",
+  "emoji": "💡",
+  "nome": "Luminária de mesa LED com carregador sem fio",
+  "desc": "3 tons de luz e base que carrega o celular.",
+  "preco": 139.9,
+  "categoria": "casa",
+  "publico": "quem trabalha em casa"
+ },
+ {
+  "id": "p074",
+  "emoji": "🤖",
+  "nome": "Aspirador robô com mapeamento",
+  "desc": "Limpa sozinho e volta para a base; controle pelo app.",
+  "preco": 1299,
+  "categoria": "casa",
+  "publico": "família"
+ },
+ {
+  "id": "p075",
+  "emoji": "💧",
+  "nome": "Umidificador de ar 3 L",
+  "desc": "Silencioso, funciona até 12 horas; ideal para o quarto.",
+  "preco": 149.9,
+  "categoria": "casa",
+  "publico": "todas as idades"
+ },
+ {
+  "id": "p076",
+  "emoji": "🖼️",
+  "nome": "Porta-retrato digital Wi-Fi 10 polegadas",
+  "desc": "Recebe fotos da família direto pelo aplicativo.",
+  "preco": 399,
+  "categoria": "casa",
+  "publico": "todas as idades"
+ },
+ {
+  "id": "p077",
+  "emoji": "☁️",
+  "nome": "Travesseiro de espuma viscoelástica",
+  "desc": "Molda-se ao pescoço e alivia tensões.",
+  "preco": 149.9,
+  "categoria": "casa",
+  "publico": "adultos"
+ },
+ {
+  "id": "p078",
+  "emoji": "🧰",
+  "nome": "Kit de ferramentas para casa (110 peças)",
+  "desc": "Martelo, chaves, alicate e trena em maleta.",
+  "preco": 199.9,
+  "categoria": "casa",
+  "publico": "adultos"
+ },
+ {
+  "id": "p079",
+  "emoji": "🧴",
+  "nome": "Kit skincare facial",
+  "desc": "Sabonete, hidratante e protetor solar para a rotina diária.",
+  "preco": 159.9,
+  "categoria": "beleza",
+  "publico": "adultos"
+ },
+ {
+  "id": "p080",
+  "emoji": "🌺",
+  "nome": "Perfume floral feminino 100 ml",
+  "desc": "Notas de jasmim, peônia e baunilha.",
+  "preco": 289.9,
+  "categoria": "beleza",
+  "publico": "mulheres"
+ },
+ {
+  "id": "p081",
+  "emoji": "🧼",
+  "nome": "Kit 4 sabonetes artesanais",
+  "desc": "Glicerina vegetal e óleos essenciais, em embalagem para presente.",
+  "preco": 39.9,
+  "categoria": "beleza",
+  "publico": "adultos"
+ },
+ {
+  "id": "p082",
+  "emoji": "💄",
+  "nome": "Kit 12 pincéis de maquiagem",
+  "desc": "Cerdas sintéticas macias, com estojo.",
+  "preco": 69.9,
+  "categoria": "beleza",
+  "publico": "adultos"
+ },
+ {
+  "id": "p083",
+  "emoji": "🪒",
+  "nome": "Barbeador elétrico recarregável",
+  "desc": "Lâminas flutuantes; uso seco ou molhado.",
+  "preco": 189.9,
+  "categoria": "beleza",
+  "publico": "homens"
+ },
+ {
+  "id": "p084",
+  "emoji": "🫙",
+  "nome": "Óleo de massagem relaxante 200 ml",
+  "desc": "Com lavanda e óleo de amêndoas.",
+  "preco": 44.9,
+  "categoria": "beleza",
+  "publico": "adultos"
+ },
+ {
+  "id": "p085",
+  "emoji": "☀️",
+  "nome": "Protetor solar FPS 50 (200 ml)",
+  "desc": "Toque seco, resistente à água.",
+  "preco": 59.9,
+  "categoria": "beleza",
+  "publico": "todas as idades"
+ },
+ {
+  "id": "p086",
+  "emoji": "🦴",
+  "nome": "Mordedor de nylon ultrarresistente",
+  "desc": "Para cães que destroem tudo: sabor bacon e não solta pedaços.",
+  "preco": 54.9,
+  "categoria": "pet",
+  "publico": "cães"
+ },
+ {
+  "id": "p087",
+  "emoji": "🎾",
+  "nome": "Bola maciça de borracha natural",
+  "desc": "Praticamente indestrutível; quica de forma imprevisível.",
+  "preco": 39.9,
+  "categoria": "pet",
+  "publico": "cães"
+ },
+ {
+  "id": "p088",
+  "emoji": "🍖",
+  "nome": "Brinquedo recheável de borracha",
+  "desc": "Coloque petiscos dentro: resistente e mantém o cão entretido por horas.",
+  "preco": 69.9,
+  "categoria": "pet",
+  "publico": "cães"
+ },
+ {
+  "id": "p089",
+  "emoji": "🥏",
+  "nome": "Disco de borracha flexível para cães",
+  "desc": "Frisbee macio para os dentes e resistente a mordidas.",
+  "preco": 34.9,
+  "categoria": "pet",
+  "publico": "cães"
+ },
+ {
+  "id": "p090",
+  "emoji": "🪢",
+  "nome": "Corda de algodão para cabo de guerra",
+  "desc": "Nós trançados que ajudam a limpar os dentes.",
+  "preco": 29.9,
+  "categoria": "pet",
+  "publico": "cães"
+ },
+ {
+  "id": "p091",
+  "emoji": "🐥",
+  "nome": "Pelúcia com apito para cães",
+  "desc": "Macia e com apito dentro.",
+  "preco": 24.9,
+  "categoria": "pet",
+  "publico": "cães"
+ },
+ {
+  "id": "p092",
+  "emoji": "🐕",
+  "nome": "Coleira peitoral anti-puxão",
+  "desc": "Acolchoada, com faixa refletiva.",
+  "preco": 79.9,
+  "categoria": "pet",
+  "publico": "cães"
+ },
+ {
+  "id": "p093",
+  "emoji": "🐶",
+  "nome": "Cama ortopédica para cães",
+  "desc": "Espuma de alta densidade e capa lavável.",
+  "preco": 189.9,
+  "categoria": "pet",
+  "publico": "cães"
+ },
+ {
+  "id": "p094",
+  "emoji": "🐈",
+  "nome": "Arranhador para gatos com torre",
+  "desc": "Três andares e brinquedo pendurado.",
+  "preco": 159.9,
+  "categoria": "pet",
+  "publico": "gatos"
+ },
+ {
+  "id": "p095",
+  "emoji": "⛲",
+  "nome": "Fonte de água para gatos",
+  "desc": "Água corrente filtrada que estimula o gato a beber mais.",
+  "preco": 129.9,
+  "categoria": "pet",
+  "publico": "gatos"
+ },
+ {
+  "id": "p096",
+  "emoji": "🥣",
+  "nome": "Comedouro lento antiengasgo",
+  "desc": "Labirinto que faz o cão comer devagar.",
+  "preco": 44.9,
+  "categoria": "pet",
+  "publico": "cães"
+ },
+ {
+  "id": "p097",
+  "emoji": "🦖",
+  "nome": "Dinossauro T-Rex articulado com som",
+  "desc": "Ruge e mexe a boca; 30 cm.",
+  "preco": 89.9,
+  "categoria": "brinquedos",
+  "publico": "crianças de 3 a 8 anos"
+ },
+ {
+  "id": "p098",
+  "emoji": "🦕",
+  "nome": "Kit escavação de fósseis de dinossauro",
+  "desc": "Bloco de gesso com 6 fósseis e ferramentas de paleontólogo.",
+  "preco": 69.9,
+  "categoria": "brinquedos",
+  "publico": "crianças a partir de 5 anos"
+ },
+ {
+  "id": "p099",
+  "emoji": "🧱",
+  "nome": "Blocos de montar (500 peças)",
+  "desc": "Estimulam a criatividade; compatíveis com as principais marcas.",
+  "preco": 149.9,
+  "categoria": "brinquedos",
+  "publico": "crianças a partir de 6 anos"
+ },
+ {
+  "id": "p100",
+  "emoji": "🧩",
+  "nome": "Quebra-cabeça 1.000 peças",
+  "desc": "Paisagem de montanha, para adultos.",
+  "preco": 59.9,
+  "categoria": "brinquedos",
+  "publico": "adultos"
+ },
+ {
+  "id": "p101",
+  "emoji": "🎲",
+  "nome": "Jogo de tabuleiro cooperativo",
+  "desc": "Todos jogam juntos contra o tabuleiro; de 2 a 5 jogadores.",
+  "preco": 129.9,
+  "categoria": "brinquedos",
+  "publico": "família, a partir de 8 anos"
+ },
+ {
+  "id": "p102",
+  "emoji": "🐻",
+  "nome": "Urso de pelúcia 40 cm",
+  "desc": "Antialérgico e super macio.",
+  "preco": 79.9,
+  "categoria": "brinquedos",
+  "publico": "todas as idades"
+ },
+ {
+  "id": "p103",
+  "emoji": "🚙",
+  "nome": "Carrinho de controle remoto 4x4",
+  "desc": "Anda na terra e na grama; bateria recarregável.",
+  "preco": 199.9,
+  "categoria": "brinquedos",
+  "publico": "crianças a partir de 6 anos"
+ },
+ {
+  "id": "p104",
+  "emoji": "🃏",
+  "nome": "Jogo de cartas de cores e números",
+  "desc": "Clássico para toda a família, com 108 cartas.",
+  "preco": 29.9,
+  "categoria": "brinquedos",
+  "publico": "família"
+ },
+ {
+  "id": "p105",
+  "emoji": "🎪",
+  "nome": "Cabana infantil de brincar",
+  "desc": "Barraca de tecido para montar no quarto ou na sala.",
+  "preco": 139.9,
+  "categoria": "brinquedos",
+  "publico": "crianças"
+ },
+ {
+  "id": "p106",
+  "emoji": "🌟",
+  "nome": "Luminária projetor de estrelas",
+  "desc": "Projeta um céu estrelado no teto na hora de dormir.",
+  "preco": 79.9,
+  "categoria": "brinquedos",
+  "publico": "crianças"
+ },
+ {
+  "id": "p107",
+  "emoji": "📗",
+  "nome": "Livro \"Horta em Casa: guia para iniciantes\"",
+  "desc": "Como plantar temperos, hortaliças e flores em pequenos espaços.",
+  "preco": 64.9,
+  "categoria": "livros",
+  "publico": "iniciantes em horta"
+ },
+ {
+  "id": "p108",
+  "emoji": "📘",
+  "nome": "Livro \"O Poder do Hábito\"",
+  "desc": "Best-seller sobre como criar e mudar hábitos.",
+  "preco": 54.9,
+  "categoria": "livros",
+  "publico": "adultos"
+ },
+ {
+  "id": "p109",
+  "emoji": "📚",
+  "nome": "Enciclopédia ilustrada dos dinossauros",
+  "desc": "Mais de 100 espécies com ilustrações e curiosidades.",
+  "preco": 79.9,
+  "categoria": "livros",
+  "publico": "crianças a partir de 5 anos"
+ },
+ {
+  "id": "p110",
+  "emoji": "📙",
+  "nome": "Livro \"Cozinha Saudável em 30 Minutos\"",
+  "desc": "80 receitas rápidas, nutritivas e fáceis.",
+  "preco": 69.9,
+  "categoria": "livros",
+  "publico": "adultos"
+ },
+ {
+  "id": "p111",
+  "emoji": "📕",
+  "nome": "Livro \"Corrida para Iniciantes\"",
+  "desc": "Plano de 8 semanas para sair do sofá e correr 5 km.",
+  "preco": 49.9,
+  "categoria": "livros",
+  "publico": "iniciantes"
+ },
+ {
+  "id": "p112",
+  "emoji": "🗺️",
+  "nome": "Guia de trilhas e acampamento em família",
+  "desc": "Roteiros, checklists e dicas para acampar com crianças.",
+  "preco": 59.9,
+  "categoria": "livros",
+  "publico": "família"
+ },
+ {
+  "id": "p113",
+  "emoji": "🎨",
+  "nome": "Livro de colorir antiestresse",
+  "desc": "60 mandalas e paisagens para desacelerar.",
+  "preco": 34.9,
+  "categoria": "livros",
+  "publico": "adultos"
+ },
+ {
+  "id": "p114",
+  "emoji": "📔",
+  "nome": "Livro \"Sono Profundo\"",
+  "desc": "Hábitos e técnicas para dormir melhor.",
+  "preco": 44.9,
+  "categoria": "livros",
+  "publico": "adultos"
+ },
+ {
+  "id": "p115",
+  "emoji": "📓",
+  "nome": "Caderno inteligente de discos",
+  "desc": "Folhas removíveis e reposicionáveis; capa dura.",
+  "preco": 119.9,
+  "categoria": "papelaria",
+  "publico": "estudantes"
+ },
+ {
+  "id": "p116",
+  "emoji": "📅",
+  "nome": "Planner 2027 capa dura",
+  "desc": "Visão semanal e mensal, metas e hábitos.",
+  "preco": 69.9,
+  "categoria": "papelaria",
+  "publico": "adultos"
+ },
+ {
+  "id": "p117",
+  "emoji": "🖍️",
+  "nome": "Kit 24 canetas coloridas",
+  "desc": "Ponta fina, ideais para anotações e bullet journal.",
+  "preco": 39.9,
+  "categoria": "papelaria",
+  "publico": "todas as idades"
+ },
+ {
+  "id": "p118",
+  "emoji": "📌",
+  "nome": "Quadro de cortiça com post-its",
+  "desc": "Quadro 40 × 60 cm, alfinetes e blocos adesivos.",
+  "preco": 49.9,
+  "categoria": "papelaria",
+  "publico": "quem trabalha em casa"
+ },
+ {
+  "id": "p119",
+  "emoji": "📱",
+  "nome": "Suporte de celular de mesa",
+  "desc": "Ajustável e dobrável, em alumínio.",
+  "preco": 24.9,
+  "categoria": "papelaria",
+  "publico": "todas as idades"
+ },
+ {
+  "id": "p120",
+  "emoji": "🗂️",
+  "nome": "Agenda de couro personalizada",
+  "desc": "Gravação do nome na capa.",
+  "preco": 89.9,
+  "categoria": "papelaria",
+  "publico": "adultos"
+ }
+]

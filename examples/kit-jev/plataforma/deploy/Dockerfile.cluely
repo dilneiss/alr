@@ -1,0 +1,11 @@
+FROM node:22-alpine
+# OCR da tela no próprio contêiner (a imagem capturada nunca sai do servidor): Tesseract 5 + português e inglês
+RUN apk add --no-cache tesseract-ocr tesseract-ocr-data-por tesseract-ocr-data-eng
+ENV NODE_ENV=production PORT=3000 DATA_DIR=/data JEV_GATEWAY_URL=http://gateway:8787 OMP_THREAD_LIMIT=1
+WORKDIR /srv
+COPY shared ./shared
+COPY apps/cluely ./apps/cluely
+RUN rm -rf ./apps/cluely/test ./apps/cluely/tools ./apps/cluely/data-runtime ./apps/cluely/node_modules && mkdir -p /data
+WORKDIR /srv/apps/cluely
+EXPOSE 3000
+CMD ["node", "server.mjs"]

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1184 448" width="1184" height="448" role="img" aria-labelledby="t-qa" font-family="-apple-system, BlinkMacSystemFont, &#x27;Segoe UI&#x27;, Roboto, &#x27;Helvetica Neue&#x27;, Arial, sans-serif">
+<title id="t-qa">Arquitetura · QA Adversarial</title>
+<rect width="100%" height="100%" fill="#0b0e15"/>
+<defs><marker id="ar-qa-nav" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#94a3b8"/></marker><marker id="ar-qa-cli" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#60a5fa"/></marker><marker id="ar-qa-app" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#a78bfa"/></marker><marker id="ar-qa-jev" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#22d3ee"/></marker><marker id="ar-qa-llm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#34d399"/></marker><marker id="ar-qa-ext" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#fbbf24"/></marker><marker id="ar-qa-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#f472b6"/></marker><marker id="ar-qa-infra" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#9ca3af"/></marker><linearGradient id="jg-qa" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a78bfa"/></linearGradient><linearGradient id="jf-qa" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee" stop-opacity=".20"/><stop offset="1" stop-color="#a78bfa" stop-opacity=".16"/></linearGradient><filter id="glow-qa" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="9"/></filter></defs>
+<path d="M336.6666666666667,106.0 C273.33333333333337,106.0 273.33333333333337,106.0 210.0,106.0" fill="none" stroke="#94a3b8" stroke-opacity=".8" stroke-width="1.7" marker-end="url(#ar-qa-nav)"/>
+<path d="M526.6666666666667,106.0 C572.0,106.0 572.0,139.0 617.3333333333334,139.0" fill="none" stroke="#22d3ee" stroke-opacity=".8" stroke-width="2.4" marker-end="url(#ar-qa-jev)"/>
+<path d="M879.3333333333334,139.0 C924.6666666666667,139.0 924.6666666666667,68.5 970.0,68.5" fill="none" stroke="#fbbf24" stroke-opacity=".8" stroke-width="1.7" marker-end="url(#ar-qa-ext)"/>
+<path d="M1065.0,93 C1065.0,148.5 1065.0,148.5 1065.0,204.0" fill="none" stroke="#f472b6" stroke-opacity=".8" stroke-width="1.7" marker-end="url(#ar-qa-data)"/>
+<path d="M970.0,228.5 C906.6666666666667,228.5 906.6666666666667,326.0 843.3333333333334,326.0" fill="none" stroke="#60a5fa" stroke-opacity=".8" stroke-width="1.7" marker-end="url(#ar-qa-cli)"/>
+<path d="M748.3333333333334,294.0 C748.3333333333334,259.0 748.3333333333334,259.0 748.3333333333334,224.0" fill="none" stroke="#22d3ee" stroke-opacity=".8" stroke-width="2.4" marker-end="url(#ar-qa-jev)"/>
+<path d="M748.3333333333334,224.0 C748.3333333333334,288.0 431.6666666666667,202.0 431.6666666666667,138.0" fill="none" stroke="#a78bfa" stroke-opacity=".8" stroke-width="1.7" marker-end="url(#ar-qa-app)"/>
+<rect x="20.0" y="74.0" width="190" height="64" rx="14" fill="rgba(148,163,184,.10)" stroke="#94a3b8" stroke-width="1.6"/>
+<text x="115.0" y="95.0" text-anchor="middle" fill="#f3f4f6" font-size="13.5" font-weight="800">Painel (navegador)</text>
+<text x="115.0" y="113.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">microscópio · caderno</text>
+<text x="115.0" y="128.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">gaveta de espécimes X/9</text>
+<rect x="336.6666666666667" y="74.0" width="190" height="64" rx="14" fill="rgba(167,139,250,.12)" stroke="#a78bfa" stroke-width="1.6"/>
+<text x="431.6666666666667" y="95.0" text-anchor="middle" fill="#f3f4f6" font-size="13.5" font-weight="800">Agente de QA (servidor)</text>
+<text x="431.6666666666667" y="113.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">1 execução por vez</text>
+<text x="431.6666666666667" y="128.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">máx. 70 passos ou 120 s</text>
+<rect x="617.3333333333334" y="54.0" width="262" height="170" rx="18" fill="#22d3ee" opacity=".22" filter="url(#glow-qa)"/>
+<rect x="617.3333333333334" y="54.0" width="262" height="170" rx="18" fill="#0b1220"/>
+<rect x="617.3333333333334" y="54.0" width="262" height="170" rx="18" fill="url(#jf-qa)" stroke="url(#jg-qa)" stroke-width="2.6"/>
+<text x="748.3333333333334" y="84.0" text-anchor="middle" fill="url(#jg-qa)" font-size="23" font-weight="900" letter-spacing=".14em">⚡ JEV</text>
+<text x="748.3333333333334" y="104.0" text-anchor="middle" fill="#67e8f9" font-size="12" font-weight="700">~55 chamadas por execução</text>
+<g opacity="1"><rect x="633.8" y="112.0" width="79.1" height="19" rx="9.5" fill="none" stroke="#67e8f9" stroke-opacity=".7"/><text x="673.4" y="125.5" text-anchor="middle" fill="#67e8f9" font-size="10.5" font-weight="700">◉ 5 escolha</text></g>
+<g opacity="1"><rect x="717.9" y="112.0" width="60.8" height="19" rx="9.5" fill="none" stroke="#fbbf24" stroke-opacity=".7"/><text x="748.3" y="125.5" text-anchor="middle" fill="#fbbf24" font-size="10.5" font-weight="700">▮ 1 nota</text></g>
+<g opacity="1"><rect x="783.7" y="112.0" width="79.1" height="19" rx="9.5" fill="none" stroke="#c4b5fd" stroke-opacity=".7"/><text x="823.3" y="125.5" text-anchor="middle" fill="#c4b5fd" font-size="10.5" font-weight="700">◐ 1 sim/não</text></g>
+<line x1="635.3333333333334" y1="140.0" x2="861.3333333333334" y2="140.0" stroke="rgba(255,255,255,.14)"/>
+<text x="748.3333333333334" y="158.0" text-anchor="middle" fill="#e5e7eb" font-size="12">próximo clique (≤40 elementos)</text>
+<text x="748.3333333333334" y="174.0" text-anchor="middle" fill="#e5e7eb" font-size="12">valor malicioso por campo (11)</text>
+<text x="748.3333333333334" y="190.0" text-anchor="middle" fill="#e5e7eb" font-size="12">triagem: é bug? · severidade</text>
+<text x="748.3333333333334" y="206.0" text-anchor="middle" fill="#e5e7eb" font-size="12">categoria</text>
+<rect x="970.0" y="44" width="190" height="49" rx="14" fill="rgba(251,191,36,.10)" stroke="#fbbf24" stroke-width="1.6"/>
+<text x="1065.0" y="65" text-anchor="middle" fill="#f3f4f6" font-size="13.5" font-weight="800">Chromium (Playwright)</text>
+<text x="1065.0" y="83" text-anchor="middle" fill="#aeb5c2" font-size="11.5">no contêiner do QA</text>
+<rect x="970.0" y="204.0" width="190" height="49" rx="14" fill="rgba(244,114,182,.10)" stroke="#f472b6" stroke-width="1.6"/>
+<text x="1065.0" y="225.0" text-anchor="middle" fill="#f3f4f6" font-size="13.5" font-weight="800">Loja Bugada (/alvo/)</text>
+<text x="1065.0" y="243.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">9 bugs plantados</text>
+<rect x="653.3333333333334" y="294.0" width="190" height="64" rx="14" fill="rgba(96,165,250,.10)" stroke="#60a5fa" stroke-width="1.6"/>
+<text x="748.3333333333334" y="315.0" text-anchor="middle" fill="#f3f4f6" font-size="13.5" font-weight="800">Oráculos</text>
+<text x="748.3333333333334" y="333.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">erro de JS · HTTP 5xx e 404</text>
+<text x="748.3333333333334" y="348.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">NaN · overflow · duplicado</text>
+<rect x="256.8833333333334" y="95.0" width="32.9" height="20" rx="10" fill="#0d1017" stroke="#94a3b8" stroke-opacity=".5"/><text x="273.33333333333337" y="109.5" text-anchor="middle" fill="#d1d5db" font-size="11">SSE</text>
+<rect x="552.4" y="111.5" width="39.2" height="20" rx="10" fill="#0d1017" stroke="#22d3ee" stroke-opacity=".5"/><text x="572.0" y="126.0" text-anchor="middle" fill="#d1d5db" font-size="11">tela</text>
+<rect x="898.7666666666668" y="92.75" width="51.8" height="20" rx="10" fill="#0d1017" stroke="#fbbf24" stroke-opacity=".5"/><text x="924.6666666666667" y="107.25" text-anchor="middle" fill="#d1d5db" font-size="11">clique</text>
+<rect x="1039.1" y="137.5" width="51.8" height="20" rx="10" fill="#0d1017" stroke="#f472b6" stroke-opacity=".5"/><text x="1065.0" y="152.0" text-anchor="middle" fill="#d1d5db" font-size="11">navega</text>
+<rect x="874.4666666666667" y="266.25" width="64.4" height="20" rx="10" fill="#0d1017" stroke="#60a5fa" stroke-opacity=".5"/><text x="906.6666666666667" y="280.75" text-anchor="middle" fill="#d1d5db" font-size="11">sintomas</text>
+<rect x="712.9833333333333" y="248.0" width="70.69999999999999" height="20" rx="10" fill="#0d1017" stroke="#22d3ee" stroke-opacity=".5"/><text x="748.3333333333334" y="262.5" text-anchor="middle" fill="#d1d5db" font-size="11">evidência</text>
+<rect x="557.8" y="218.0" width="64.4" height="20" rx="10" fill="#0d1017" stroke="#a78bfa" stroke-opacity=".5"/><text x="590.0" y="232.5" text-anchor="middle" fill="#d1d5db" font-size="11">bug real</text>
+</svg>

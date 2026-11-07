@@ -1,0 +1,364 @@
+[
+  {
+    "id": "vendas",
+    "curto": "Venda",
+    "titulo": "Venda para uma clínica",
+    "emoji": "💼",
+    "contexto": "vendas",
+    "outro": "Mariana",
+    "resumo": "Você vende a Atendix para a dona de uma rede de clínicas. Ela pergunta de integração, LGPD, preço e desconto.",
+    "falas": [
+      {
+        "q": "v",
+        "t": "Oi, Mariana, tudo bem? Obrigado por separar esse tempo hoje.",
+        "m": "conversa_social",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "Oi! Tudo ótimo. Olha, a gente tem três unidades e o WhatsApp virou um caos.",
+        "m": "dado_importante",
+        "a": 0
+      },
+      {
+        "q": "v",
+        "t": "Entendi. Quantas mensagens vocês recebem por dia, mais ou menos?",
+        "m": "explicacao_de_voce",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "Umas quatrocentas. E metade é paciente querendo remarcar consulta.",
+        "m": "dado_importante",
+        "a": 0
+      },
+      {
+        "q": "v",
+        "t": "A Atendix responde na hora e marca e remarca direto na agenda de vocês.",
+        "m": "explicacao_de_voce",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "Tá, mas isso integra com o Clinicorp? É o sistema que a gente usa nas três unidades.",
+        "m": "pergunta_para_voce",
+        "a": 1
+      },
+      {
+        "q": "v",
+        "t": "Integra sim, e a implantação leva sete dias úteis.",
+        "m": "explicacao_de_voce",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "E os dados dos pacientes? Por causa da LGPD eu fico com muito medo de vazar alguma coisa.",
+        "m": "objecao",
+        "a": 1
+      },
+      {
+        "q": "v",
+        "t": "Os dados ficam no Brasil, criptografados, e a gente assina o contrato de tratamento de dados.",
+        "m": "explicacao_de_voce",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "Entendi. E quanto fica tudo isso por mês?",
+        "m": "pergunta_para_voce",
+        "a": 1
+      },
+      {
+        "q": "v",
+        "t": "O plano Pro sai por mil quatrocentos e noventa reais por unidade.",
+        "m": "explicacao_de_voce",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "Nossa, quase mil e quinhentos por unidade? Pra três unidades fica pesado pra gente.",
+        "m": "objecao",
+        "a": 1
+      },
+      {
+        "q": "v",
+        "t": "Entendo. No plano anual à vista você ganha dois meses grátis.",
+        "m": "explicacao_de_voce",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "Se eu fechar o anual, o desconto vale para as três unidades ou só para a matriz?",
+        "m": "pergunta_para_voce",
+        "a": 1
+      },
+      {
+        "q": "v",
+        "t": "Vale para as três unidades do contrato.",
+        "m": "explicacao_de_voce",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "Então me manda a proposta do anual por e-mail até sexta, que eu levo pro meu sócio.",
+        "m": "tarefa_ou_prazo",
+        "a": 0
+      },
+      {
+        "q": "v",
+        "t": "Combinado, te mando hoje ainda.",
+        "m": "tarefa_ou_prazo",
+        "a": 0
+      }
+    ]
+  },
+  {
+    "id": "reuniao",
+    "curto": "Reunião",
+    "titulo": "Reunião de equipe",
+    "emoji": "🗂️",
+    "contexto": "reuniao",
+    "outro": "Paula",
+    "resumo": "Reunião para decidir o lançamento do plano anual: siglas, números, decisões e tarefas com dono.",
+    "falas": [
+      {
+        "q": "o",
+        "t": "Bom, pessoal, o objetivo hoje é fechar a data de lançamento do plano anual.",
+        "m": "dado_importante",
+        "a": 0
+      },
+      {
+        "q": "v",
+        "t": "Perfeito. Do lado do marketing, as peças ficam prontas em uma semana.",
+        "m": "explicacao_de_voce",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "Ótimo. O financeiro pediu pra gente olhar o CAC e o LTV antes de decidir o desconto.",
+        "m": "termo_tecnico",
+        "a": 1
+      },
+      {
+        "q": "v",
+        "t": "Faz sentido. Hoje o nosso CAC está em cento e vinte reais.",
+        "m": "explicacao_de_voce",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "E o churn do mensal? Tá subindo ou estabilizou?",
+        "m": "pergunta_para_voce",
+        "a": 1
+      },
+      {
+        "q": "v",
+        "t": "Estabilizou em quatro por cento ao mês.",
+        "m": "explicacao_de_voce",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "Então fechado: lançamento no dia quinze, com vinte por cento de desconto no anual.",
+        "m": "decisao",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "Você consegue me mandar o orçamento da campanha até quinta-feira?",
+        "m": "tarefa_ou_prazo",
+        "a": 0
+      },
+      {
+        "q": "v",
+        "t": "Consigo, te mando até quinta de manhã.",
+        "m": "tarefa_ou_prazo",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "E quem cuida do e-mail pra base de alunos?",
+        "m": "pergunta_para_voce",
+        "a": 1
+      },
+      {
+        "q": "v",
+        "t": "O Lucas cuida do e-mail e eu fico com os anúncios.",
+        "m": "tarefa_ou_prazo",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "Última coisa: tem risco de atrasar por causa do checkout novo?",
+        "m": "pergunta_para_voce",
+        "a": 1
+      }
+    ]
+  },
+  {
+    "id": "atendimento",
+    "curto": "Cliente irritado",
+    "titulo": "Cliente irritado",
+    "emoji": "🎧",
+    "contexto": "atendimento",
+    "outro": "Rodrigo",
+    "resumo": "Cobrança em dobro e fone com defeito: o copiloto acalma, responde prazos e anota o que você prometeu.",
+    "falas": [
+      {
+        "q": "v",
+        "t": "Loja Aurora, meu nome é Ana. Em que posso ajudar?",
+        "m": "conversa_social",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "Oi, Ana. Eu fui cobrado duas vezes pelo mesmo fone e ninguém me responde no e-mail!",
+        "m": "objecao",
+        "a": 1
+      },
+      {
+        "q": "v",
+        "t": "Poxa, sinto muito por isso. Pode me passar o número do pedido?",
+        "m": "explicacao_de_voce",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "É o pedido quatro oito dois um três. Faz uma semana que eu estou esperando.",
+        "m": "dado_importante",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "Quando é que esse dinheiro volta pra minha conta?",
+        "m": "pergunta_para_voce",
+        "a": 1
+      },
+      {
+        "q": "v",
+        "t": "O estorno cai em até cinco dias úteis, e eu já abri o protocolo.",
+        "m": "explicacao_de_voce",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "E o fone ainda veio com um chiado no lado esquerdo. Dá pra trocar?",
+        "m": "pergunta_para_voce",
+        "a": 1
+      },
+      {
+        "q": "v",
+        "t": "Dá sim, a troca por defeito tem frete grátis.",
+        "m": "explicacao_de_voce",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "Tá bom. Então me manda o protocolo por e-mail, por favor.",
+        "m": "tarefa_ou_prazo",
+        "a": 0
+      },
+      {
+        "q": "v",
+        "t": "Mando agora mesmo. Mais alguma coisa?",
+        "m": "tarefa_ou_prazo",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "Não, era isso. Obrigado pela ajuda, Ana.",
+        "m": "conversa_social",
+        "a": 0
+      }
+    ]
+  },
+  {
+    "id": "ia",
+    "curto": "Termos de IA",
+    "titulo": "Consultoria de IA (termos em inglês)",
+    "emoji": "🤖",
+    "contexto": "ia",
+    "outro": "Renato",
+    "resumo": "O cliente fala termos de IA em inglês e a transcrição escreve errado (\"toque\", \"cloud code\", \"faz um tuning\"); o glossário e o Jev corrigem pelo contexto, e a resposta aparece antes de ele terminar a frase.",
+    "falas": [
+      {
+        "q": "o",
+        "t": "Oi, tudo bem? A gente quer colocar um agente de IA no WhatsApp da agência.",
+        "m": "dado_importante",
+        "a": 0
+      },
+      {
+        "q": "v",
+        "t": "Ótimo. Hoje vocês já usam alguma automação?",
+        "m": "explicacao_de_voce",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "A gente usa o n oito n pra mandar os leads pro CRM, mas o fluxo quebra toda hora.",
+        "m": "dado_importante",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "Quanto custa por milhão de toque na API da open ai?",
+        "m": "pergunta_para_voce",
+        "a": 1
+      },
+      {
+        "q": "v",
+        "t": "Depende do modelo, mas eu te mostro a conta por conversa.",
+        "m": "explicacao_de_voce",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "E vocês fazem o faz um tuning do modelo com as nossas conversas antigas?",
+        "m": "pergunta_para_voce",
+        "a": 1
+      },
+      {
+        "q": "v",
+        "t": "Na maioria dos casos a gente começa com rag e bons prompts.",
+        "m": "explicacao_de_voce",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "O que é esse rag? É tipo um banco de dados?",
+        "m": "pergunta_para_voce",
+        "a": 1
+      },
+      {
+        "q": "o",
+        "t": "E o cloud code, a gente consegue usar pra mexer no código sozinho?",
+        "m": "pergunta_para_voce",
+        "a": 1
+      },
+      {
+        "q": "v",
+        "t": "Consegue, mas quem mantém o código é a nossa equipe.",
+        "m": "explicacao_de_voce",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "Tá. E qual é o custo de referência se a gente passar de cinco mil conversas por mês?",
+        "m": "pergunta_para_voce",
+        "a": 1
+      },
+      {
+        "q": "v",
+        "t": "Aí entra o valor por conversa acima do plano.",
+        "m": "explicacao_de_voce",
+        "a": 0
+      },
+      {
+        "q": "o",
+        "t": "Fechado, me manda a proposta até sexta que eu apresento pro meu sócio.",
+        "m": "tarefa_ou_prazo",
+        "a": 0
+      }
+    ]
+  }
+]

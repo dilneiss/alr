@@ -1,0 +1,8 @@
+/* tema.css — paleta “cafe-caramelo” (seção 4.2) e par “artesanal” (seção 4.3) */
+@font-face { font-family: "Fraunces"; src: url("fonts/titulos.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Inter"; src: url("fonts/texto.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+:root {
+  --bg: #0f0c0b; --bg-rgb: 15, 12, 11; --s0: #120f0d; --bg2: #14100e; --bloco: #15110f; --porta-b: #161210; --s1: #181411; --porta-a: #1a1613; --aberto: #1c1714; --s2: #1d1815; --bolha: #211c18; --msg: #231d19; --s3: #251f1b; --av: #2a231e; --campo: #110e0c; --campo2: #100d0c; --lomb-a: #1d1917; --lomb-b: #13110f; --lomb-c: #12100e; --painel-rgb: 22, 18, 16; --tx: #efede9; --tx-rgb: 239, 237, 233; --tx2: #bcb3a6; --tx3: #938570; --ac: #dcae7e; --ac-rgb: 220, 174, 126; --ac2: #f1dcc2; --ok: #a9d3a4; --ok-rgb: 169, 211, 164; --no: #dca08f; --cta-tx: #0f0c0b; --cta-hover: #fbf9f5; --lomb-1: #dcae7e; --lomb-2: #c98a5e; --lomb-3: #e2c48f; --lomb-4: #9fb88a; --lomb-5: #c9918a; --lomb-6: #b9a58c;
+  --f-tit: "Fraunces", Georgia, serif; --f-tit-peso: 400;
+  --f-txt: "Inter", "Helvetica Neue", Arial, system-ui, sans-serif;
+}

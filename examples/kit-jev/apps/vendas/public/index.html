@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copiloto de Vendas ao Vivo · Jev</title>
+<meta name="description" content="O Jev escuta a ligação de vendas e, a cada fala do cliente, detecta objeções e sinais de compra e mostra na hora o card certo para o vendedor.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23000'/><rect x='2' y='2' width='28' height='28' fill='none' stroke='%23FF9F1C' stroke-width='2'/><path d='M6 22l6-7 5 4 9-11' fill='none' stroke='%2300D26A' stroke-width='3'/></svg>">
+<link rel="stylesheet" href="/_jev/jev.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="jev-topbar"></header>
+<main class="jev-shell cop">
+  <section class="hero">
+    <div class="hero-t"><span class="mnem" aria-hidden="true">VEND</span><h1>Copiloto de Vendas ao Vivo</h1></div>
+    <p>O Jev escuta a ligação e, a cada fala do cliente — muitas vezes <b>antes de a frase terminar</b> —, detecta a objeção e o sinal de compra e mostra o <b>card certo para o vendedor</b>. Em ~300 ms: rápido o bastante para responder antes de a objeção passar.</p>
+  </section>
+
+  <div class="deck">
+    <section class="fbar" aria-label="Controles da ligação">
+      <div class="fgrp fg-scen">
+        <span class="fg-l" aria-hidden="true">Ligações</span>
+        <div class="scen" id="scen" role="radiogroup" aria-label="Roteiro da ligação simulada"></div>
+      </div>
+      <div class="fgrp fg-run">
+        <button class="key key--go" id="sim" type="button">Simular ligação</button>
+        <div class="segctl" id="speed" role="radiogroup" aria-label="Velocidade">
+          <button type="button" role="radio" data-v="1" aria-checked="true">1×</button>
+          <button type="button" role="radio" data-v="2" aria-checked="false">2×</button>
+        </div>
+        <button class="key key--stop" id="end" type="button">Encerrar</button>
+      </div>
+      <div class="fgrp fg-mic">
+        <button class="key key--mic" id="mic" type="button" aria-pressed="false" title="Transcrição ao vivo em português pelo reconhecimento de voz do navegador (no Chrome, feito pelos servidores do Google). Só o texto transcrito vai para o Jev.">Microfone</button>
+        <div class="segctl" id="who" role="radiogroup" aria-label="Quem está falando">
+          <button type="button" role="radio" data-v="cliente" aria-checked="true">Cliente</button>
+          <button type="button" role="radio" data-v="vendedor" aria-checked="false">Vendedor</button>
+        </div>
+      </div>
+    </section>
+    <div class="fkeys" role="group" aria-label="Ordens do copiloto por tipo">
+      <span class="fk" data-tipo="objecao" title="F1 · Contornar: o cliente levantou uma objeção"><kbd>F1</kbd><span class="fk-n">Contornar</span><b class="fk-c">0</b></span>
+      <span class="fk" data-tipo="sinal" title="F2 · Fechar: o cliente deu sinal de compra"><kbd>F2</kbd><span class="fk-n">Fechar</span><b class="fk-c">0</b></span>
+      <span class="fk" data-tipo="risco" title="F3 · Resgatar: risco real de perder a venda"><kbd>F3</kbd><span class="fk-n">Resgatar</span><b class="fk-c">0</b></span>
+      <span class="fk" data-tipo="sugestao" title="F4 · Conduzir: sem objeção, o próximo passo da conversa"><kbd>F4</kbd><span class="fk-n">Conduzir</span><b class="fk-c">0</b></span>
+      <span class="grow"></span>
+      <span class="rnote" id="rnote">aguardando a primeira fala do cliente</span>
+    </div>
+  </div>
+
+  <div class="main">
+    <section class="pnl call" id="call" aria-label="Ligação">
+      <header class="ph"><span class="pn" aria-hidden="true">1</span><h2>Fita da ligação</h2><span class="grow"></span>
+        <span class="rec" id="rec"><i aria-hidden="true"></i><span class="rec-l">Ao vivo</span><b class="mono" id="clock">00:00</b></span></header>
+      <div class="sec">
+        <span class="sec-sym" id="p-av" aria-hidden="true" data-idle="1">—</span>
+        <div class="who-t"><b id="p-name">Nenhuma ligação ainda</b><span id="p-meta">Escolha um roteiro, ligue o microfone ou digite uma fala</span></div>
+      </div>
+      <div class="transcript" id="transcript" role="log" aria-label="Transcrição da ligação"><div class="t-empty t-loading">Conectando ao copiloto…</div></div>
+      <form class="typer" id="typer" autocomplete="off">
+        <label class="prompt" id="prompt" for="fala">Cliente</label>
+        <input class="jev-input" id="fala" maxlength="600" placeholder="“tá caro demais pra mim agora”" aria-label="Fala para analisar">
+        <button class="key key--go" id="send" type="submit">Analisar</button>
+      </form>
+    </section>
+
+    <section class="radar" id="radar" aria-label="Painéis da ligação">
+      <section class="pnl p-quote" aria-label="Chance de fechar">
+        <header class="ph"><span class="pn" aria-hidden="true">2</span><h2>Chance de fechar</h2><span class="grow"></span>
+          <span class="lg" aria-hidden="true"><i class="l-up"></i>sobe <i class="l-dn"></i>cai <i class="l-se"></i>sentimento <i class="l-ob"></i>objeção <i class="l-bu"></i>sinal de compra</span></header>
+        <div class="qt idle" id="gauge">
+          <div class="q-main">
+            <span class="q-sym" id="q-sym">—</span>
+            <b class="q-last" id="q-last">—</b>
+            <span class="q-side"><span class="q-chg" id="q-chg">sem cotação</span><span class="q-tag" id="q-tag" hidden>parcial</span></span>
+          </div>
+          <dl class="q-stats">
+            <div><dt>Abertura</dt><dd id="q-open">—</dd></div>
+            <div><dt>Máx.</dt><dd id="q-max">—</dd></div>
+            <div><dt>Mín.</dt><dd id="q-min">—</dd></div>
+            <div><dt>Falas</dt><dd id="q-n">0</dd></div>
+          </dl>
+        </div>
+        <div class="chart-wrap"><svg id="chart" role="img" aria-label="Chance de fechar e sentimento ao longo da ligação"></svg></div>
+      </section>
+
+      <section class="pnl p-book" aria-label="Leitura da fala atual">
+        <header class="ph"><span class="pn" aria-hidden="true">3</span><h2>Livro da fala</h2></header>
+        <div class="book">
+          <div class="bk-row bk-obj"><span class="bk-l">Objeção</span><span class="ob-now" id="ob-now">—</span></div>
+          <div class="depth">
+            <div class="dp dp-buy"><span class="bk-l">Sinal de compra</span><b class="mono dp-v" id="v-sinal">—</b><span class="trk"><i id="b-sinal"></i></span></div>
+            <div class="dp dp-sell"><span class="bk-l">Risco de perder</span><b class="mono dp-v" id="v-risco">—</b><span class="trk"><i id="b-risco"></i></span></div>
+          </div>
+          <div class="bk-row bk-sent"><span class="bk-l">Sentimento</span><span class="sent" id="sent"></span><b class="mono" id="v-sent">—</b></div>
+          <div class="bk-rank">
+            <div class="bk-l">Cartas mais prováveis</div>
+            <ol class="rank" id="rank"><li class="rk-empty">o Jev escolhe entre 14 cartas a cada fala</li></ol>
+          </div>
+        </div>
+      </section>
+
+      <section class="pnl p-stage" aria-label="Estágio da conversa">
+        <header class="ph"><span class="pn" aria-hidden="true">4</span><h2>Estágio</h2></header>
+        <div class="stepper" id="stepper"></div>
+      </section>
+
+      <section class="pnl p-orders" aria-label="Ordens do copiloto">
+        <header class="ph"><span class="pn" aria-hidden="true">5</span><h2>Ordens do copiloto</h2><span class="grow"></span><span class="ph-r" id="feed-count"></span></header>
+        <div class="feed" id="feed"><div class="feed-empty">Carregando…</div></div>
+      </section>
+    </section>
+  </div>
+</main>
+
+<div class="tape" id="tape" aria-hidden="true"><div class="tape-track" id="tape-track"></div></div>
+
+<div class="modal" id="summary" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="s-title">
+    <header class="s-hd">
+      <h3 id="s-title">Resumo da ligação</h3>
+      <span class="grow"></span>
+      <button class="key key--sm" id="s-close" type="button" aria-label="Fechar">✕</button>
+    </header>
+    <div class="s-body">
+      <div class="s-kpis" id="s-kpis"></div>
+      <div class="s-grid">
+        <div class="s-blk"><h4>Objeções por tipo</h4><div id="s-obj"></div></div>
+        <div class="s-blk"><h4>Momento de maior risco</h4><div id="s-risk"></div></div>
+      </div>
+      <div class="s-blk"><h4>Evolução</h4><div class="s-evo" id="s-evo"></div><svg id="s-chart" role="img" aria-label="Evolução da ligação"></svg></div>
+    </div>
+    <footer class="s-ft">
+      <span class="dim" id="s-note"></span>
+      <span class="grow"></span>
+      <button class="key" id="s-again" type="button">↺ Simular de novo</button>
+      <button class="key key--go" id="s-next" type="button">Próximo roteiro</button>
+    </footer>
+  </div>
+</div>
+
+<script src="/_jev/jev-kit.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

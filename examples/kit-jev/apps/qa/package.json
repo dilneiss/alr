@@ -1,0 +1,16 @@
+{
+  "name": "jev-qa-adversarial",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "QA Adversarial — o Jev pilota um navegador (Playwright) e caça bugs numa loja plantada.",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "playwright": "1.57.0"
+  }
+}

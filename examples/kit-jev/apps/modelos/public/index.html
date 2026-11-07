@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modelos do Jev</title>
+<meta name="theme-color" content="#0a0b10">
+<link rel="stylesheet" href="_motor/motor.css">
+<style>
+  .idx { max-width: 1280px; margin: 0 auto; padding: 28px 22px 60px; }
+  .idx h1 { font-size: clamp(28px, 4vw, 44px); margin: 0 0 6px; letter-spacing: -.02em; }
+  .idx > p { color: var(--mj-mudo); margin: 0 0 22px; max-width: 70ch; }
+  .idx h2 { font: 650 12px/1 var(--mj-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--mj-mudo); margin: 30px 0 12px; display: flex; gap: 10px; }
+  .idx h2 span { color: var(--mj-dim); }
+  .gr { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .ca { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 14px; background: var(--mj-card); border: 1px solid var(--mj-borda); color: var(--mj-texto); text-decoration: none; transition: transform .2s, border-color .2s; }
+  .ca:hover { transform: translateY(-2px); border-color: var(--c, var(--mj-acento)); }
+  .ca .e { font-size: 26px; } .ca b { font-size: 15px; } .ca p { margin: 0; font-size: 13px; color: var(--mj-mudo); }
+  .ca .m { display: flex; flex-wrap: wrap; gap: 5px; margin-top: auto; padding-top: 6px; }
+</style>
+</head>
+<body>
+<main class="idx">
+  <h1>Modelos do Jev</h1>
+  <p>Apps-modelo que você pode abrir, ver funcionando e baixar para adaptar ao seu caso. Cada um é definido num arquivo só, o <code>app.config.mjs</code>.</p>
+  <div id="lista">carregando…</div>
+</main>
+<script type="module">
+  const CAT = { imediata: 'IA imediata', atendimento: 'Atendimento e caixa de entrada', confianca: 'Confiança e segurança', vendas: 'Vendas, marketing e criadores', dados: 'Dados e back-office', construtores: 'Para quem constrói com IA', voz: 'Voz e tempo real', educacao: 'Educação', radares: 'Radares e alertas', juridico: 'Jurídico e setor público', 'casa-jogos': 'Casa e jogos' };
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const r = await (await fetch('catalogo.json')).json();
+  const grupos = {};
+  for (const a of r.apps) (grupos[a.categoria] ||= []).push(a);
+  document.getElementById('lista').innerHTML = Object.keys(CAT).filter((k) => grupos[k]).map((k) => `<h2>${esc(CAT[k])} <span>${grupos[k].length}</span></h2><div class="gr">${grupos[k].map((a) => `<a class="ca" href="${a.id}/" style="--c:${esc(a.acento || '')}"><span class="e">${a.emoji}</span><b>${esc(a.titulo)}</b><p>${esc(a.resumo)}</p><span class="m">${(a.marcas || []).map((m) => `<span class="mj-marca-tag">${esc(m)}</span>`).join('')}<span class="mj-chip">${esc(a.motor)}</span></span></a>`).join('')}</div>`).join('');
+</script>
+</body>
+</html>

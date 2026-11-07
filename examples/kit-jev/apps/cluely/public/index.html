@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Cluely · Jev + modelo de texto</title>
+<meta name="description" content="Um mini Cluely: vê sua tela, ouve a conversa e sopra a resposta. O Jev decide quando ajudar; um modelo de texto rápido escreve.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🫥</text></svg>">
+<link rel="stylesheet" href="/_jev/jev.css">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="jev-topbar"></header>
+<main class="jev-shell mc">
+  <section class="mc-hero" id="hero">
+    <div class="mc-hero-txt">
+      <div class="mc-eyebrow"><span class="mc-dot"></span> mini Cluely · Jev decide, IA de texto escreve</div>
+      <h1>Vê sua tela, ouve a conversa e <span class="grad-text">sopra a resposta</span> na hora.</h1>
+      <p>O <b class="jev-text">Jev</b> julga cada fala e cada tela em ~0,3 s e decide <b>quando</b> e <b>como</b> ajudar. Um <b>modelo de texto rápido</b> (Gemini 2.5 Flash-Lite, pelo OpenRouter) escreve a ajuda. A imagem da sua tela é lida no seu servidor e não sai dele.</p>
+    </div>
+    <div class="mc-hero-cta">
+      <button class="jev-btn jev-btn--primary" type="button" data-sim="vendas">🎬 Simular uma venda ao vivo</button>
+      <button class="jev-btn" type="button" data-tela="email">📧 Ler um e-mail na tela</button>
+      <button class="jev-btn" type="button" data-flutuar>⧉ Flutuar por cima de tudo</button>
+    </div>
+  </section>
+
+  <div class="mc-grid">
+    <section class="mc-stage" aria-label="O que o copiloto vê e ouve">
+      <div class="jev-card mc-fontes">
+        <div class="mc-linha-fontes">
+          <span class="mc-rot">Ouvir</span>
+          <button id="btnMic" class="jev-btn jev-btn--sm mc-mic" type="button" aria-pressed="false"><span class="mc-mic-ico">🎙️</span> <span class="lbl">Microfone</span><span class="mc-nivel" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button>
+          <span class="mc-sep"></span>
+          <span class="mc-rot">Simular</span>
+          <span class="mc-sims" id="sims"></span>
+          <button id="btnVel" class="jev-chip mc-vel" type="button" title="Velocidade da simulação">1×</button>
+          <button id="btnParar" class="jev-chip" type="button" hidden>⏹ Parar</button>
+        </div>
+        <div class="mc-linha-fontes">
+          <span class="mc-rot">Ver</span>
+          <button id="btnTela" class="jev-btn jev-btn--sm" type="button" aria-pressed="false">🖥️ <span class="lbl">Compartilhar tela ou aba</span></button>
+          <span class="mc-sep"></span>
+          <span class="mc-rot">Exemplos</span>
+          <span class="mc-telas" id="telasEx"></span>
+        </div>
+        <div class="mc-linha-fontes">
+          <span class="mc-rot">Contexto</span>
+          <select id="selContexto" class="jev-select mc-select" aria-label="Contexto do usuário"></select>
+          <button id="btnEditarCtx" class="jev-chip" type="button">✏️ Editar</button>
+          <span class="mc-sep"></span>
+          <label class="mc-toggle" title="Quando o Jev decide que vale ajudar, a IA de texto já escreve a resposta"><input type="checkbox" id="chkAuto" checked> Responder sozinho</label>
+          <label class="mc-toggle" title="Com uma tela compartilhada, lê de novo quando ela muda"><input type="checkbox" id="chkObservar"> 👀 Ler a tela quando mudar</label>
+        </div>
+      </div>
+
+      <div class="mc-palco">
+        <div class="jev-card mc-tela" id="painelTela">
+          <div class="mc-card-head"><h3>🖥️ Tela</h3><span id="telaStatus" class="mc-status"></span></div>
+          <div class="mc-tela-box" id="telaBox">
+            <video id="telaVideo" muted playsinline hidden></video>
+            <img id="telaImg" alt="" hidden>
+            <canvas id="telaCaixas" aria-hidden="true"></canvas>
+            <div class="mc-scan" id="telaScan" hidden></div>
+            <div class="mc-tela-vazia" id="telaVazia">
+              <b>Nenhuma tela ainda</b>
+              <span>Compartilhe uma tela ou aba (com áudio, para o copiloto ouvir a reunião) ou abra um exemplo.</span>
+            </div>
+          </div>
+          <div class="mc-tela-rodape" id="telaRodape"></div>
+        </div>
+
+        <div class="jev-card mc-conversa">
+          <div class="mc-card-head"><h3>🎧 Conversa</h3><span id="convStatus" class="mc-status"></span></div>
+          <div class="mc-trans" id="trans" aria-live="polite">
+            <div class="mc-trans-vazia" id="transVazia">A transcrição aparece aqui. O Jev decide quem falou pelo conteúdo — não há identificação de voz.</div>
+          </div>
+          <form id="formFala" class="mc-fala-form" autocomplete="off">
+            <input id="inFala" class="jev-input" placeholder="…ou digite uma fala e Enter" maxlength="600" aria-label="Digitar uma fala">
+            <select id="selQuem" class="jev-select" aria-label="Quem falou">
+              <option value="misto">Jev decide quem falou</option>
+              <option value="o">Outra pessoa</option>
+              <option value="v">Você</option>
+            </select>
+          </form>
+        </div>
+      </div>
+
+      <div class="jev-card mc-raiox" id="raiox">
+        <div class="mc-card-head"><h3>🩻 Raio-X do Jev</h3><span id="raioxInfo" class="mc-status">cada fala vira uma chamada com ~18 perguntas tipadas</span></div>
+        <div class="mc-raiox-corpo" id="raioxCorpo"><div class="mc-vazio">Assim que alguém falar, você vê aqui cada decisão do Jev com as probabilidades.</div></div>
+      </div>
+    </section>
+
+    <aside class="mc-lado" aria-label="Copiloto">
+      <div id="copilotoSlot" class="mc-slot">
+        <div class="mc-flutuando-aviso" id="avisoFlutuando" hidden>
+          <b>⧉ O copiloto está flutuando</b>
+          <span>Ele está numa janela própria, por cima de qualquer app — arraste-a para o canto da sua reunião.</span>
+          <button class="jev-btn jev-btn--sm" type="button" id="btnTrazer">Trazer de volta</button>
+        </div>
+        <div class="mc-cop" id="copiloto">
+          <div class="mc-pill">
+            <span class="mc-estado" id="copEstado"><i></i><span>Pronto</span></span>
+            <span class="mc-relogio mono" id="copRelogio">00:00</span>
+            <span class="mc-modo" id="copModo" title="Tipo de conversa detectado pelo Jev">modo: —</span>
+            <span class="spacer"></span>
+            <button class="mc-ico-btn" type="button" data-flutuar title="Flutuar por cima de todos os apps (Document Picture-in-Picture)" aria-label="Flutuar">⧉</button>
+            <button class="mc-ico-btn" type="button" id="btnOcultar" title="Ocultar / mostrar (⌘\)" aria-label="Ocultar o copiloto">–</button>
+          </div>
+          <div class="mc-cop-corpo" id="copCorpo">
+            <div class="mc-timeline" id="timeline" aria-label="Uma bolinha por fala: a cor é o que o Jev viu; o anel, quando ajudou"></div>
+            <div class="mc-acoes">
+              <button class="mc-acao" type="button" data-acao="seguir">💬 O que eu digo?</button>
+              <button class="mc-acao" type="button" data-acao="perguntas">❓ Perguntas</button>
+              <button class="mc-acao" type="button" data-acao="resumo">🧾 Resumo</button>
+              <button class="mc-acao" type="button" data-acao="email">✉️ E-mail</button>
+            </div>
+            <div class="mc-cob" id="cobertura" title="O que a conversa já cobriu, segundo o Jev (uma pergunta sim/não por tópico, a cada fala)"></div>
+            <div class="mc-abas" role="tablist">
+              <button class="mc-aba on" type="button" role="tab" aria-selected="true" data-aba="feed">Ao vivo</button>
+              <button class="mc-aba" type="button" role="tab" aria-selected="false" data-aba="notas">Notas <span class="mc-badge" id="nNotas">0</span></button>
+            </div>
+            <div class="mc-feed" id="feed" role="tabpanel">
+              <div class="mc-vazio mc-boas" id="feedVazio">
+                <b>Pronto para ajudar.</b>
+                <span>Comece uma simulação ou ligue o microfone. A cada fala o Jev decide se vale interromper; quando vale, a IA de texto escreve a ajuda aqui.</span>
+                <span class="mc-kbd"><kbd>⌘</kbd><kbd>↵</kbd> ajuda agora · <kbd>⌘</kbd><kbd>\</kbd> ocultar</span>
+              </div>
+            </div>
+            <div class="mc-notas" id="notas" role="tabpanel" hidden>
+              <div class="mc-vazio" id="notasVazio">Tarefas, decisões e números que o Jev marcar como importantes aparecem aqui, com o dono.</div>
+              <ul id="notasLista"></ul>
+            </div>
+            <form class="mc-ask" id="formAsk" autocomplete="off">
+              <input id="inAsk" placeholder="Pergunte qualquer coisa…" maxlength="400" aria-label="Pergunte ao copiloto">
+              <button type="submit" class="mc-ask-btn" title="Perguntar (⌘↵ sem texto = o Jev decide o que você precisa)">⌘↵</button>
+            </form>
+            <div class="mc-rodape" id="copRodape"></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+  <p class="mc-nota-legal">Projeto de demonstração inspirado no Cluely; não é afiliado à Cluely. Não funciona "invisível": a janela flutuante aparece se você compartilhar a tela inteira.</p>
+</main>
+
+<dialog class="mc-dlg" id="dlgCtx" aria-labelledby="dlgCtxTitulo">
+  <form method="dialog" class="mc-dlg-corpo" id="formCtx">
+    <h2 id="dlgCtxTitulo">Seu contexto</h2>
+    <p class="muted">É o que o copiloto sabe sobre você: o Jev usa os papéis para descobrir quem falou, e a IA de texto só responde com estes fatos.</p>
+    <div class="mc-dlg-grid">
+      <label><span class="jev-label">Você é</span><input class="jev-input" id="ctxVoce" maxlength="80" required></label>
+      <label><span class="jev-label">A outra pessoa é</span><input class="jev-input" id="ctxOutro" maxlength="80" required></label>
+    </div>
+    <label><span class="jev-label">Fatos que o copiloto pode usar (um por linha: produto, preços, regras…)</span><textarea class="jev-textarea" id="ctxTexto" maxlength="1500" rows="7"></textarea></label>
+    <label><span class="jev-label">Termos que você usa (nomes, marcas, siglas — ensinam a transcrição a escrever certo)</span><textarea class="jev-textarea mc-termos" id="ctxTermos" maxlength="600" rows="2" placeholder="Ex.: Atendix, Clinicorp, n8n, Claude Code, Sua Empresa"></textarea></label>
+    <div class="row mc-dlg-acoes"><span class="dim" id="ctxConta"></span><span class="spacer" style="flex:1"></span><button class="jev-btn jev-btn--sm jev-btn--ghost" value="cancelar" type="submit" formnovalidate>Cancelar</button><button class="jev-btn jev-btn--sm jev-btn--primary" value="salvar" type="submit">Salvar</button></div>
+  </form>
+</dialog>
+
+<script src="/_jev/jev-kit.js"></script>
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>

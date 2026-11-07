@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formulário que Qualifica · Jev</title>
+<meta name="description" content="Um formulário estilo Typeform que qualifica o lead enquanto ele digita: o Jev reavalia orçamento, autoridade, necessidade e urgência a cada tecla e escolhe o próximo passo comercial.">
+<meta name="theme-color" content="#EFE6D6">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='10' y='8' width='44' height='52' rx='7' fill='%232E3A2B'/%3E%3Crect x='16' y='18' width='32' height='36' rx='2' fill='%23FBF7EF'/%3E%3Crect x='22' y='4' width='20' height='10' rx='3' fill='%23B9B3A3'/%3E%3Crect x='21' y='27' width='22' height='3' rx='1.5' fill='%23C4552D'/%3E%3Crect x='21' y='35' width='16' height='3' rx='1.5' fill='%23D9A441'/%3E%3Crect x='21' y='43' width='19' height='3' rx='1.5' fill='%232E3A2B'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/young-serif-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/onest-wght.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/_jev/jev.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="jev-topbar"></header>
+<main class="jev-shell">
+  <section class="hero">
+    <h1>Formulário que Qualifica</h1>
+    <p>Estilo Typeform, mas <b>o lead é qualificado enquanto digita</b>: a cada pausa o Jev reavalia o BANT e escolhe o próximo passo — <b id="heroQ">9</b> perguntas numa chamada, em ~350 ms.</p>
+    <div class="ftabs" role="tablist" aria-label="Visões">
+      <button type="button" role="tab" class="tab on" data-tab="form" id="tabForm" aria-selected="true"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10.5 12h5M10.5 16h5"/></svg>Formulário</button>
+      <button type="button" role="tab" class="tab" data-tab="leads" id="tabLeads" aria-selected="false"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Leads <span class="tcount" id="leadCount">0</span></button>
+    </div>
+  </section>
+
+  <div id="viewForm" class="split">
+    <section class="fcard" id="fcard" aria-label="Formulário">
+      <div class="ftop">
+        <span class="fbrand"><span class="fmark" aria-hidden="true"></span>Diagnóstico de IA para empresas</span>
+        <span class="fstep" id="fstep">8 perguntas · 2 minutos</span>
+      </div>
+      <div class="fprog" aria-hidden="true"><i id="fprog"></i></div>
+      <div class="presets" id="presets"><span class="plabel">Preencher como:</span></div>
+      <div class="presetbar" id="presetbar" hidden>
+        <span class="jev-spinner"></span><span id="presetTxt">Preenchendo…</span>
+        <button type="button" class="jev-btn jev-btn--sm" id="presetFast"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path class="fill" d="M3.5 6.2 11 12l-7.5 5.8zM12 6.2l7.5 5.8L12 17.8z"/></svg>Pular animação</button>
+        <button type="button" class="jev-btn jev-btn--sm jev-btn--ghost" id="presetStop">Parar</button>
+      </div>
+      <div class="stage" id="stage"></div>
+      <div class="fbottom">
+        <span class="demo-note">demo — não use dados reais</span>
+        <div class="fnav">
+          <button type="button" id="navPrev" class="navbtn" aria-label="Pergunta anterior" title="Pergunta anterior"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg></button>
+          <button type="button" id="navNext" class="navbtn" aria-label="Próxima pergunta" title="Próxima pergunta"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="seller" id="seller" aria-label="Visão do vendedor ao vivo">
+      <div class="clip" aria-hidden="true">
+        <svg viewBox="0 0 184 62">
+          <g class="lever">
+            <path d="M46 34 C46 5 138 5 138 34" fill="none" stroke="#8C8678" stroke-width="6.5" stroke-linecap="round"/>
+            <path d="M46 34 C46 7 138 7 138 34" fill="none" stroke="#E2DCCD" stroke-width="2" stroke-linecap="round" opacity=".9"/>
+          </g>
+          <g class="plate">
+            <rect x="14" y="26" width="156" height="34" rx="8" fill="#6F6A5E"/>
+            <rect x="14" y="24" width="156" height="33" rx="8" fill="#CFC9BA"/>
+            <rect x="20" y="27" width="144" height="5" rx="2.5" fill="#E8E3D6" opacity=".8"/>
+            <circle cx="29" cy="41" r="4.6" fill="#8C8678"/>
+            <circle cx="28.2" cy="40.2" r="1.6" fill="#E8E3D6"/>
+            <circle cx="155" cy="41" r="4.6" fill="#8C8678"/>
+            <circle cx="154.2" cy="40.2" r="1.6" fill="#E8E3D6"/>
+          </g>
+        </svg>
+      </div>
+      <span class="live" id="liveDot"><i></i>AO VIVO</span>
+
+      <header class="sh">
+        <h2 class="sh-t">Visão do vendedor</h2>
+        <div class="sh-m" id="shMeta">aguardando a primeira resposta</div>
+      </header>
+
+      <div class="sum" id="sum">
+        <div class="sum-l">
+          <span class="jev-badge" id="qBadge">sem dados</span>
+          <div class="sum-title" id="qTitle">Aguardando…</div>
+          <div class="sum-sub" id="qSub">Comece a responder (ou use um preset): o Jev avalia o lead a cada pausa na digitação.</div>
+        </div>
+        <div class="sum-g" id="gauge30"></div>
+      </div>
+
+      <div class="blk blk-q">
+        <div class="blk-h"><h3>Qualificação</h3><span class="changes" id="changes"></span></div>
+        <div id="qbars" class="qbars"></div>
+      </div>
+
+      <div class="blk printout">
+        <div class="blk-h">
+          <h3>Evolução · chance de “altamente qualificado”</h3>
+          <span class="legend"><span class="lg a"></span>quente <span class="lg s"></span>lead score</span>
+        </div>
+        <div class="chart" id="chart"></div>
+      </div>
+
+      <div class="blk blk-bant">
+        <div class="blk-h"><h3>BANT</h3><span class="small">escala 0–3, contínua</span></div>
+        <div class="bant" id="bant"></div>
+      </div>
+
+      <div class="blk blk-note">
+        <div class="nextstep" id="nextStep">
+          <div class="ns-main">
+            <div class="ns-head"><span class="ns-kicker">Próximo passo sugerido</span><span class="ns-area" id="areaTxt"></span></div>
+            <div class="ns-body">
+              <span class="ns-ic"></span>
+              <div class="ns-t"><b>—</b><span>o Jev escolhe entre 5 caminhos</span></div>
+            </div>
+          </div>
+          <span class="ns-p">—</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <section id="viewLeads" class="leadsview" hidden aria-label="Painel de leads">
+    <div class="lv-head">
+      <div>
+        <h2>Painel do vendedor</h2>
+        <p class="muted">Todos os envios, <b>ordenados pelo Jev</b> (lead score = 60% qualificação + 40% BANT). <span class="demo-note">demo — não use dados reais</span></p>
+      </div>
+      <div class="lv-filters" id="lvFilters">
+        <button type="button" class="jev-chip active" data-f="todos">Todos</button>
+        <button type="button" class="jev-chip" data-f="quentes"><span class="hotdot" aria-hidden="true"></span>Quentes</button>
+        <button type="button" class="jev-chip" data-f="meus">Meus envios</button>
+      </div>
+    </div>
+    <div class="jev-kpis" id="lvKpis"></div>
+    <div class="lv-list" id="lvList"></div>
+  </section>
+</main>
+<button type="button" class="minibar" id="minibar" hidden aria-label="Ver a visão do vendedor">
+  <span class="live on"><i></i></span><span class="mb-t" id="mbTxt">—</span><span class="mb-s" id="mbScore"></span><span class="mb-go">ver prancheta<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
+</button>
+<script src="/_jev/jev-kit.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

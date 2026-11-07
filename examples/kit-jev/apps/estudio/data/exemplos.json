@@ -1,0 +1,49 @@
+[
+ {
+  "id": "burger",
+  "rotulo": "🍔 Hamburgueria rock",
+  "texto": "Tenho uma hamburgueria artesanal em Curitiba chamada Brasa Burger, o clima é bem rock and roll, com música alta e muita atitude. A gente faz delivery pelo WhatsApp e eu quero mostrar o cardápio com os preços."
+ },
+ {
+  "id": "virada",
+  "rotulo": "🔄 Mudei de ideia",
+  "texto": "Tenho uma hamburgueria artesanal em Curitiba, clima rock and roll, faço delivery e quero mostrar o cardápio. Mas pensando bem, quero algo mais sofisticado, pra casal, tipo um jantar especial."
+ },
+ {
+  "id": "comandos",
+  "rotulo": "🎯 Ajustes por voz",
+  "texto": "Tenho uma hamburgueria artesanal em Curitiba chamada Brasa Burger, o clima é bem rock and roll e a gente faz delivery pelo WhatsApp. Agora muda o logo pra ficar minimalista, só o nome grandão. Gostei desse logo, pode manter ele assim. Troca as cores pra algo mais escuro e elegante. Na verdade, volta as cores de antes."
+ },
+ {
+  "id": "clinica",
+  "rotulo": "💆 Clínica premium",
+  "texto": "Sou dermatologista e tenho uma clínica de estética premium em São Paulo, chamada Clínica Aurora. Faço harmonização facial, bioestimuladores e limpeza de pele, com atendimento exclusivo e sofisticado, e quero que as pacientes agendem uma avaliação."
+ },
+ {
+  "id": "pet",
+  "rotulo": "🐶 Pet shop de bairro",
+  "texto": "Tenho um pet shop de bairro aqui em Belo Horizonte, a gente dá banho e tosa, vende ração e acessórios, e todo mundo conhece os bichinhos pelo nome. Quero que os tutores marquem o banho pelo WhatsApp."
+ },
+ {
+  "id": "b2b",
+  "rotulo": "📊 Consultoria B2B",
+  "texto": "Sou consultor e ajudo pequenas e médias empresas a organizar processos e aumentar as vendas, com diagnóstico, treinamento de líderes e acompanhamento mensal. Quero captar empresários interessados e marcar uma conversa de diagnóstico."
+ },
+ {
+  "id": "ingles",
+  "rotulo": "🧒 Inglês infantil",
+  "texto": "Tenho uma escola de inglês para crianças de quatro a dez anos em Florianópolis, as aulas são com música, jogos e muita brincadeira. O nome é Little Explorers e eu quero que os pais agendem uma aula experimental grátis."
+ },
+ {
+  "id": "pizzaA",
+  "rotulo": "🍕 Pizzaria · jeito 1",
+  "par": "pizzaB",
+  "texto": "Tenho uma pizzaria com forno a lenha e quero receber mais pedidos de delivery."
+ },
+ {
+  "id": "pizzaB",
+  "rotulo": "🍕 Pizzaria · jeito 2",
+  "par": "pizzaA",
+  "texto": "Meu negócio é pizza assada na lenha e eu preciso que chegue mais pedido pra entregar na casa das pessoas."
+ }
+]

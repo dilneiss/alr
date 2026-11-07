@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Central de Suporte com Triagem · Jev</title>
+<meta name="description" content="Cada ticket que chega é triado pelo Jev numa única chamada: departamento, prioridade, frustração, risco de reembolso e de cancelamento — e a resposta pronta certa.">
+<meta name="theme-color" content="#0F1011">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%230F1011'/%3E%3Crect x='5' y='5' width='22' height='22' rx='2' fill='%23FFD23F'/%3E%3Cpath d='M16 7.5c-.9 0-1.4.8-1.4 1.8v4.6L8 18v2l6.6-2.1v3.9l-1.9 1.4v1.5l3.3-.9 3.3.9v-1.5l-1.9-1.4v-3.9L24 20v-2l-6.6-4.1V9.3c0-1-.5-1.8-1.4-1.8z' fill='%230F1011'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/_jev/jev.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="jev-topbar"></header>
+<main class="jev-shell sup">
+  <section class="top">
+    <div class="intro">
+      <p class="kicker rv" style="--d:60ms"><span class="kick-tile">T1</span>Terminal de suporte · Sinapse, escola online de IA</p>
+      <h1 class="rv" style="--d:120ms">Central de Suporte com Triagem</h1>
+      <p class="lede rv" style="--d:200ms">Cada ticket que chega é lido pelo Jev numa <b>única chamada de ~350 ms</b>: departamento, prioridade, frustração, risco de reembolso e de cancelamento — e a <b>resposta pronta</b> certa, já preenchida.</p>
+    </div>
+    <div class="kpis" aria-label="Indicadores">
+      <div class="kpi rv" style="--d:260ms"><div class="k">Tickets triados</div><div class="v mono" id="k-triados">0</div><div class="s" id="k-triados-s">60 na fila</div></div>
+      <div class="kpi rv" style="--d:320ms"><div class="k">Latência média</div><div class="v mono" id="k-lat">—</div><div class="s" id="k-lat-s">9 perguntas por ticket</div></div>
+      <div class="kpi rv" style="--d:380ms"><div class="k">Custo por mil tickets</div><div class="v mono" id="k-custo">—</div><div class="s" id="k-custo-s">1 chamada por ticket</div></div>
+      <div class="kpi rv" style="--d:440ms"><div class="k">Tempo humano economizado</div><div class="v mono" id="k-tempo">0 min</div><div class="s">premissa: 3 min de triagem/ticket</div></div>
+    </div>
+  </section>
+
+  <section class="arrival rv" style="--d:300ms" id="arrival" aria-label="Painel de partidas: a caixa de entrada">
+    <div class="arr-label">
+      <div class="arr-title">
+        <svg class="arr-plane" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.2c-.8 0-1.3.8-1.3 1.7v5.2L3 13.9v2.3l7.7-2.4v4.5l-2.2 1.6v1.8l3.5-1 3.5 1v-1.8l-2.2-1.6v-4.5l7.7 2.4v-2.3l-7.7-4.8V3.9c0-.9-.5-1.7-1.3-1.7z"/></svg>
+        <div class="arr-tt">
+          <h2 class="arr-name flaps"><span class="sr">Partidas</span><span class="tiles" aria-hidden="true"><span class="flap"><b>P</b></span><span class="flap"><b>A</b></span><span class="flap"><b>R</b></span><span class="flap"><b>T</b></span><span class="flap"><b>I</b></span><span class="flap"><b>D</b></span><span class="flap"><b>A</b></span><span class="flap"><b>S</b></span></span></h2>
+          <span class="arr-sub">caixa de entrada</span>
+        </div>
+      </div>
+      <div class="arr-state"><span class="radar" aria-hidden="true"></span><span class="status" id="status" aria-live="polite">parado</span></div>
+      <div class="actions">
+        <button class="jev-btn jev-btn--primary" id="play" type="button" data-st="play">Iniciar caixa ao vivo</button>
+        <button class="jev-btn" id="compose" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17z"/><path d="m14.5 7.5 3 3"/></svg>Escrever um ticket</button>
+        <button class="jev-btn" id="lote" type="button" title="Todos os tickets da fila chegam de uma vez e o Jev tria em chamadas paralelas">Backlog de uma vez</button>
+        <button class="jev-btn jev-btn--ghost jev-btn--sm" id="speed" type="button" aria-pressed="false" title="Velocidade de chegada dos tickets">1×</button>
+        <button class="jev-btn jev-btn--ghost jev-btn--sm" id="reset" type="button" aria-label="Reiniciar" title="Esvaziar os portões e recomeçar a fila"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4.5V9h4.5"/></svg><span class="lbl">Reiniciar</span></button>
+      </div>
+      <span class="arr-clock mono" id="arr-clock" aria-hidden="true">--:--:--</span>
+    </div>
+    <div class="arr-cols" aria-hidden="true"><span>Hora</span><span>Voo</span><span>Cliente e mensagem</span><span>Destino</span><span>Portão</span><span>Situação</span></div>
+    <div class="arr-stage" id="arr-stage">
+      <div class="arr-empty" id="arr-empty">
+        <b>A caixa de entrada está parada.</b>
+        <span>Clique em “Iniciar caixa ao vivo”: chega um ticket novo a cada 2–3 s e o Jev decide para qual portão ele vai — ou escreva o seu.</span>
+      </div>
+    </div>
+    <ol class="arr-next" id="arr-next" aria-label="Próximos tickets da fila"></ol>
+  </section>
+
+  <section class="board" id="board" aria-label="Portões por departamento"></section>
+  <div class="foot-note" id="global"></div>
+</main>
+
+<!-- Detalhe do ticket: o cartão de embarque com a resposta pronta -->
+<div class="modal" id="detail" hidden>
+  <div class="sheet pass" role="dialog" aria-modal="true" aria-labelledby="d-name">
+    <header class="d-hd">
+      <span class="pass-brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.2c-.8 0-1.3.8-1.3 1.7v5.2L3 13.9v2.3l7.7-2.4v4.5l-2.2 1.6v1.8l3.5-1 3.5 1v-1.8l-2.2-1.6v-4.5l7.7 2.4v-2.3l-7.7-4.8V3.9c0-.9-.5-1.7-1.3-1.7z"/></svg>Cartão de embarque</span>
+      <span class="pass-voo mono" id="d-voo">—</span>
+      <span class="grow"></span>
+      <span class="d-took" id="d-took"></span>
+      <button class="jev-btn jev-btn--sm" id="d-insp" type="button" title="Ver a chamada exata enviada ao Jev"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg><span class="hide-sm">ver a chamada</span></button>
+      <button class="jev-btn jev-btn--sm jev-btn--ghost x" id="d-close" type="button" aria-label="Fechar"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </header>
+    <div class="d-grid">
+      <section class="d-left">
+        <div class="pass-fields">
+          <div class="pf pf-dest"><span class="pf-k">Destino</span><span class="pf-v" id="d-dep">—</span></div>
+          <div class="pf pf-gate"><span class="pf-k">Portão</span><span class="pf-v" id="d-gate">—</span></div>
+          <div class="pf"><span class="pf-k">Prioridade</span><span class="pf-v pri" id="d-pri">—</span></div>
+          <div class="pf"><span class="pf-k">Prazo</span><span class="pf-v" id="d-sla">—</span></div>
+          <div class="pf pf-sit"><span class="pf-k">Situação</span><span class="pf-v sit" id="d-sit">—</span></div>
+        </div>
+        <div class="pass-who">
+          <span class="avatar" id="d-av" aria-hidden="true">—</span>
+          <div class="pass-who-t"><span class="pf-k">Passageiro</span><b id="d-name">—</b><span id="d-meta">—</span></div>
+        </div>
+        <div class="d-msg-w">
+          <span class="pf-k">Mensagem do cliente</span>
+          <div class="d-msg" id="d-msg"></div>
+        </div>
+        <div class="d-reply">
+          <div class="d-reply-hd">
+            <h4>Resposta pronta</h4>
+            <span class="jev-badge violet" id="d-macro-conf">macro</span>
+          </div>
+          <div class="macro-title" id="d-macro-title">—</div>
+          <textarea class="jev-textarea" id="d-text" aria-label="Texto da resposta (editável)"></textarea>
+          <div class="alts" id="d-alts"></div>
+          <div class="d-actions">
+            <button class="jev-btn jev-btn--primary" id="d-send" type="button" data-ico="send">Enviar resposta</button>
+            <button class="jev-btn jev-btn--sm" id="d-copy" type="button">Copiar</button>
+            <span class="sim">simulação: nada é enviado de verdade</span>
+          </div>
+        </div>
+      </section>
+      <section class="d-right">
+        <h4 class="d-right-t">O que o Jev decidiu <span id="d-nq">· 9 perguntas, 1 chamada</span></h4>
+        <div class="blk"><div class="blk-t">Departamento</div><div id="d-deps"></div></div>
+        <div class="blk"><div class="blk-t">Prioridade <span class="val mono" id="d-pri-v">—</span></div><div id="d-pri-m"></div></div>
+        <div class="blk two">
+          <div><div class="blk-t">Frustração <span class="val mono" id="d-fru-v">—</span></div><div id="d-fru-m"></div></div>
+          <div><div class="blk-t">Sentimento <span class="val mono" id="d-sen-v">—</span></div><div id="d-sen-m"></div></div>
+        </div>
+        <div class="blk last"><div class="blk-t">Sinais <span class="dim">(probabilidade de “sim”)</span></div><div class="sig" id="d-sig"></div></div>
+        <div class="barcode" aria-hidden="true"><i></i><span class="mono" id="d-bc"></span></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- Escrever um ticket: o balcão de check-in -->
+<div class="modal" id="composer" hidden>
+  <div class="sheet sheet--sm" role="dialog" aria-modal="true" aria-labelledby="c-title">
+    <header class="d-hd">
+      <h3 id="c-title"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17z"/><path d="m14.5 7.5 3 3"/></svg>Escreva um ticket</h3>
+      <span class="c-kick">check-in</span>
+      <span class="grow"></span>
+      <button class="jev-btn jev-btn--sm jev-btn--ghost x" id="c-close" type="button" aria-label="Fechar"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </header>
+    <form class="c-body" id="c-form" novalidate>
+      <p class="c-lead">Escreva como um cliente escreveria — educado, irritado, em CAPS, com ironia, em inglês… O Jev lê e decide tudo numa chamada.</p>
+      <div class="chips" id="c-presets" aria-label="Exemplos prontos"></div>
+      <div class="c-row">
+        <label class="fld"><span class="jev-label">Nome do cliente</span><input class="jev-input" id="c-nome" maxlength="60" autocomplete="off" placeholder="Ex.: Marina Souza"></label>
+        <div class="fld"><span class="jev-label">Canal</span><div class="segctl" id="c-canal" role="radiogroup" aria-label="Canal"></div></div>
+      </div>
+      <label class="fld" id="c-assunto-w"><span class="jev-label">Assunto do e-mail</span><input class="jev-input" id="c-assunto" maxlength="120" autocomplete="off" placeholder="Opcional"></label>
+      <label class="fld"><span class="jev-label">Mensagem</span>
+        <textarea class="jev-textarea" id="c-texto" maxlength="3000" placeholder="Ex.: fui cobrado duas vezes, quero meu dinheiro de volta hoje ou vou no Procon"></textarea>
+        <span class="c-cnt mono" id="c-cnt">0 / 3.000</span>
+      </label>
+      <div class="c-row">
+        <label class="fld"><span class="jev-label">Plano (ficha simulada)</span><select class="jev-select" id="c-plano"></select></label>
+        <label class="fld"><span class="jev-label">Cliente há</span><select class="jev-select" id="c-ha"></select></label>
+      </div>
+      <div class="c-foot">
+        <span class="c-err" id="c-err" role="alert"></span>
+        <span class="grow"></span>
+        <button class="jev-btn jev-btn--primary" id="c-send" type="submit"><svg class="i fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>Triar ticket</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/_jev/jev-kit.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+[
+  {"id":"m01","nome":"Carla","idade":34,"g":"f","prof":"enfermeira","emoji":"👩‍⚕️","trabalho":"hospital","turno":[7,19],"dias":"seg-sex","salario":38,"tracos":["sociável","workaholic"],"casa":"c01"},
+  {"id":"m02","nome":"Marcos","idade":36,"g":"m","prof":"programador","emoji":"👨‍💻","trabalho":"escritorio","turno":[9,18],"dias":"seg-sex","salario":55,"tracos":["caseiro","viciado em café"],"casa":"c01"},
+  {"id":"m03","nome":"Lucas","idade":15,"g":"m","prof":"estudante","emoji":"🧑‍🎓","trabalho":"escola","turno":[7,12],"dias":"seg-sex","salario":0,"tracos":["sociável","dorminhoco"],"casa":"c01"},
+
+  {"id":"m04","nome":"Dona Cida","idade":72,"g":"f","prof":"aposentada","emoji":"👵","trabalho":null,"turno":null,"dias":null,"salario":0,"tracos":["sociável","madrugadora"],"casa":"c02"},
+  {"id":"m05","nome":"Seu Jorge","idade":75,"g":"m","prof":"aposentado","emoji":"👴","trabalho":null,"turno":null,"dias":null,"salario":0,"tracos":["madrugador","fitness"],"casa":"c02"},
+  {"id":"m06","nome":"Natália","idade":26,"g":"f","prof":"recepcionista da academia","emoji":"💁‍♀️","trabalho":"academia","turno":[14,22],"dias":"seg-sex","salario":22,"tracos":["fitness","sociável"],"casa":"c02"},
+
+  {"id":"m07","nome":"Rafael","idade":28,"g":"m","prof":"personal trainer","emoji":"🏋️‍♂️","trabalho":"academia","turno":[6,14],"dias":"seg-sex","salario":35,"tracos":["fitness","madrugador"],"casa":"c03"},
+  {"id":"m08","nome":"Bruna","idade":27,"g":"f","prof":"designer","emoji":"👩‍🎨","trabalho":"escritorio","turno":[9,18],"dias":"seg-sex","salario":45,"tracos":["festeira","gastadora"],"casa":"c03"},
+  {"id":"m09","nome":"Seu Benedito","idade":80,"g":"m","prof":"aposentado","emoji":"🧓","trabalho":null,"turno":null,"dias":null,"salario":0,"tracos":["caseiro","preocupado com a saúde"],"casa":"c03"},
+
+  {"id":"m10","nome":"Pedro","idade":31,"g":"m","prof":"operário","emoji":"👷‍♂️","trabalho":"fabrica","turno":[6,14],"dias":"seg-sab","salario":28,"tracos":["festeiro","econômico"],"casa":"c04"},
+  {"id":"m11","nome":"Juliana","idade":29,"g":"f","prof":"caixa do mercado","emoji":"👩‍💼","trabalho":"mercado","turno":[8,16],"dias":"seg-sab","salario":20,"tracos":["sociável","econômica"],"casa":"c04"},
+  {"id":"m12","nome":"Enzo","idade":16,"g":"m","prof":"estudante","emoji":"👨‍🎓","trabalho":"escola","turno":[7,12],"dias":"seg-sex","salario":0,"tracos":["fitness","sociável"],"casa":"c04"},
+
+  {"id":"m13","nome":"Dr. Henrique","idade":45,"g":"m","prof":"médico","emoji":"👨‍⚕️","trabalho":"hospital","turno":[8,18],"dias":"seg-sex","salario":120,"tracos":["workaholic","viciado em café"],"casa":"c05"},
+  {"id":"m14","nome":"Patrícia","idade":43,"g":"f","prof":"advogada","emoji":"👩‍⚖️","trabalho":"escritorio","turno":[9,18],"dias":"seg-sex","salario":90,"tracos":["workaholic","gastadora"],"casa":"c05"},
+  {"id":"m15","nome":"Sofia","idade":14,"g":"f","prof":"estudante","emoji":"👩‍🎓","trabalho":"escola","turno":[7,12],"dias":"seg-sex","salario":0,"tracos":["estudiosa","caseira"],"casa":"c05"},
+
+  {"id":"m16","nome":"Thiago","idade":24,"g":"m","prof":"bartender","emoji":"🧔","trabalho":"bar","turno":[18,2],"dias":"ter-dom","salario":25,"tracos":["festeiro","dorminhoco"],"casa":"c06"},
+  {"id":"m17","nome":"Gabi","idade":23,"g":"f","prof":"barista","emoji":"🧑‍🍳","trabalho":"cafe","turno":[6,14],"dias":"seg-sab","salario":18,"tracos":["madrugadora","sociável"],"casa":"c06"},
+  {"id":"m18","nome":"Isabela","idade":24,"g":"f","prof":"estagiária","emoji":"🙋‍♀️","trabalho":"escritorio","turno":[9,17],"dias":"seg-sex","salario":15,"tracos":["sociável","festeira"],"casa":"c06"},
+
+  {"id":"m19","nome":"Seu Antônio","idade":58,"g":"m","prof":"dono do restaurante","emoji":"👨‍🍳","trabalho":"restaurante","turno":[10,23],"dias":"ter-dom","salario":60,"tracos":["workaholic","comilão"],"casa":"c07"},
+  {"id":"m20","nome":"Dona Lúcia","idade":55,"g":"f","prof":"confeiteira","emoji":"👩‍🍳","trabalho":"cafe","turno":[5,13],"dias":"seg-sab","salario":24,"tracos":["madrugadora","caseira"],"casa":"c07"},
+  {"id":"m21","nome":"Mariana","idade":19,"g":"f","prof":"garçonete","emoji":"💁‍♀️","trabalho":"restaurante","turno":[11,23],"dias":"ter-dom","salario":16,"tracos":["festeira","sociável"],"casa":"c07"},
+
+  {"id":"m22","nome":"Fernanda","idade":38,"g":"f","prof":"professora","emoji":"👩‍🏫","trabalho":"escola","turno":[7,13],"dias":"seg-sex","salario":32,"tracos":["caseira","econômica"],"casa":"c08"},
+  {"id":"m23","nome":"Ricardo","idade":40,"g":"m","prof":"supervisor da fábrica","emoji":"👨‍🏭","trabalho":"fabrica","turno":[8,17],"dias":"seg-sex","salario":48,"tracos":["workaholic","econômico"],"casa":"c08"},
+  {"id":"m24","nome":"Laura","idade":17,"g":"f","prof":"estudante","emoji":"👩‍🎓","trabalho":"escola","turno":[7,12],"dias":"seg-sex","salario":0,"tracos":["festeira","sociável"],"casa":"c08"},
+
+  {"id":"m25","nome":"Diego","idade":33,"g":"m","prof":"operário do turno da tarde","emoji":"👷‍♂️","trabalho":"fabrica","turno":[14,22],"dias":"seg-sab","salario":28,"tracos":["fitness","festeiro"],"casa":"c09"},
+  {"id":"m26","nome":"Camila","idade":32,"g":"f","prof":"técnica de enfermagem do plantão noturno","emoji":"🧑‍⚕️","trabalho":"hospital","turno":[19,7],"dias":"seg-sex","salario":30,"tracos":["dorminhoca","caseira"],"casa":"c09"},
+  {"id":"m27","nome":"Márcia","idade":41,"g":"f","prof":"operária","emoji":"👷‍♀️","trabalho":"fabrica","turno":[6,14],"dias":"seg-sab","salario":28,"tracos":["madrugadora","econômica"],"casa":"c09"},
+
+  {"id":"m28","nome":"Seu Raimundo","idade":68,"g":"m","prof":"aposentado","emoji":"👴","trabalho":null,"turno":null,"dias":null,"salario":0,"tracos":["festeiro","sociável"],"casa":"c10"},
+  {"id":"m29","nome":"Dona Glória","idade":66,"g":"f","prof":"aposentada","emoji":"👵","trabalho":null,"turno":null,"dias":null,"salario":0,"tracos":["caseira","preocupada com a saúde"],"casa":"c10"},
+  {"id":"m30","nome":"Jefferson","idade":37,"g":"m","prof":"mecânico da fábrica","emoji":"👨‍🔧","trabalho":"fabrica","turno":[8,17],"dias":"seg-sex","salario":34,"tracos":["comilão","festeiro"],"casa":"c10"},
+
+  {"id":"m31","nome":"Vinícius","idade":26,"g":"m","prof":"freelancer que trabalha no café","emoji":"🧑‍💻","trabalho":"cafe","turno":[9,17],"dias":"seg-sex","salario":40,"tracos":["viciado em café","caseiro"],"casa":"c11"},
+  {"id":"m32","nome":"Letícia","idade":25,"g":"f","prof":"analista","emoji":"👩‍💻","trabalho":"escritorio","turno":[9,18],"dias":"seg-sex","salario":42,"tracos":["fitness","sociável"],"casa":"c11"},
+  {"id":"m33","nome":"Felipe","idade":30,"g":"m","prof":"enfermeiro do plantão noturno","emoji":"👨‍⚕️","trabalho":"hospital","turno":[19,7],"dias":"seg-sex","salario":36,"tracos":["fitness","dorminhoco"],"casa":"c11"},
+
+  {"id":"m34","nome":"André","idade":35,"g":"m","prof":"operário","emoji":"👷","trabalho":"fabrica","turno":[6,14],"dias":"seg-sab","salario":28,"tracos":["comilão","econômico"],"casa":"c12"},
+  {"id":"m35","nome":"Priscila","idade":34,"g":"f","prof":"recepcionista do hospital","emoji":"💁‍♀️","trabalho":"hospital","turno":[8,17],"dias":"seg-sex","salario":22,"tracos":["sociável","gastadora"],"casa":"c12"},
+  {"id":"m36","nome":"Davi","idade":15,"g":"m","prof":"estudante","emoji":"👨‍🎓","trabalho":"escola","turno":[7,12],"dias":"seg-sex","salario":0,"tracos":["fitness","dorminhoco"],"casa":"c12"},
+
+  {"id":"m37","nome":"Beatriz","idade":30,"g":"f","prof":"cozinheira","emoji":"👩‍🍳","trabalho":"restaurante","turno":[10,22],"dias":"ter-dom","salario":30,"tracos":["workaholic","comilona"],"casa":"c13"},
+  {"id":"m38","nome":"Gustavo","idade":29,"g":"m","prof":"operário do turno da tarde","emoji":"👷‍♂️","trabalho":"fabrica","turno":[14,22],"dias":"seg-sab","salario":28,"tracos":["festeiro","gastador"],"casa":"c13"},
+  {"id":"m39","nome":"Carlos","idade":44,"g":"m","prof":"professor","emoji":"👨‍🏫","trabalho":"escola","turno":[13,18],"dias":"seg-sex","salario":32,"tracos":["caseiro","econômico"],"casa":"c13"},
+
+  {"id":"m40","nome":"Roberto","idade":50,"g":"m","prof":"gerente do escritório","emoji":"👨‍💼","trabalho":"escritorio","turno":[8,19],"dias":"seg-sex","salario":85,"tracos":["workaholic","viciado em café"],"casa":"c14"},
+  {"id":"m41","nome":"Sandra","idade":48,"g":"f","prof":"gerente do mercado","emoji":"👩‍💼","trabalho":"mercado","turno":[8,18],"dias":"seg-sex","salario":50,"tracos":["econômica","madrugadora"],"casa":"c14"},
+  {"id":"m42","nome":"Heitor","idade":17,"g":"m","prof":"estudante","emoji":"🧑‍🎓","trabalho":"escola","turno":[7,12],"dias":"seg-sex","salario":0,"tracos":["estudioso","caseiro"],"casa":"c14"},
+
+  {"id":"m43","nome":"Paulo","idade":27,"g":"m","prof":"desempregado","emoji":"🧑","trabalho":null,"turno":null,"dias":null,"salario":0,"tracos":["econômico","dorminhoco"],"casa":"c15"},
+  {"id":"m44","nome":"Aline","idade":26,"g":"f","prof":"artista de rua que pinta retratos na praça","emoji":"👩‍🎨","trabalho":"praca","turno":[10,18],"dias":"qua-dom","salario":25,"tracos":["festeira","sociável"],"casa":"c15"},
+  {"id":"m45","nome":"Manu","idade":16,"g":"f","prof":"estudante","emoji":"👩‍🎓","trabalho":"escola","turno":[7,12],"dias":"seg-sex","salario":0,"tracos":["sociável","festeira"],"casa":"c15"},
+
+  {"id":"m46","nome":"Seu Zé","idade":62,"g":"m","prof":"jardineiro do parque","emoji":"👨‍🌾","trabalho":"parque","turno":[7,15],"dias":"seg-sex","salario":20,"tracos":["madrugador","caseiro"],"casa":"c16"},
+  {"id":"m47","nome":"Dona Rosa","idade":60,"g":"f","prof":"dona do bar","emoji":"👩‍🦳","trabalho":"bar","turno":[17,1],"dias":"ter-dom","salario":45,"tracos":["festeira","sociável"],"casa":"c16"},
+  {"id":"m48","nome":"Tiago","idade":22,"g":"m","prof":"repositor do mercado","emoji":"🧑‍🦱","trabalho":"mercado","turno":[12,20],"dias":"seg-sab","salario":18,"tracos":["fitness","econômico"],"casa":"c16"}
+]

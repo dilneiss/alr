@@ -1,0 +1,13 @@
+{
+  "nome": "Loja Bugada",
+  "produtos": [
+    { "slug": "fone-bluetooth", "nome": "Fone Bluetooth Bass+", "preco": 199.9, "emoji": "🎧", "cores": ["#e0e7ff", "#c7d2fe"], "descricao": "Graves profundos, 30 horas de bateria e cancelamento de ruído para focar no código.", "vitrine": true },
+    { "slug": "teclado-rgb", "nome": "Teclado Mecânico RGB", "preco": 349.9, "emoji": "⌨️", "cores": ["#fce7f3", "#fbcfe8"], "descricao": "Switches azuis, 16 milhões de cores e aquele clique que irrita o time inteiro.", "vitrine": true },
+    { "slug": "cadeira-gamer", "nome": "Cadeira Gamer Pro", "preco": 1299.0, "emoji": "🪑", "cores": ["#dcfce7", "#bbf7d0"], "descricao": "Reclina 180°, apoio lombar e rodinhas silenciosas para maratonas de deploy.", "vitrine": true, "link_da_vitrine": "cadeira-gamer-pro" },
+    { "slug": "caneca-dev", "nome": "Caneca “Funciona na minha máquina”", "preco": 49.9, "emoji": "☕", "cores": ["#fef3c7", "#fde68a"], "descricao": "Cerâmica, 350 ml. Aguenta café, chá e desculpas de produção.", "vitrine": true },
+    { "slug": "camiseta-bug-hunter", "nome": "Camiseta Bug Hunter", "preco": 79.9, "emoji": "👕", "cores": ["#e0f2fe", "#bae6fd"], "descricao": "Algodão, estampa de besouro com lupa. Tamanhos P ao GG.", "vitrine": false }
+  ],
+  "cupons": { "BEMVINDO10": 0.1, "JEV20": 0.2 },
+  "carrinho_inicial": [{ "slug": "camiseta-bug-hunter", "qtd": "1" }],
+  "cliente": { "nome": "Ana Souza", "email": "ana.souza@email.com", "endereco": "Rua dos Testes, 404 — São Paulo/SP" }
+}

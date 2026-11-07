@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Tron: Você vs Jev · Jev</title>
+<meta name="description" content="Motos de luz contra uma IA que decide cada curva em milissegundos: o Jev lê os sensores da arena e escolhe seguir reto, virar à esquerda ou à direita.">
+<meta name="theme-color" content="#05060A">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230B1030'/%3E%3Cpath d='M12 48V22h40' fill='none' stroke='%2319E6FF' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M52 40H30' fill='none' stroke='%23FF8A00' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/tilt-neon-latin-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/share-tech-mono-latin-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/_jev/jev.css">
+<link rel="stylesheet" href="tron.css">
+</head>
+<body data-estado="idle" data-modo="">
+<header class="jev-topbar"></header>
+<main class="jev-shell fliperama">
+  <div class="sala">
+
+    <!-- ===================== o gabinete: letreiro, tela de tubo e painel de controle ===================== -->
+    <section class="gabinete" id="arenaCard" aria-label="Gabinete do jogo">
+      <header class="letreiro">
+        <div class="letreiro-vidro">
+          <h1 class="letreiro-t">
+            <span class="neon-title">TR<span class="tubo">O</span>N</span>
+            <span class="vs"><span class="n-voce">Você</span> <i>vs</i> <b class="n-jev">Jev</b></span>
+          </h1>
+        </div>
+      </header>
+      <p class="p-short">O Jev lê a arena e decide cada curva em ~300 ms.</p>
+
+      <div class="moldura">
+        <div class="crt">
+          <div class="arena-wrap" id="arenaWrap">
+            <canvas id="arena" aria-label="Arena do Tron"></canvas>
+
+            <div class="atracao" aria-hidden="true">
+              <p class="ficha">Insira ficha</p>
+              <p class="atr-sub">escolha o desafio no painel</p>
+            </div>
+            <div class="ov ov-count" id="ovCount" hidden><div><div class="count" id="countN">3</div><div class="count-sub" id="countSub"></div></div></div>
+            <div class="ov" id="ovPausa" hidden><div class="ov-box small"><div class="ov-kicker">pausado</div><p>A partida pausa sozinha quando ninguém está olhando (e o Jev para de gastar).</p><button class="jev-btn jev-btn--primary ico-play" id="btnContinuar" type="button">Continuar</button></div></div>
+            <div class="ov ov-fim" id="ovFim" hidden>
+              <div class="ov-box">
+                <div class="ov-kicker" id="fimKicker">fim de partida</div>
+                <h2 class="fim-title" id="fimTitulo">—</h2>
+                <p class="fim-motivo" id="fimMotivo">—</p>
+                <div class="fim-kpis" id="fimKpis"></div>
+                <div class="fim-btns">
+                  <button class="jev-btn jev-btn--primary ico-play" id="btnDeNovo" type="button">Jogar de novo</button>
+                  <button class="jev-btn" id="btnTrocar" type="button">Trocar modo</button>
+                  <button class="jev-btn jev-btn--ghost ico-lupa" id="btnInsp" type="button">Ver o que o Jev viu</button>
+                </div>
+              </div>
+            </div>
+            <div class="aviso" id="aviso" hidden></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="painel">
+        <!-- modo de atração: os três modos são os botões do fliperama -->
+        <div class="ov-intro" id="ovIntro">
+          <div class="modes" role="group" aria-label="Escolha o desafio">
+            <button class="mode" data-modo="humano" type="button" style="--i:0"><span class="cap" aria-hidden="true"></span><span class="mode-txt"><b>Você vs Jev</b><small>Setas ou WASD (no celular, deslize). Encurrale a moto azul.</small></span></button>
+            <button class="mode" data-modo="robo" type="button" style="--i:1"><span class="cap" aria-hidden="true"></span><span class="mode-txt"><b>Jev vs Robô clássico</b><small>Assista: IA que decide × heurística de espaço livre.</small></span></button>
+            <button class="mode" data-modo="jevjev" type="button" style="--i:2"><span class="cap" aria-hidden="true"></span><span class="mode-txt"><b>Jev vs Jev</b><small>Duas motos, uma chamada: o Jev decide as duas.</small></span></button>
+          </div>
+        </div>
+        <!-- durante a partida: lâmpadas dos jogadores, contador de passos e botões -->
+        <div class="painel-jogo">
+          <div class="legend" id="legend"><span class="dim">Escolha um modo para começar</span></div>
+          <div class="leitura">
+            <div class="arena-info" id="arenaInfo"></div>
+            <div class="teclas-dica" aria-hidden="true"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd><span>ou</span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div>
+          </div>
+          <div class="dpad" id="dpad" hidden aria-label="Controles">
+            <button type="button" data-dir="0" aria-label="Cima"></button>
+            <button type="button" data-dir="3" aria-label="Esquerda"></button>
+            <button type="button" data-dir="2" aria-label="Baixo"></button>
+            <button type="button" data-dir="1" aria-label="Direita"></button>
+          </div>
+          <div class="arena-btns">
+            <button class="jev-btn jev-btn--sm ico-pausa" id="btnPausa" type="button" hidden>Pausar</button>
+            <button class="jev-btn jev-btn--sm jev-btn--ghost ico-sair" id="btnSair" type="button" hidden>Sair</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== telas de diagnóstico (lado direito) ===================== -->
+    <aside class="lateral lateral-dir" aria-label="Telas de diagnóstico do Jev">
+      <div id="brains">
+        <section class="brain brain-idle" data-slot="0" style="--c:#19E6FF">
+          <div class="brain-head"><span class="dot" aria-hidden="true"></span><h3>Cérebro do Jev</h3><span class="modo-pill" hidden></span></div>
+          <svg class="sensor-demo" viewBox="0 0 300 128" aria-hidden="true">
+            <g class="vet-fraco">
+              <path d="M150 78V34M136 88H78M164 88h58" stroke-dasharray="3 5"/>
+              <rect x="116" y="4" width="68" height="22" rx="3"/>
+              <rect x="8" y="77" width="64" height="22" rx="3"/>
+              <rect x="228" y="77" width="64" height="22" rx="3"/>
+            </g>
+            <g class="vet-forte">
+              <path d="M150 78l-9 18 9-5 9 5z"/>
+              <path d="M144 40l6-8 6 8M84 82l-7 6 7 6M216 82l7 6-7 6"/>
+            </g>
+            <text x="150" y="19" text-anchor="middle">reto</text>
+            <text x="40" y="92" text-anchor="middle">esquerda</text>
+            <text x="260" y="92" text-anchor="middle">direita</text>
+            <text class="vet-leg" x="150" y="122" text-anchor="middle">espaço · território · risco</text>
+          </svg>
+          <div class="brain-empty">A cada passo o Jev recebe, para cada opção (reto, esquerda, direita): se <b>bate</b>, quantas casas de <b>espaço</b> ainda alcança, o <b>território</b> que ganha do oponente e o <b>risco</b> de batida de frente. Ele devolve as probabilidades — e a moto obedece.</div>
+        </section>
+      </div>
+
+      <section class="osc rt" aria-labelledby="rtTitulo">
+        <div class="osc-head"><span class="osc-led" aria-hidden="true"></span><h3 id="rtTitulo">Tempo real</h3></div>
+        <dl class="rt-kpis" id="rtKpis">
+          <div><dt>decisões do Jev</dt><dd id="kDec">0</dd></div>
+          <div><dt>no tempo</dt><dd id="kTempo">—</dd></div>
+          <div><dt>última latência</dt><dd id="kLat">—</dd></div>
+          <div><dt>tick (prazo)</dt><dd id="kTick">—</dd></div>
+          <div><dt>latência média</dt><dd id="kMedia">—</dd></div>
+          <div><dt>custo da partida</dt><dd id="kCusto">US$ 0</dd></div>
+        </dl>
+        <canvas id="spark" height="64" aria-label="Latência de cada decisão comparada ao prazo do tick"></canvas>
+        <p class="rt-note" title="Cada barra é uma decisão do Jev. Verde: chegou antes do tick. Vermelha: atrasou e a moto usou o piloto automático (opção com mais espaço). Tracejado: prazo do tick."><span class="ok">verde</span> = chegou no tempo · <span class="late">vermelha</span> = atrasou · tracejado = prazo</p>
+      </section>
+    </aside>
+
+    <!-- ===================== recordes e cartão de instruções (lado esquerdo) ===================== -->
+    <aside class="lateral lateral-esq" aria-label="Recordes do dia e instruções">
+      <section class="hs-tela" aria-labelledby="recTitulo">
+        <h3 class="hs-t" id="recTitulo">Recordes do dia</h3>
+        <div class="placar" id="placar" aria-label="Placar do dia">
+          <p class="hs-carregando">carregando o placar…</p>
+        </div>
+      </section>
+
+      <section class="cartao" aria-labelledby="comoTitulo">
+        <h3 id="comoTitulo">Como jogar</h3>
+        <p class="p-long">Motos de luz contra uma IA que decide <b>cada curva</b>. A cada passo, o Jev lê os sensores da arena — espaço livre em cada direção, território, risco de batida — e escolhe <b>seguir reto, virar à esquerda ou à direita</b> em ~300 ms.</p>
+        <p class="cartao-teclas"><span class="kg"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span><span class="ou">ou</span><span class="kg"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span class="cel">no celular, deslize</span></p>
+        <p class="ov-note">Cada decisão é uma chamada real ao Jev com os sensores da arena. Se ela chegar depois do tick, a moto usa o piloto automático — e isso aparece no placar de "decisões no tempo".</p>
+      </section>
+    </aside>
+
+  </div>
+</main>
+<script src="/_jev/jev-kit.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

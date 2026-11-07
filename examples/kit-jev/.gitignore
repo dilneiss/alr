@@ -1,0 +1,9 @@
+# segredos e estado de execução do kit: nunca vão para o Git
+segredos/*
+!segredos/LEIA-ME.md
+.kit/
+exportados/
+node_modules/
+data-runtime/
+.env
+.DS_Store

@@ -1,0 +1,14 @@
+Falas do Seu Valdir (Convença o Porteiro)
+
+- 52 falas curtas em português do Brasil, uma por arquivo: <id da fala>.mp3 (o id é o mesmo de FALAS no app.config.mjs).
+- Geradas com a ElevenLabs (modelo eleven_v4), com a voz "Carlos", uma voz pronta da Voice Library da ElevenLabs.
+  Não é a voz de nenhuma pessoa real deste projeto.
+- Tratamento: silêncio das pontas cortado, volume normalizado em -16 LUFS (ffmpeg loudnorm), mp3 mono de 96 kbps.
+- Uso: o áudio gerado na ElevenLabs segue os termos da ElevenLabs para a conta que gerou. Para publicar o seu app,
+  grave as suas próprias falas.
+
+Para adaptar o personagem:
+1. Troque os textos em FALAS (app.config.mjs): "texto" é o balão e "quando" é o critério que o Jev lê para escolher.
+2. Grave cada fala com o mesmo id (ElevenLabs, outro TTS ou a sua voz) e salve aqui como <id>.mp3.
+3. Teste falando ou com os exemplos da barra, e confira em "O que o Jev vê" se ele escolhe a fala certa.
+   Os testes anotados ficam em "testes", no fim do app.config.mjs: frase de exemplo e a resposta esperada.

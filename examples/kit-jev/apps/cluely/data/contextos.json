@@ -1,0 +1,52 @@
+[
+  {
+    "id": "vendas",
+    "titulo": "Vendas · Atendix",
+    "emoji": "💼",
+    "papel_voce": "vendedor(a) da Atendix",
+    "papel_outro": "cliente: dona de uma rede de clínicas",
+    "modo": "vendas",
+    "texto": "Eu vendo a Atendix: atendente de IA para o WhatsApp de clínicas, que responde na hora e marca e remarca consultas direto na agenda.\nPreço: plano Pro R$ 1.490 por mês por unidade. Anual à vista: R$ 14.900 por unidade (equivale a 2 meses grátis). O desconto do anual vale para todas as unidades do contrato.\nImplantação: 7 dias úteis, feita pela nossa equipe. Integra com Clinicorp, iClinic e Feegow.\nLGPD: dados no Brasil, criptografados, e assinamos o contrato de tratamento de dados.\nGarantia de 30 dias; depois disso, cancelamento com aviso de 30 dias, sem multa.\nPiloto: 14 dias grátis em uma unidade.",
+    "termos": "Atendix, Clinicorp, iClinic, Feegow, LGPD, WhatsApp"
+  },
+  {
+    "id": "reuniao",
+    "titulo": "Reunião de equipe",
+    "emoji": "🗂️",
+    "papel_voce": "gerente de marketing",
+    "papel_outro": "colega de trabalho: diretora de produto",
+    "modo": "reuniao_de_equipe",
+    "texto": "Sou gerente de marketing de uma escola de cursos online.\nMétricas: CAC atual de R$ 120; LTV médio de R$ 980; churn do plano mensal de 4% ao mês, estável há 3 meses.\nLançamento do plano anual: as peças de marketing ficam prontas em 1 semana; o checkout novo ainda está em teste com 5% dos alunos.\nEquipe: o Lucas cuida do e-mail marketing; eu cuido dos anúncios.",
+    "termos": "CAC, LTV, churn, checkout, Lucas"
+  },
+  {
+    "id": "atendimento",
+    "titulo": "Atendimento · Loja Aurora",
+    "emoji": "🎧",
+    "papel_voce": "atendente da Loja Aurora",
+    "papel_outro": "cliente da loja",
+    "modo": "atendimento",
+    "texto": "Sou atendente da Loja Aurora, um e-commerce de eletrônicos.\nCobrança duplicada: o estorno cai em até 5 dias úteis no cartão, e o protocolo vai por e-mail na hora.\nTroca por defeito: até 7 dias depois da entrega, com frete grátis; a coleta é agendada pelo WhatsApp.\nSempre peça o número do pedido e confirme o e-mail do cliente.",
+    "termos": "Loja Aurora, protocolo, estorno"
+  },
+  {
+    "id": "ia",
+    "titulo": "Consultoria de IA",
+    "emoji": "🤖",
+    "papel_voce": "consultor(a) de IA e automação",
+    "papel_outro": "cliente: dono de uma agência de marketing",
+    "modo": "vendas",
+    "texto": "Eu implanto agentes de IA para empresas: atendimento no WhatsApp, automações no n8n e integração com o CRM.\nStack: Claude e GPT pela API, RAG com banco vetorial no Supabase e automações no n8n; o cliente não precisa programar.\nCusto de IA: em média R$ 0,02 por conversa de atendimento (tokens da API), incluído no plano até 5 mil conversas por mês; acima disso, R$ 0,03 por conversa.\nPlano: R$ 4.900 de implantação + R$ 890 por mês; prazo de 15 dias úteis.\nFine-tuning quase nunca é necessário: começamos com RAG e bons prompts; fine-tuning só com mais de 10 mil exemplos de conversa.\nRAG: o agente busca a resposta nos documentos da empresa antes de responder, para não inventar.\nO Claude Code é usado pela nossa equipe para manter o código; o cliente edita prompts e respostas num painel, sem programar.",
+    "termos": "n8n, Claude, Claude Code, GPT, OpenAI, RAG, Supabase, prompt, tokens, fine-tuning, CRM, WhatsApp"
+  },
+  {
+    "id": "livre",
+    "titulo": "Meu contexto",
+    "emoji": "✍️",
+    "papel_voce": "o usuário do copiloto",
+    "papel_outro": "a outra pessoa da conversa",
+    "modo": null,
+    "texto": "",
+    "termos": ""
+  }
+]

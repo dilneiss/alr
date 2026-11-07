@@ -1,0 +1,4 @@
+Fontes deste app, servidas daqui mesmo (subconjunto latin, via Fontsource), sob a SIL Open Font License 1.1
+(https://openfontlicense.org):
+- Pixelify Sans (variável, pesos 400–700) — Copyright 2021 The Pixelify Sans Project Authors
+- Atkinson Hyperlegible (400, 700, 400 itálico) — Copyright 2020 Braille Institute of America, Inc.

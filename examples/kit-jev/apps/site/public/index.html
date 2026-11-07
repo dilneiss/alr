@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Site que Lê Intenções · Jev</title>
+<meta name="description" content="Uma página de vendas em que quase tudo começa fechado. Cada coisa que você abre é um sinal, e o Jev monta a página para você enquanto você navega.">
+<meta name="theme-color" content="#0c0d0e">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<link rel="preload" href="fonts/titulos.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/texto.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/_jev/jev.css">
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="tema.css">
+</head>
+<body class="site">
+<header class="jev-topbar"></header>
+
+<a class="pular" href="#portas">Pular para as seções</a>
+
+<div class="faixa-demo" id="faixaDemo"></div>
+
+<main class="pg" id="pagina">
+  <section class="hero" id="topo" data-sec="topo" aria-labelledby="heroTitulo"></section>
+  <nav class="pilares" id="pilares" aria-label="Pilares"></nav>
+
+  <div class="layout" id="layout">
+    <div class="coluna">
+      <div class="portas-cab" id="portasCab"></div>
+      <div class="portas" id="portas" aria-label="Seções da página"></div>
+      <section class="final" id="final" aria-labelledby="finalTitulo"></section>
+    </div>
+
+    <aside class="trilho" id="trilho" aria-label="O que o Jev está montando para você">
+      <section class="lente" id="lente" aria-label="Lente do Jev"></section>
+      <section class="minha-trilha" id="minhaTrilha" aria-label="Sua trilha" hidden></section>
+      <section class="mapa" id="mapa" aria-label="Mapa da página"></section>
+      <div class="trilho-cta" id="trilhoCta"></div>
+    </aside>
+  </div>
+</main>
+
+<!-- camada fixa: pilha de avisos (próximo para você, dúvida, cartões) e barra do celular -->
+<div class="palco" id="palco" aria-live="polite"></div>
+<div class="doca" id="doca"></div>
+<div class="aviso-reorg" id="avisoReorg" role="status" aria-live="polite" hidden></div>
+<svg class="batuta" id="batuta" aria-hidden="true"></svg>
+
+<!-- pagamento ou contato de demonstração -->
+<dialog class="dlg checkout" id="checkout" aria-labelledby="ckTitulo"></dialog>
+<!-- saída segurada -->
+<dialog class="dlg saida" id="dlgSaida" aria-labelledby="saidaTitulo"></dialog>
+<!-- Raio-X completo -->
+<aside class="raiox" id="raiox" role="dialog" aria-modal="false" aria-labelledby="rxTitulo" hidden></aside>
+<div class="raiox-fundo" id="raioxFundo" hidden></div>
+<!-- gaveta do celular (lente + trilha + mapa) -->
+<div class="folha" id="folha" hidden></div>
+
+<!-- simulações -->
+<div class="sim-menu" id="simMenu" role="dialog" aria-label="Simular visitante" hidden></div>
+<div class="sim-hud" id="simHud" role="status" aria-live="polite" hidden></div>
+<div class="sim-resumo" id="simResumo" role="dialog" aria-labelledby="simResumoTit" hidden></div>
+<div class="fantasma" id="fantasma" hidden aria-hidden="true">
+  <svg viewBox="0 0 24 24" width="26" height="26"><defs><linearGradient id="gFant" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a78bfa"/></linearGradient></defs><path d="M4 2.5l15.2 9.1-6.6 1.4 3.9 7.3-2.9 1.5-3.9-7.3-4.8 4.7z" fill="#0c0d0e" stroke="url(#gFant)" stroke-width="1.6" stroke-linejoin="round"/></svg>
+  <span class="fantasma-rot" id="fantasmaRot"></span>
+</div>
+
+<script src="/_jev/jev-kit.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

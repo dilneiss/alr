@@ -1,0 +1,3 @@
+Fontes deste app (subconjunto latin, via Fontsource), todas sob a SIL Open Font License 1.1 (https://openfontlicense.org):
+- Newsreader (newsreader-opsz.woff2, newsreader-italic.woff2) — Copyright 2020 The Newsreader Project Authors (Production Type).
+- Libre Franklin (libre-franklin.woff2) — Copyright 2015 The Libre Franklin Project Authors (Impallari Type).

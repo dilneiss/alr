@@ -1,0 +1,9 @@
+exemplo.mp3 — gravação de exemplo da demonstração (▶ Ver funcionando) do "Editor que Corta Enquanto Você Fala".
+
+- Voz sintética, não é uma pessoa real: voz de estoque "Raquel" da biblioteca de vozes da ElevenLabs (pt-BR),
+  modelo eleven_multilingual_v2, gerada em 21/10/2026 numa conta paga (o plano permite uso comercial do áudio).
+- O texto tem erros de propósito (frase pela metade, "não, peraí", "é… tipo assim", "ops, vou de novo", repetição),
+  para o editor ter o que cortar. Montagem: uma fala por frase, pausas naturais entre elas, -16 LUFS e um leve
+  ruído de sala por baixo, como num microfone de verdade.
+- exemplo.json traz o texto de cada frase e os tempos medidos uma vez no próprio arquivo (onde a voz começa e termina,
+  e o tempo de cada palavra). Para trocar o exemplo, grave o seu áudio, meça os tempos e troque os dois arquivos.
