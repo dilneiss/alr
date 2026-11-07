@@ -23,7 +23,10 @@ O `scripts/serve.mjs` da biblioteca sobe o ALR já com o professor apontado para
 motores respondem igual — medido: `noul 0.64` no ALR e `noul 0.64` no JEV para o
 mesmo estado.
 
-Diagnóstico do professor: `D:/herd/alr-teacher.log` (só escreve quando algo falha).
+Diagnóstico do professor: `ALR_TEACHER_LOG` (o `serve.mjs` aponta para `data-alr-teacher.log`;
+rodando na mão, o padrão é `<tmp>/alr-teacher.log`). Só escreve quando algo falha.
+
+O `state` aceita **string ou objeto** (`{"contexto": …, "tarefa": …}`) — é o que os apps mandam.
 
 ## Rodar
 
@@ -40,11 +43,13 @@ D:/herd/alr-target/release/alr.exe playground --port 3000
 ```bash
 curl -X POST http://127.0.0.1:3000/api/v1/decisions \
   -H 'Content-Type: application/json' \
-  -d '{"state":"Cliente: integra com Clinicorp? uso em 3 unidades",
+  -d '{"state":{"tarefa":"Cliente: integra com Clinicorp? uso em 3 unidades"},
        "questions":{"quer_comprar":{"type":"noul","instructions":"Intencao real de compra?"}}}'
 ```
 
 ## Cuidado
 
 - `.gitignore` do kit continua valendo (não versionar mídia gerada).
+- O espelho é byte a byte igual ao original; conferir com `node scripts/check-sync.mjs`
+  no repositório maestros (ele compara este diretório com `anexos/kit-jev/kit-jev-100-apps`).
 - Este diretório é cópia de leitura: edite a versão em `maestros/anexos/kit-jev/`.
