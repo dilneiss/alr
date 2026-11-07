@@ -673,7 +673,7 @@ Infraestrutura completa de alta frequência e baixa latência para execução qu
    * No momento exato da abertura de qualquer trade, o robô congela e persiste no banco SQLite um snapshot auditável contendo os valores exatos de todos os indicadores técnicos e o mapa completo de pesos dos fatores ativos.
    * Visualização interativa na Web via modal `[📊 Indicadores & Pesos]` presente na tabela de extrato recente e nos cards das posições em aberto.
 3. **Arena de 400 Perfis Concorrentes Simultâneos (200 Cripto + 200 Forex) & Campeãs por Ativo:**
-   * Executa simultaneamente no motor **400 perfis de estratégias evolutivas** operando em micro-contas virtuais ($1.000 USD cada):
+   * Executa simultaneamente no motor **200 perfis de estratégias evolutivas** operando em micro-contas virtuais ($1.000 USD cada):
      * **200 Perfis Especializados em Criptomoedas**: Focados em volume institucional, momentum estrutural, Ichimoku Kumo breakouts, confluência MTF, proteção contra dumps de BTC, Order Book Imbalance (OBI) e Point of Control (POC).
      * **200 Perfis Especializados em Forex**: Calibrados com matemática de pips, rompimentos de sessões (London Breakout, Asian Range Squeeze, New York Continuation), reversão à média Donchian, scalping de spread curto e confluências de fluxo cambial.
    * **Fim das Travas de Posição (Trades Ilimitados Simultâneos)**:
@@ -693,7 +693,7 @@ Infraestrutura completa de alta frequência e baixa latência para execução qu
        * Para ativos neutros: nó em modo sentinela indicando a estratégia que está monitorando o mercado e o status atual da confluência.
        * Clique em qualquer nó para abrir o modal de inspeção profunda de indicadores técnicos e acionar zeragem imediata ou breakeven.
 5. **Otimizador de Backtest Histórico de até 90 Dias (3 Meses):**
-   * Permite realizar simulações profundas de até 90 dias de histórico para cada ativo do basket avaliando todos os 400 perfis simultaneamente.
+   * Permite realizar simulações profundas de até 90 dias de histórico para cada ativo do basket avaliando todos os 200 perfis simultaneamente.
    * Gera um relatório classificado de performance (#1 a #100) com taxa de acerto, PnL líquido, profit factor, drawdown e Sharpe ratio, elegendo a melhor configuração inicial para iniciar as operações ao vivo.
    * **Filtro de Correlação com Bitcoin (`BtcMarketBetaGuard`)**: Veto absoluto (`hold_logits += 8.0`, `buy_logits = -10.0`) em compras de altcoins caso o Bitcoin esteja em queda severa intradiária (< -1.2% ou abaixo da banda inferior VWAP).
    * **Volume Profile & Ponto de Controle (`PointOfControlEngine`)**: Identificação do nível de preço com maior volume financeiro institucional (POC) e Value Area (70% do volume) para posicionar TP1 e Stop-Loss de forma cirúrgica.

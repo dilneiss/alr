@@ -1090,14 +1090,24 @@ async fn handle_decision(
     body: Json<JevDecisionRequest>,
 ) -> impl IntoResponse {
     if let Some(j) = professor_remoto(&body.0).await {
+        // O professor cobra (OpenRouter), mas quem responde é o ALR: o custo que ele
+        // informa vai para `cost_professor` e `cost` fica 0, para nenhum app somar gasto
+        // ao usar o motor local.
+        let mut usage = j
+            .get("usage")
+            .cloned()
+            .unwrap_or(serde_json::json!({ "input_tokens": 0, "output_tokens": 0, "cost": 0.0 }));
+        if let Some(obj) = usage.as_object_mut() {
+            let gasto = obj.get("cost").and_then(|v| v.as_f64()).unwrap_or(0.0);
+            obj.insert("cost".to_string(), serde_json::json!(0.0));
+            obj.insert("cost_professor".to_string(), serde_json::json!(gasto));
+        }
         let resp = serde_json::json!({
             "id": format!("alr-teacher-{}", chrono::Utc::now().timestamp_millis()),
             "model": j.get("model").cloned().unwrap_or(serde_json::json!("typesafe/jev-1.13")),
             "provider": "ALR System 1 · teacher",
             "answers": j.get("answers").cloned().unwrap_or(serde_json::json!({})),
-            "usage": j.get("usage").cloned().unwrap_or(serde_json::json!({
-                "input_tokens": 0, "output_tokens": 0, "cost": 0.0
-            })),
+            "usage": usage,
         });
         return (axum::http::StatusCode::OK, Json(resp)).into_response();
     }

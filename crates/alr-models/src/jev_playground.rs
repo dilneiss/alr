@@ -775,7 +775,7 @@ impl JevPlaygroundPreset {
                 usage: JevUsage {
                     input_tokens: 384,
                     output_tokens: 22,
-                    cost: 0.000016128,
+                    cost: 0.0,
                 },
                 cost_comparison: Some(JevCostComparison {
                     input_tokens: 384,
@@ -862,7 +862,7 @@ impl JevPlaygroundPreset {
                 usage: JevUsage {
                     input_tokens: 364,
                     output_tokens: 38,
-                    cost: 0.000015288,
+                    cost: 0.0,
                 },
                 cost_comparison: Some(JevCostComparison {
                     input_tokens: 364,
@@ -949,7 +949,7 @@ impl JevPlaygroundPreset {
                 usage: JevUsage {
                     input_tokens: 413,
                     output_tokens: 20,
-                    cost: 0.000017346,
+                    cost: 0.0,
                 },
                 cost_comparison: Some(JevCostComparison {
                     input_tokens: 413,
@@ -2173,7 +2173,8 @@ impl JevTypedJudgeEngine {
             usage: JevUsage {
                 input_tokens,
                 output_tokens,
-                cost: (jev_cost * 1_000_000.0).round() / 1_000_000.0,
+                // ALR local não cobra nada: o valor que seria cobrado fica em cost_comparison
+                cost: 0.0,
             },
             cost_comparison: Some(JevCostComparison {
                 input_tokens,

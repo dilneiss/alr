@@ -48,7 +48,7 @@
   }
 
   // ---------------- métricas + topbar ----------------
-  const metrics = { calls: 0, decisions: 0, cost: 0, last: null, lat: [] };
+  const metrics = { calls: 0, decisions: 0, cost: 0, custoProfessor: 0, motor: null, last: null, lat: [] };
   let topbarEls = null;
 
   function latClass(ms) { return ms == null ? '' : ms < 450 ? 'lat-good' : ms < 900 ? 'lat-mid' : 'lat-bad'; }
@@ -59,7 +59,13 @@
     lat.className = 'jev-metric lat ' + latClass(metrics.last);
     lat.querySelector('b').textContent = metrics.last == null ? '—' : fmt.ms(metrics.last);
     dec.querySelector('b').textContent = fmt.int(metrics.decisions);
-    cost.querySelector('b').textContent = fmt.usd(metrics.cost);
+    // com o motor ALR quem decide é local: o custo da sessão é zero (o gasto do professor,
+    // quando existe, fica no rodapé do inspetor e não entra no bolo)
+    const ehAlr = /^ALR/i.test(metrics.motor || '');
+    cost.querySelector('b').textContent = ehAlr ? 'grátis' : fmt.usd(metrics.cost);
+    cost.title = ehAlr
+      ? 'Motor ALR (local): nenhum custo de nuvem' + (metrics.custoProfessor > 0 ? ' · professor consultado: ' + fmt.usd(metrics.custoProfessor) : '')
+      : 'Custo acumulado desta sessão no OpenRouter';
     if (flash) { lat.classList.remove('flash'); void lat.offsetWidth; lat.classList.add('flash'); }
   }
 
@@ -162,6 +168,8 @@
       metrics.calls++;
       metrics.decisions += d.n_questions || 0;
       metrics.cost += d.cost || 0;
+      metrics.custoProfessor += d.custo_professor || 0;
+      if (d.provider) metrics.motor = d.provider;
       if (!d.cached && d.latency_ms != null) { metrics.last = d.latency_ms; metrics.lat.push(d.latency_ms); }
       calls.push({ ...d, n: metrics.calls, at: new Date().toLocaleTimeString('pt-BR'), label: label || d.label });
       if (calls.length > 60) calls.shift();

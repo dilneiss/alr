@@ -754,10 +754,10 @@ mod tests {
         let engine = MultiAssetTraderEngine::new_dual_market(50_000.0);
         assert_eq!(engine.config.max_concurrent_positions, 14);
         assert_eq!(engine.config.basket.len(), 14);
-        assert_eq!(engine.strategy_arena.competitors.len(), 400);
+        assert_eq!(engine.strategy_arena.competitors.len(), 200);
 
         let topology = engine.get_graph_topology();
-        assert_eq!(topology.arena_competitors_count, 400);
+        assert_eq!(topology.arena_competitors_count, 200);
         assert_eq!(topology.nodes.len(), 17);
         assert_eq!(topology.links.len(), 16);
         assert_eq!(topology.assets.len(), 14);
@@ -786,7 +786,7 @@ mod tests {
 
         assert_eq!(resp.status(), reqwest::StatusCode::OK);
         let body: GraphTopologyData = resp.json().await.expect("deserialize GraphTopologyData");
-        assert_eq!(body.arena_competitors_count, 400);
+        assert_eq!(body.arena_competitors_count, 200);
         assert_eq!(body.nodes.len(), 17);
         assert_eq!(body.links.len(), 16);
         assert_eq!(body.assets.len(), 14);

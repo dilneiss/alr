@@ -34,7 +34,9 @@ async fn test_preset_agent_guardrail_noul_exact_match() {
 
     assert_eq!(resp.usage.input_tokens, 384);
     assert_eq!(resp.usage.output_tokens, 22);
-    assert!((resp.usage.cost - 0.000016128).abs() < 1e-7);
+    // ALR local não cobra: o valor que seria cobrado fica em cost_comparison.jev_cost
+    assert_eq!(resp.usage.cost, 0.0);
+    assert!((resp.cost_comparison.as_ref().unwrap().jev_cost - 0.000016128).abs() < 1e-9);
 
     let ui_decision = resp.ui_decision.expect("ui_decision must be present");
     assert_eq!(ui_decision.action_text, "Pause and ask a human");
@@ -81,7 +83,8 @@ async fn test_preset_support_routing_choice_exact_match() {
 
     assert_eq!(resp.usage.input_tokens, 364);
     assert_eq!(resp.usage.output_tokens, 38);
-    assert!((resp.usage.cost - 0.000015288).abs() < 1e-7);
+    assert_eq!(resp.usage.cost, 0.0);
+    assert!((resp.cost_comparison.as_ref().unwrap().jev_cost - 0.000015288).abs() < 1e-9);
 
     let ui_decision = resp.ui_decision.expect("ui_decision must be present");
     assert_eq!(
@@ -139,7 +142,8 @@ async fn test_preset_lead_qualification_score_exact_match() {
 
     assert_eq!(resp.usage.input_tokens, 413);
     assert_eq!(resp.usage.output_tokens, 20);
-    assert!((resp.usage.cost - 0.000017346).abs() < 1e-7);
+    assert_eq!(resp.usage.cost, 0.0);
+    assert!((resp.cost_comparison.as_ref().unwrap().jev_cost - 0.000017346).abs() < 1e-9);
 
     let ui_decision = resp.ui_decision.expect("ui_decision must be present");
     assert_eq!(ui_decision.action_text, "Route to an account executive");

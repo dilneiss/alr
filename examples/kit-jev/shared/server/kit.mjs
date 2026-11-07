@@ -65,9 +65,10 @@ export async function callJev({ app, state, questions, ip = '', cache = false, m
   }
   if (!j.ok) throw new HttpError(r.status === 429 ? 429 : 502, j.error?.message || 'Falha no Jev', j.error?.code || 'jev_error');
   const out = {
-    answers: j.answers, latency_ms: j.latency_ms, total_ms: Math.round(performance.now() - t0), cost: j.cost, usage: j.usage, model: j.model, cached: j.cached,
+    answers: j.answers, latency_ms: j.latency_ms, total_ms: Math.round(performance.now() - t0), cost: j.cost, custo_professor: j.custo_professor,
+    usage: j.usage, model: j.model, provider: j.provider, cached: j.cached,
   };
-  out.debug = { request: { model: j.model, state: trimForDebug(state), questions: trimForDebug(questions, 9000) }, response: { answers: trimForDebug(j.answers, 9000), usage: j.usage }, latency_ms: j.latency_ms, cost: j.cost, cached: j.cached, n_questions: Object.keys(questions).length };
+  out.debug = { request: { model: j.model, state: trimForDebug(state), questions: trimForDebug(questions, 9000) }, response: { answers: trimForDebug(j.answers, 9000), usage: j.usage }, latency_ms: j.latency_ms, cost: j.cost, custo_professor: j.custo_professor, provider: j.provider, cached: j.cached, n_questions: Object.keys(questions).length };
   return out;
 }
 
