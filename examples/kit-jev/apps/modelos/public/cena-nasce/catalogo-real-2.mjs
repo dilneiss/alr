@@ -84,7 +84,7 @@ export const MUNDO_REAL_2 = [
   ['cometa', 'cometa', '☄️', 120, 'frente', 'objeto', 'cometa', 'cometas', 'meteoro', 'estrela cadente grande'],
   ['fossil', 'fóssil', '🦴', 100, 'frente', 'objeto', 'fóssil', 'fossil', 'fósseis', 'osso de dinossauro'],
   ['folha_seca', 'folha seca', '🍂', 50, 'frente', 'objeto', 'folha seca', 'folhas secas', 'folha caindo'],
-  ['semente', 'semente', '🌱', 40, 'frente', 'objeto', 'sementes', 'semente de flor'],
+  ['semente', 'semente de flor', '🌱', 40, 'frente', 'objeto', 'sementinha de flor'],
   ['raiz', 'raiz', '🌱', 60, 'frente', 'objeto', 'raiz', 'raízes', 'raizes'],
   ['pedra_preciosa', 'pedra preciosa', '💠', 60, 'frente', 'objeto', 'pedra preciosa', 'pedras preciosas', 'joia', 'jóia'],
   ['argila', 'argila', '🟤', 70, 'frente', 'objeto', 'argila', 'barro', 'massinha'],
@@ -111,7 +111,7 @@ export const MUNDO_REAL_2 = [
   ['guarda_roupa', 'guarda-roupa', '🚪', 200, 'frente', 'objeto', 'guarda-roupa', 'guarda roupa', 'armário', 'armario'],
   ['tapete', 'tapete', '🟫', 40, 'frente', 'objeto', 'tapete', 'tapetes', 'tapetinho'],
   ['cobertor', 'cobertor', '🛌', 70, 'frente', 'objeto', 'cobertor', 'cobertores', 'edredom', 'manta'],
-  ['almofada', 'almofada', '🛋️', 60, 'frente', 'objeto', 'almofada', 'almofadas', 'travesseiro'],
+  ['almofada', 'almofada', '🛋️', 60, 'frente', 'objeto', 'almofada', 'almofadas'],
 
   // ---------- casa, cozinha e utensílios (40) ----------
   ['sofa', 'sofá', '🛋️', 120, 'frente', 'objeto', 'sofá', 'sofa', 'sofás', 'sofa da sala'],
@@ -186,8 +186,8 @@ export const MUNDO_REAL_2 = [
   ['pipa', 'pipa', '🪁', 100, 'frente', 'objeto', 'pipa', 'pipas', 'papagaio de papel', 'arraia voadora'],
   ['ioio', 'ioiô', '🪀', 60, 'frente', 'objeto', 'ioiô', 'ioio', 'ioiôs', 'iô-iô'],
   ['peao', 'pião', '🌀', 50, 'frente', 'objeto', 'pião', 'peao', 'piões', 'peão de brinquedo'],
-  ['corda', 'corda', '🪢', 80, 'frente', 'objeto', 'corda', 'cordas', 'corda de pular', 'cordinha'],
-  ['raquete', 'raquete', '🏸', 70, 'frente', 'objeto', 'raquete', 'raquetes', 'raquete de tênis', 'raquete de pingue-pongue'],
+  ['corda', 'corda', '🪢', 80, 'frente', 'objeto', 'cordas', 'cordinha'],
+  ['raquete', 'raquete', '🏸', 70, 'frente', 'objeto', 'raquetes', 'raquete de tênis'],
   ['rede', 'rede', '🕸️', 100, 'frente', 'objeto', 'rede', 'redes', 'rede de vôlei', 'rede de balanço'],
   ['gol', 'gol', '🥅', 120, 'frente', 'objeto', 'gol', 'gols', 'trave', 'gol de futebol'],
   ['apito', 'apito', '📢', 50, 'frente', 'objeto', 'apito', 'apitos', 'apito do juiz'],

@@ -164,7 +164,7 @@ export const MUNDO_REAL = [
   ['pizza', 'pizza', '🍕', 80, 'frente', 'objeto', 'pizza', 'pizzas', 'fatia de pizza'],
   ['hamburguer', 'hambúrguer', '🍔', 76, 'frente', 'objeto', 'hambúrguer', 'hamburguer', 'burguer', 'lanche'],
   ['pipoca', 'pipoca', '🍿', 70, 'frente', 'objeto', 'pipoca', 'pipocas', 'balde de pipoca'],
-  ['fruta', 'fruta', '🍎', 70, 'frente', 'objeto', 'fruta', 'frutas', 'banana', 'laranja', 'uva'],
+  ['fruta', 'fruta', '🍎', 70, 'frente', 'objeto', 'fruta', 'frutas', 'banana', 'laranja'],
   ['morango', 'morango', '🍓', 60, 'frente', 'objeto', 'morango', 'morangos', 'morangão'],
   ['bolo_festa', 'bolo de festa', '🎂', 96, 'frente', 'objeto', 'bolo de festa', 'bolo confeitado'],
   ['doce', 'doce', '🍬', 50, 'frente', 'objeto', 'doce', 'doces', 'bala', 'balas', 'pirulito'],
@@ -179,7 +179,7 @@ export const MUNDO_REAL = [
   ['bandeira', 'bandeira', '🚩', 90, 'frente', 'objeto', 'bandeira', 'bandeiras', 'estandarte'],
   ['dinheiro', 'dinheiro', '💵', 50, 'frente', 'objeto', 'dinheiro', 'nota', 'notas', 'cédula'],
   ['medalha', 'medalha', '🏅', 54, 'frente', 'objeto', 'medalha', 'medalhas', 'troféu', 'trofeu'],
-  ['fogo', 'fogueira', '🔥', 80, 'frente', 'objeto', 'fogo', 'fogo de acampamento', 'fogueirinha'],
+  ['fogo', 'fogueira', '🔥', 80, 'frente', 'objeto', 'fogo de acampamento', 'fogueirinha'],
 
   // ---------- veículos e coisas grandes (30) ----------
   ['onibus', 'ônibus', '🚌', 150, 'esq', 'objeto', 'ônibus', 'onibus', 'ônibus escolar', 'busão'],

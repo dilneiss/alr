@@ -125,7 +125,7 @@ export const MINECRAFT = [
   ['mc_batata', 'Batata', '🥔', 60, 'frente', 'objeto', 'batata', 'batatas', 'potato'],
   ['mc_melancia', 'Melancia', '🍉', 90, 'frente', 'objeto', 'melancia', 'melancias', 'watermelon', 'melancia bloco'],
   ['mc_abobora', 'Abóbora', '🎃', 90, 'frente', 'objeto', 'abóbora', 'abobora', 'pumpkin', 'abóboras'],
-  ['mc_fogueira', 'Fogueira', '🔥', 90, 'frente', 'objeto', 'campfire', 'fogueira de acampamento'],
+  ['mc_fogueira', 'Fogueira do Minecraft', '🔥', 90, 'frente', 'objeto', 'campfire', 'fogueira de acampamento'],
   ['mc_areia_alma', 'Areia das Almas', '🟫', 100, 'frente', 'objeto', 'areia das almas', 'soul sand', 'areia marrom'],
   ['mc_magma', 'Bloco de Magma', '🟠', 100, 'frente', 'objeto', 'bloco de magma', 'magma block', 'magma'],
   ['mc_gelo', 'Gelo', '🧊', 100, 'frente', 'objeto', 'gelo', 'ice', 'bloco de gelo', 'gelo azul'],
