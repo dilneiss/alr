@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carro Autônomo · Jev</title>
+<meta name="description" content="O Jev é o cérebro de um carro autônomo: a cada ~0,35 s ele lê os sensores e decide acelerar, frear ou trocar de faixa — ao vivo.">
+<meta name="theme-color" content="#0A1426">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A1426'/%3E%3Cpath d='M6.5 22.5a9.5 9.5 0 1 1 19 0' fill='none' stroke='%23E5322D' stroke-width='3' stroke-linecap='round' stroke-dasharray='6 40' stroke-dashoffset='-24'/%3E%3Cpath d='M6.5 22.5a9.5 9.5 0 1 1 19 0' fill='none' stroke='%233AA0FF' stroke-width='3' stroke-linecap='round' stroke-dasharray='22 40'/%3E%3Cpath d='M16 22.5l5.2-6.6' stroke='%23F2F4F7' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/_jev/jev.css">
+<link rel="stylesheet" href="carro.css">
+</head>
+<body>
+<svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="g-bezel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6A7C99"/><stop offset=".42" stop-color="#1B2840"/><stop offset=".7" stop-color="#101A2C"/><stop offset="1" stop-color="#45587A"/></linearGradient>
+    <radialGradient id="g-face" cx=".5" cy=".4" r=".62"><stop offset="0" stop-color="#11223D"/><stop offset=".7" stop-color="#081326"/><stop offset="1" stop-color="#040A15"/></radialGradient>
+  </defs>
+  <!-- luzes-espia (uma por manobra do Jev) -->
+  <symbol id="i-acelerar" viewBox="0 0 24 24"><path d="M5.5 12.5 12 6l6.5 6.5M5.5 18.5 12 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-manter" viewBox="0 0 24 24"><path d="M3.6 17.6a8.4 8.4 0 1 1 16.8 0" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/><path d="M12 17.6l4.3-5.7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="17.6" r="2" fill="currentColor"/></symbol>
+  <symbol id="i-frear_suave" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5.7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M5 5.4a9.4 9.4 0 0 0 0 13.2M19 5.4a9.4 9.4 0 0 1 0 13.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M9.5 12h5" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></symbol>
+  <symbol id="i-frear_forte" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5.7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M5 5.4a9.4 9.4 0 0 0 0 13.2M19 5.4a9.4 9.4 0 0 1 0 13.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M12 8.8v3.6" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/><circle cx="12" cy="15.3" r="1.3" fill="currentColor"/></symbol>
+  <symbol id="i-mudar_para_esquerda" viewBox="0 0 24 24"><path d="M10.4 4.2 2.6 12l7.8 7.8v-4.4h11V8.6h-11z" fill="currentColor"/></symbol>
+  <symbol id="i-mudar_para_direita" viewBox="0 0 24 24"><path d="M13.6 4.2 21.4 12l-7.8 7.8v-4.4h-11V8.6h11z" fill="currentColor"/></symbol>
+  <!-- comandos -->
+  <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 3.2v8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M7.1 6.3a7.6 7.6 0 1 0 9.8 0" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.2v13.6L19 12z" fill="currentColor"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 5.2h3.6v13.6H7zM13.4 5.2H17v13.6h-3.6z" fill="currentColor"/></symbol>
+  <symbol id="i-cone" viewBox="0 0 24 24"><path d="M9.6 4h4.8l4.6 15H5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.1 9.4h7.8M6.6 14.2h10.8" stroke="currentColor" stroke-width="2"/><path d="M3 19.6h18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-pedestre" viewBox="0 0 24 24"><circle cx="13.2" cy="4.4" r="2.1" fill="currentColor"/><path d="M12.6 8.2 10.5 14l3 2.6.9 4.6M10.5 14l-1.6 3.4-2.9 3.6M12.6 8.2l-3.5 1.9-1.6 3.3M12.6 8.2l2.1 3.4 3.3 1.3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-carro" viewBox="0 0 24 24"><path d="M3.4 16.2v-3.5l2.2-4.9A1.9 1.9 0 0 1 7.3 6.6h9.4a1.9 1.9 0 0 1 1.7 1.2l2.2 4.9v3.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 12.4h16" stroke="currentColor" stroke-width="2"/><circle cx="7.6" cy="16.6" r="2.1" fill="currentColor"/><circle cx="16.4" cy="16.6" r="2.1" fill="currentColor"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4.6 12.4A7.6 7.6 0 1 0 7 6.6" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/><path d="M6.6 2.8v4.4H11" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-cursor" viewBox="0 0 24 24"><path d="M5 3.5 18.5 13l-6 1.2 3.6 6.4-2.6 1.4-3.5-6.4L5.5 20z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></symbol>
+  <!-- avisos -->
+  <symbol id="i-fuel" viewBox="0 0 24 24"><path d="M5 20.5V5.2A1.7 1.7 0 0 1 6.7 3.5h6.1a1.7 1.7 0 0 1 1.7 1.7v15.3M3.5 20.5h12.6M5 10h9.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.5 8.5h1.7a1.6 1.6 0 0 1 1.6 1.6v6.1a1.3 1.3 0 0 0 2.6 0V9.1l-2.8-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-antena" viewBox="0 0 24 24"><path d="M12 11.5v9M8.6 20.5h6.8" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/><circle cx="12" cy="9.6" r="1.8" fill="currentColor"/><path d="M8.4 6a5.2 5.2 0 0 0 0 7.2M15.6 6a5.2 5.2 0 0 1 0 7.2M5.6 3.4a9 9 0 0 0 0 12.4M18.4 3.4a9 9 0 0 1 0 12.4" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/><path d="M4 20.5 20 4" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></symbol>
+</svg>
+
+<header class="jev-topbar"></header>
+
+<main class="cockpit">
+  <!-- ============================================================ para-brisa -->
+  <section class="windshield" aria-label="Para-brisa">
+    <div class="stage" id="stage" aria-label="Simulador: avenida vista de cima">
+      <canvas id="cv" aria-label="Simulador do carro autônomo"></canvas>
+      <div class="glass" aria-hidden="true"></div>
+      <div class="feed" id="feed" aria-hidden="true"></div>
+      <div class="nav" aria-hidden="true"><canvas class="minimap" id="minimap"></canvas><span class="nav-lbl">Nav</span></div>
+      <div class="thought" id="thought" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use id="thIc" href="#i-manter"/></svg><span class="tx"><span id="thTx">—</span><span class="sub" id="thSub"></span></span></div>
+      <p class="hint"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-cursor"/></svg>Clique em qualquer ponto da <b>pista</b> para soltar um cone ali</p>
+      <span class="pillar l" aria-hidden="true"></span><span class="pillar r" aria-hidden="true"></span>
+      <div class="overlay" id="overlay">
+        <div class="ov-card" id="ovCard"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ cluster -->
+  <section class="cluster" aria-label="Painel de instrumentos">
+    <div class="binnacle">
+      <!-- velocímetro -->
+      <div class="pod pod-speed">
+        <svg class="dial" viewBox="0 0 200 200" aria-hidden="true">
+          <circle class="bezel" cx="100" cy="100" r="97"/>
+          <circle class="face" cx="100" cy="100" r="92"/>
+          <path class="band-red" id="spRed" d="M27.25 142A84 84 0 1 1 172.75 142" pathLength="240"/>
+          <path class="sweep-trk" d="M36.78 136.5A73 73 0 1 1 163.22 136.5"/>
+          <path class="sweep" id="spArc" d="M36.78 136.5A73 73 0 1 1 163.22 136.5" pathLength="240"/>
+          <path class="tk-maj" d="M23.79 144L31.58 139.5M12 100L21 100M23.79 56L31.58 60.5M56 23.79L60.5 31.58M100 12L100 21M144 23.79L139.5 31.58M176.21 56L168.42 60.5M188 100L179 100M176.21 144L168.42 139.5"/>
+          <path class="tk-min" d="M15 122.78L19.83 121.48M15 77.22L19.83 78.52M37.77 37.77L41.31 41.31M77.22 15L78.52 19.83M122.78 15L121.48 19.83M162.23 37.77L158.69 41.31M185 77.22L180.17 78.52M185 122.78L180.17 121.48"/>
+          <g class="nums"><text x="46.31" y="131">0</text><text x="38" y="100">10</text><text x="46.31" y="69">20</text><text x="69" y="46.31">30</text><text x="100" y="38">40</text><text x="131" y="46.31">50</text><text x="153.69" y="69">60</text><text x="162" y="100">70</text><text x="153.69" y="131">80</text></g>
+          <circle class="disc" cx="100" cy="100" r="37"/>
+          <g class="sweep-in"><g class="needle" id="spNeedle"><path d="M141 97.7 187 99.4v1.2L141 102.3z"/></g></g>
+        </svg>
+        <div class="readout"><b class="num" id="spNum">0</b><span class="unit">km/h</span></div>
+        <div class="pedal-row" title="Pedal: freio à esquerda, acelerador à direita"><span>freio</span><div class="pedal"><i id="pedal"></i></div><span>acel.</span></div>
+        <div class="limit" id="limit" title="Limite de velocidade">50</div>
+      </div>
+
+      <!-- tela central: a decisão do Jev -->
+      <div class="mfd" id="brain" data-acao="">
+        <div class="mfd-hd">
+          <span class="live" id="live"><i></i><span class="who">Jev</span><span class="st">parado</span></span>
+          <span class="lane" id="laneBox" data-lane="1" title="Faixa em que o carro está"><i class="lane-car" aria-hidden="true"></i><span id="lane">Faixa da direita</span></span>
+          <span class="link" id="link">aguardando partida</span>
+        </div>
+        <div class="dec" id="dec">
+          <div class="ic" id="decIc"><span class="gear">P</span></div>
+          <div class="dec-tx"><div class="t" id="decT">Aguardando partida</div><div class="w" id="decW">O Jev decide o próximo comando a cada ~0,35 s</div></div>
+          <div class="c" id="decC">—<small>certeza</small></div>
+        </div>
+        <ol class="tts" id="bars" aria-label="Probabilidade de cada manobra, segundo o Jev">
+          <li class="tt" data-k="acelerar"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-acelerar"/></svg><b class="pc">—</b><span class="nm">Acelerar</span><i class="led"><i></i></i></li>
+          <li class="tt" data-k="manter"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-manter"/></svg><b class="pc">—</b><span class="nm">Manter</span><i class="led"><i></i></i></li>
+          <li class="tt" data-k="frear_suave"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-frear_suave"/></svg><b class="pc">—</b><span class="nm"><i>Frear </i>suave</span><i class="led"><i></i></i></li>
+          <li class="tt" data-k="frear_forte"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-frear_forte"/></svg><b class="pc">—</b><span class="nm"><i>Frear </i>forte</span><i class="led"><i></i></i></li>
+          <li class="tt" data-k="mudar_para_esquerda"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-mudar_para_esquerda"/></svg><b class="pc">—</b><span class="nm">Esquerda</span><i class="led"><i></i></i></li>
+          <li class="tt" data-k="mudar_para_direita"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-mudar_para_direita"/></svg><b class="pc">—</b><span class="nm">Direita</span><i class="led"><i></i></i></li>
+        </ol>
+        <div class="tape"><canvas id="tape" aria-hidden="true"></canvas></div>
+      </div>
+
+      <!-- medidor de perigo (a nota contínua do Jev, 0 a 3) -->
+      <div class="pod pod-risk">
+        <svg class="dial" viewBox="0 0 200 200" aria-hidden="true">
+          <circle class="bezel" cx="100" cy="100" r="97"/>
+          <circle class="face" cx="100" cy="100" r="92"/>
+          <path class="band-amber" d="M27.25 142A84 84 0 1 1 172.75 142" pathLength="240" stroke-dasharray="80 999" stroke-dashoffset="-120"/>
+          <path class="band-red" d="M27.25 142A84 84 0 1 1 172.75 142" pathLength="240" stroke-dasharray="40 999" stroke-dashoffset="-200"/>
+          <path class="tk-maj" d="M23.79 144L31.58 139.5M43.43 32.59L49.22 39.48M156.57 32.59L150.78 39.48M176.21 144L168.42 139.5"/>
+          <path class="tk-min" d="M13.34 115.28L18.26 114.41M13.34 84.72L18.26 85.59M23.79 56L28.12 58.5M69.9 17.31L71.61 22.01M100 12L100 17M130.1 17.31L128.39 22.01M176.21 56L171.88 58.5M186.66 84.72L181.74 85.59M186.66 115.28L181.74 114.41"/>
+          <g class="nums"><text x="46.31" y="131">0</text><text x="60.15" y="52.51">1</text><text x="139.85" y="52.51">2</text><text x="153.69" y="131">3</text></g>
+          <circle class="disc" cx="100" cy="100" r="37"/>
+          <g class="sweep-in"><g class="needle" id="pgNeedle"><path d="M141 97.7 187 99.4v1.2L141 102.3z"/></g></g>
+        </svg>
+        <div class="readout"><span class="cap">Perigo</span><b class="num" id="pgNum">—</b></div>
+        <span class="perigo-lbl" id="perigoLbl">—</span>
+        <div class="risk-levels" id="perigo" title="Probabilidade de cada nível de perigo"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="stack">
+    <!-- ============================================================ computador de bordo -->
+    <aside class="board" id="scoreCard" aria-label="Computador de bordo">
+      <header class="board-hd">
+        <span class="board-t">Computador de bordo</span>
+        <span class="clock" title="Tempo de direção nesta sessão">tempo <b id="tripTime">00:00</b></span>
+      </header>
+      <section class="page pg-percurso" aria-labelledby="pg1">
+        <h3 class="page-t" id="pg1"><span class="pn">01</span>Percurso</h3>
+        <div class="kpis">
+          <div class="kpi hi" id="kDist"><div class="k">Distância dirigida</div><div class="v">0 m</div></div>
+          <div class="kpi" id="kSin"><div class="k">Sinais respeitados</div><div class="v">0</div></div>
+          <div class="kpi" id="kAv" title="Avanços de sinal vermelho"><div class="k">Avanços no vermelho</div><div class="v">0</div></div>
+          <div class="kpi" id="kCol"><div class="k">Colisões</div><div class="v">0</div></div>
+          <div class="kpi" id="kQuase" title="Momentos em que uma colisão estava a menos de 1,3 s"><div class="k">Quase-acidentes</div><div class="v">0</div></div>
+          <div class="kpi key" id="kEm" title="Vezes em que a rede de segurança (tempo até colisão menor que 0,7 s) teve de frear no lugar do Jev. Meta: 0"><div class="k">Freio de emergência <span class="meta">meta 0</span></div><div class="v">0</div></div>
+        </div>
+        <div class="chips-row" id="chips"></div>
+      </section>
+      <section class="page pg-consumo" aria-labelledby="pg2">
+        <h3 class="page-t" id="pg2"><span class="pn">02</span>Consumo do Jev</h3>
+        <div class="metrics">
+          <div title="Latência da última decisão (ida e volta até o modelo)"><b id="mLat">—</b><span>latência</span></div>
+          <div title="Decisões do Jev no último minuto de direção"><b id="mRate">—</b><span>decisões/min</span></div>
+          <div title="Custo médio de uma decisão (3 perguntas numa chamada)"><b id="mCost1">—</b><span>US$ / decisão</span></div>
+          <div title="Custo por minuto de simulação rodando"><b id="mCostMin">—</b><span>US$ / minuto</span></div>
+        </div>
+      </section>
+      <section class="page pg-motivo" aria-labelledby="pg3">
+        <h3 class="page-t" id="pg3"><span class="pn">03</span>Motivo <small>os 3 mais prováveis</small></h3>
+        <div id="motivos"><p class="empty">O motivo de cada decisão aparece aqui assim que o Jev assumir o volante.</p></div>
+      </section>
+      <section class="page pg-log" aria-labelledby="pg4">
+        <h3 class="page-t" id="pg4"><span class="pn">04</span>Log de viagem</h3>
+        <ol id="log" aria-live="polite"><li class="empty-log">Os eventos do percurso aparecem aqui: sinais, desvios, pedestres, ultrapassagens.</li></ol>
+        <div class="odo" id="global"></div>
+      </section>
+    </aside>
+
+    <!-- ============================================================ console -->
+    <section class="console" aria-label="Comandos do carro">
+      <div class="toolbar" role="toolbar" aria-label="Controles do simulador">
+        <button class="ignition" id="play" type="button" data-state="idle"><span class="g" aria-hidden="true">▶</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-power"/></svg><span class="t">Dar a partida</span></button>
+        <div class="mode">
+          <span class="mode-lbl">Velocidade da simulação</span>
+          <div class="seg speed" role="group" aria-label="Velocidade da simulação">
+            <button type="button" data-speed="1" class="on" aria-pressed="true">1×</button>
+            <button type="button" data-speed="2" aria-pressed="false">2×</button>
+          </div>
+        </div>
+        <button class="tool reset" id="btnReset" type="button" title="Reiniciar o percurso" aria-label="Reiniciar o percurso"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-reset"/></svg></button>
+        <div class="switches">
+          <button class="tool" id="btnCone" type="button" title="Solta cones na faixa do carro, mais à frente (tecla C)"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-cone"/></svg><span class="lbl">Cone</span><kbd>C</kbd></button>
+          <button class="tool" id="btnPed" type="button" title="Um pedestre atravessa na próxima faixa de pedestres (tecla P)"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-pedestre"/></svg><span class="lbl">Pedestre</span><kbd>P</kbd></button>
+          <button class="tool" id="btnSlow" type="button" title="Um carro lento (20 km/h) entra à frente (tecla L)"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-carro"/></svg><span class="lbl">Carro lento</span><kbd>L</kbd></button>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+<script src="/_jev/jev-kit.js"></script>
+<script src="sim.js"></script>
+<script src="render.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

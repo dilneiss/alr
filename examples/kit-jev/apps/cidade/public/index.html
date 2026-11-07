@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cidade Viva · Jev</title>
+<meta name="description" content="Uma cidade com 48 moradores, cada um com um cérebro Jev. A cada hora do jogo, os 48 decidem o que fazer numa única chamada — em meio segundo e por menos de um décimo de centavo de dólar.">
+<meta name="theme-color" content="#1F3F8F">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%20shape-rendering%3D%22crispEdges%22%3E%3Cpath%20fill%3D%22%23141412%22%20d%3D%22M10%200h1v1h-1zM9%201h3v1h-3zM9%202h1v1h-1zM11%202h1v1h-1zM3%203h4v1h-4zM9%203h1v1h-1zM11%203h1v1h-1zM3%204h1v1h-1zM6%204h1v1h-1zM9%204h1v1h-1zM11%204h1v1h-1zM3%205h1v1h-1zM6%205h1v1h-1zM8%205h2v1h-2zM11%205h3v1h-3zM3%206h1v1h-1zM6%206h3v1h-3zM10%206h2v1h-2zM14%206h1v1h-1zM0%207h4v1h-4zM6%207h1v1h-1zM8%207h1v1h-1zM10%207h2v1h-2zM14%207h1v1h-1zM0%208h1v1h-1zM3%208h1v1h-1zM6%208h1v1h-1zM8%208h1v1h-1zM10%208h2v1h-2zM14%208h2v1h-2zM0%209h1v1h-1zM3%209h1v1h-1zM6%209h1v1h-1zM8%209h1v1h-1zM10%209h2v1h-2zM14%209h2v1h-2zM0%2010h1v1h-1zM3%2010h1v1h-1zM6%2010h1v1h-1zM8%2010h1v1h-1zM10%2010h2v1h-2zM14%2010h1v1h-1zM0%2011h1v1h-1zM3%2011h1v1h-1zM6%2011h1v1h-1zM8%2011h1v1h-1zM10%2011h2v1h-2zM14%2011h1v1h-1zM0%2012h1v1h-1zM3%2012h1v1h-1zM6%2012h1v1h-1zM8%2012h1v1h-1zM10%2012h2v1h-2zM14%2012h2v1h-2z%22%2F%3E%3Cpath%20fill%3D%22%23CFE6FA%22%20d%3D%22M10%202h1v1h-1zM4%204h2v1h-2zM10%204h1v1h-1zM4%206h2v1h-2zM9%206h1v1h-1zM12%207h2v1h-2zM1%208h2v1h-2zM4%208h2v1h-2zM9%208h1v1h-1zM12%209h2v1h-2zM1%2010h2v1h-2zM4%2010h2v1h-2zM9%2010h1v1h-1zM12%2011h2v1h-2zM1%2012h2v1h-2zM4%2012h2v1h-2zM9%2012h1v1h-1z%22%2F%3E%3Cpath%20fill%3D%22%233B6FD4%22%20d%3D%22M10%203h1v1h-1zM4%205h2v1h-2zM10%205h1v1h-1zM4%207h2v1h-2zM9%207h1v1h-1zM1%209h2v1h-2zM4%209h2v1h-2zM9%209h1v1h-1zM1%2011h2v1h-2zM4%2011h2v1h-2zM9%2011h1v1h-1z%22%2F%3E%3Cpath%20fill%3D%22%237FB2E5%22%20d%3D%22M12%206h2v1h-2zM12%208h2v1h-2zM12%2010h2v1h-2zM12%2012h2v1h-2z%22%2F%3E%3Cpath%20fill%3D%22%23F3D9B1%22%20d%3D%22M7%207h1v1h-1zM7%208h1v1h-1zM7%209h1v1h-1zM7%2010h1v1h-1zM7%2011h1v1h-1zM7%2012h1v1h-1z%22%2F%3E%3Cpath%20fill%3D%22%235FA85B%22%20d%3D%22M0%2013h16v1h-16z%22%2F%3E%3Cpath%20fill%3D%22%232E6B35%22%20d%3D%22M0%2014h16v1h-16z%22%2F%3E%3C%2Fsvg%3E">
+<link rel="preload" href="fonts/pixelify-sans-vf.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/atkinson-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/atkinson-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/_jev/jev.css">
+<link rel="stylesheet" href="cidade.css">
+</head>
+<body>
+<header class="jev-topbar"></header>
+<main class="jev-shell cv">
+  <!-- barra de status do jogo: nome da cidade, a frase de valor e o relógio -->
+  <section class="cv-hero" style="--i:0" aria-label="Cidade Viva">
+    <div class="cv-logo"><span class="cv-logo-ico" data-px="cidade"></span><h1>Cidade Viva</h1></div>
+    <p class="cv-lead"><span>A cada hora do jogo, <b>os 48 moradores decidem juntos numa única chamada ao Jev</b> — em ~0,5 s e por menos de US$ 0,001.</span></p>
+    <div class="cv-clock" id="relogio" aria-live="polite">
+      <div class="cv-time" title="Hora do jogo: 1 hora a cada ~4 segundos">
+        <div class="cv-hour" id="hora">--:--</div>
+        <div class="cv-hourbar" aria-hidden="true"><i id="anel"></i></div>
+      </div>
+      <div class="cv-day" id="dia">conectando…</div>
+      <div class="cv-weather" id="clima">—<span>&nbsp;</span></div>
+    </div>
+  </section>
+
+  <div class="cv-grid">
+    <!-- coluna da esquerda: paleta de ferramentas do Modo Deus + orçamento -->
+    <div class="cv-col cv-col--l">
+      <section class="win cv-god" style="--i:1" aria-labelledby="t-deus">
+        <header class="win-t"><span class="win-ico" data-px="raio"></span><h2 id="t-deus">Modo Deus</h2></header>
+        <div class="win-b">
+          <p class="cv-god-sub">Mude a cidade e veja 48 cérebros reagirem.</p>
+          <div class="cv-evs" id="eventos">
+            <button class="cv-ev primary" type="button" data-evento="show"><span class="ico" data-px="show"></span><span class="rot">Show grátis na praça</span></button>
+            <button class="cv-ev" type="button" data-evento="tempestade"><span class="ico" data-px="tempestade"></span><span class="rot">Tempestade</span></button>
+            <button class="cv-ev" type="button" data-evento="desconto"><span class="ico" data-px="desconto"></span><span class="rot">Restaurante 50% off</span></button>
+            <button class="cv-ev" type="button" data-evento="gripe"><span class="ico" data-px="gripe"></span><span class="rot">Surto de gripe</span></button>
+            <button class="cv-ev" type="button" data-evento="folga"><span class="ico" data-px="folga"></span><span class="rot">Fábrica dá folga</span></button>
+            <button class="cv-ev" type="button" data-evento="feriado"><span class="ico" data-px="feriado"></span><span class="rot">Feriado</span></button>
+          </div>
+          <form class="cv-free" id="livre-form" autocomplete="off">
+            <label class="cv-lbl" for="livre">Evento livre</label>
+            <input class="cv-field" id="livre" maxlength="100" placeholder="“chegou um circo no parque”" aria-label="Evento livre (até 100 caracteres)">
+            <div class="row2">
+              <span class="cnt" id="livre-n">0/100</span>
+              <button class="btn btn--padrao" id="livre-go" type="submit" title="O Jev lê o texto, acha o lugar e os moradores reagem"><span class="ico" data-px="megafone"></span>Disparar</button>
+            </div>
+          </form>
+          <div class="cv-fila" id="fila-status">1 evento a cada 20 s para toda a cidade</div>
+        </div>
+      </section>
+
+      <section class="win cv-contas" style="--i:6" aria-labelledby="t-contas">
+        <header class="win-t"><span class="win-ico" data-px="moedas"></span><h2 id="t-contas">Orçamento</h2></header>
+        <div class="win-b">
+          <dl class="cv-kpis">
+            <div class="cv-kpi jev" title="As 48 decisões da última hora vieram de UMA chamada ao Jev"><dt class="k">Última hora do jogo</dt><dd class="vv"><span class="v" id="k-lat">—</span><span class="s" id="k-lat-s">48 decisões, 1 chamada</span></dd></div>
+            <div class="cv-kpi" title="Custo real da chamada ao Jev por hora simulada (média das últimas horas)"><dt class="k">Custo por hora simulada</dt><dd class="vv"><span class="v" id="k-hora">—</span><span class="s" id="k-hora-s">48 moradores</span></dd></div>
+            <div class="cv-kpi" title="Quanto custa um dia inteiro (24 horas) desta cidade"><dt class="k">Custo por dia simulado</dt><dd class="vv"><span class="v" id="k-dia">—</span><span class="s" id="k-dia-s">24 h × 48 moradores</span></dd></div>
+          </dl>
+        </div>
+      </section>
+    </div>
+
+    <!-- centro: a janela do jogo (o mapa) e o jornal em faixa -->
+    <div class="cv-col cv-col--c">
+      <section class="win cv-mapwin" style="--i:2" aria-labelledby="t-mapa">
+        <header class="win-t">
+          <span class="win-ico" data-px="mapa"></span><h2 id="t-mapa">Vila Jev</h2><span class="win-sub">mapa ao vivo</span>
+          <div class="cv-pulse" id="pulso">Conectando à cidade…</div>
+        </header>
+        <div class="win-b">
+          <div class="cv-mapframe">
+            <div class="cv-map" id="mapa-box">
+              <canvas id="mapa" aria-label="Mapa da cidade com os 48 moradores. Clique num morador para ver o que ele está pensando."></canvas>
+              <div class="cv-ativos" id="ativos"></div>
+              <div class="cv-tip" id="tip" hidden></div>
+              <div class="cv-pop" id="pop" hidden></div>
+              <div class="cv-banner" id="banner" role="status" hidden></div>
+              <div class="cv-paused" id="pausado" hidden>
+                <div class="box" role="group" aria-labelledby="t-pausa">
+                  <div class="win-t"><span class="win-ico" data-px="pausa"></span><h3 id="t-pausa">Cidade pausada</h3></div>
+                  <div class="pz">
+                    <span class="big" data-px="ampulheta"></span>
+                    <div>
+                      <h4>A cidade pausou para economizar</h4>
+                      <p>Ela só roda enquanto alguém está olhando — cada hora simulada é uma chamada real ao Jev.</p>
+                      <button class="btn btn--padrao" id="continuar" type="button"><span class="ico" data-px="play"></span>Continuar a cidade</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="win cv-diario" style="--i:4" aria-labelledby="t-diario">
+        <header class="win-t">
+          <span class="win-ico" data-px="jornal"></span><h2 id="t-diario">Jornal</h2>
+          <span class="cv-foot" id="rodape"></span>
+          <span class="win-meta"><i class="cv-live off" id="live" aria-hidden="true"></i><span class="cv-aovivo">ao vivo</span><span class="cv-viewers" id="espectadores"></span></span>
+        </header>
+        <div class="win-b">
+          <div class="cv-paper">
+            <div class="cv-mast">
+              <span class="nome">Diário da Cidade</span>
+              <span class="data" id="diario-data">Vila Jev · edição ao vivo</span>
+              <button class="btn btn--sm" id="ver-chamada" type="button" title="A chamada completa da última hora: estado, 48 perguntas e 48 respostas">48 perguntas ↗</button>
+            </div>
+            <ol id="feed" tabindex="0" aria-label="Decisões dos moradores, hora a hora"><li class="empty">Esperando a próxima hora…</li></ol>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- coluna da direita: a ficha do morador e o censo -->
+    <div class="cv-col cv-col--r">
+      <section class="win cv-fichawin" style="--i:3" aria-labelledby="t-ficha">
+        <header class="win-t"><span class="win-ico" data-px="ficha"></span><h2 id="t-ficha">Ficha do morador</h2></header>
+        <div class="win-b">
+          <section class="cv-mor" id="morador" aria-live="polite">
+            <div class="jev-empty">Clique num morador no mapa para ver o que ele sente e o que o Jev decidiu.</div>
+          </section>
+        </div>
+      </section>
+
+      <section class="win cv-censo" style="--i:5" aria-labelledby="t-censo">
+        <header class="win-t"><span class="win-ico" data-px="censo"></span><h2 id="t-censo">Onde estão agora</h2><span class="win-sub" id="censo-sub"></span></header>
+        <div class="win-b">
+          <div class="cv-occ" id="ocupacao" aria-label="Ocupação por lugar"></div>
+          <div class="cv-humor" title="Média de fome, energia, social, diversão, saúde e dinheiro dos 48 moradores"><span class="k">Felicidade média</span><span class="v" id="k-fel">—</span><svg id="k-fel-g" viewBox="0 0 100 16" preserveAspectRatio="none" aria-hidden="true"></svg></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+<script src="/_jev/jev-kit.js"></script>
+<script src="pixel.js"></script>
+<script src="mapa.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

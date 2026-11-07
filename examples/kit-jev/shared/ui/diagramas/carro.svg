@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1184 368" width="1184" height="368" role="img" aria-labelledby="t-carro" font-family="-apple-system, BlinkMacSystemFont, &#x27;Segoe UI&#x27;, Roboto, &#x27;Helvetica Neue&#x27;, Arial, sans-serif">
+<title id="t-carro">Arquitetura · Carro Autônomo</title>
+<rect width="100%" height="100%" fill="#0b0e15"/>
+<defs><marker id="ar-carro-nav" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#94a3b8"/></marker><marker id="ar-carro-cli" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#60a5fa"/></marker><marker id="ar-carro-app" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#a78bfa"/></marker><marker id="ar-carro-jev" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#22d3ee"/></marker><marker id="ar-carro-llm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#34d399"/></marker><marker id="ar-carro-ext" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#fbbf24"/></marker><marker id="ar-carro-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#f472b6"/></marker><marker id="ar-carro-infra" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#9ca3af"/></marker><linearGradient id="jg-carro" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a78bfa"/></linearGradient><linearGradient id="jf-carro" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee" stop-opacity=".20"/><stop offset="1" stop-color="#a78bfa" stop-opacity=".16"/></linearGradient><filter id="glow-carro" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="9"/></filter></defs>
+<path d="M210.0,113.5 C273.33333333333337,113.5 273.33333333333337,113.5 336.6666666666667,113.5" fill="none" stroke="#a78bfa" stroke-opacity=".8" stroke-width="1.7" marker-end="url(#ar-carro-app)"/>
+<path d="M526.6666666666667,113.5 C572.0,113.5 572.0,131.0 617.3333333333334,131.0" fill="none" stroke="#22d3ee" stroke-opacity=".8" stroke-width="2.4" marker-end="url(#ar-carro-jev)"/>
+<path d="M879.3333333333334,131.0 C924.6666666666667,131.0 924.6666666666667,83.5 970.0,83.5" fill="none" stroke="#22d3ee" stroke-opacity=".8" stroke-width="2.4" marker-end="url(#ar-carro-jev)"/>
+<path d="M879.3333333333334,131.0 C924.6666666666667,131.0 924.6666666666667,246.0 970.0,246.0" fill="none" stroke="#22d3ee" stroke-opacity=".8" stroke-width="2.4" marker-end="url(#ar-carro-jev)"/>
+<path d="M1065.0,278.0 C1065.0,342.0 115.0,217.0 115.0,153.0" fill="none" stroke="#94a3b8" stroke-opacity=".8" stroke-width="1.7" marker-end="url(#ar-carro-nav)"/>
+<rect x="20.0" y="74.0" width="190" height="79" rx="14" fill="rgba(148,163,184,.10)" stroke="#94a3b8" stroke-width="1.6"/>
+<text x="115.0" y="95.0" text-anchor="middle" fill="#f3f4f6" font-size="13.5" font-weight="800">Sensores</text>
+<text x="115.0" y="113.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">velocidade · distâncias</text>
+<text x="115.0" y="128.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">semáforo · pedestre</text>
+<text x="115.0" y="143.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">obstáculo · faixas</text>
+<rect x="336.6666666666667" y="74.0" width="190" height="79" rx="14" fill="rgba(167,139,250,.12)" stroke="#a78bfa" stroke-width="1.6"/>
+<text x="431.6666666666667" y="95.0" text-anchor="middle" fill="#f3f4f6" font-size="13.5" font-weight="800">App carro</text>
+<text x="431.6666666666667" y="113.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">monta o estado em texto</text>
+<text x="431.6666666666667" y="128.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">(o navegador só manda</text>
+<text x="431.6666666666667" y="143.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">números)</text>
+<rect x="617.3333333333334" y="54.0" width="262" height="154" rx="18" fill="#22d3ee" opacity=".22" filter="url(#glow-carro)"/>
+<rect x="617.3333333333334" y="54.0" width="262" height="154" rx="18" fill="#0b1220"/>
+<rect x="617.3333333333334" y="54.0" width="262" height="154" rx="18" fill="url(#jf-carro)" stroke="url(#jg-carro)" stroke-width="2.6"/>
+<text x="748.3333333333334" y="84.0" text-anchor="middle" fill="url(#jg-carro)" font-size="23" font-weight="900" letter-spacing=".14em">⚡ JEV</text>
+<text x="748.3333333333334" y="104.0" text-anchor="middle" fill="#67e8f9" font-size="12" font-weight="700">1 decisão a cada ~0,35 s</text>
+<g opacity="1"><rect x="633.8" y="112.0" width="79.1" height="19" rx="9.5" fill="none" stroke="#67e8f9" stroke-opacity=".7"/><text x="673.4" y="125.5" text-anchor="middle" fill="#67e8f9" font-size="10.5" font-weight="700">◉ 2 escolha</text></g>
+<g opacity="1"><rect x="717.9" y="112.0" width="60.8" height="19" rx="9.5" fill="none" stroke="#fbbf24" stroke-opacity=".7"/><text x="748.3" y="125.5" text-anchor="middle" fill="#fbbf24" font-size="10.5" font-weight="700">▮ 1 nota</text></g>
+<g opacity=".35"><rect x="783.7" y="112.0" width="79.1" height="19" rx="9.5" fill="none" stroke="#c4b5fd" stroke-opacity=".7"/><text x="823.3" y="125.5" text-anchor="middle" fill="#c4b5fd" font-size="10.5" font-weight="700">◐ 0 sim/não</text></g>
+<line x1="635.3333333333334" y1="140.0" x2="861.3333333333334" y2="140.0" stroke="rgba(255,255,255,.14)"/>
+<text x="748.3333333333334" y="158.0" text-anchor="middle" fill="#e5e7eb" font-size="12">ação: acelerar · manter · frear</text>
+<text x="748.3333333333334" y="174.0" text-anchor="middle" fill="#e5e7eb" font-size="12">trocar de faixa (6 opções)</text>
+<text x="748.3333333333334" y="190.0" text-anchor="middle" fill="#e5e7eb" font-size="12">motivo (7) · perigo (0–3)</text>
+<rect x="970.0" y="44" width="190" height="79" rx="14" fill="rgba(96,165,250,.10)" stroke="#60a5fa" stroke-width="1.6"/>
+<text x="1065.0" y="65" text-anchor="middle" fill="#f3f4f6" font-size="13.5" font-weight="800">Painel de instrumentos</text>
+<text x="1065.0" y="83" text-anchor="middle" fill="#aeb5c2" font-size="11.5">luzes-espia · medidor de</text>
+<text x="1065.0" y="98" text-anchor="middle" fill="#aeb5c2" font-size="11.5">perigo</text>
+<text x="1065.0" y="113" text-anchor="middle" fill="#aeb5c2" font-size="11.5">balão · computador de bordo</text>
+<rect x="970.0" y="214.0" width="190" height="64" rx="14" fill="rgba(96,165,250,.10)" stroke="#60a5fa" stroke-width="1.6"/>
+<text x="1065.0" y="235.0" text-anchor="middle" fill="#f3f4f6" font-size="13.5" font-weight="800">Simulador (navegador)</text>
+<text x="1065.0" y="253.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">física 60 fps · controlador</text>
+<text x="1065.0" y="268.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">freio de emergência</text>
+<rect x="244.28333333333336" y="102.5" width="58.1" height="20" rx="10" fill="#0d1017" stroke="#a78bfa" stroke-opacity=".5"/><text x="273.33333333333337" y="117.0" text-anchor="middle" fill="#d1d5db" font-size="11">números</text>
+<rect x="539.8" y="111.25" width="64.4" height="20" rx="10" fill="#0d1017" stroke="#22d3ee" stroke-opacity=".5"/><text x="572.0" y="125.75" text-anchor="middle" fill="#d1d5db" font-size="11">sensores</text>
+<rect x="895.6166666666668" y="96.25" width="58.1" height="20" rx="10" fill="#0d1017" stroke="#22d3ee" stroke-opacity=".5"/><text x="924.6666666666667" y="110.75" text-anchor="middle" fill="#d1d5db" font-size="11">ao vivo</text>
+<rect x="905.0666666666667" y="177.5" width="39.2" height="20" rx="10" fill="#0d1017" stroke="#22d3ee" stroke-opacity=".5"/><text x="924.6666666666667" y="192.0" text-anchor="middle" fill="#d1d5db" font-size="11">ação</text>
+<rect x="538.9" y="252.5" width="102.2" height="20" rx="10" fill="#0d1017" stroke="#94a3b8" stroke-opacity=".5"/><text x="590.0" y="267.0" text-anchor="middle" fill="#d1d5db" font-size="11">a cada ~0,35 s</text>
+</svg>

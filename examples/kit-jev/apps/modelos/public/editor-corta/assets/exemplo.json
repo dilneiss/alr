@@ -1,0 +1,151 @@
+{
+ "sobre": "Gravação de exemplo para a demonstração (▶): voz sintética de estoque \"Raquel\" (biblioteca de vozes da ElevenLabs, pt-BR), modelo eleven_multilingual_v2, gerada em 21/10/2026, com erros de propósito. Os tempos foram medidos uma vez no próprio arquivo: \"voz\" é onde a fala começa e termina; \"palavras\" vem do alinhamento da ElevenLabs.",
+ "audio": "exemplo.mp3",
+ "duracao": 30.53,
+ "frases": [
+  {
+   "texto": "Hoje eu vou mostrar como…",
+   "voz": [0.8, 2.12],
+   "palavras": [
+    ["Hoje", 0.77, 1.025],
+    ["eu", 1.049, 1.095],
+    ["vou", 1.13, 1.234],
+    ["mostrar", 1.281, 1.594],
+    ["como…", 1.629, 2.117]
+   ]
+  },
+  {
+   "texto": "Não, peraí.",
+   "voz": [2.53, 3.1],
+   "palavras": [
+    ["Não,", 2.49, 2.711],
+    ["peraí.", 2.734, 3.094]
+   ]
+  },
+  {
+   "texto": "Hoje eu vou mostrar três jeitos de gravar um vídeo sem precisar editar depois.",
+   "voz": [4.29, 7.93],
+   "palavras": [
+    ["Hoje", 4.17, 4.483],
+    ["eu", 4.507, 4.553],
+    ["vou", 4.576, 4.692],
+    ["mostrar", 4.75, 5.064],
+    ["três", 5.11, 5.343],
+    ["jeitos", 5.377, 5.656],
+    ["de", 5.679, 5.737],
+    ["gravar", 5.784, 6.039],
+    ["um", 6.074, 6.12],
+    ["vídeo", 6.19, 6.434],
+    ["sem", 6.48, 6.608],
+    ["precisar", 6.643, 7.038],
+    ["editar", 7.061, 7.409],
+    ["depois.", 7.456, 8.907]
+   ]
+  },
+  {
+   "texto": "É… tipo assim…",
+   "voz": [8.87, 10.02],
+   "palavras": [
+    ["É…", 8.87, 9.242],
+    ["tipo", 9.416, 9.648],
+    ["assim…", 9.671, 10.403]
+   ]
+  },
+  {
+   "texto": "O primeiro jeito é escrever o roteiro inteiro antes de ligar a câmera.",
+   "voz": [11.06, 14],
+   "palavras": [
+    ["O", 10.99, 11.071],
+    ["primeiro", 11.129, 11.443],
+    ["jeito", 11.489, 11.721],
+    ["é", 11.745, 11.768],
+    ["escrever", 11.803, 12.174],
+    ["o", 12.209, 12.232],
+    ["roteiro", 12.255, 12.534],
+    ["inteiro", 12.557, 12.859],
+    ["antes", 12.894, 13.033],
+    ["de", 13.091, 13.173],
+    ["ligar", 13.219, 13.498],
+    ["a", 13.544, 13.567],
+    ["câmera.", 13.614, 14.38]
+   ]
+  },
+  {
+   "texto": "O segundo jeito é gravar em blocos curtos.",
+   "voz": [14.92, 16.9],
+   "palavras": [
+    ["O", 14.85, 14.931],
+    ["segundo", 15.013, 15.326],
+    ["jeito", 15.384, 15.605],
+    ["é", 15.628, 15.651],
+    ["gravar", 15.674, 15.976],
+    ["em", 16.011, 16.057],
+    ["blocos", 16.092, 16.394],
+    ["curtos.", 16.452, 16.893]
+   ]
+  },
+  {
+   "texto": "Ops, vou de novo.",
+   "voz": [17.49, 18.58],
+   "palavras": [
+    ["Ops,", 17.46, 17.913],
+    ["vou", 17.959, 18.075],
+    ["de", 18.122, 18.18],
+    ["novo.", 18.226, 18.993]
+   ]
+  },
+  {
+   "texto": "O segundo jeito é gravar em blocos curtos, de um minuto cada.",
+   "voz": [19.64, 22.51],
+   "palavras": [
+    ["O", 19.57, 19.663],
+    ["segundo", 19.733, 20.058],
+    ["jeito", 20.116, 20.336],
+    ["é", 20.359, 20.383],
+    ["gravar", 20.418, 20.696],
+    ["em", 20.731, 20.777],
+    ["blocos", 20.801, 21.091],
+    ["curtos,", 21.149, 21.497],
+    ["de", 21.52, 21.59],
+    ["um", 21.637, 21.695],
+    ["minuto", 21.718, 22.031],
+    ["cada.", 22.078, 23.007]
+   ]
+  },
+  {
+   "texto": "E o terceiro jeito é deixar o editor cortar os erros enquanto você fala.",
+   "voz": [23.42, 26.74],
+   "palavras": [
+    ["E", 23.33, 23.469],
+    ["o", 23.551, 23.574],
+    ["terceiro", 23.609, 23.98],
+    ["jeito", 24.038, 24.236],
+    ["é", 24.259, 24.282],
+    ["deixar", 24.328, 24.642],
+    ["o", 24.677, 24.7],
+    ["editor", 24.735, 25.037],
+    ["cortar", 25.106, 25.408],
+    ["os", 25.443, 25.513],
+    ["erros", 25.571, 25.756],
+    ["enquanto", 25.803, 26.093],
+    ["você", 26.14, 26.325],
+    ["fala.", 26.407, 27.045]
+   ]
+  },
+  {
+   "texto": "Como eu falei, o editor corta os erros sozinho.",
+   "voz": [27.6, 29.57],
+   "palavras": [
+    ["Como", 27.52, 27.752],
+    ["eu", 27.775, 27.822],
+    ["falei,", 27.857, 28.124],
+    ["o", 28.147, 28.17],
+    ["editor", 28.193, 28.484],
+    ["corta", 28.542, 28.774],
+    ["os", 28.797, 28.867],
+    ["erros", 28.925, 29.087],
+    ["sozinho.", 29.111, 29.888]
+   ]
+  }
+ ]
+}

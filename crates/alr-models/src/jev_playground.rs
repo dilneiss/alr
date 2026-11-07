@@ -2,12 +2,44 @@ use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// Estado da decisão: o JEV aceita string ou objeto JSON (os apps do kit mandam
+/// `{contexto: {...}, tarefa: "..."}`); guardamos os dois e expomos `as_text()`.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(untagged)]
+pub enum JevState {
+    Texto(String),
+    Objeto(serde_json::Value),
+}
+
+impl Default for JevState {
+    fn default() -> Self {
+        JevState::Texto(String::new())
+    }
+}
+
+impl JevState {
+    /// texto plano para a heurística local (objeto vira JSON)
+    pub fn as_text(&self) -> String {
+        match self {
+            JevState::Texto(s) => s.clone(),
+            JevState::Objeto(v) => serde_json::to_string(v).unwrap_or_default(),
+        }
+    }
+    pub fn to_json(&self) -> serde_json::Value {
+        match self {
+            JevState::Texto(s) => serde_json::Value::String(s.clone()),
+            JevState::Objeto(v) => v.clone(),
+        }
+    }
+}
+
 /// JEV Decision Request format compliant with OpenRouter / TypeSafe JEV-1.13 API
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct JevDecisionRequest {
     #[serde(default = "default_model")]
     pub model: String,
-    pub state: String,
+    #[serde(default)]
+    pub state: JevState,
     pub questions: HashMap<String, JevQuestionInput>,
 }
 
@@ -732,7 +764,7 @@ impl JevPlaygroundPreset {
             description: "A noul question returns the probability that a condition holds. Gate an agent tool call on it.".to_string(),
             request: JevDecisionRequest {
                 model: "typesafe/jev-1.13".to_string(),
-                state,
+                state: JevState::Texto(state),
                 questions,
             },
             expected_response: JevDecisionResponse {
@@ -743,7 +775,7 @@ impl JevPlaygroundPreset {
                 usage: JevUsage {
                     input_tokens: 384,
                     output_tokens: 22,
-                    cost: 0.000016128,
+                    cost: 0.0,
                 },
                 cost_comparison: Some(JevCostComparison {
                     input_tokens: 384,
@@ -819,7 +851,7 @@ impl JevPlaygroundPreset {
             description: "A choice question picks one option from a set you define and returns a probability for each.".to_string(),
             request: JevDecisionRequest {
                 model: "typesafe/jev-1.13".to_string(),
-                state,
+                state: JevState::Texto(state),
                 questions,
             },
             expected_response: JevDecisionResponse {
@@ -830,7 +862,7 @@ impl JevPlaygroundPreset {
                 usage: JevUsage {
                     input_tokens: 364,
                     output_tokens: 38,
-                    cost: 0.000015288,
+                    cost: 0.0,
                 },
                 cost_comparison: Some(JevCostComparison {
                     input_tokens: 364,
@@ -906,7 +938,7 @@ impl JevPlaygroundPreset {
             description: "A score question evaluates input against an ordered rubric scale and returns a calibrated score and distribution.".to_string(),
             request: JevDecisionRequest {
                 model: "typesafe/jev-1.13".to_string(),
-                state,
+                state: JevState::Texto(state),
                 questions,
             },
             expected_response: JevDecisionResponse {
@@ -917,7 +949,7 @@ impl JevPlaygroundPreset {
                 usage: JevUsage {
                     input_tokens: 413,
                     output_tokens: 20,
-                    cost: 0.000017346,
+                    cost: 0.0,
                 },
                 cost_comparison: Some(JevCostComparison {
                     input_tokens: 413,
@@ -995,7 +1027,7 @@ impl JevPlaygroundPreset {
             description: "Analisa intensidade emocional, ameaça judicial e risco de litígio em CPU em sub-microssegundo.".to_string(),
             request: JevDecisionRequest {
                 model: "alr/typed-judge-1.13".to_string(),
-                state,
+                state: JevState::Texto(state),
                 questions,
             },
             expected_response: JevDecisionResponse {
@@ -1081,7 +1113,7 @@ impl JevPlaygroundPreset {
             description: "Triagem instantânea de termos de busca em Google Ads com negativação automática de desperdício.".to_string(),
             request: JevDecisionRequest {
                 model: "alr/marketing-suite".to_string(),
-                state,
+                state: JevState::Texto(state),
                 questions,
             },
             expected_response: JevDecisionResponse {
@@ -1153,7 +1185,7 @@ impl JevPlaygroundPreset {
             description: "Detecção visual de violação de perímetro em frames de câmera com alerta desktop sonoro nativo.".to_string(),
             request: JevDecisionRequest {
                 model: "alr/cctv-engine".to_string(),
-                state,
+                state: JevState::Texto(state),
                 questions,
             },
             expected_response: JevDecisionResponse {
@@ -1236,7 +1268,7 @@ impl JevPlaygroundPreset {
             description: "Geração determinística de sinais de compra/venda em sub-microssegundo (< 10 µs) com proteção de stop-loss.".to_string(),
             request: JevDecisionRequest {
                 model: "alr/trader-engine".to_string(),
-                state,
+                state: JevState::Texto(state),
                 questions,
             },
             expected_response: JevDecisionResponse {
@@ -1320,7 +1352,7 @@ impl JevPlaygroundPreset {
                     .to_string(),
             request: JevDecisionRequest {
                 model: "alr/marketing-suite".to_string(),
-                state,
+                state: JevState::Texto(state),
                 questions,
             },
             expected_response: JevDecisionResponse {
@@ -1409,7 +1441,7 @@ impl JevPlaygroundPreset {
             badge: "score".to_string(),
             category: "Marketing Ops".to_string(),
             description: "Avalia a taxa de conversão esperada pelo alinhamento entre o criativo e a página de destino.".to_string(),
-            request: JevDecisionRequest { model: "alr/marketing-suite".to_string(), state, questions },
+            request: JevDecisionRequest { model: "alr/marketing-suite".to_string(), state: JevState::Texto(state), questions },
             expected_response: JevDecisionResponse {
                 id: "alr-match-902".to_string(),
                 model: "alr/page-matcher".to_string(),
@@ -1469,7 +1501,7 @@ impl JevPlaygroundPreset {
             badge: "noul".to_string(),
             category: "Segurança & Risco".to_string(),
             description: "Escudo atômico que intercepta movimentos suicidas e loops repetitivos de agentes robóticos/jogos.".to_string(),
-            request: JevDecisionRequest { model: "alr/safety-shield".to_string(), state, questions },
+            request: JevDecisionRequest { model: "alr/safety-shield".to_string(), state: JevState::Texto(state), questions },
             expected_response: JevDecisionResponse {
                 id: "alr-shield-evasion".to_string(),
                 model: "alr/cycle-shield".to_string(),
@@ -1533,7 +1565,7 @@ impl JevPlaygroundPreset {
             description: "Automação de testes em páginas da internet via Chromium CDP: navegação, preenchimento, asserts de DOM e auto-recuperação de seletores.".to_string(),
             request: JevDecisionRequest {
                 model: "alr/qa-browser-cdp".to_string(),
-                state,
+                state: JevState::Texto(state),
                 questions,
             },
             expected_response: JevDecisionResponse {
@@ -1624,7 +1656,7 @@ impl JevPlaygroundPreset {
             description: "Automação de testes em processos, executáveis e APIs: execução de comandos, asserções de stdout/stderr, tempo limite e integridade de memória.".to_string(),
             request: JevDecisionRequest {
                 model: "alr/qa-program-runner".to_string(),
-                state,
+                state: JevState::Texto(state),
                 questions,
             },
             expected_response: JevDecisionResponse {
@@ -1712,7 +1744,7 @@ impl JevPlaygroundPreset {
             description: "Auditoria e autorização instantânea de estorno e formulários de suporte sem intervenção humana.".to_string(),
             request: JevDecisionRequest {
                 model: "alr/system-one-native".to_string(),
-                state,
+                state: JevState::Texto(state),
                 questions,
             },
             expected_response: JevDecisionResponse {
@@ -1800,7 +1832,7 @@ impl JevPlaygroundPreset {
             description: "Auditoria estática de telemetria de sensores e travamento de freio de emergência a laser.".to_string(),
             request: JevDecisionRequest {
                 model: "alr/system-one-native".to_string(),
-                state,
+                state: JevState::Texto(state),
                 questions,
             },
             expected_response: JevDecisionResponse {
@@ -1873,7 +1905,7 @@ impl JevPlaygroundPreset {
             description: "Descarregamento automático de saídas pesadas de ferramentas para storage com SHA-256 e geração de digest.".to_string(),
             request: JevDecisionRequest {
                 model: "alr/system-one-native".to_string(),
-                state,
+                state: JevState::Texto(state),
                 questions,
             },
             expected_response: JevDecisionResponse {
@@ -2007,7 +2039,7 @@ impl JevTypedJudgeEngine {
             JevPlaygroundPreset::lead_qualification(),
         ];
         for p in &benchmark_presets {
-            if req.state.trim() == p.request.state.trim() && req.questions == p.request.questions {
+            if req.state.as_text().trim() == p.request.state.as_text().trim() && req.questions == p.request.questions {
                 let mut resp = p.expected_response.clone();
                 let latency_sec = (start.elapsed().as_micros() as f64) / 1_000_000.0;
                 if let Some(dec) = &mut resp.ui_decision {
@@ -2017,7 +2049,8 @@ impl JevTypedJudgeEngine {
             }
         }
 
-        let state_lower = req.state.to_lowercase();
+        let estado = req.state.as_text();
+        let state_lower = estado.to_lowercase();
 
         // 2. Dynamic Semantic Evaluation for Custom & Modified Inputs
         let mut answers = HashMap::new();
@@ -2026,21 +2059,21 @@ impl JevTypedJudgeEngine {
         for (q_id, q_input) in &req.questions {
             match q_input.r#type.as_str() {
                 "noul" => {
-                    let (p_true, dec_rec) = self.evaluate_noul(&req.state, q_input);
+                    let (p_true, dec_rec) = self.evaluate_noul(&estado, q_input);
                     answers.insert(q_id.clone(), JevAnswerOutput::Noul { noul: p_true });
                     if ui_decision.is_none() {
                         ui_decision = Some(dec_rec);
                     }
                 }
                 "choice" => {
-                    let (ans, dec_rec) = self.evaluate_choice(&req.state, q_input)?;
+                    let (ans, dec_rec) = self.evaluate_choice(&estado, q_input)?;
                     answers.insert(q_id.clone(), ans);
                     if ui_decision.is_none() {
                         ui_decision = Some(dec_rec);
                     }
                 }
                 "score" => {
-                    let (ans, dec_rec) = self.evaluate_score(&req.state, q_input)?;
+                    let (ans, dec_rec) = self.evaluate_score(&estado, q_input)?;
                     answers.insert(q_id.clone(), ans);
                     if ui_decision.is_none() {
                         ui_decision = Some(dec_rec);
@@ -2053,7 +2086,7 @@ impl JevTypedJudgeEngine {
         }
 
         let elapsed_sec = (start.elapsed().as_micros() as f64) / 1_000_000.0;
-        let input_tokens = (req.state.len() + 100) / 4 + 150;
+        let input_tokens = (estado.len() + 100) / 4 + 150;
         let output_tokens = 25;
         let jev_cost = (input_tokens as f64 * 0.000000038) + (output_tokens as f64 * 0.000000075);
         let cloud_llm_cost = (input_tokens as f64 * 0.0000025) + (output_tokens as f64 * 0.000010);
@@ -2140,7 +2173,8 @@ impl JevTypedJudgeEngine {
             usage: JevUsage {
                 input_tokens,
                 output_tokens,
-                cost: (jev_cost * 1_000_000.0).round() / 1_000_000.0,
+                // ALR local não cobra nada: o valor que seria cobrado fica em cost_comparison
+                cost: 0.0,
             },
             cost_comparison: Some(JevCostComparison {
                 input_tokens,
@@ -2976,5 +3010,18 @@ impl JevTypedJudgeEngine {
             },
             rec,
         ))
+    }
+}
+
+// Conveniências para quem constrói um JevDecisionRequest em código/teste.
+impl From<String> for JevState {
+    fn from(s: String) -> Self {
+        JevState::Texto(s)
+    }
+}
+
+impl From<&str> for JevState {
+    fn from(s: &str) -> Self {
+        JevState::Texto(s.to_string())
     }
 }

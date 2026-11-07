@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QA Adversarial · Jev</title>
+<meta name="description" content="O Jev pilota um navegador de verdade, clica e digita coisas maliciosas para quebrar um site, e relata os bugs — em menos de 1 minuto e por centavos.">
+<meta name="theme-color" content="#F4F0E4">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 13v17' stroke='%231C1B19' stroke-width='2.2' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='9' r='7' fill='%23C4302B'/%3E%3Ccircle cx='13.6' cy='6.8' r='2.2' fill='%23fff' fill-opacity='.7'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/_jev/jev.css">
+<link rel="stylesheet" href="qa.css">
+</head>
+<body>
+<header class="jev-topbar"></header>
+<main class="jev-shell lab">
+
+  <!-- etiqueta da mostra: título, frase de valor e a ação principal -->
+  <header class="plaque">
+    <div class="plaque-id">
+      <p class="eyebrow"><span>Laboratório de QA</span><span>Coleção de defeitos da Loja Bugada</span></p>
+      <h1>QA Adversarial</h1>
+      <p class="binomial"><i>Probator adversarius</i> Jev, 2026</p>
+    </div>
+    <p class="lede">Um testador de QA incansável. O Jev pilota um <b>navegador de verdade</b>, decide onde clicar e o que digitar para <b>quebrar</b> uma lojinha cheia de bugs plantados, e faz a <b>triagem</b> de cada defeito — em menos de 1 minuto e por menos de 1 centavo.</p>
+    <div class="cta">
+      <button class="btn-run" id="run" type="button"><span class="run-ico" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M9 6.5v11l9-5.5z" fill="currentColor"/></svg></span><span class="run-lbl">Testar a Loja Bugada</span></button>
+      <div class="cta-sub">
+        <a class="alvo-link" id="verloja" href="/alvo/" target="_blank" rel="noopener">Ver a loja alvo<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
+        <span class="runline" id="runline" aria-live="polite"></span>
+      </div>
+    </div>
+  </header>
+
+  <div class="bench">
+    <!-- o microscópio: a tela do navegador que o Jev pilota -->
+    <section class="scope" aria-labelledby="scope-t">
+      <h2 class="sec-t" id="scope-t">Microscópio <i>a tela do navegador do Jev, ao vivo</i><span class="obj" aria-hidden="true">obj. 1200 × 780</span></h2>
+      <div class="scope-body">
+        <div class="slide">
+          <span class="slide-tag" aria-hidden="true">Lâmina</span>
+          <span class="slide-url" id="urlpath">jev-qa.exemplo.com/alvo/</span>
+          <span class="stepbadge" id="stepbadge" hidden>passo 0</span>
+          <span class="rec" id="rec" hidden><i></i>ao vivo</span>
+        </div>
+        <div class="ticks" aria-hidden="true"></div>
+        <div class="screen-wrap" id="view">
+          <div class="focusing" aria-hidden="true"><span class="lens"></span>Ajustando o foco da lâmina…</div>
+          <img id="screen" alt="Tela do navegador controlado pelo Jev" hidden>
+          <div class="screen-holder" id="holder">
+            <div class="holder-in">
+              <svg class="holder-fig" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+                <circle cx="60" cy="60" r="54" fill="none" stroke="currentColor" stroke-width="1.2"/>
+                <circle cx="60" cy="60" r="40" fill="none" stroke="currentColor" stroke-width=".7" stroke-dasharray="1 5"/>
+                <path d="M60 2v16M60 102v16M2 60h16M102 60h16" stroke="currentColor" stroke-width="1.2"/>
+                <g fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 3" stroke-linecap="round" opacity=".7"><ellipse cx="60" cy="38" rx="6" ry="4.6"/><path d="M50 43.5q10-4 20 0l1.8 8.4q-11.8 3-23.6 0z"/><path d="M60 52c12.6 0 17.5 10 16.6 20.6-.9 12.4-8.9 21.2-16.6 23.4-7.7-2.2-15.7-11-16.6-23.4C42.5 62 47.4 52 60 52z"/></g>
+                <circle cx="61.5" cy="47.5" r="2.2" fill="#C4302B"/>
+              </svg>
+              <p class="holder-t">Lâmina vazia.</p>
+              <p class="holder-p">Clique em <b>“Testar a Loja Bugada”</b>. Você vai ver o Jev navegando e caçando bugs em tempo real.</p>
+            </div>
+          </div>
+          <i class="reticle" aria-hidden="true"></i>
+        </div>
+        <div class="obs">
+          <div class="caption" id="caption" hidden><span class="ic" id="capic"></span><span class="captext" id="captext">—</span><span class="capjev" id="capjev"></span></div>
+          <p class="obs-idle" id="obsIdle">Nenhuma observação ainda.</p>
+        </div>
+      </div>
+      <div class="final" id="final" aria-live="polite"></div>
+    </section>
+
+    <!-- o armário: ficha de catalogação (placar) e a gaveta com os espécimes -->
+    <aside class="cabinet" aria-label="Placar e coleção de bugs">
+      <section class="ficha" aria-labelledby="ficha-t">
+        <header class="ficha-hd"><h2 id="ficha-t">Ficha de catalogação</h2><span class="ficha-data" id="fichaData">coleta de hoje</span></header>
+        <div class="ficha-body">
+          <div class="score">
+            <div class="num"><b id="scoreN">0</b><span id="scoreT">/9</span></div>
+            <div class="prog">
+              <div class="track"><div class="fill" id="scoreFill"></div></div>
+              <div class="lbl" id="scoreLbl">bugs reais confirmados pelo Jev</div>
+            </div>
+          </div>
+          <dl class="kpis">
+            <div class="kpi"><dt class="k">passos</dt><dd class="v" id="kSteps">0</dd></div>
+            <div class="kpi"><dt class="k">tempo</dt><dd class="v" id="kTime">0,0 s</dd></div>
+            <div class="kpi"><dt class="k">custo do teste</dt><dd class="v" id="kCost">US$ 0</dd></div>
+          </dl>
+        </div>
+        <i class="ficha-furo" aria-hidden="true"></i>
+      </section>
+
+      <section class="drawer" aria-labelledby="drawer-t">
+        <header class="drawer-hd"><h2 id="drawer-t">Gaveta de espécimes</h2><p><i>bugs plantados no alvo</i></p></header>
+        <div class="glass">
+          <ol class="trays" id="planted" aria-label="Bugs plantados no alvo"></ol>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="annex">
+    <section class="notebook" aria-labelledby="nb-t">
+      <header class="nb-hd"><h2 id="nb-t">Caderno de laboratório</h2><p>decisões do Jev, passo a passo</p></header>
+      <ol class="log" id="log"><li class="empty-log">O log de ações aparece aqui assim que o teste começa.</li></ol>
+    </section>
+
+    <section class="registro" aria-labelledby="reg-t">
+      <header class="reg-hd"><h2 id="reg-t">Registro dos espécimes</h2><p>cada bug encontrado, com a triagem do Jev</p></header>
+      <div class="bugs" id="bugs"><div class="empty-log" id="bugsEmpty">Nenhum bug ainda. Rode o teste e veja a lista crescer.</div></div>
+    </section>
+  </div>
+</main>
+<script src="/_jev/jev-kit.js"></script>
+<script src="app.js"></script>
+<script src="/_jev/intencoes.js" defer data-cta="#run" data-contexto="Painel do QA Adversarial: o Jev pilota um navegador de verdade para caçar bugs plantados numa loja de teste; o visitante clica em Testar e assiste ao vivo"></script>
+</body>
+</html>

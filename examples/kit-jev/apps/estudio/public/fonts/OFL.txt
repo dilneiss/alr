@@ -1,0 +1,3 @@
+As fontes desta pasta são livres (SIL Open Font License 1.1), baixadas do Google Fonts (subconjunto latino):
+Anton, Instrument Serif, Instrument Sans (instrument-sans.woff2: variável, peso 400–700 e largura 75–100, usada na interface do console), Outfit, Space Grotesk, Bodoni Moda, Jost, Archivo, Figtree, Nunito, Fraunces, Dancing Script, Zilla Slab, Cinzel, Courier Prime, Crimson Pro, Marcellus, Space Mono, Syne, Caveat, Righteous.
+Licença: https://openfontlicense.org — cada família pertence aos seus autores.

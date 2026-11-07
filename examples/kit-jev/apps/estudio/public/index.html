@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estúdio por Voz · Jev</title>
+<meta name="description" content="Fale do seu negócio e veja site, identidade visual, carrosséis de Instagram, e-mail marketing e anúncios de display nascerem ao mesmo tempo — o Jev toma 89 decisões em paralelo a cada pausa da sua fala e atende pedidos como “muda o logo”.">
+<meta name="theme-color" content="#1B1B1B">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23E23B2E'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round'%3E%3Crect x='12.5' y='6' width='7' height='13' rx='3.5'/%3E%3Cpath d='M9 15.5a7 7 0 0 0 14 0M16 22.5v3.5'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="/_jev/jev.css">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="css/carrossel.css">
+<link rel="stylesheet" href="css/email.css">
+<link rel="stylesheet" href="css/anuncios.css">
+</head>
+<body>
+<!-- ícones da casca: um sprite só, usado pelo HTML e pelo app.mjs (nada de emoji como ícone de interface) -->
+<svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false">
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5v4M8.5 21.5h7"/></symbol>
+  <symbol id="i-baixar" viewBox="0 0 24 24"><path d="M12 3.5v11.5M7 10.5l5 5 5-5M4.5 20h15"/></symbol>
+  <symbol id="i-ampliar" viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></symbol>
+  <symbol id="i-copiar" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2"/><path d="M15.5 8.5v-3A1.5 1.5 0 0 0 14 4H5.5A1.5 1.5 0 0 0 4 5.5V14a1.5 1.5 0 0 0 1.5 1.5h3"/></symbol>
+  <symbol id="i-dado" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8.6" cy="8.6" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="15.4" cy="15.4" r="1.5" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-raiox" viewBox="0 0 24 24"><path d="M4 8.5v-3A1.5 1.5 0 0 1 5.5 4h3M15.5 4h3A1.5 1.5 0 0 1 20 5.5v3M20 15.5v3a1.5 1.5 0 0 1-1.5 1.5h-3M8.5 20h-3A1.5 1.5 0 0 1 4 18.5v-3M7.5 12h9M9.5 8.5h5M9.5 15.5h5"/></symbol>
+  <symbol id="i-versoes" viewBox="0 0 24 24"><path d="M3.8 12a8.2 8.2 0 1 0 2.5-5.9"/><path d="M3.8 3.8v4.6h4.6"/><path d="M12 7.6V12l3.1 2"/></symbol>
+  <symbol id="i-caneta" viewBox="0 0 24 24"><path d="M4 20l1.2-4.6L15.6 5a2.1 2.1 0 0 1 3 3L8.2 18.4z"/><path d="M13.6 7l3 3"/></symbol>
+  <symbol id="i-talk" viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 4v-4A2.5 2.5 0 0 1 4 13.5z"/><path d="M8 8.5h8M8 11.5h5"/></symbol>
+  <symbol id="i-balao" viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 4v-4A2.5 2.5 0 0 1 4 13.5z"/></symbol>
+  <symbol id="i-cadeado" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5v-3a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-desfazer" viewBox="0 0 24 24"><path d="M9 5 4.5 9.5 9 14"/><path d="M4.5 9.5H14a5 5 0 0 1 0 10h-3"/></symbol>
+  <symbol id="i-alvo" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-alerta" viewBox="0 0 24 24"><path d="M12 4 21.5 20h-19z"/><path d="M12 10v4.5M12 17.3v.2"/></symbol>
+  <symbol id="i-ok" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-parar" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="1.5" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-mais" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-raio" viewBox="0 0 24 24"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-fechar" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-voltar" viewBox="0 0 24 24"><path d="M4.6 12a7.4 7.4 0 1 0 2.2-5.3"/><path d="M4.6 4.4V9h4.6"/></symbol>
+  <symbol id="i-fila" viewBox="0 0 24 24"><path d="M7 3.5h10M7 20.5h10M8 3.5c0 4.2 8 4.6 8 8.5s-8 4.3-8 8.5M16 3.5c0 4.2-8 4.6-8 8.5s8 4.3 8 8.5"/></symbol>
+  <symbol id="i-cartucho" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2"/><circle cx="8.8" cy="12" r="2.1"/><circle cx="15.2" cy="12" r="2.1"/><path d="M8 18.5l1.2-2.5h5.6l1.2 2.5"/></symbol>
+  <symbol id="i-fader" viewBox="0 0 24 24"><path d="M6 3.5v17M12 3.5v17M18 3.5v17"/><rect x="3.2" y="12.6" width="5.6" height="3.8" rx="1" fill="currentColor" stroke="none"/><rect x="9.2" y="6" width="5.6" height="3.8" rx="1" fill="currentColor" stroke="none"/><rect x="15.2" y="9.8" width="5.6" height="3.8" rx="1" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-alinhar-centro" viewBox="0 0 24 24"><path d="M4 6h16M7 10h10M4 14h16M8 18h8"/></symbol>
+  <symbol id="i-alinhar-esq" viewBox="0 0 24 24"><path d="M4 6h16M4 10h10M4 14h16M4 18h8"/></symbol>
+  <symbol id="i-knob" viewBox="0 0 40 40"><path d="M8.54 31.46L6.56 33.44M3.45 25.38L1.93 25.87M2.81 17.28L1.23 17.03M5.92 9.77L4.63 8.83M12.10 4.50L11.37 3.07M20.00 3.80L20.00 1.00M27.90 4.50L28.63 3.07M34.08 9.77L35.37 8.83M37.19 17.28L38.77 17.03M36.55 25.38L38.07 25.87M31.46 31.46L33.44 33.44"/></symbol>
+</svg>
+
+<header class="jev-topbar"></header>
+<main class="est">
+  <aside class="voz" id="voz" aria-label="Fale do seu negócio">
+    <div class="voz-a">
+      <div class="voz-cab">
+        <h1><span class="crepe">Estúdio por Voz</span></h1>
+        <p>Fale do negócio: <b>site, marca, carrosséis, e-mail e anúncios</b> nascem juntos.</p>
+      </div>
+
+      <div class="mic-linha">
+        <button class="mic" id="mic" type="button" aria-pressed="false" title="Falar (reconhecimento de voz do navegador, em português)">
+          <span class="mic-anel" id="mic-anel"></span>
+          <svg class="mic-ic" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5v4M8.5 21.5h7"/></svg>
+          <span class="mic-leg" aria-hidden="true">mic</span>
+        </button>
+        <div class="vu" id="vu" aria-hidden="true">
+          <svg class="vu-svg" viewBox="0 5 220 106">
+            <defs>
+              <radialGradient id="vu-face" cx=".5" cy=".95" r=".95"><stop offset="0" stop-color="#FFF4CF"/><stop offset=".6" stop-color="#F4E7C2"/><stop offset="1" stop-color="#E2D2A6"/></radialGradient>
+              <linearGradient id="vu-sombra-topo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".28"/><stop offset=".22" stop-color="#000" stop-opacity="0"/></linearGradient>
+            </defs>
+            <rect class="vu-face" x="0" y="0" width="220" height="116" rx="4" fill="url(#vu-face)"/>
+            <path class="vu-arco" d="M38.7 63.8A96 96 0 0 1 139.4 36.6"/>
+            <path class="vu-verm" d="M140.1 34.5A98.2 98.2 0 0 1 183 62.3"/>
+            <path class="vu-t" d="M44.6 69.1L38.3 63.4M63.1 53.5L58.6 46.3M76.1 46.8L72.8 38.9M88.4 42.7L86.4 34.4M104.6 40.2L104.1 31.7M114.3 40.1L114.7 31.6M125.1 41.3L126.5 32.9M136.9 44.2L139.5 36.1"/>
+            <path class="vu-t vu-tr" d="M149.6 49.4L153.4 41.8M162.7 57.5L167.8 50.7M175.4 69.1L181.7 63.4"/>
+            <path class="vu-t2" d="M48.4 60.3L45 56.6M67.3 47.1L65 42.7M80.7 41.3L79.1 36.6M95.4 37.7L94.6 32.7M109.3 36.5L109.2 31.5M119.9 37L120.5 32.1M131.7 39.1L132.9 34.3"/>
+            <path class="vu-t2 vu-tr" d="M144.5 43.3L146.4 38.6M158 50.1L160.6 45.8M171.5 60.2L174.8 56.5"/>
+            <g class="vu-num">
+              <text x="32" y="60.7">20</text><text x="54.1" y="42.1">10</text><text x="69.6" y="34.1">7</text><text x="84.3" y="29.2">5</text><text x="103.5" y="26.2">3</text><text x="115.1" y="26.1">2</text><text x="128" y="27.6">1</text><text x="142.1" y="31">0</text>
+              <text x="157.3" y="37.2" class="vu-r">1</text><text x="172.8" y="46.9" class="vu-r">2</text><text x="188" y="60.7" class="vu-r">3</text>
+              <text x="23" y="71" class="vu-s">−</text><text x="195.5" y="70" class="vu-s vu-r">+</text>
+            </g>
+            <text class="vu-marca" x="110" y="88">VU</text>
+            <g class="vu-led"><circle cx="204" cy="15" r="3.4"/><text x="196" y="17.4">pico</text></g>
+            <g class="vu-agulha vu-agulha--sombra"><path d="M112.2 130V33"/></g>
+            <g class="vu-agulha"><path d="M110 128V30"/></g>
+            <path class="vu-pivo" d="M91 116a19 19 0 0 1 38 0z"/>
+            <rect x="0" y="0" width="220" height="116" rx="4" fill="url(#vu-sombra-topo)"/>
+          </svg>
+        </div>
+      </div>
+      <div class="mic-info">
+        <b id="mic-estado">Toque e fale</b>
+        <small id="mic-dica">em português · ou simule uma fala abaixo</small>
+        <div class="nivel" id="nivel" aria-hidden="true"></div>
+      </div>
+
+      <div class="fala" id="fala" aria-live="polite" aria-label="Transcrição ao vivo">
+        <span class="fala-vazia" id="fala-vazia">“Tenho uma hamburgueria artesanal em Curitiba, clima rock and roll, faço delivery e quero mostrar o cardápio…”</span>
+        <span class="fala-final" id="fala-final"></span> <span class="fala-parcial" id="fala-parcial"></span><span class="caret" id="caret" hidden></span>
+      </div>
+      <div class="cmd-vivo" id="cmd-vivo" hidden role="status" aria-live="polite"></div>
+      <form class="cmd-form" id="cmd-form" autocomplete="off" title="Depois de criar, fale ou digite um ajuste: o Jev entende qual peça mudar e trava o que você pediu">
+        <svg class="ic cmd-ic" aria-hidden="true" focusable="false"><use href="#i-talk"/></svg><input id="cmd" maxlength="300" placeholder="Ajuste: “fundo em degradê verde e branco”, “tudo em caixa alta”, “muda o logo pra ficar tipo selo”…" aria-label="Comando de ajuste">
+        <button class="tecla tecla--preta tecla--sm" type="submit">Aplicar</button>
+      </form>
+
+      <div class="ident">
+        <label class="nome-caixa" title="Nome do negócio — vem da fala (“se chama…”) ou edite aqui"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-caneta"/></svg><input id="nome" maxlength="32" autocomplete="off" spellcheck="false" placeholder="nome do negócio" aria-label="Nome do negócio"><span class="orig" id="nome-orig" title="De onde veio o nome">—</span></label>
+        <span class="cidade" id="cidade" hidden></span>
+      </div>
+    </div>
+
+    <div class="voz-b">
+      <div class="leituras">
+      <div class="placar" id="placar">
+        <div class="placar-big"><b class="mono" id="pl-dec">0</b> <span class="placar-rot">decisões em <b class="mono" id="pl-tempo">—</b></span></div>
+      </div>
+
+      <div class="knobs" role="group" aria-label="Escalas que o Jev decide (score)">
+        <div class="knob" id="kn-preco" data-q="preco" title="Faixa de preço: o Jev decide numa escala contínua"><span class="knob-g" aria-hidden="true"><svg class="knob-escala"><use href="#i-knob"/></svg><i class="knob-c"></i></span><span class="knob-r">preço</span><span class="knob-v">—</span></div>
+        <div class="knob" id="kn-mat" data-q="mat" title="Tempo de mercado: o Jev decide numa escala contínua"><span class="knob-g" aria-hidden="true"><svg class="knob-escala"><use href="#i-knob"/></svg><i class="knob-c"></i></span><span class="knob-r">tempo</span><span class="knob-v">—</span></div>
+        <div class="knob" id="kn-dens" data-q="dens" title="Densidade do site: o Jev decide numa escala contínua"><span class="knob-g" aria-hidden="true"><svg class="knob-escala"><use href="#i-knob"/></svg><i class="knob-c"></i></span><span class="knob-r">densidade</span><span class="knob-v">—</span></div>
+        <div class="knob" id="kn-emoji" data-q="emoji" title="Emojis nas legendas, e-mails e anúncios: o Jev decide numa escala contínua"><span class="knob-g" aria-hidden="true"><svg class="knob-escala"><use href="#i-knob"/></svg><i class="knob-c"></i></span><span class="knob-r">emojis</span><span class="knob-v">—</span></div>
+      </div>
+      <div class="placar-sub">custo <b class="mono" id="pl-custo">US$ 0</b> · <b class="mono" id="pl-atu">0</b> <span id="pl-atu-rot">atualizações nesta fala</span></div>
+      </div>
+
+      <div class="acoes-voz">
+        <button class="tecla tecla--azul b-ia" id="b-ia" type="button" title="O modelo de texto (Gemini 2.5 Flash-Lite, pelo OpenRouter) reescreve os textos com base na sua fala e nas decisões do Jev"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-caneta"/></svg><span>Escrever textos com IA de texto</span></button>
+        <button class="tecla tecla--amarela" id="b-versao" type="button" title="Sorteia outra versão entre as opções que o Jev achou boas (sem nova chamada)"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-dado"/></svg><span>Outra versão</span></button>
+        <button class="tecla tecla--verde" id="b-raiox" type="button" title="Cada decisão do Jev: pergunta, escolha, probabilidade e 2º lugar"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-raiox"/></svg><span>Raio-X</span></button>
+        <button class="tecla tecla--creme" id="b-versoes" type="button" title="Cada estado criado fica guardado: volte a qualquer versão, traga só o logo ou as cores de uma versão antiga, baixe"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-versoes"/></svg><span>Versões</span></button>
+        <button class="tecla tecla--fantasma tecla--sm" id="b-voltar" type="button" hidden title="Volta para as escolhas mais prováveis do Jev"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-voltar"/></svg><span>versão do Jev</span></button>
+      </div>
+      <div class="ia-status" id="ia-status" hidden></div>
+
+      <div class="sim">
+        <div class="sim-t"><span><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-cartucho"/></svg>Simular fala <small>como o microfone</small></span><button class="linkbtn" id="b-novo" type="button" title="Começa um negócio novo; o atual fica guardado em Versões"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-mais"/></svg>Novo negócio</button></div>
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <form class="digitar" id="digitar" autocomplete="off">
+        <textarea class="campo" id="texto" rows="2" maxlength="3000" placeholder="Prefere digitar? Descreva o seu negócio aqui…" aria-label="Descrição do negócio"></textarea>
+        <button class="tecla tecla--verde" type="submit">Gerar</button>
+      </form>
+    </div>
+  </aside>
+
+  <section class="palco" id="palco" aria-label="Artefatos gerados">
+    <div class="fita" id="fita" aria-label="Chamadas paralelas ao Jev"></div>
+    <div class="pecas">
+      <article class="peca p-site vazia" id="painel-site" data-grupo="site">
+        <div class="travas" id="tv-site"></div>
+        <header class="peca-cab"><span class="num" aria-hidden="true">1</span><b>Site</b><span class="peca-lat" id="lat-site"></span><span class="grow"></span><button class="mini mini--verde" id="b-baixar" type="button" title="Baixa o site gerado como um único arquivo HTML"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-baixar"/></svg><span>Baixar</span></button><button class="mini mini--azul" id="b-ampliar" type="button" title="Ver o site em tela cheia"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-ampliar"/></svg><span>Ampliar</span></button></header>
+        <div class="browser">
+          <div class="browser-bar"><i></i><i></i><i></i><span class="url" id="url">seunegocio.com.br</span></div>
+          <div class="site-vp" id="site-vp"><iframe id="site-frame" title="Prévia do site gerado" sandbox="allow-same-origin" tabindex="0"></iframe></div>
+        </div>
+        <div class="peca-vazia"><div class="esq esq-site"><i></i><i></i><i></i><i></i></div><p>O site nasce aqui</p></div>
+      </article>
+      <article class="peca p-marca vazia" id="painel-marca" data-grupo="marca">
+        <div class="travas" id="tv-marca"></div>
+        <header class="peca-cab"><span class="num" aria-hidden="true">2</span><b>Identidade visual</b><span class="peca-lat" id="lat-marca"></span></header>
+        <div class="marca-corpo" id="marca-corpo"></div>
+        <div class="peca-vazia"><div class="esq esq-marca"><i></i><i></i><i></i><i></i><i></i></div><p>Logo, paleta e fontes</p></div>
+      </article>
+      <article class="peca p-posts vazia" id="painel-posts" data-grupo="posts">
+        <div class="travas" id="tv-posts"></div>
+        <header class="peca-cab"><span class="num" aria-hidden="true">3</span><b>Carrosséis do Instagram</b><span class="peca-lat" id="lat-posts"></span><span class="grow"></span><button class="mini mini--azul" id="b-amp-posts" type="button" title="Ver os 3 carrosséis inteiros, lâmina por lâmina"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-ampliar"/></svg><span>Ampliar</span></button></header>
+        <div class="posts-grid" id="posts-grid"></div>
+        <div class="peca-vazia"><div class="esq esq-posts"><i></i><i></i><i></i></div><p>3 carrosséis, 6 lâminas cada</p></div>
+      </article>
+      <article class="peca p-email vazia" id="painel-email" data-grupo="email">
+        <div class="travas" id="tv-email"></div>
+        <header class="peca-cab"><span class="num" aria-hidden="true">4</span><b data-curto="E-mail">E-mail marketing</b><span class="peca-lat" id="lat-email"></span><span class="grow"></span><button class="mini mini--amarela mini--ic" id="b-ass-copiar" type="button" title="Copia a assinatura para colar no Gmail ou no Outlook" aria-label="Copiar a assinatura"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-copiar"/></svg></button><button class="mini mini--verde mini--ic" id="b-email-html" type="button" title="Baixa o e-mail em HTML de tabelas (Mailchimp, RD Station, Brevo)" aria-label="Baixar o e-mail em HTML"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-baixar"/></svg></button><button class="mini mini--azul mini--ic" id="b-amp-email" type="button" title="Ver o template master e a assinatura em tamanho real" aria-label="Ampliar o e-mail"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-ampliar"/></svg></button></header>
+        <div class="email-corpo" id="email-corpo"></div>
+        <div class="peca-vazia"><div class="esq esq-email"><i></i><i></i><i></i></div><p>Template master e assinatura</p></div>
+      </article>
+      <article class="peca p-ads vazia" id="painel-ads" data-grupo="anuncios">
+        <div class="travas" id="tv-ads"></div>
+        <header class="peca-cab"><span class="num" aria-hidden="true">5</span><b data-curto="Anúncios">Anúncios de display</b><span class="peca-lat" id="lat-ads"></span><span class="grow"></span><button class="mini mini--verde mini--ic" id="b-ads-baixar" type="button" title="Baixa o kit de banners HTML5 (todos os tamanhos)" aria-label="Baixar o kit de banners"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-baixar"/></svg></button><button class="mini mini--azul mini--ic" id="b-amp-ads" type="button" title="Ver os banners num site de verdade e em tamanho real" aria-label="Ampliar os anúncios"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-ampliar"/></svg></button></header>
+        <div class="ads-corpo" id="ads-corpo"></div>
+        <div class="peca-vazia"><div class="esq esq-ads"><i></i><i></i></div><p>Banners nos tamanhos padrão</p></div>
+      </article>
+    </div>
+  </section>
+</main>
+
+<aside class="raiox" id="raiox" role="dialog" aria-label="Raio-X das decisões" aria-hidden="true">
+  <header class="rx-cab"><b><span class="crepe">Raio-X das decisões</span></b><span class="rx-resumo" id="rx-resumo"></span><span class="grow"></span><button class="tecla tecla--preta tecla--sm tecla--ic" id="rx-fechar" type="button" aria-label="Fechar"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-fechar"/></svg></button></header>
+  <div class="rx-explica">Cada linha é uma pergunta tipada que o Jev respondeu <b>em paralelo</b>, com a transcrição da fala como estado. Mostramos a escolha, a probabilidade e o 2º lugar. <span class="rx-dado"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-dado"/></svg></span> = sorteada no “Outra versão” entre as opções que o Jev achou boas.</div>
+  <div class="rx-corpo" id="rx-corpo"></div>
+</aside>
+<div class="rx-fundo" id="rx-fundo"></div>
+
+<aside class="raiox versoes" id="versoes" role="dialog" aria-label="Versões guardadas" aria-hidden="true">
+  <header class="rx-cab"><b><span class="crepe">Versões</span></b><span class="rx-resumo" id="vs-resumo"></span><span class="grow"></span><button class="tecla tecla--preta tecla--sm" id="vs-fechar" type="button"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-fechar"/></svg><span>Fechar</span></button></header>
+  <div class="rx-explica">Cada fala, comando, outra versão e texto da IA vira uma versão guardada no servidor (a <b>receita</b>: decisões do Jev + travas + textos). <b>Tudo</b> volta o estúdio inteiro; os botões das peças trazem <b>só aquela peça</b> e a travam. Também dá para baixar o site ou o logo de qualquer versão.</div>
+  <div class="vs-projetos" id="vs-projetos"></div>
+  <div class="rx-corpo vs-corpo" id="vs-corpo"></div>
+</aside>
+<div class="rx-fundo" id="vs-fundo"></div>
+
+<div class="modal modal-peca" id="modal-peca" hidden>
+  <div class="modal-caixa" role="dialog" aria-modal="true" aria-labelledby="mp-titulo">
+    <header><b class="crepe" id="mp-titulo"></b><span class="grow"></span><button class="tecla tecla--preta tecla--sm tecla--ic" id="mp-fechar" type="button" aria-label="Fechar"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-fechar"/></svg></button></header>
+    <div class="mp-corpo" id="mp-corpo"></div>
+  </div>
+</div>
+
+<div class="modal" id="modal-site" hidden>
+  <div class="modal-caixa" role="dialog" aria-modal="true" aria-label="Site em tela cheia">
+    <header><span class="url" id="modal-url"></span><span class="grow"></span><button class="tecla tecla--verde tecla--sm" id="modal-baixar" type="button"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-baixar"/></svg><span>Baixar HTML</span></button><button class="tecla tecla--preta tecla--sm tecla--ic" id="modal-fechar" type="button" aria-label="Fechar"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-fechar"/></svg></button></header>
+    <iframe id="modal-frame" title="Site gerado em tela cheia" sandbox="allow-same-origin"></iframe>
+  </div>
+</div>
+
+<script src="/_jev/jev-kit.js"></script>
+<script type="module" src="js/app.mjs"></script>
+</body>
+</html>

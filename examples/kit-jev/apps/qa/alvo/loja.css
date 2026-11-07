@@ -1,0 +1,141 @@
+/* Loja Bugada — alvo do QA Adversarial. Tema claro de e-commerce, propositalmente "normal". */
+:root {
+  --lb-bg: #f6f7fb; --lb-card: #ffffff; --lb-ink: #111827; --lb-muted: #6b7280; --lb-line: #e5e7eb;
+  --lb-brand: #7c3aed; --lb-brand-2: #db2777; --lb-ok: #047857; --lb-okbg: #ecfdf5; --lb-err: #b91c1c; --lb-errbg: #fef2f2;
+  --lb-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--lb-bg); color: var(--lb-ink); font: 15px/1.5 var(--lb-font); -webkit-font-smoothing: antialiased; overflow-wrap: anywhere; }
+a { color: var(--lb-brand); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1, h2, h3 { margin: 0 0 .4em; line-height: 1.15; letter-spacing: -.01em; }
+.lb-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* topo */
+.lb-top { background: #fff; border-bottom: 1px solid var(--lb-line); position: sticky; top: 0; z-index: 5; }
+.lb-top-in { max-width: 1140px; margin: 0 auto; height: 64px; padding: 0 20px; display: flex; align-items: center; gap: 22px; }
+.lb-logo { display: flex; align-items: center; gap: 8px; color: var(--lb-ink); font-size: 20px; letter-spacing: -.02em; white-space: nowrap; }
+.lb-logo:hover { text-decoration: none; }
+.lb-logo b { color: var(--lb-brand); }
+.lb-logo-ic { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, #ede9fe, #fce7f3); font-size: 19px; }
+.lb-nav { display: flex; gap: 4px; min-width: 0; }
+.lb-nav a { color: #374151; font-weight: 600; font-size: 14px; padding: 8px 12px; border-radius: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px; }
+.lb-nav a:hover { background: #f3f4f6; text-decoration: none; }
+.lb-busca { margin-left: auto; display: flex; gap: 6px; flex: 0 1 330px; min-width: 0; }
+.lb-busca input { flex: 1; min-width: 0; height: 40px; border: 1px solid #d1d5db; border-radius: 10px; padding: 0 12px; font: inherit; background: #f9fafb; }
+.lb-busca button { height: 40px; padding: 0 14px; border: 0; border-radius: 10px; background: #111827; color: #fff; font: 700 14px var(--lb-font); cursor: pointer; }
+.lb-faixa { background: linear-gradient(90deg, #7c3aed, #db2777); color: #fff; text-align: center; font-size: 13px; font-weight: 600; padding: 7px 12px; }
+
+/* layout */
+.lb-main { max-width: 1140px; margin: 0 auto; padding: 26px 20px 40px; min-height: 52vh; }
+.lb-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: linear-gradient(135deg, var(--lb-brand), var(--lb-brand-2)); color: #fff; font: 700 15px var(--lb-font); cursor: pointer; white-space: nowrap; box-shadow: 0 6px 18px rgba(124,58,237,.25); }
+.lb-btn:hover { filter: brightness(1.06); text-decoration: none; }
+.lb-btn.sec { background: #111827; box-shadow: none; }
+.lb-status { min-height: 22px; margin: 10px 0 0; font-size: 14px; font-weight: 600; }
+.lb-status.ok { color: var(--lb-ok); }
+.lb-status.erro { color: var(--lb-err); }
+.lb-caixa { background: var(--lb-card); border: 1px solid var(--lb-line); border-radius: 18px; padding: 20px; }
+
+/* home */
+.lb-hero { display: grid; grid-template-columns: 1fr 220px; gap: 20px; align-items: center; background: linear-gradient(120deg, #1e1b4b, #4c1d95 55%, #831843); color: #fff; border-radius: 22px; padding: 30px 34px; margin-bottom: 26px; overflow: hidden; }
+.lb-hero h1 { font-size: 38px; margin: 8px 0 6px; }
+.lb-hero p { margin: 0; color: #e9d5ff; font-size: 16px; }
+.lb-hero small { display: block; margin-top: 10px; color: #c4b5fd; font-size: 12px; }
+.lb-tag { display: inline-block; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.25); border-radius: 999px; padding: 3px 12px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.lb-hero-art { font-size: 110px; text-align: center; line-height: 1; filter: drop-shadow(0 10px 30px rgba(0,0,0,.35)); }
+.lb-sec-tit { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+.lb-sec-tit h2 { font-size: 22px; margin: 0; }
+.lb-sec-tit span { color: var(--lb-muted); font-size: 14px; }
+.lb-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.lb-card { display: block; background: var(--lb-card); border: 1px solid var(--lb-line); border-radius: 18px; overflow: hidden; color: var(--lb-ink); transition: transform .15s, box-shadow .15s; }
+.lb-card:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(17,24,39,.08); text-decoration: none; }
+.lb-img { display: grid; place-items: center; height: 150px; font-size: 64px; }
+.lb-card-b { padding: 14px 16px 16px; }
+.lb-card-b h3 { font-size: 15px; font-weight: 700; min-height: 36px; margin-bottom: 6px; }
+.lb-preco { font-size: 20px; font-weight: 800; color: var(--lb-ink); margin: 0; }
+.lb-parc { font-size: 12px; color: var(--lb-muted); }
+.lb-ver { display: inline-block; margin-top: 8px; color: var(--lb-brand); font-weight: 700; font-size: 14px; }
+
+/* produto */
+.lb-bread { font-size: 14px; color: var(--lb-muted); margin-bottom: 14px; }
+.lb-prod { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.lb-prod .lb-img { height: 340px; border-radius: 22px; font-size: 140px; border: 1px solid var(--lb-line); }
+.lb-prod h1 { font-size: 30px; }
+.lb-prod .lb-preco { font-size: 30px; }
+.lb-desc { color: #4b5563; margin: 10px 0 18px; }
+.lb-form label { display: block; font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 6px; }
+.lb-campo { width: 100%; height: 44px; border: 1px solid #d1d5db; border-radius: 12px; padding: 0 14px; font: inherit; background: #fff; }
+.lb-campo:focus, .lb-busca input:focus { outline: 3px solid rgba(124,58,237,.25); border-color: var(--lb-brand); }
+.lb-qtd { width: 120px; }
+.lb-sub { margin: 14px 0 16px; font-size: 16px; color: #374151; }
+.lb-sub b { font-size: 20px; color: var(--lb-ink); }
+
+/* carrinho */
+.lb-cart { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+.lb-itens { background: var(--lb-card); border: 1px solid var(--lb-line); border-radius: 18px; overflow: hidden; }
+.lb-item { display: grid; grid-template-columns: 64px minmax(0, 1fr) minmax(0, 150px); gap: 14px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--lb-line); }
+.lb-item:last-child { border-bottom: 0; }
+.lb-item .lb-mini { width: 64px; height: 64px; border-radius: 14px; display: grid; place-items: center; font-size: 32px; }
+.lb-item .nm { font-weight: 700; }
+.lb-item .qt { color: var(--lb-muted); font-size: 14px; }
+.lb-item .tt { text-align: right; font-weight: 800; }
+.lb-vazio { padding: 30px; text-align: center; color: var(--lb-muted); }
+.lb-resumo { background: var(--lb-card); border: 1px solid var(--lb-line); border-radius: 18px; padding: 18px 20px; }
+.lb-linha { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; color: #374151; }
+.lb-linha b { color: var(--lb-ink); text-align: right; }
+.lb-linha.tot { border-top: 1px solid var(--lb-line); margin-top: 6px; padding-top: 10px; font-size: 18px; }
+.lb-linha.desc b { color: var(--lb-ok); }
+.lb-mini-form { margin-top: 14px; }
+.lb-mini-form label { display: block; font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 6px; }
+.lb-mini-form .lin { display: flex; gap: 8px; }
+.lb-mini-form .lb-campo { height: 40px; }
+.lb-mini-form button { height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #d1d5db; background: #f9fafb; font: 700 14px var(--lb-font); cursor: pointer; white-space: nowrap; }
+.lb-resumo .lb-btn { width: 100%; margin-top: 14px; }
+
+/* checkout */
+.lb-check { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+.lb-check form .lb-campo { margin-bottom: 12px; }
+.lb-etiqueta { width: 340px; max-width: 100%; border: 2px dashed #c4b5fd; border-radius: 14px; padding: 12px 14px; margin: 4px 0 16px; background: #faf5ff; }
+.lb-etiqueta .et-t { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--lb-brand); }
+/* BUG PLANTADO (nome_longo): nowrap sem overflow/ellipsis — nome comprido vaza da etiqueta. */
+.lb-etiqueta .et-nome { white-space: nowrap; overflow-wrap: normal; font-weight: 800; font-size: 16px; margin: 4px 0 2px; }
+.lb-etiqueta .et-end { font-size: 13px; color: #4b5563; }
+.lb-pedidos { margin-top: 16px; }
+.lb-pedidos h3 { font-size: 14px; color: #374151; }
+.lb-ped { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; padding: 8px 10px; border-radius: 10px; background: #f9fafb; border: 1px solid var(--lb-line); margin-top: 6px; }
+
+/* busca / 404 */
+.lb-res { display: grid; gap: 10px; }
+.lb-res a { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid var(--lb-line); border-radius: 14px; padding: 12px 14px; color: var(--lb-ink); }
+.lb-res a .lb-mini { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-size: 26px; flex: none; }
+.lb-erro { background: var(--lb-errbg); border: 1px solid #fecaca; color: var(--lb-err); border-radius: 14px; padding: 16px; font-weight: 700; }
+.lb-404 { text-align: center; padding: 50px 20px; }
+.lb-404 .big { font-size: 90px; line-height: 1; }
+.lb-404 h1 { font-size: 34px; margin-top: 12px; }
+.lb-404 p { color: var(--lb-muted); }
+
+/* rodapé */
+.lb-rodape { border-top: 1px solid var(--lb-line); background: #fff; }
+.lb-news { max-width: 1140px; margin: 0 auto; padding: 22px 20px 6px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 460px); gap: 8px 20px; align-items: center; }
+.lb-news-txt b { display: block; font-size: 17px; }
+.lb-news-txt span { color: var(--lb-muted); font-size: 14px; }
+.lb-news-campos { display: flex; gap: 8px; }
+.lb-news-campos input { flex: 1; min-width: 0; height: 44px; border: 1px solid #d1d5db; border-radius: 12px; padding: 0 14px; font: inherit; }
+.lb-news .lb-status { grid-column: 2; margin-top: 0; }
+.lb-copy { max-width: 1140px; margin: 0 auto; padding: 8px 20px 20px; color: #9ca3af; font-size: 12px; }
+
+@media (max-width: 860px) {
+  .lb-top-in { height: auto; flex-wrap: wrap; padding: 10px 14px; gap: 8px 12px; }
+  .lb-busca { flex: 1 1 100%; order: 3; margin-left: 0; }
+  .lb-nav a { padding: 6px 8px; font-size: 13px; }
+  .lb-hero { grid-template-columns: 1fr; padding: 22px; }
+  .lb-hero h1 { font-size: 28px; }
+  .lb-hero-art { display: none; }
+  .lb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lb-prod, .lb-cart, .lb-check { grid-template-columns: 1fr; }
+  .lb-prod .lb-img { height: 200px; font-size: 90px; }
+  .lb-news { grid-template-columns: 1fr; }
+  .lb-news .lb-status { grid-column: 1; }
+  .lb-main { padding: 18px 14px 30px; }
+}

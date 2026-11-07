@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>__TITULO__ · Loja Bugada</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐞</text></svg>">
+<link rel="stylesheet" href="/alvo/loja.css">
+</head>
+<body data-pagina="__PAGINA__">
+<header class="lb-top">
+  <div class="lb-top-in">
+    <a class="lb-logo" href="/alvo/"><span class="lb-logo-ic">🐞</span><span>Loja<b>Bugada</b></span></a>
+    <nav class="lb-nav" aria-label="Principal">
+      <a href="/alvo/">Ofertas</a>
+      <a href="/alvo/carrinho" id="navCarrinho">Carrinho</a>
+      <a href="/alvo/checkout">Finalizar compra</a>
+    </nav>
+    <form class="lb-busca" action="/alvo/busca" method="get" role="search" novalidate>
+      <input name="q" type="search" placeholder="Buscar produtos…" aria-label="Buscar produtos" autocomplete="off">
+      <button type="submit">Buscar</button>
+    </form>
+  </div>
+</header>
+<div class="lb-faixa">🚚 Frete grátis acima de R$ 299 · Parcele em até 10× · Loja de demonstração com bugs plantados de propósito</div>
+<main class="lb-main" id="app"></main>
+<footer class="lb-rodape">
+  <form class="lb-news" id="formNews" novalidate>
+    <div class="lb-news-txt"><b>Receba ofertas por e-mail</b><span>Cupons exclusivos toda semana. Sem spam (quase).</span></div>
+    <div class="lb-news-campos">
+      <label class="lb-sr" for="newsEmail">Seu e-mail</label>
+      <input id="newsEmail" type="email" placeholder="seu@email.com" autocomplete="off">
+      <button type="submit" class="lb-btn">Assinar</button>
+    </div>
+    <p class="lb-status" id="newsStatus" role="status"></p>
+  </form>
+  <p class="lb-copy">Loja Bugada · CNPJ 00.000.404/0001-00 · alvo de testes do QA Adversarial (Jev Apps)</p>
+</footer>
+<script>window.LOJA = __DADOS__;</script>
+<script src="/alvo/loja.js"></script>
+<script src="/_jev/intencoes.js" defer data-contexto="Loja Bugada: loja virtual de demonstração com ofertas, página de produto, carrinho, cupom, frete e checkout"></script>
+</body>
+</html>

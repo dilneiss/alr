@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat com Moderação ao Vivo · Jev</title>
+<meta name="description" content="Um chat público em que cada mensagem passa pelo Jev antes de aparecer, em ~300 ms. Escreva regras em português e elas viram perguntas do Jev na hora.">
+<meta name="theme-color" content="#141517">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='1' y='6' width='30' height='20' rx='4' fill='%23141517'/><rect x='4' y='9' width='24' height='14' rx='2' fill='%23FF3B30'/><circle cx='16' cy='16' r='3.5' fill='%23EDE8DC'/></svg>">
+<link rel="stylesheet" href="/_jev/jev.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-tab="chat">
+<header class="jev-topbar"></header>
+<main class="jev-shell chat-shell">
+  <!-- ============ FAIXA DE PRODUÇÃO: tally NO AR, título, relógio, plateia, tecla de simulação ============ -->
+  <section class="hero" aria-label="Transmissão">
+    <div class="onair" aria-hidden="true"><span>No ar</span></div>
+    <div class="hero-txt">
+      <h1>Chat com Moderação ao Vivo</h1>
+      <p class="hero-long">Cada mensagem passa pelo Jev <b>antes de aparecer</b>, em ~300 ms. Suas regras, em português comum, viram perguntas do Jev na hora.</p>
+      <p class="hero-short">Cada mensagem passa pelo Jev antes de aparecer, em ~300 ms.</p>
+    </div>
+    <div class="hero-cta">
+      <div class="readout clock" aria-hidden="true"><span>Hora</span><b id="clock">--:--:--</b></div>
+      <span class="readout live-pill" title="Pessoas com o chat aberto agora"><span><i></i>Plateia</span><b><em id="online">1</em> assistindo</b></span>
+      <button class="jev-btn sim-key" id="simBtn" type="button"><span class="sim-ic" aria-hidden="true"></span><span class="sim-lbl" id="simLbl">Simular chat</span></button>
+    </div>
+  </section>
+
+  <nav class="mtabs" aria-label="Seções">
+    <button type="button" data-tab="chat" class="on"><i class="mt-lamp" aria-hidden="true"></i>Chat</button>
+    <button type="button" data-tab="mod"><i class="mt-lamp" aria-hidden="true"></i>Moderação <span class="mt-badge" id="mtBlocked" hidden>0</span></button>
+    <button type="button" data-tab="regras"><i class="mt-lamp" aria-hidden="true"></i>Regras</button>
+  </nav>
+
+  <div class="stage">
+    <!-- ============ MONITOR DE PROGRAMA (PGM): o que o público vê ============ -->
+    <section class="panel p-chat" data-panel="chat" aria-label="Chat ao vivo">
+      <header class="panel-head umd">
+        <i class="tl" aria-hidden="true"></i>
+        <div class="ph-main">
+          <div class="panel-title"><span class="umd-src" aria-hidden="true">PGM</span>Chat ao vivo</div>
+          <div class="ph-sub" id="liveTitle">Live: IA para pequenos negócios</div>
+        </div>
+        <span class="jev-badge info" title="O que o público vê: só mensagens aprovadas pelo Jev">o que o público vê</span>
+        <i class="tl" aria-hidden="true"></i>
+      </header>
+      <div class="simbar" id="simbar" hidden><div class="simbar-fill" id="simFill"></div><span class="simbar-lamp" aria-hidden="true"></span><span id="simText">simulação</span></div>
+      <div class="chat-wrap">
+        <div class="chat-list" id="chatList" aria-live="polite"></div>
+        <div class="chat-empty" id="chatEmpty" hidden>
+          <div class="ce-bars" aria-hidden="true"><span>Sem sinal</span></div>
+          <div class="ce-txt">O chat está quietinho.<br>Mande a primeira mensagem ou clique em <b>Simular chat</b>.</div>
+        </div>
+        <button type="button" class="new-pill" id="newPill" hidden>novas mensagens ↓</button>
+      </div>
+      <footer class="compose">
+        <form id="joinForm" class="compose-row" autocomplete="off">
+          <input id="nickInput" class="jev-input" maxlength="20" placeholder="Escolha um apelido para conversar" aria-label="Seu apelido">
+          <button class="jev-btn jev-btn--jev" id="joinBtn" type="submit">Entrar</button>
+        </form>
+        <form id="sendForm" autocomplete="off" hidden>
+          <div class="me-line"><span class="me-av" id="meAv">?</span><b id="meNick">—</b><button type="button" class="linkbtn" id="changeNick">trocar apelido</button><span class="count" id="count">0/200</span></div>
+          <div class="compose-row">
+            <input id="msgInput" class="jev-input" maxlength="200" placeholder="Diga algo no chat…" aria-label="Sua mensagem">
+            <button class="jev-btn jev-btn--jev" id="sendBtn" type="submit" aria-label="Enviar">Enviar</button>
+          </div>
+        </form>
+        <div class="muted-bar" id="mutedBar" hidden><span class="mute-tag">Mudo</span><span class="mute-txt">Você foi silenciado pelo Jev por <b id="muteLeft">5:00</b><span id="muteWhy"></span></span></div>
+        <div class="hint">Sua mensagem passa pelo Jev antes de ir ao ar para todos.</div>
+      </footer>
+    </section>
+
+    <!-- ============ CONSOLE DO MODERADOR: ponte de medidores, monitor PVW e fita do log ============ -->
+    <section class="panel p-mod" data-panel="mod" aria-label="Console do moderador">
+      <div class="bridge rack">
+        <header class="panel-head">
+          <div class="ph-main">
+            <div class="panel-title">Console do moderador</div>
+            <div class="ph-sub">o que o moderador vê: tudo, com as probabilidades do Jev</div>
+          </div>
+          <span class="conn off" id="conn" title="Conexão ao vivo com o chat">conectando…</span>
+        </header>
+        <div class="kpis">
+          <div class="kpi"><div class="k">Analisadas</div><div class="v" id="kAnal">0</div><div class="s">mensagens no total</div></div>
+          <div class="kpi kpi-bloq"><div class="k">Bloqueadas</div><div class="v bad" id="kBloq">—</div><div class="s" id="kBloqS">nesta sala</div><div class="vu" aria-hidden="true"><i></i></div></div>
+          <div class="kpi"><div class="k">Latência</div><div class="v good" id="kLat">—</div><div class="s">mediana (p50)</div></div>
+          <div class="kpi"><div class="k">Custo</div><div class="v" id="kCusto">—</div><div class="s">por mil mensagens</div></div>
+        </div>
+      </div>
+
+      <article class="dec" id="dec">
+        <header class="umd umd-pvw"><i class="tl" aria-hidden="true"></i><span class="umd-src" aria-hidden="true">PVW</span><span class="umd-name">Decisão do Jev</span><i class="tl" aria-hidden="true"></i></header>
+        <div class="dec-screen">
+          <div class="dec-empty" id="decEmpty">
+            <span class="de-lamp" aria-hidden="true"></span>
+            <b>Aguardando mensagens…</b>
+            <span>Clique em <b>Simular chat</b> e veja cada decisão do Jev aqui, com as probabilidades.</span>
+          </div>
+          <div id="decBody" hidden>
+            <div class="dec-head">
+              <span class="dbadge" id="decBadge">—</span>
+              <b class="dec-who" id="decWho">—</b><span class="cm-tag" id="decTag" hidden>sim</span>
+              <span class="dim dec-time" id="decTime"></span>
+              <span class="spacer"></span>
+              <button type="button" class="linkbtn" id="decLive" hidden>fixada · voltar ao vivo</button>
+            </div>
+            <div class="dec-copy">
+              <div class="dec-text-row"><div class="dec-text" id="decText">—</div><button type="button" class="linkbtn" id="decReveal" hidden>mostrar</button></div>
+              <div class="dec-reason" id="decReason"></div>
+            </div>
+            <div class="dec-stack">
+              <div class="dec-grid" id="decGrid">
+                <div><h4>Categoria</h4><div id="decCat"></div></div>
+                <div><h4>Ação sugerida</h4><div id="decAcao"></div></div>
+                <div class="dec-tox"><h4>Toxicidade</h4><div id="decTox"></div></div>
+              </div>
+              <div class="dec-rules-wrap" id="decRulesWrap"><h4>Suas regras <span class="dim">(noul · oculta a partir de 70%)</span></h4><div class="dec-rules" id="decRules"></div></div>
+              <div class="dec-sil" id="decSil" hidden><span class="mute-tag">Mudo</span><span>Autor silenciado: a mensagem foi descartada <b>sem consultar o Jev</b> (custo zero).</span></div>
+            </div>
+            <div class="dec-meta" id="decMeta"></div>
+          </div>
+        </div>
+      </article>
+
+      <div class="log-wrap">
+        <div class="log-head">
+          <h4><span class="lh-slot" aria-hidden="true"></span>Log ao vivo</h4>
+          <div class="seg" role="tablist" aria-label="Filtrar log">
+            <button type="button" data-f="all" class="on">Tudo</button>
+            <button type="button" data-f="blocked">Bloqueadas</button>
+            <button type="button" data-f="ok">Publicadas</button>
+          </div>
+        </div>
+        <div class="log" id="log" data-f="all"></div>
+      </div>
+    </section>
+
+    <!-- ============ CHAVES: as regras da sua live ============ -->
+    <section class="panel p-rules rack" data-panel="regras" aria-label="Regras da sua live">
+      <header class="panel-head">
+        <div class="ph-main">
+          <div class="panel-title">Regras da sua live</div>
+          <div class="ph-sub">em português comum · viram perguntas do Jev</div>
+        </div>
+        <span class="jev-badge violet" id="ruleCount">0/8</span>
+      </header>
+      <div class="rules-body">
+       <div class="rules-main">
+        <ol class="rules" id="rules"></ol>
+        <form id="ruleForm" class="compose-row" autocomplete="off">
+          <input id="ruleInput" class="jev-input" maxlength="120" placeholder="Escreva uma regra…" aria-label="Nova regra">
+          <button class="jev-btn jev-btn--primary" id="ruleBtn" type="submit">Adicionar</button>
+        </form>
+        <div class="retro" id="retro" hidden></div>
+        <div class="sugs"><span class="dim">Ideias:</span><span id="sugs"></span></div>
+       </div>
+       <div class="rules-side">
+        <div class="qprev" id="qprev" hidden>
+          <div class="qprev-h">Como o Jev recebe a sua regra</div>
+          <pre id="qprevCode"></pre>
+        </div>
+        <div class="how">
+          <div class="how-h">Como funciona</div>
+          <ol>
+            <li><b>1 chamada por mensagem</b> com todas as perguntas: categoria (9 opções), toxicidade (0–3), ação (4) e <b>1 pergunta por regra</b>.</li>
+            <li>Limiares claros decidem: <span class="k-ok">publica</span>, <span class="k-warn">avisa</span>, <span class="k-bad">oculta</span> ou <span class="k-sil">silencia 5 min</span>.</li>
+            <li>Regra nova? O Jev reavalia as últimas mensagens <b>numa chamada só</b> (uma pergunta por mensagem).</li>
+          </ol>
+          <p class="dim small">Suas regras valem para a <b>sua</b> sessão: você modera o chat que você vê, sem afetar os outros visitantes. As diretrizes da comunidade (golpe, ofensa, ódio, spam…) valem para todos.</p>
+          <button type="button" class="jev-btn jev-btn--ghost jev-btn--sm" id="resetRules">Restaurar regras padrão</button>
+        </div>
+       </div>
+      </div>
+    </section>
+  </div>
+</main>
+<script src="/_jev/jev-kit.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

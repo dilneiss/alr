@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1184 324" width="1184" height="324" role="img" aria-labelledby="t-vendas" font-family="-apple-system, BlinkMacSystemFont, &#x27;Segoe UI&#x27;, Roboto, &#x27;Helvetica Neue&#x27;, Arial, sans-serif">
+<title id="t-vendas">Arquitetura · Copiloto de Vendas</title>
+<rect width="100%" height="100%" fill="#0b0e15"/>
+<defs><marker id="ar-vendas-nav" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#94a3b8"/></marker><marker id="ar-vendas-cli" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#60a5fa"/></marker><marker id="ar-vendas-app" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#a78bfa"/></marker><marker id="ar-vendas-jev" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#22d3ee"/></marker><marker id="ar-vendas-llm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#34d399"/></marker><marker id="ar-vendas-ext" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#fbbf24"/></marker><marker id="ar-vendas-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#f472b6"/></marker><marker id="ar-vendas-infra" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#9ca3af"/></marker><linearGradient id="jg-vendas" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a78bfa"/></linearGradient><linearGradient id="jf-vendas" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee" stop-opacity=".20"/><stop offset="1" stop-color="#a78bfa" stop-opacity=".16"/></linearGradient><filter id="glow-vendas" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="9"/></filter></defs>
+<path d="M210.0,96.0 C273.33333333333337,96.0 273.33333333333337,96.0 336.6666666666667,96.0" fill="none" stroke="#a78bfa" stroke-opacity=".8" stroke-width="1.7" marker-end="url(#ar-vendas-app)"/>
+<path d="M526.6666666666667,96.0 C572.0,96.0 572.0,121.0 617.3333333333334,121.0" fill="none" stroke="#22d3ee" stroke-opacity=".8" stroke-width="2.4" marker-end="url(#ar-vendas-jev)"/>
+<path d="M526.6666666666667,256.0 C572.0,256.0 572.0,121.0 617.3333333333334,121.0" fill="none" stroke="#f472b6" stroke-opacity=".8" stroke-width="1.7" marker-end="url(#ar-vendas-data)"/>
+<path d="M879.3333333333334,121.0 C924.6666666666667,121.0 924.6666666666667,103.5 970.0,103.5" fill="none" stroke="#22d3ee" stroke-opacity=".8" stroke-width="2.4" marker-end="url(#ar-vendas-jev)"/>
+<rect x="20.0" y="64.0" width="190" height="64" rx="14" fill="rgba(148,163,184,.10)" stroke="#94a3b8" stroke-width="1.6"/>
+<text x="115.0" y="85.0" text-anchor="middle" fill="#f3f4f6" font-size="13.5" font-weight="800">Entrada</text>
+<text x="115.0" y="103.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">microfone (Web Speech)</text>
+<text x="115.0" y="118.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">ligação simulada · texto</text>
+<rect x="336.6666666666667" y="64.0" width="190" height="64" rx="14" fill="rgba(167,139,250,.12)" stroke="#a78bfa" stroke-width="1.6"/>
+<text x="431.6666666666667" y="85.0" text-anchor="middle" fill="#f3f4f6" font-size="13.5" font-weight="800">App vendas</text>
+<text x="431.6666666666667" y="103.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">estado = últimas ~6 falas</text>
+<text x="431.6666666666667" y="118.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">+ a nova</text>
+<rect x="336.6666666666667" y="224.00000000000003" width="190" height="64" rx="14" fill="rgba(244,114,182,.10)" stroke="#f472b6" stroke-width="1.6"/>
+<text x="431.6666666666667" y="245.00000000000003" text-anchor="middle" fill="#f3f4f6" font-size="13.5" font-weight="800">Battlecards</text>
+<text x="431.6666666666667" y="263.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">14 cartas escritas</text>
+<text x="431.6666666666667" y="278.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">por nós</text>
+<rect x="617.3333333333334" y="44.0" width="262" height="154" rx="18" fill="#22d3ee" opacity=".22" filter="url(#glow-vendas)"/>
+<rect x="617.3333333333334" y="44.0" width="262" height="154" rx="18" fill="#0b1220"/>
+<rect x="617.3333333333334" y="44.0" width="262" height="154" rx="18" fill="url(#jf-vendas)" stroke="url(#jg-vendas)" stroke-width="2.6"/>
+<text x="748.3333333333334" y="74.0" text-anchor="middle" fill="url(#jg-vendas)" font-size="23" font-weight="900" letter-spacing=".14em">⚡ JEV</text>
+<text x="748.3333333333334" y="94.0" text-anchor="middle" fill="#67e8f9" font-size="12" font-weight="700">1 chamada por fala do cliente</text>
+<g opacity="1"><rect x="633.8" y="102.0" width="79.1" height="19" rx="9.5" fill="none" stroke="#67e8f9" stroke-opacity=".7"/><text x="673.4" y="115.5" text-anchor="middle" fill="#67e8f9" font-size="10.5" font-weight="700">◉ 3 escolha</text></g>
+<g opacity="1"><rect x="717.9" y="102.0" width="60.8" height="19" rx="9.5" fill="none" stroke="#fbbf24" stroke-opacity=".7"/><text x="748.3" y="115.5" text-anchor="middle" fill="#fbbf24" font-size="10.5" font-weight="700">▮ 1 nota</text></g>
+<g opacity="1"><rect x="783.7" y="102.0" width="79.1" height="19" rx="9.5" fill="none" stroke="#c4b5fd" stroke-opacity=".7"/><text x="823.3" y="115.5" text-anchor="middle" fill="#c4b5fd" font-size="10.5" font-weight="700">◐ 3 sim/não</text></g>
+<line x1="635.3333333333334" y1="130.0" x2="861.3333333333334" y2="130.0" stroke="rgba(255,255,255,.14)"/>
+<text x="748.3333333333334" y="148.0" text-anchor="middle" fill="#e5e7eb" font-size="12">objeção (8) · sinal de compra</text>
+<text x="748.3333333333334" y="164.0" text-anchor="middle" fill="#e5e7eb" font-size="12">sentimento · estágio · chance de fechar</text>
+<text x="748.3333333333334" y="180.0" text-anchor="middle" fill="#e5e7eb" font-size="12">risco de perder · melhor carta</text>
+<rect x="970.0" y="64.0" width="190" height="79" rx="14" fill="rgba(96,165,250,.10)" stroke="#60a5fa" stroke-width="1.6"/>
+<text x="1065.0" y="85.0" text-anchor="middle" fill="#f3f4f6" font-size="13.5" font-weight="800">Terminal do vendedor</text>
+<text x="1065.0" y="103.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">ordens F1–F4 com a frase</text>
+<text x="1065.0" y="118.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">pronta</text>
+<text x="1065.0" y="133.0" text-anchor="middle" fill="#aeb5c2" font-size="11.5">cotação da chance de fechar</text>
+<rect x="253.73333333333338" y="85.0" width="39.2" height="20" rx="10" fill="#0d1017" stroke="#a78bfa" stroke-opacity=".5"/><text x="273.33333333333337" y="99.5" text-anchor="middle" fill="#d1d5db" font-size="11">fala</text>
+<rect x="539.8" y="97.5" width="64.4" height="20" rx="10" fill="#0d1017" stroke="#22d3ee" stroke-opacity=".5"/><text x="572.0" y="112.0" text-anchor="middle" fill="#d1d5db" font-size="11">conversa</text>
+<rect x="546.1" y="177.5" width="51.8" height="20" rx="10" fill="#0d1017" stroke="#f472b6" stroke-opacity=".5"/><text x="572.0" y="192.0" text-anchor="middle" fill="#d1d5db" font-size="11">opções</text>
+<rect x="898.7666666666668" y="101.25" width="51.8" height="20" rx="10" fill="#0d1017" stroke="#22d3ee" stroke-opacity=".5"/><text x="924.6666666666667" y="115.75" text-anchor="middle" fill="#d1d5db" font-size="11">~0,4 s</text>
+</svg>

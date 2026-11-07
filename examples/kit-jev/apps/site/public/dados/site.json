@@ -1,0 +1,1137 @@
+{
+ "versao": 1,
+ "fonte": {
+  "gerado_em": "2026-09-24",
+  "descricao_sha1": "5792dac2e92201f316e0a1c77d2114e00d2810b9"
+ },
+ "marca": {
+  "nome": "Casa Grão",
+  "segmento": "cafeteria de especialidade com clube de assinatura",
+  "links": [
+   {
+    "rotulo": "Instagram",
+    "url": "https://example.com/casagrao"
+   }
+  ]
+ },
+ "identidade": {
+  "paleta": "cafe-caramelo",
+  "fontes": "artesanal",
+  "favicon": "☕",
+  "por_que": "A descrição pede tons de café, caramelo e creme e cara de loja de bairro: paleta Café e caramelo e o par artesanal (Fraunces + Inter)."
+ },
+ "conversao": {
+  "tipo": "pagamento",
+  "cta": "Assinar o clube",
+  "acao": "assinar o clube",
+  "verbo": "assinar",
+  "concluida": "assinou o clube"
+ },
+ "hero": {
+  "selo": "Clube de café especial",
+  "titulo": "Café especial torrado na semana, na sua casa, todo mês.",
+  "sub": "Somos uma cafeteria de especialidade em Campinas que torra os próprios grãos. No clube, você recebe 250 g de café fresco e uma ficha que ensina a provar.",
+  "cta": "Assinar o clube por R$69/mês",
+  "letra_miuda": "R$69/mês no plano mensal ou R$59/mês no anual · Troca do primeiro pacote em até 7 dias · Cancele quando quiser",
+  "numeros": [
+   [
+    "250 g",
+    "de café especial por mês"
+   ],
+   [
+    "{total:rotas}",
+    "preparos nas rotas de degustação"
+   ],
+   [
+    "{n:glossario}",
+    "termos no glossário do café"
+   ],
+   [
+    "2019",
+    "o ano em que abrimos a loja"
+   ]
+  ]
+ },
+ "pilares_titulo": "O que a Casa Grão faz",
+ "pilares": [
+  {
+   "titulo": "Torra na loja",
+   "nota": "Toda semana, em Campinas",
+   "secoes": [
+    "caixa"
+   ]
+  },
+  {
+   "titulo": "Rotas para provar",
+   "nota": "Do primeiro espresso aos filtrados",
+   "secoes": [
+    "rotas",
+    "glossario"
+   ]
+  },
+  {
+   "titulo": "Balcão e cardápio",
+   "nota": "Espressos, filtrados, gelados e acompanhamentos",
+   "secoes": [
+    "cardapio",
+    "experiencias"
+   ]
+  },
+  {
+   "titulo": "Clube em casa",
+   "nota": "Café fresco todo mês",
+   "secoes": [
+    "clube",
+    "faq"
+   ]
+  }
+ ],
+ "secoes": [
+  {
+   "id": "problema",
+   "tipo": "dores",
+   "nome": "O café de todo dia",
+   "emoji": "😐",
+   "icone": "relogio",
+   "kicker": "Antes de tudo",
+   "produto": false,
+   "promessa": "Você toma café todo dia, mas quase nunca prova o café de verdade.",
+   "jev": "O problema do café comum: pacote sem data de torra, amargor que esconde o sabor, preparo errado e não saber o que pedir. Vale mais para quem acabou de chegar e só conhece café de supermercado; não serve para quem já está escolhendo cafés ou olhando o clube",
+   "titulo": "Você toma café todo dia, mas quase nunca prova o café de verdade.",
+   "texto": "O café do dia a dia costuma ser velho, amargo e sem história. Não precisa ser assim: com grão fresco e um pouco de orientação, a mesma xícara muda de gosto.",
+   "dores": [
+    [
+     "Pacote sem data de torra",
+     "No mercado, a embalagem raramente diz quando o café foi torrado. O aroma vai embora antes de chegar à sua xícara."
+    ],
+    [
+     "Amargor que esconde o sabor",
+     "Torra escura demais deixa tudo com gosto de queimado. Doçura, acidez e notas de fruta ficam para trás."
+    ],
+    [
+     "Café bom, preparo errado",
+     "Moagem, água e método mudam o resultado. Sem o básico, até um grão especial fica sem graça."
+    ],
+    [
+     "Sem saber o que pedir",
+     "Um cardápio cheio de nomes e nenhuma pista de por onde começar. Aí você pede o de sempre."
+    ]
+   ]
+  },
+  {
+   "id": "rotas",
+   "tipo": "trilhas",
+   "nome": "Rotas de degustação",
+   "emoji": "🧭",
+   "icone": "pin",
+   "kicker": "Por onde começar",
+   "produto": false,
+   "promessa": "{n:rotas} caminhos para provar a casa, do primeiro espresso aos métodos filtrados.",
+   "jev": "As {n:rotas} rotas de degustação ({total:rotas} preparos): Primeira xícara (espresso, cafés com leite e V60), Métodos filtrados (V60, Chemex, Aeropress e prensa francesa) e Gelados e leves (cold brew e tônica com espresso). Vale mais para quem quer aprender a provar, para iniciantes e para fãs de métodos",
+   "intro": "Cada rota é uma sequência de preparos da casa para provar em ordem, do mais simples ao mais detalhado. Abra uma rota para ver as etapas.",
+   "unidade": [
+    "preparo",
+    "preparos"
+   ],
+   "pergunta": "Por qual rota de degustação este visitante deve começar?",
+   "itens": [
+    {
+     "id": "primeira-xicara",
+     "nome": "Primeira xícara",
+     "curto": "Primeira xícara",
+     "pelo": "pela",
+     "n": 4,
+     "rotulo_bloco": "etapas",
+     "frase": "Para quem só conhece café de supermercado.",
+     "desc": "Começa no espresso, passa pelos cafés com leite e termina no V60 do dia, para sentir a diferença entre um café encorpado e um café leve.",
+     "nota": "Todos os preparos estão no cardápio da loja.",
+     "blocos": [
+      {
+       "titulo": "Etapa 1 · O café puro",
+       "itens": [
+        "Espresso: prove o corpo e a doçura"
+       ]
+      },
+      {
+       "titulo": "Etapa 2 · Com leite",
+       "itens": [
+        "Cappuccino: a espuma alta e o café por baixo",
+        "Flat white: mais café, menos espuma"
+       ]
+      },
+      {
+       "titulo": "Etapa 3 · Filtrado",
+       "itens": [
+        "V60 do dia: leve, limpo e aromático"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "filtrados",
+     "nome": "Métodos filtrados",
+     "curto": "Filtrados",
+     "pelo": "pelos",
+     "n": 4,
+     "rotulo_bloco": "etapas",
+     "frase": "Para comparar o mesmo café em métodos diferentes.",
+     "desc": "Os métodos lado a lado: V60, Chemex, Aeropress e prensa francesa. O café muda de corpo, clareza e doçura conforme o preparo.",
+     "nota": "Chemex, Aeropress e prensa francesa são preparados por encomenda no balcão.",
+     "blocos": [
+      {
+       "titulo": "Etapa 1 · Filtro de papel",
+       "itens": [
+        "V60: xícara limpa e delicada",
+        "Chemex: ainda mais clara, para dividir"
+       ]
+      },
+      {
+       "titulo": "Etapa 2 · Imersão",
+       "itens": [
+        "Aeropress: rápida e encorpada",
+        "Prensa francesa: corpo cheio, com os óleos do café"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "gelados",
+     "nome": "Gelados e leves",
+     "curto": "Gelados",
+     "pelo": "pelos",
+     "n": 2,
+     "rotulo_bloco": "etapas",
+     "frase": "Para os dias quentes e para quem não gosta de café forte.",
+     "desc": "Cold brew e tônica com espresso: bebidas geladas e refrescantes, boas para começar sem amargor.",
+     "blocos": [
+      {
+       "titulo": "Etapa 1 · Extração a frio",
+       "itens": [
+        "Cold brew: doce e suave"
+       ]
+      },
+      {
+       "titulo": "Etapa 2 · Com tônica",
+       "itens": [
+        "Tônica com espresso: cítrica e borbulhante"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "cardapio",
+   "tipo": "lista",
+   "formato": "cartoes",
+   "nome": "Cardápio da casa",
+   "emoji": "☕",
+   "icone": "xicara",
+   "kicker": "No balcão",
+   "produto": false,
+   "promessa": "Os cafés e os acompanhamentos que servimos na loja.",
+   "unidade": [
+    "item",
+    "itens"
+   ],
+   "jev": "O cardápio da loja ({n:cardapio} itens): espresso, cappuccino, flat white, cold brew, tônica com espresso, V60 do dia, Chemex, Aeropress, prensa francesa, pão de queijo, bolo de fubá e torrada. Vale mais para quem frequenta ou quer visitar a loja e para quem quer saber o que pedir",
+   "itens": [
+    {
+     "id": "espresso",
+     "nome": "Espresso",
+     "grupo": "Espressos",
+     "frase": "O café concentrado, base de quase tudo.",
+     "desc": "Uma dose curta e intensa. É o melhor jeito de sentir o corpo e a doçura do grão."
+    },
+    {
+     "id": "cappuccino",
+     "nome": "Cappuccino",
+     "grupo": "Espressos",
+     "frase": "Espresso com leite vaporizado e espuma.",
+     "desc": "Espresso com leite vaporizado e uma camada alta de espuma. Suave, sem esconder o café."
+    },
+    {
+     "id": "flat-white",
+     "nome": "Flat white",
+     "grupo": "Espressos",
+     "frase": "Mais café e menos espuma.",
+     "desc": "Espresso com leite vaporizado e pouca espuma. O café aparece mais do que no cappuccino."
+    },
+    {
+     "id": "v60",
+     "nome": "V60 do dia",
+     "grupo": "Filtrados",
+     "frase": "Filtrado leve com o café da semana.",
+     "desc": "Preparado na hora com o café torrado na semana. Leve, limpo e aromático."
+    },
+    {
+     "id": "chemex",
+     "nome": "Chemex",
+     "grupo": "Filtrados",
+     "frase": "Filtrado claro, por encomenda no balcão.",
+     "desc": "Filtro de papel mais grosso, que deixa a xícara clara e delicada. Preparado por encomenda."
+    },
+    {
+     "id": "aeropress",
+     "nome": "Aeropress",
+     "grupo": "Filtrados",
+     "frase": "Rápido e encorpado, por encomenda.",
+     "desc": "Imersão com pressão: um café encorpado em poucos minutos. Preparado por encomenda no balcão."
+    },
+    {
+     "id": "prensa",
+     "nome": "Prensa francesa",
+     "grupo": "Filtrados",
+     "frase": "Corpo cheio, por encomenda.",
+     "desc": "Imersão com filtro de metal, que deixa passar os óleos do café. Encorpado e macio."
+    },
+    {
+     "id": "cold-brew",
+     "nome": "Cold brew",
+     "grupo": "Gelados",
+     "frase": "Extraído a frio, doce e suave.",
+     "desc": "Café extraído em água fria por muitas horas. Sai doce, suave e refrescante."
+    },
+    {
+     "id": "tonica",
+     "nome": "Tônica com espresso",
+     "grupo": "Gelados",
+     "frase": "Cítrica e borbulhante.",
+     "desc": "Espresso sobre água tônica gelada. Refrescante, com amargor leve e bolhas."
+    },
+    {
+     "id": "pao-de-queijo",
+     "nome": "Pão de queijo",
+     "grupo": "Para comer",
+     "frase": "O clássico para acompanhar.",
+     "desc": "Quentinho, para acompanhar qualquer café da casa."
+    },
+    {
+     "id": "bolo-fuba",
+     "nome": "Bolo de fubá com goiabada",
+     "grupo": "Para comer",
+     "frase": "Bolo de fubá com pedaços de goiabada.",
+     "desc": "Bolo de fubá com goiabada, macio e caseiro. Combina com filtrados."
+    },
+    {
+     "id": "torrada",
+     "nome": "Torrada de fermentação natural",
+     "grupo": "Para comer",
+     "frase": "Pão de fermentação natural tostado.",
+     "desc": "Pão de fermentação natural, tostado na hora."
+    }
+   ]
+  },
+  {
+   "id": "glossario",
+   "tipo": "lista",
+   "formato": "cartoes",
+   "explicativo": true,
+   "nome": "Glossário do café",
+   "emoji": "📚",
+   "icone": "livro",
+   "kicker": "Aprenda a provar",
+   "produto": false,
+   "promessa": "Os termos da ficha de degustação, explicados sem frescura.",
+   "unidade": [
+    "termo",
+    "termos"
+   ],
+   "jev": "Glossário com {n:glossario} termos de degustação, preparo e grão (acidez, corpo, doçura, notas, torra, moagem, extração, frescor, especialidade). Vale mais para quem quer aprender a provar e para fãs de métodos",
+   "itens": [
+    {
+     "id": "acidez",
+     "nome": "Acidez",
+     "grupo": "Sabor",
+     "frase": "A vivacidade do café, não o azedo.",
+     "desc": "A sensação viva e brilhante, parecida com a de uma fruta. Café bom tem acidez agradável; azedo demais é defeito."
+    },
+    {
+     "id": "corpo",
+     "nome": "Corpo",
+     "grupo": "Sabor",
+     "frase": "O peso do café na boca.",
+     "desc": "A textura: um café pode ser leve como chá ou encorpado como leite integral."
+    },
+    {
+     "id": "docura",
+     "nome": "Doçura",
+     "grupo": "Sabor",
+     "frase": "O doce natural do grão.",
+     "desc": "Mesmo sem açúcar, um café bem torrado tem doçura natural, que lembra caramelo ou frutas."
+    },
+    {
+     "id": "amargor",
+     "nome": "Amargor",
+     "grupo": "Sabor",
+     "frase": "Faz parte, mas não pode mandar.",
+     "desc": "Um pouco de amargor equilibra a xícara. Amargor forte costuma vir de torra escura ou extração demais."
+    },
+    {
+     "id": "notas",
+     "nome": "Notas sensoriais",
+     "grupo": "Sabor",
+     "frase": "Os sabores que o café lembra.",
+     "desc": "Chocolate, castanhas, frutas amarelas: são comparações para descrever o que você sente, não ingredientes."
+    },
+    {
+     "id": "finalizacao",
+     "nome": "Finalização",
+     "grupo": "Sabor",
+     "frase": "O gosto que fica depois do gole.",
+     "desc": "O que permanece na boca depois de engolir. Em cafés especiais, costuma ser longo e agradável."
+    },
+    {
+     "id": "aroma",
+     "nome": "Aroma",
+     "grupo": "Sabor",
+     "frase": "O que você sente antes do primeiro gole.",
+     "desc": "O cheiro do café moído e da bebida pronta. É a primeira pista do que vem na xícara."
+    },
+    {
+     "id": "torra",
+     "nome": "Torra",
+     "grupo": "Grão",
+     "frase": "Quando o grão verde vira café.",
+     "desc": "O processo que transforma o grão verde no café que conhecemos. Clara, média ou escura, muda tudo na xícara."
+    },
+    {
+     "id": "frescor",
+     "nome": "Frescor",
+     "grupo": "Grão",
+     "frase": "Quanto tempo depois da torra.",
+     "desc": "O café perde aroma com o tempo depois da torra. Por isso a data de torra importa mais que a validade."
+    },
+    {
+     "id": "especialidade",
+     "nome": "Café especial",
+     "grupo": "Grão",
+     "frase": "Grão escolhido com cuidado, sem defeitos.",
+     "desc": "Café de grãos selecionados, com cuidado da lavoura à xícara, avaliado por provadores."
+    },
+    {
+     "id": "origem",
+     "nome": "Origem",
+     "grupo": "Grão",
+     "frase": "De onde vem o café.",
+     "desc": "Região, altitude e clima mudam o sabor. Cafés de origens diferentes podem ser muito diferentes."
+    },
+    {
+     "id": "processo",
+     "nome": "Processo",
+     "grupo": "Grão",
+     "frase": "Como o fruto vira grão.",
+     "desc": "Natural, lavado ou cereja descascado: o jeito de secar o fruto do café muda doçura e acidez."
+    },
+    {
+     "id": "moagem",
+     "nome": "Moagem",
+     "grupo": "Preparo",
+     "frase": "Fina, média ou grossa.",
+     "desc": "Cada método pede uma moagem. Fina demais amarga; grossa demais deixa o café ralo."
+    },
+    {
+     "id": "extracao",
+     "nome": "Extração",
+     "grupo": "Preparo",
+     "frase": "O quanto a água tira do pó.",
+     "desc": "Pouca extração deixa o café azedo e ralo; extração demais, amargo. O ponto certo equilibra tudo."
+    },
+    {
+     "id": "proporcao",
+     "nome": "Proporção",
+     "grupo": "Preparo",
+     "frase": "Quanto café para quanta água.",
+     "desc": "A relação entre pó e água define a força da bebida. Pesar ajuda a repetir o café que deu certo."
+    },
+    {
+     "id": "filtrado",
+     "nome": "Filtrado",
+     "grupo": "Preparo",
+     "frase": "A água passa pelo pó e por um filtro.",
+     "desc": "Métodos como V60 e Chemex: a água atravessa o pó e o filtro retém as partículas. Xícara limpa."
+    },
+    {
+     "id": "imersao",
+     "nome": "Imersão",
+     "grupo": "Preparo",
+     "frase": "O pó fica mergulhado na água.",
+     "desc": "Métodos como prensa francesa e Aeropress: o pó fica em contato com a água antes de filtrar. Mais corpo."
+    },
+    {
+     "id": "crema",
+     "nome": "Crema",
+     "grupo": "Preparo",
+     "frase": "A espuma dourada do espresso.",
+     "desc": "A camada de espuma que se forma no espresso. Bonita, mas não garante sozinha um café bom."
+    }
+   ]
+  },
+  {
+   "id": "experiencias",
+   "tipo": "lista",
+   "formato": "icones",
+   "nome": "Degustação e curso",
+   "emoji": "🗓️",
+   "icone": "calendario",
+   "kicker": "Para ir além",
+   "produto": false,
+   "promessa": "Degustação guiada aos sábados e curso de barista, pagos à parte.",
+   "unidade": [
+    "experiência",
+    "experiências"
+   ],
+   "jev": "Degustação guiada aos sábados às 10h (R$ 45 por pessoa) e curso de barista de 8 horas (R$ 380), pagos à parte do clube. Vale mais para quem quer aprender com alguém do lado, para fãs de métodos e para quem quer trabalhar com café",
+   "itens": [
+    {
+     "id": "degustacao",
+     "nome": "Degustação guiada",
+     "rotulo": "Sábados, 10h",
+     "icone": "xicara",
+     "desc": "Uma prova guiada para aprender a perceber aroma, doçura, acidez e corpo. Aos sábados, às 10h. R$ 45 por pessoa."
+    },
+    {
+     "id": "curso",
+     "nome": "Curso de barista",
+     "rotulo": "8 horas",
+     "icone": "ferramenta",
+     "desc": "Curso de barista de 8 horas, para quem quer ir além da xícara e entender o preparo. R$ 380."
+    }
+   ]
+  },
+  {
+   "id": "caixa",
+   "tipo": "espacos",
+   "nome": "O que vem na caixa",
+   "emoji": "📦",
+   "icone": "presente",
+   "kicker": "Clube Casa Grão",
+   "produto": true,
+   "promessa": "Todo mês, 250 g de café especial torrado na semana do envio e uma ficha de degustação.",
+   "jev": "O que vem na caixa do clube: 250 g de café especial por mês, torrado na semana do envio, e uma ficha de degustação que ensina a provar. Vale mais para quem já está pensando em assinar e quer saber exatamente o que recebe",
+   "titulo": "Um café especial por mês, fresco e explicado.",
+   "desc": "O clube leva para a sua casa o que a gente faz no balcão: café torrado na semana, com a ficha que ensina a provar.",
+   "cards": [
+    [
+     "250 g de café especial",
+     "Um café especial por mês, torrado na loja."
+    ],
+    [
+     "Torrado na semana do envio",
+     "O pacote sai da torra direto para a caixa, sem ficar parado na prateleira."
+    ],
+    [
+     "Ficha de degustação",
+     "Explica o café do mês e ensina a perceber aroma, doçura, acidez e corpo."
+    ]
+   ],
+   "nota": "Cancele quando quiser. Se o primeiro pacote não agradar, a gente troca em até 7 dias."
+  },
+  {
+   "id": "depoimentos",
+   "tipo": "depoimentos",
+   "nome": "Exemplos de depoimentos",
+   "emoji": "💬",
+   "icone": "balao",
+   "kicker": "Ilustrativo",
+   "produto": false,
+   "exemplo": true,
+   "promessa": "Exemplos de como um assinante poderia contar a experiência. Não são depoimentos reais.",
+   "jev": "Exemplos ilustrativos de depoimentos ({n:depoimentos}): iniciante, fã de filtrados, quem toma café todo dia em casa e cliente da loja. Vale mais para quem está desconfiado ou perto de decidir",
+   "itens": [
+    {
+     "id": "ana",
+     "nome": "Ana",
+     "papel": "começando no café especial",
+     "texto": "Eu só tomava café de mercado. Com a ficha, entendi por que o espresso não precisa ser amargo."
+    },
+    {
+     "id": "marcos",
+     "nome": "Marcos",
+     "papel": "fã de métodos filtrados",
+     "texto": "Gosto de comparar o café do mês na V60 e na prensa. Cada método mostra um lado diferente."
+    },
+    {
+     "id": "julia",
+     "nome": "Júlia",
+     "papel": "toma café todo dia em casa",
+     "texto": "O café chega fresco e a ficha deixa o café da manhã mais interessante."
+    },
+    {
+     "id": "rafael",
+     "nome": "Rafael",
+     "papel": "cliente da loja",
+     "texto": "Conheci a Casa Grão no balcão e assinei para ter o mesmo café em casa."
+    }
+   ]
+  },
+  {
+   "id": "para_quem",
+   "tipo": "para_quem",
+   "nome": "Combina com você?",
+   "emoji": "🎯",
+   "icone": "alvo",
+   "kicker": "Para quem é",
+   "produto": false,
+   "promessa": "É para quem gosta de café e quer aprender a provar melhor.",
+   "jev": "Para quem o clube é e para quem não é. Vale mais para quem ainda não sabe se combina",
+   "sim": [
+    "Gosta de café e quer entender por que um é melhor que outro.",
+    "Só conhece café de mercado e quer começar sem complicação.",
+    "Quer receber café fresco em casa todo mês.",
+    "Tem curiosidade por métodos como V60, Chemex e prensa francesa.",
+    "Prefere comprar de uma loja de bairro que torra o próprio café."
+   ],
+   "nao": [
+    "Procura o café mais barato possível.",
+    "Não quer mudar o café de sempre.",
+    "Quer cápsulas prontas."
+   ]
+  },
+  {
+   "id": "clube",
+   "tipo": "oferta",
+   "nome": "Clube Casa Grão",
+   "emoji": "💳",
+   "icone": "cartao",
+   "kicker": "Oferta",
+   "produto": false,
+   "promessa": "Assinatura mensal com 250 g de café especial e ficha de degustação.",
+   "jev": "O Clube Casa Grão: R$69/mês no plano mensal ou R$59/mês no anual, 250 g de café especial por mês, ficha de degustação, cancele quando quiser e troca do primeiro pacote em até 7 dias. Vale mais para quem já viu o que queria e está perto de decidir",
+   "rotulo": "Assinatura do Clube Casa Grão · plano mensal",
+   "preco": {
+    "de": null,
+    "por": "R$69",
+    "periodo": "/mês"
+   },
+   "planos_extras": [
+    {
+     "nome": "Plano anual",
+     "por": "R$59",
+     "periodo": "/mês",
+     "resumo": "O mesmo clube, no plano anual."
+    }
+   ],
+   "inclui": [
+    {
+     "texto": "250 g de café especial por mês",
+     "secoes": [
+      "caixa"
+     ],
+     "perfis": [
+      "rotina",
+      "iniciante"
+     ],
+     "interesses": [
+      "rotina"
+     ]
+    },
+    {
+     "texto": "Café torrado na semana do envio",
+     "secoes": [
+      "caixa"
+     ],
+     "perfis": [
+      "metodos",
+      "rotina"
+     ],
+     "interesses": [
+      "provar",
+      "rotina"
+     ]
+    },
+    {
+     "texto": "Ficha de degustação que ensina a provar",
+     "secoes": [
+      "glossario",
+      "rotas"
+     ],
+     "trilha": "primeira-xicara",
+     "perfis": [
+      "iniciante",
+      "aprendiz"
+     ],
+     "interesses": [
+      "aprender"
+     ]
+    },
+    {
+     "texto": "Entrega em casa todo mês",
+     "secoes": [
+      "caixa"
+     ],
+     "perfis": [
+      "rotina"
+     ],
+     "interesses": [
+      "rotina"
+     ]
+    },
+    {
+     "texto": "Cancele quando quiser",
+     "secoes": [],
+     "perfis": [],
+     "interesses": [
+      "condicoes"
+     ]
+    },
+    {
+     "texto": "Troca do primeiro pacote em até 7 dias",
+     "secoes": [],
+     "perfis": [
+      "iniciante"
+     ],
+     "interesses": [
+      "condicoes",
+      "prova"
+     ]
+    }
+   ],
+   "selos": [
+    "Troca em até 7 dias",
+    "Cancele quando quiser"
+   ],
+   "garantia": {
+    "dias": 7,
+    "frase": "troca do primeiro pacote em até 7 dias"
+   },
+   "observacao": "Degustação guiada e curso de barista são pagos à parte.",
+   "cta": "Assinar o clube por R$69/mês"
+  },
+  {
+   "id": "faq",
+   "tipo": "faq",
+   "nome": "Perguntas frequentes",
+   "emoji": "❓",
+   "icone": "interrogacao",
+   "kicker": "Dúvidas",
+   "produto": false,
+   "promessa": "Respostas para as dúvidas mais comuns sobre o clube e a loja.",
+   "jev": "Perguntas frequentes ({n:faq}): preço dos planos, o que vem na caixa, se precisa entender de café, troca, cancelamento, frescor, endereço da loja, degustação e curso. Vale mais para quem tem uma dúvida específica",
+   "porta": [
+    "f3",
+    "f4",
+    "f5"
+   ],
+   "itens": [
+    {
+     "id": "f1",
+     "pergunta": "Quanto custa o clube?",
+     "resposta": "R$ 69 por mês no plano mensal ou R$ 59 por mês no plano anual."
+    },
+    {
+     "id": "f2",
+     "pergunta": "O que vem na caixa?",
+     "resposta": "250 g de um café especial torrado na semana do envio e uma ficha de degustação que ensina a provar."
+    },
+    {
+     "id": "f3",
+     "pergunta": "Preciso entender de café para assinar?",
+     "resposta": "Não. A ficha de degustação explica o café do mês e ensina a provar, passo a passo. O clube é também para quem só conhece café de supermercado."
+    },
+    {
+     "id": "f4",
+     "pergunta": "E se eu não gostar do primeiro café?",
+     "resposta": "Se o primeiro pacote não agradar, a gente troca em até 7 dias."
+    },
+    {
+     "id": "f5",
+     "pergunta": "Posso cancelar quando quiser?",
+     "resposta": "Sim. Você cancela quando quiser."
+    },
+    {
+     "id": "f6",
+     "pergunta": "O café chega fresco?",
+     "resposta": "Sim. O café é torrado na semana do envio, na nossa loja."
+    },
+    {
+     "id": "f7",
+     "pergunta": "Onde fica a loja?",
+     "resposta": "Na Rua Barão de Jaguara, 1200, em Campinas (SP). Estamos lá desde 2019."
+    },
+    {
+     "id": "f8",
+     "pergunta": "Como funcionam a degustação e o curso?",
+     "resposta": "A degustação guiada acontece aos sábados, às 10h, e custa R$ 45 por pessoa. O curso de barista tem 8 horas e custa R$ 380."
+    }
+   ]
+  }
+ ],
+ "final": {
+  "titulo": "Leve o café da Casa Grão para a sua casa.",
+  "texto": "Um café especial por mês, torrado na semana do envio, com a ficha que ensina a provar. Se o primeiro pacote não agradar, a gente troca.",
+  "cta": "Assinar o clube",
+  "letra_miuda": "R$69/mês · Troca do primeiro pacote em até 7 dias · Cancele quando quiser"
+ },
+ "jev": {
+  "pagina": "Página de vendas do Clube Casa Grão, de uma cafeteria de especialidade em Campinas: assinatura de R$69/mês (ou R$59/mês no plano anual) com 250 g de café especial torrado na semana do envio e uma ficha de degustação; cancele quando quiser e troca do primeiro pacote em até 7 dias. Tem {n:rotas} rotas de degustação, o cardápio da loja ({n:cardapio} itens), um glossário ({n:glossario} termos), degustação guiada, curso de barista e exemplos de depoimentos.",
+  "perfis": [
+   {
+    "id": "iniciante",
+    "emoji": "🌱",
+    "rotulo": "Começando no café especial",
+    "criterio": "Iniciante que só conhece café de mercado e quer começar sem complicação: abre O café de todo dia, a rota Primeira xícara, o Espresso, termos básicos do glossário (Torra, Acidez, Amargor) e a pergunta \"Preciso entender de café para assinar?\""
+   },
+   {
+    "id": "aprendiz",
+    "emoji": "📚",
+    "rotulo": "Quer aprender a provar",
+    "criterio": "Curioso que quer aprender a provar melhor: abre o Glossário do café, busca termos (acidez, corpo, notas, finalização), abre a Degustação guiada e a Ficha de degustação do clube"
+   },
+   {
+    "id": "metodos",
+    "emoji": "⚗️",
+    "rotulo": "Fã de filtrados",
+    "criterio": "Quem gosta de métodos e de preparar em casa: abre a rota Métodos filtrados, V60, Chemex, Aeropress, Prensa francesa, termos como Extração, Moagem e Proporção, e o Curso de barista"
+   },
+   {
+    "id": "rotina",
+    "emoji": "☕",
+    "rotulo": "Café todo dia em casa",
+    "criterio": "Quem toma café todo dia em casa e quer café fresco sem sair de casa: abre O que vem na caixa, o Clube Casa Grão, a pergunta \"O café chega fresco?\" e os exemplos de depoimentos"
+   },
+   {
+    "id": "loja",
+    "emoji": "📍",
+    "rotulo": "Cliente da loja",
+    "criterio": "Quem mora em Campinas ou frequenta a loja: abre o Cardápio da casa, Pão de queijo, Bolo de fubá, a pergunta \"Onde fica a loja?\" e Degustação e curso"
+   }
+  ],
+  "interesses": [
+   {
+    "id": "aprender",
+    "emoji": "🎓",
+    "rotulo": "Aprender a provar",
+    "criterio": "Aprender a provar: abre o glossário, as rotas de degustação, a degustação guiada e a ficha de degustação",
+    "cta": "Assinar e aprender a provar"
+   },
+   {
+    "id": "provar",
+    "emoji": "🧪",
+    "rotulo": "Provar cafés novos",
+    "criterio": "Provar cafés e preparos diferentes: abre o cardápio, as rotas, os métodos filtrados e os gelados",
+    "cta": "Provar um café novo por mês"
+   },
+   {
+    "id": "rotina",
+    "emoji": "☕",
+    "rotulo": "Café fresco em casa",
+    "criterio": "Ter café bom em casa todo dia: abre O que vem na caixa, o clube e a pergunta do frescor",
+    "cta": "Receber café fresco todo mês"
+   },
+   {
+    "id": "loja",
+    "emoji": "📍",
+    "rotulo": "Conhecer a loja",
+    "criterio": "Conhecer a loja: abre o cardápio, os acompanhamentos, a degustação, o curso e o endereço",
+    "cta": "Levar o café da loja para casa"
+   },
+   {
+    "id": "condicoes",
+    "emoji": "💳",
+    "rotulo": "Preço e condições",
+    "criterio": "Entender preço e condições: abre o clube, passa o mouse no preço, abre as perguntas de preço, troca e cancelamento",
+    "cta": "Assinar com troca em {dias} dias"
+   },
+   {
+    "id": "prova",
+    "emoji": "🧐",
+    "rotulo": "Conferir se vale a pena",
+    "criterio": "Conferir se vale a pena: abre os exemplos de depoimentos, a troca do primeiro pacote e O café de todo dia",
+    "cta": "Assinar com troca do primeiro pacote"
+   }
+  ],
+  "objecoes": [
+   {
+    "id": "preco",
+    "emoji": "💸",
+    "rotulo": "Vale o preço?",
+    "faq": "f1",
+    "criterio": "\"Será que vale R$69 por mês?\": abriu o clube, passou o mouse no preço, copiou o valor ou abriu a pergunta de preço"
+   },
+   {
+    "id": "entender",
+    "emoji": "🧩",
+    "rotulo": "Precisa entender de café?",
+    "faq": "f3",
+    "criterio": "\"Preciso entender de café para assinar?\": iniciante, abriu O café de todo dia, a Primeira xícara ou termos básicos do glossário, ou abriu essa pergunta"
+   },
+   {
+    "id": "nao_gostar",
+    "emoji": "🛡️",
+    "rotulo": "E se não gostar?",
+    "faq": "f4",
+    "criterio": "\"E se eu não gostar do primeiro café?\": abriu o clube e ficou no preço, abriu os exemplos de depoimentos ou a pergunta da troca"
+   },
+   {
+    "id": "cancelar",
+    "emoji": "🔓",
+    "rotulo": "Fica preso?",
+    "faq": "f5",
+    "criterio": "\"Fico preso na assinatura?\": abriu a pergunta de cancelamento ou comparou o plano mensal com o anual"
+   },
+   {
+    "id": "frescor",
+    "emoji": "🌿",
+    "rotulo": "Chega fresco?",
+    "faq": "f6",
+    "criterio": "\"O café chega fresco em casa?\": abriu O que vem na caixa, o termo Frescor ou a pergunta do frescor"
+   }
+  ],
+  "sua_trilha": {
+   "rotulo_experimente": "Prove",
+   "experimente": [
+    "cardapio",
+    "experiencias"
+   ],
+   "experimente_padrao": {
+    "texto": "o V60 do dia no balcão",
+    "secao": "cardapio"
+   },
+   "duvidas": [
+    "faq",
+    "experiencias"
+   ]
+  }
+ },
+ "simulacoes": [
+  {
+   "id": "iniciante",
+   "rotulo": "🌱 Começando no café especial",
+   "desc": "Abre O café de todo dia e a rota Primeira xícara, depois a pergunta “Preciso entender de café para assinar?”.",
+   "espera": "A dúvida “entender de café” é respondida com a resposta oficial e o Jev sugere a próxima porta.",
+   "captura": "duvida",
+   "espera_jev": {
+    "perfil": "iniciante",
+    "objecao": "entender"
+   },
+   "passos": [
+    {
+     "f": "abrirPorta",
+     "secao": "problema"
+    },
+    {
+     "f": "lerSecao",
+     "secao": "problema",
+     "ms": 2600
+    },
+    {
+     "f": "abrirPorta",
+     "secao": "rotas"
+    },
+    {
+     "f": "abrirTrilha",
+     "trilha": "primeira-xicara",
+     "ler_ms": 2600
+    },
+    {
+     "f": "abrirBloco",
+     "trilha": "primeira-xicara",
+     "bloco": 0,
+     "ler_ms": 3000
+    },
+    {
+     "f": "abrirFaq",
+     "faq": "f3",
+     "ler_ms": 3000
+    },
+    {
+     "f": "esperarDuvida",
+     "faq": "f3",
+     "ms": 9000
+    },
+    {
+     "f": "olharTrilha"
+    },
+    {
+     "f": "seguirRecomendacao",
+     "clicar": true
+    }
+   ]
+  },
+  {
+   "id": "metodos",
+   "rotulo": "⚗️ Fã de filtrados",
+   "desc": "Abre o Cardápio (V60 e Chemex), o Glossário e busca “extração”.",
+   "espera": "Termos de preparo sobem no Glossário como “Para você” e a trilha começa pelos filtrados.",
+   "captura": "pins:glossario",
+   "espera_jev": {
+    "perfil": "metodos",
+    "pins": {
+     "secao": "glossario"
+    }
+   },
+   "passos": [
+    {
+     "f": "abrirPorta",
+     "secao": "cardapio"
+    },
+    {
+     "f": "abrirItem",
+     "secao": "cardapio",
+     "item": "V60",
+     "ler_ms": 3600
+    },
+    {
+     "f": "abrirItem",
+     "secao": "cardapio",
+     "item": "Chemex",
+     "ler_ms": 3000
+    },
+    {
+     "f": "abrirPorta",
+     "secao": "glossario"
+    },
+    {
+     "f": "buscar",
+     "secao": "glossario",
+     "q": "extração"
+    },
+    {
+     "f": "esperarPins",
+     "secao": "glossario",
+     "ms": 9000
+    },
+    {
+     "f": "abrirPrimeiroPin",
+     "secao": "glossario",
+     "ler_ms": 2600
+    },
+    {
+     "f": "olharTrilha",
+     "esperar_ms": 5000
+    },
+    {
+     "f": "seguirRecomendacao",
+     "clicar": false
+    }
+   ]
+  },
+  {
+   "id": "preco",
+   "rotulo": "💸 De olho no preço",
+   "desc": "Abre o Cardápio e o Clube, fica no preço, copia o valor e abre “Quanto custa o clube?”.",
+   "espera": "A dúvida de preço é respondida com a resposta oficial e a chamada muda para as condições.",
+   "captura": "duvida",
+   "espera_jev": {
+    "objecao": "preco"
+   },
+   "passos": [
+    {
+     "f": "abrirPorta",
+     "secao": "cardapio"
+    },
+    {
+     "f": "abrirItem",
+     "secao": "cardapio",
+     "item": "Espresso",
+     "ler_ms": 2600
+    },
+    {
+     "f": "abrirPorta",
+     "secao": "clube"
+    },
+    {
+     "f": "pairarPreco",
+     "ms": 3600
+    },
+    {
+     "f": "copiarPreco"
+    },
+    {
+     "f": "abrirFaq",
+     "faq": "f1",
+     "ler_ms": 3200
+    },
+    {
+     "f": "esperarDuvida",
+     "faq": "f1",
+     "ms": 12000
+    },
+    {
+     "f": "olharChamada"
+    }
+   ]
+  },
+  {
+   "id": "saindo",
+   "rotulo": "🚪 Indo embora",
+   "desc": "Abre O que vem na caixa e as Rotas, volta rápido ao topo e sai pelo topo da janela.",
+   "espera": "Antes de sair, a página mostra o resumo do que a pessoa abriu, com o preço e a troca reais.",
+   "captura": "saida",
+   "espera_jev": {
+    "saida": true
+   },
+   "passos": [
+    {
+     "f": "abrirPorta",
+     "secao": "caixa"
+    },
+    {
+     "f": "lerSecao",
+     "secao": "caixa",
+     "ms": 2600
+    },
+    {
+     "f": "abrirPorta",
+     "secao": "rotas"
+    },
+    {
+     "f": "lerSecao",
+     "secao": "rotas",
+     "ms": 2600
+    },
+    {
+     "f": "voltarAoTopo"
+    },
+    {
+     "f": "sairPeloTopo"
+    }
+   ]
+  },
+  {
+   "id": "rotina",
+   "rotulo": "☕ Café todo dia em casa",
+   "desc": "Abre O que vem na caixa, a pergunta do frescor e os exemplos de depoimentos.",
+   "espera": "O Jev monta a trilha e mostra, no clube, um exemplo de depoimento parecido.",
+   "captura": "prova",
+   "espera_jev": {
+    "perfil": "rotina",
+    "prova": true
+   },
+   "passos": [
+    {
+     "f": "abrirPorta",
+     "secao": "caixa"
+    },
+    {
+     "f": "lerSecao",
+     "secao": "caixa",
+     "ms": 3000
+    },
+    {
+     "f": "abrirFaq",
+     "faq": "f6",
+     "ler_ms": 3000
+    },
+    {
+     "f": "abrirPorta",
+     "secao": "depoimentos"
+    },
+    {
+     "f": "abrirItem",
+     "secao": "depoimentos",
+     "item": "Júlia",
+     "ler_ms": 3000
+    },
+    {
+     "f": "olharTrilha",
+     "esperar_ms": 8000
+    },
+    {
+     "f": "esperarProva"
+    }
+   ]
+  }
+ ]
+}

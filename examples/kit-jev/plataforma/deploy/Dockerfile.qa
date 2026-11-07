@@ -1,0 +1,9 @@
+FROM mcr.microsoft.com/playwright:v1.57.0-noble
+ENV NODE_ENV=production PORT=3000 DATA_DIR=/data JEV_GATEWAY_URL=http://gateway:8787
+WORKDIR /srv
+COPY shared ./shared
+COPY apps/qa ./apps/qa
+WORKDIR /srv/apps/qa
+RUN rm -rf node_modules test data-runtime && mkdir -p /data && npm install --omit=dev --no-audit --no-fund
+EXPOSE 3000
+CMD ["node", "server.mjs"]

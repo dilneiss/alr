@@ -1,0 +1,126 @@
+{
+  "alvo": "Loja Bugada (/alvo/)",
+  "observacao": "Gabarito dos 9 bugs plantados. Serve só para medir o placar: o agente não lê este arquivo. Um bug conta como encontrado quando um oráculo automático gera um achado que casa com um dos 'sinais' abaixo E a triagem do Jev diz que é bug real (bug_real >= 0,5).",
+  "bugs": [
+    {
+      "id": "qtd_negativa",
+      "titulo": "Quantidade negativa aceita",
+      "curto": "Qtd. negativa",
+      "icone": "➖",
+      "onde": "Produto → carrinho",
+      "descricao": "O campo Quantidade aceita 0 e números negativos: o subtotal e o total do carrinho ficam negativos (ex.: R$ -599,70).",
+      "como_reproduzir": "Abra um produto, digite -3 em Quantidade e clique em Adicionar ao carrinho.",
+      "categoria_esperada": "calculo_errado",
+      "sinais": [
+        { "oraculo": "texto", "padrao": "valor_negativo" },
+        { "oraculo": "aceitou_invalido", "campo": "quantidade", "valores": ["zero", "negativo"] }
+      ]
+    },
+    {
+      "id": "cupom_regex",
+      "titulo": "Cupom com caracteres especiais derruba o JavaScript",
+      "curto": "Cupom quebra o JS",
+      "icone": "🎟️",
+      "onde": "Carrinho",
+      "descricao": "O código do cupom é colado dentro de uma expressão regular sem escape: símbolos como ( [ * lançam SyntaxError não tratado.",
+      "como_reproduzir": "No carrinho, digite !@#$%*([{ no cupom e clique em Aplicar.",
+      "categoria_esperada": "crash_js",
+      "sinais": [
+        { "oraculo": "erro_js", "contem": "Invalid regular expression" },
+        { "oraculo": "erro_js", "contem": "aplicarCupom" }
+      ]
+    },
+    {
+      "id": "busca_500",
+      "titulo": "Busca vazia devolve erro 500",
+      "curto": "Busca vazia → 500",
+      "icone": "🔎",
+      "onde": "Busca (topo de todas as páginas)",
+      "descricao": "A API de busca chama toLowerCase() num termo inexistente e responde HTTP 500 quando a busca é enviada vazia.",
+      "como_reproduzir": "Clique em Buscar sem digitar nada.",
+      "categoria_esperada": "erro_servidor",
+      "sinais": [
+        { "oraculo": "http", "metodo": "GET", "caminho": "/alvo/api/busca", "status": 500 }
+      ]
+    },
+    {
+      "id": "nome_longo",
+      "titulo": "Nome longo estoura a etiqueta de entrega",
+      "curto": "Nome longo estoura",
+      "icone": "📐",
+      "onde": "Checkout",
+      "descricao": "A etiqueta de entrega usa white-space: nowrap sem limite: um nome comprido vaza da caixa e cria rolagem horizontal.",
+      "como_reproduzir": "No checkout, digite um nome com mais de 60 caracteres.",
+      "categoria_esperada": "layout_quebrado",
+      "sinais": [
+        { "oraculo": "layout", "pagina": "/alvo/checkout" }
+      ]
+    },
+    {
+      "id": "email_fraco",
+      "titulo": "Newsletter aceita “a@” como e-mail",
+      "curto": "E-mail “a@” aceito",
+      "icone": "📧",
+      "onde": "Newsletter (rodapé)",
+      "descricao": "A validação só confere se existe um @: “a@” recebe “Inscrição confirmada”.",
+      "como_reproduzir": "No rodapé, digite a@ e clique em Assinar.",
+      "categoria_esperada": "validacao_fraca",
+      "sinais": [
+        { "oraculo": "aceitou_invalido", "campo": "mail", "valores": ["email_invalido"] }
+      ]
+    },
+    {
+      "id": "qtd_vazia_nan",
+      "titulo": "Quantidade vazia mostra “R$ NaN”",
+      "curto": "R$ NaN",
+      "icone": "🧮",
+      "onde": "Produto → carrinho",
+      "descricao": "Com o campo Quantidade vazio, parseInt('') vira NaN e o subtotal aparece como “R$ NaN”.",
+      "como_reproduzir": "Abra um produto e apague a quantidade.",
+      "categoria_esperada": "calculo_errado",
+      "sinais": [
+        { "oraculo": "texto", "padrao": "NaN" }
+      ]
+    },
+    {
+      "id": "link_404",
+      "titulo": "Link da vitrine leva a uma página 404",
+      "curto": "Link 404",
+      "icone": "🔗",
+      "onde": "Vitrine (página inicial)",
+      "descricao": "O card da Cadeira Gamer Pro aponta para /alvo/produto/cadeira-gamer-pro, mas o produto se chama cadeira-gamer.",
+      "como_reproduzir": "Na página inicial, clique na Cadeira Gamer Pro.",
+      "categoria_esperada": "link_quebrado",
+      "sinais": [
+        { "oraculo": "http", "status": 404, "caminho": "/alvo/produto/", "navegacao": true }
+      ]
+    },
+    {
+      "id": "frete_excecao",
+      "titulo": "“Calcular frete” lança exceção com CEP inválido",
+      "curto": "Frete lança exceção",
+      "icone": "🚚",
+      "onde": "Carrinho",
+      "descricao": "calcularFrete() usa o resultado de match() sem conferir se é null: qualquer CEP fora do padrão gera TypeError.",
+      "como_reproduzir": "No carrinho, clique em Calcular frete com o CEP vazio ou com letras.",
+      "categoria_esperada": "crash_js",
+      "sinais": [
+        { "oraculo": "erro_js", "contem": "calcularFrete" },
+        { "oraculo": "erro_js", "contem": "reading '1'" }
+      ]
+    },
+    {
+      "id": "pedido_duplicado",
+      "titulo": "Clique duplo em “Finalizar pedido” cria 2 pedidos",
+      "curto": "Pedido em dobro",
+      "icone": "👯",
+      "onde": "Checkout",
+      "descricao": "O botão não é desativado durante o envio e a API não tem chave de idempotência: dois cliques rápidos geram dois pedidos cobrados.",
+      "como_reproduzir": "No checkout, dê um clique duplo em Finalizar pedido.",
+      "categoria_esperada": "duplicidade",
+      "sinais": [
+        { "oraculo": "duplicado", "caminho": "/alvo/api/pedidos" }
+      ]
+    }
+  ]
+}

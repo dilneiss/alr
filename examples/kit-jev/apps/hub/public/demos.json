@@ -1,0 +1,259 @@
+[
+ {
+  "id": "cluely",
+  "emoji": "🫥",
+  "title": "Mini Cluely",
+  "sub": "jev-cluely",
+  "oneliner": "Vê sua tela, ouve a reunião e sopra a resposta na hora — numa janela que flutua por cima de qualquer app.",
+  "jev": "~20 decisões por fala, já com a frase pela metade (quem falou, vale interromper?, que ajuda, que fato do seu contexto, termo mal transcrito?): o rascunho aparece antes do fim da frase. O modelo local (Qwen3-4B) só escreve quando o Jev manda; o Whisper revisa a transcrição.",
+  "tags": [
+   "tela + voz",
+   "copiloto",
+   "modelo local"
+  ],
+  "n": 1,
+  "url": "https://jev-cluely.exemplo.com",
+  "shot": "shots/cluely.jpg"
+ },
+ {
+  "id": "estudio",
+  "emoji": "🎙️",
+  "title": "Estúdio por Voz",
+  "sub": "jev-estudio",
+  "oneliner": "Fale do seu negócio e veja site, marca, carrosséis, e-mail marketing e anúncios nascerem juntos — depois peça ajustes por voz e volte a qualquer versão.",
+  "jev": "89 decisões em 6 chamadas paralelas a cada pausa; diga “muda o logo pra…” e o Jev escolhe de novo só aquela peça; cada estado vira uma versão.",
+  "tags": [
+   "voz",
+   "tempo real",
+   "criação"
+  ],
+  "n": 2,
+  "url": "https://jev-estudio.exemplo.com",
+  "shot": "shots/estudio.jpg"
+ },
+ {
+  "id": "planilha",
+  "emoji": "📊",
+  "title": "Planilha Preditiva",
+  "sub": "jev-planilha",
+  "oneliner": "Crie uma coluna escrevendo só o título — o Jev preenche centenas de linhas em segundos.",
+  "jev": "Escolhe o tipo da coluna a partir do título e classifica cada linha em lote (dezenas de perguntas por chamada).",
+  "tags": [
+   "lote",
+   "dados",
+   "custo"
+  ],
+  "n": 3,
+  "url": "https://jev-planilha.exemplo.com",
+  "shot": "shots/planilha.jpg"
+ },
+ {
+  "id": "form",
+  "emoji": "📝",
+  "title": "Formulário que Qualifica",
+  "sub": "jev-form",
+  "oneliner": "Um Typeform que qualifica o lead enquanto ele digita e escolhe o final: agenda, proposta ou conteúdo.",
+  "jev": "A cada tecla: qualificação, BANT, chance de compra em 30 dias e próximo passo — numa chamada.",
+  "tags": [
+   "tempo real",
+   "vendas B2B"
+  ],
+  "n": 4,
+  "url": "https://jev-form.exemplo.com",
+  "shot": "shots/form.jpg"
+ },
+ {
+  "id": "carro",
+  "emoji": "🚗",
+  "title": "Carro Autônomo",
+  "sub": "jev-carro",
+  "oneliner": "O Jev dirige: lê os sensores e decide acelerar, frear ou trocar de faixa várias vezes por segundo.",
+  "jev": "Ação, motivo e nível de perigo a cada decisão, a partir de distâncias, semáforos e pedestres.",
+  "tags": [
+   "tempo real",
+   "controle"
+  ],
+  "n": 5,
+  "url": "https://jev-carro.exemplo.com",
+  "shot": "shots/carro.jpg"
+ },
+ {
+  "id": "cidade",
+  "emoji": "🏙️",
+  "title": "Cidade Viva",
+  "sub": "jev-cidade",
+  "oneliner": "48 moradores com cérebro Jev decidem o que fazer a cada hora — todos numa única chamada.",
+  "jev": "48 perguntas de escolha por hora simulada; eventos escritos pelo público mudam o comportamento.",
+  "tags": [
+   "multiagente",
+   "simulação"
+  ],
+  "n": 6,
+  "url": "https://jev-cidade.exemplo.com",
+  "shot": "shots/cidade.jpg"
+ },
+ {
+  "id": "chat",
+  "emoji": "💬",
+  "title": "Chat com Moderação ao Vivo",
+  "sub": "jev-chat",
+  "oneliner": "Toda mensagem passa pelo Jev antes de aparecer. Regras escritas em português viram perguntas na hora.",
+  "jev": "Categoria, toxicidade, violação de cada regra e ação (publicar, ocultar, silenciar) por mensagem.",
+  "tags": [
+   "tempo real",
+   "multiusuário"
+  ],
+  "n": 7,
+  "url": "https://jev-chat.exemplo.com",
+  "shot": "shots/chat.jpg"
+ },
+ {
+  "id": "suporte",
+  "emoji": "🎧",
+  "title": "Central de Suporte",
+  "sub": "jev-suporte",
+  "oneliner": "Cada ticket triado numa chamada: departamento, prioridade, frustração, reembolso e a resposta pronta certa.",
+  "jev": "Departamento, prioridade, frustração, reembolso, risco de cancelamento e macro de resposta.",
+  "tags": [
+   "atendimento",
+   "operação"
+  ],
+  "n": 8,
+  "url": "https://jev-suporte.exemplo.com",
+  "shot": "shots/suporte.jpg"
+ },
+ {
+  "id": "escudo",
+  "emoji": "🛡️",
+  "title": "Escudo de IA",
+  "sub": "jev-escudo",
+  "oneliner": "Firewall semântico contra prompt injection, jailbreak e SQL injection — lado a lado com um WAF de regex.",
+  "jev": "Veredito, tipo de ataque, severidade e alvo de cada entrada antes de chegar ao sistema.",
+  "tags": [
+   "segurança"
+  ],
+  "n": 9,
+  "url": "https://jev-escudo.exemplo.com",
+  "shot": "shots/escudo.jpg"
+ },
+ {
+  "id": "qa",
+  "emoji": "🐞",
+  "title": "QA Adversarial",
+  "sub": "jev-qa",
+  "oneliner": "O Jev pilota um navegador de verdade tentando quebrar um site — e relata os bugs em um minuto.",
+  "jev": "Próximo clique, valor malicioso para cada campo e triagem de cada anomalia encontrada.",
+  "tags": [
+   "agente de navegador",
+   "testes"
+  ],
+  "n": 10,
+  "url": "https://jev-qa.exemplo.com",
+  "shot": "shots/qa.jpg"
+ },
+ {
+  "id": "escape",
+  "emoji": "🗝️",
+  "title": "Escape Room",
+  "sub": "jev-escape",
+  "oneliner": "Aventura de texto que entende qualquer coisa que você digita — e nunca quebra as regras do jogo.",
+  "jev": "Transforma texto livre na ação válida do momento e lê o tom do jogador.",
+  "tags": [
+   "jogo",
+   "linguagem natural"
+  ],
+  "n": 11,
+  "url": "https://jev-escape.exemplo.com",
+  "shot": "shots/escape.jpg"
+ },
+ {
+  "id": "vendas",
+  "emoji": "🎙️",
+  "title": "Copiloto de Vendas",
+  "sub": "jev-vendas",
+  "oneliner": "Escuta a ligação e mostra o card certo a cada objeção do cliente, em tempo real.",
+  "jev": "Objeção, sinal de compra, sentimento, estágio e melhor argumento a cada fala.",
+  "tags": [
+   "voz",
+   "tempo real"
+  ],
+  "n": 12,
+  "url": "https://jev-vendas.exemplo.com",
+  "shot": "shots/vendas.jpg"
+ },
+ {
+  "id": "busca",
+  "emoji": "🔎",
+  "title": "Busca que Entende",
+  "sub": "jev-busca",
+  "oneliner": "O Jev avalia o catálogo inteiro a cada busca: “presente pra mãe que ama jardinagem até R$ 150”.",
+  "jev": "Relevância de cada produto para a intenção da frase, com restrições de preço e ocasião.",
+  "tags": [
+   "e-commerce",
+   "ranking"
+  ],
+  "n": 13,
+  "url": "https://jev-busca.exemplo.com",
+  "shot": "shots/busca.jpg"
+ },
+ {
+  "id": "golpe",
+  "emoji": "🚨",
+  "title": "Detector de Golpes",
+  "sub": "jev-golpe",
+  "oneliner": "Cole a mensagem suspeita: é golpe? de que tipo? que sinais? o que fazer? — em meio segundo.",
+  "jev": "12 perguntas numa chamada: veredito, tipo, gravidade, conduta e 8 sinais de alerta.",
+  "tags": [
+   "segurança",
+   "utilidade pública"
+  ],
+  "n": 14,
+  "url": "https://jev-golpe.exemplo.com",
+  "shot": "shots/golpe.jpg"
+ },
+ {
+  "id": "comentarios",
+  "emoji": "▶️",
+  "title": "Comentários → Oportunidades",
+  "sub": "jev-comentarios",
+  "oneliner": "Cole um vídeo do YouTube: leads, dúvidas, pedidos de conteúdo e spam separados em segundos.",
+  "jev": "Tipo, intenção de compra, necessidade de resposta e sentimento de centenas de comentários em lote.",
+  "tags": [
+   "criadores",
+   "lote"
+  ],
+  "n": 15,
+  "url": "https://jev-comentarios.exemplo.com",
+  "shot": "shots/comentarios.jpg"
+ },
+ {
+  "id": "tron",
+  "emoji": "🏍️",
+  "title": "Tron: Você vs Jev",
+  "sub": "jev-tron",
+  "oneliner": "Jogo de motos de luz contra o Jev, que decide cada curva em milissegundos.",
+  "jev": "Seguir, virar à esquerda ou à direita a cada passo, lendo o espaço livre do tabuleiro.",
+  "tags": [
+   "jogo",
+   "tempo real"
+  ],
+  "n": 16,
+  "url": "https://jev-tron.exemplo.com",
+  "shot": "shots/tron.jpg"
+ },
+ {
+  "id": "site",
+  "emoji": "🧠",
+  "title": "Site que Lê Intenções",
+  "sub": "jev-site",
+  "oneliner": "Uma página de vendas em que tudo abre por clique, e que se monta para quem visita conforme o que a pessoa abre.",
+  "jev": "A cada abertura: quem é você, a próxima seção que vale abrir, o que destacar entre os itens reais do site, a sua dúvida e por onde começar.",
+  "tags": [
+   "marketing",
+   "personalização"
+  ],
+  "n": 17,
+  "url": "https://jev-site.exemplo.com",
+  "shot": "shots/site.jpg"
+ }
+]

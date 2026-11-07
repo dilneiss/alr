@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detector de Golpes · Jev</title>
+<meta name="description" content="Cole qualquer mensagem suspeita e o Jev diz em meio segundo se é golpe, de que tipo e o que fazer.">
+<meta name="theme-color" content="#E9D7A5">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='rotate(-12 32 32)' fill='none' stroke='%23C1121F' stroke-width='5'%3E%3Crect x='6' y='15' width='52' height='34' rx='5'/%3E%3Cpath d='M16 28h32M16 37h22'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="/_jev/jev.css">
+<link rel="stylesheet" href="golpe.css">
+</head>
+<body>
+<header class="jev-topbar"></header>
+
+<main class="mesa">
+  <div class="pasta">
+    <p class="pasta-aba" aria-hidden="true"><span>Perícia de mensagens</span></p>
+
+    <!-- lado esquerdo: a prova -->
+    <section class="lado lado-prova" aria-labelledby="titulo">
+      <header class="capa">
+        <div class="capa-etiqueta">
+          <h1 id="titulo">Detector de Golpes</h1>
+        </div>
+        <p class="capa-texto">Recebeu uma mensagem estranha? Cole aqui. O Jev responde <b>12 perguntas de uma vez</b> — é golpe? de que tipo? quais sinais de alerta? o que fazer? — em menos de meio segundo, e enquanto você digita.</p>
+      </header>
+
+      <div class="saco">
+        <div class="saco-lacre" aria-hidden="true"><span>Prova · lacre de segurança · prova · lacre de segurança · prova · lacre de segurança · prova · lacre de segurança</span></div>
+        <div class="typing" id="typing" hidden><span class="cursor" aria-hidden="true"></span>analisando…</div>
+        <div class="saco-etiqueta">
+          <p class="etq-num"><span>Prova</span><b>nº <span id="provaNum">001</span></b></p>
+          <dl class="etq-campos">
+            <div><dt>Coleta</dt><dd id="dataColeta">—</dd></div>
+            <div><dt>Origem</dt><dd>WhatsApp · SMS · e-mail</dd></div>
+          </dl>
+        </div>
+        <div class="msgbox">
+          <textarea id="msg" placeholder="Cole aqui a mensagem do WhatsApp, SMS ou e-mail…" aria-label="Mensagem para analisar" spellcheck="false"></textarea>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button class="btn-analisar" id="go" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M9.6 3.5h4.8a1 1 0 0 1 1 1V7c0 1.3-1.6 1.9-1.6 3.4V12h-3.6v-1.6C10.2 8.9 8.6 8.3 8.6 7V4.5a1 1 0 0 1 1-1z"/><path d="M5 12h14a1 1 0 0 1 1 1v3.2H4V13a1 1 0 0 1 1-1z"/><path d="M5.5 19.8h13"/></svg>
+          Analisar mensagem
+        </button>
+        <div class="toolbar-opcoes">
+          <label class="switch" title="Refaz a análise a cada pausa na digitação"><input type="checkbox" id="live" checked> analisar ao digitar</label>
+          <button class="btn-limpar" id="clear" type="button">Limpar</button>
+        </div>
+      </div>
+
+      <section class="arquivo" aria-labelledby="arqTitulo">
+        <div class="arquivo-cab">
+          <h2 id="arqTitulo">Casos arquivados <small>experimente um exemplo real</small></h2>
+          <p class="counter" id="counter"></p>
+        </div>
+        <div class="fichas" id="chips"></div>
+      </section>
+    </section>
+
+    <!-- lado direito: o laudo -->
+    <section class="lado lado-laudo" aria-label="Laudo do Jev">
+      <article class="laudo res-card" id="res">
+        <svg class="clipe" viewBox="0 0 44 118" aria-hidden="true"><defs><linearGradient id="metal" x1="0" x2="1"><stop offset="0" stop-color="#7d838a"/><stop offset=".45" stop-color="#e3e6e9"/><stop offset="1" stop-color="#8f959c"/></linearGradient></defs><path d="M16 38V90a6.5 6.5 0 0 0 13 0V17a10.5 10.5 0 0 0-21 0v79a13.5 13.5 0 0 0 27 0V34" fill="none" stroke="url(#metal)" stroke-width="3.4" stroke-linecap="round"/></svg>
+
+        <header class="laudo-cab">
+          <div>
+            <p class="laudo-tipo">Laudo pericial <span>nº <b id="laudoNum">—</b></span></p>
+            <p class="laudo-meta"><span id="laudoEstado">aguardando prova</span> · perito: <b id="perito">Jev</b><span class="laudo-examinando" aria-hidden="true"> · em exame…</span></p>
+          </div>
+          <div class="laudo-lado">
+            <p class="laudo-data" id="laudoData"></p>
+            <p class="laudo-modelo" id="modelo"></p>
+          </div>
+        </header>
+
+        <div class="empty" id="empty">
+          <div class="vazio-carimbo" aria-hidden="true">Aguardando<br>prova</div>
+          <p>Cole uma mensagem ou clique num exemplo.<br>O veredito aparece aqui em milissegundos.</p>
+          <ol class="vazio-quesitos" aria-hidden="true">
+            <li><span>I.</span> Conclusão <i></i></li>
+            <li><span>II.</span> Providências <i></i></li>
+            <li><span>III.</span> Tipo de golpe <i></i></li>
+            <li><span>IV.</span> Gravidade <i></i></li>
+            <li><span>V.</span> Achados <i></i></li>
+          </ol>
+        </div>
+
+        <div id="out" hidden>
+          <section class="q q-conclusao">
+            <h3><span class="q-n">I.</span> Conclusão</h3>
+            <div class="verdict">
+              <div class="v-texto">
+                <div class="v-linha"><span class="v-title" id="vtitle">—</span><span class="v-badge" id="vbadge">veredito</span></div>
+                <div class="v-sub" id="vsub">—</div>
+                <div class="regua" id="gauge"></div>
+              </div>
+              <div class="carimbo-area">
+                <div class="carimbo" id="carimbo" aria-hidden="true"><span class="carimbo-palavra" id="carimboTxt">—</span><span class="carimbo-linha" id="carimboLinha">—</span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="q q-prov">
+            <h3><span class="q-n">II.</span> Providências</h3>
+            <div class="action"><div class="ic" id="aic"></div><div><b id="atitle">—</b><p id="adetail">—</p></div></div>
+          </section>
+
+          <div class="q-grade">
+            <section class="q q-tipo">
+              <h3><span class="q-n">III.</span> Tipo de golpe <small>probabilidades</small></h3>
+              <div id="tipos"></div>
+            </section>
+            <section class="q q-grav">
+              <h3><span class="q-n">IV.</span> Gravidade</h3>
+              <div id="grav"></div>
+            </section>
+            <section class="q q-achados">
+              <h3><span class="q-n">V.</span> Achados <small>sinais de alerta</small></h3>
+              <p class="legenda" aria-hidden="true"><span><i class="lg on"></i>constatado</span><span><i class="lg maybe"></i>inconclusivo</span></p>
+              <ol class="flags" id="flags"></ol>
+            </section>
+          </div>
+
+          <footer class="speed" id="speed"></footer>
+        </div>
+        <p class="sr-only" id="anuncio" aria-live="polite"></p>
+      </article>
+    </section>
+  </div>
+</main>
+<script src="/_jev/jev-kit.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+/* O Jogo que Lê Você — cockpit neon: o que o Jev leu (esquerda) · o jogo (meio) · o diretor (direita).
+   Texto do HUD com 18 px no mínimo (há navegadores com fonte mínima de 18 px): a hierarquia vem de peso e cor. */
+.jl {
+  --roxo: #a855f7; --ciano: #22d3ee; --rosa: #f472b6;
+  --vidro: rgba(15, 8, 34, .78); --borda: rgba(168, 85, 247, .26); --borda2: rgba(168, 85, 247, .5);
+  --txt: #f5f3ff; --mudo: #c4b5fd; --dim: #9d8fc4;
+  position: relative; flex: 1; min-height: 0;
+  display: grid; grid-template-columns: minmax(220px, 262px) minmax(0, 1fr) minmax(286px, 340px); grid-template-areas: "leu jogo dir";
+  gap: 12px; padding: 12px;
+  background:
+    radial-gradient(800px 420px at 50% -20%, rgba(168, 85, 247, .22), transparent 70%),
+    radial-gradient(600px 400px at 100% 110%, rgba(34, 211, 238, .12), transparent 70%),
+    linear-gradient(180deg, #0b0520, #05020f);
+  color: var(--txt); overflow: hidden;
+}
+.jl-leu { grid-area: leu; }
+.jl-jogo { grid-area: jogo; }
+.jl-dir { grid-area: dir; }
+
+/* ---------- painéis ---------- */
+.jl-leu, .jl-dir {
+  position: relative; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 12px 14px 12px;
+  border-radius: 20px; background: var(--vidro); border: 1px solid var(--borda);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 18px 50px rgba(0, 0, 0, .35);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); overflow: hidden;
+}
+.jl-cab { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.jl-cab.linha { align-items: center; flex-wrap: nowrap; min-height: 32px; }
+.jl-cab.linha h3 { white-space: nowrap; }
+.jl-cab h3 { margin: 0; font: 800 20px/1.15 var(--mj-f); letter-spacing: -.01em; }
+.jl-cab p { margin: 2px 0 0; font-size: 18px; line-height: 1.25; color: var(--dim); }
+.jl-fita { min-width: 0; display: flex; justify-content: flex-end; }
+.jl-fita .mj-fita { position: static; flex-direction: row; }
+.jl-fita .mj-fita-p:not(:first-child) { display: none; }
+.jl-fita .mj-fita-p { font-size: 15px; padding: 5px 10px; gap: 6px; }
+.jl-fita .mj-fita-p span { display: none; }
+
+/* ritmo: quanto falta para a próxima leitura */
+.jl-ritmo { height: 4px; border-radius: 99px; background: rgba(255, 255, 255, .08); overflow: hidden; flex: none; }
+.jl-ritmo i { display: block; height: 100%; transform-origin: left; transform: scaleX(0); background: linear-gradient(90deg, var(--roxo), var(--ciano)); transition: transform .12s linear; }
+.jl-ritmo.lendo i { animation: jl-lendo .6s ease-in-out infinite alternate; }
+@keyframes jl-lendo { from { opacity: .45; } to { opacity: 1; } }
+
+/* a leitura grande */
+.jl-leitura { --cor: #a78bfa; position: relative; padding: 8px 12px 9px; border-radius: 16px; background: color-mix(in srgb, var(--cor) 12%, rgba(255, 255, 255, .03)); border: 1px solid color-mix(in srgb, var(--cor) 40%, transparent); transition: background .45s var(--mj-ease), border-color .45s var(--mj-ease), box-shadow .45s; flex: none; }
+.jl-leitura.certo { box-shadow: 0 0 34px color-mix(in srgb, var(--cor) 26%, transparent); }
+.jl-rot { margin: 0; font-size: 18px; color: var(--mudo); }
+.jl-estado { display: flex; align-items: center; gap: 10px; min-width: 0; margin-top: 2px; }
+.jl-estado .emo { font-size: 42px; line-height: 1; flex: none; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .4)); }
+.jl-estado .emo.pula { animation: jl-pula .5s var(--mj-ease); }
+@keyframes jl-pula { 0% { transform: scale(.4) rotate(-14deg); opacity: 0; } 60% { transform: scale(1.18); opacity: 1; } 100% { transform: none; } }
+.jl-estado .nome { flex: 1; min-width: 0; font: 850 30px/1.05 var(--mj-f); letter-spacing: -.02em; color: var(--cor); overflow-wrap: anywhere; transition: color .45s; }
+.jl-estado .pct { flex: none; font-size: 28px; font-weight: 800; color: var(--txt); }
+.jl-fala { margin: 4px 0 0; font-size: 18px; line-height: 1.3; color: var(--txt); opacity: .92; min-height: 1.3em; }
+
+/* barras dos 4 estados */
+.jl-barras { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; flex: none; }
+.jl-barras li { --p: 0; --cor: #a78bfa; position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 32px; padding: 3px 10px 3px 6px; border-radius: 12px; background: rgba(255, 255, 255, .04); overflow: hidden; }
+.jl-barras .fil { position: absolute; inset: 0 auto 0 0; width: calc(var(--p) * 100%); background: linear-gradient(90deg, color-mix(in srgb, var(--cor) 45%, transparent), color-mix(in srgb, var(--cor) 22%, transparent)); transition: width .45s var(--mj-ease); }
+.jl-barras li > :not(.fil) { position: relative; }
+.jl-barras .emo { font-size: 22px; text-align: center; line-height: 1; }
+.jl-barras .nm { font-size: 18px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jl-barras .pc { font-size: 18px; font-weight: 750; color: var(--mudo); }
+.jl-barras li.top { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cor) 70%, transparent); }
+.jl-barras li.top .pc { color: var(--txt); }
+
+/* o plano do diretor */
+.jl-plano { display: grid; gap: 2px; flex: none; padding: 6px 10px; border-radius: 14px; background: rgba(255, 255, 255, .035); border: 1px solid rgba(255, 255, 255, .06); }
+.jl-pl { display: flex; align-items: center; justify-content: space-between; gap: 4px 8px; min-height: 28px; flex-wrap: wrap; }
+.jl-pl .r { font-size: 18px; color: var(--dim); }
+.jl-pl .v { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.jl-pl b { font-size: 19px; font-weight: 800; }
+.jl-pl .p { font-size: 18px; color: var(--mudo); }
+.jl-pl.sim b, .jl-pl:has(.sim) b { color: #6ee7b7; }
+.jl-pl .v.sim b { color: #6ee7b7; }
+.jl-pl .seg { --n: 2; display: inline-flex; gap: 3px; }
+.jl-pl .seg i { width: 9px; height: 18px; border-radius: 3px; background: rgba(255, 255, 255, .12); transition: background .35s; }
+.jl-pl .seg i.on { background: linear-gradient(180deg, #f0abfc, var(--roxo)); box-shadow: 0 0 10px rgba(168, 85, 247, .55); }
+
+/* registro */
+.jl-reg { min-height: 0; flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.jl-reg h4 { margin: 0; font: 750 18px/1.2 var(--mj-f); color: var(--mudo); }
+.jl-reg-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; min-height: 0; overflow: hidden; mask-image: linear-gradient(180deg, #000 82%, transparent); -webkit-mask-image: linear-gradient(180deg, #000 82%, transparent); }
+.jl-reg-lista li { flex: none; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: baseline; font-size: 18px; line-height: 1.25; padding: 5px 8px; border-radius: 10px; background: rgba(255, 255, 255, .035); border-left: 3px solid rgba(168, 85, 247, .6); animation: jl-entra .4s var(--mj-ease); }
+.jl-reg-lista time { font-size: 18px; color: var(--dim); }
+.jl-reg-lista div { min-width: 0; }
+.jl-reg-lista b { display: block; font-weight: 750; overflow-wrap: anywhere; }
+.jl-reg-lista span { display: block; color: var(--mudo); overflow-wrap: anywhere; }
+.jl-reg-lista .r-chefe { border-left-color: #f87171; background: rgba(248, 113, 113, .08); }
+.jl-reg-lista .r-ajuda { border-left-color: #34d399; }
+.jl-reg-lista .r-corte { border-left-color: #fbbf24; }
+.jl-reg-lista .r-muda { border-left-color: var(--ciano); }
+.jl-reg-lista .r-inicio { border-left-color: rgba(255, 255, 255, .3); color: var(--mudo); }
+@keyframes jl-entra { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+
+/* ---------- o que o Jev leu ---------- */
+.jl-sinais { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; min-height: 0; overflow: hidden; flex: 1; mask-image: linear-gradient(180deg, #000 88%, transparent); -webkit-mask-image: linear-gradient(180deg, #000 88%, transparent); }
+.jl-sinais li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 8px; align-items: start; font-size: 18px; line-height: 1.28; padding: 5px 8px 5px 6px; border-radius: 10px; border-left: 3px solid rgba(255, 255, 255, .12); background: rgba(255, 255, 255, .03); animation: jl-entra .35s var(--mj-ease); }
+.jl-sinais li i { font-style: normal; font-size: 18px; line-height: 1.28; text-align: center; }
+.jl-sinais li span { overflow-wrap: anywhere; }
+.jl-sinais li.vazio { display: block; color: var(--dim); border: 0; background: none; padding: 6px 2px; }
+.jl-sinais .tom-entediado { border-left-color: #fbbf24; background: rgba(251, 191, 36, .07); }
+.jl-sinais .tom-no_ponto { border-left-color: #34d399; background: rgba(52, 211, 153, .07); }
+.jl-sinais .tom-frustrado { border-left-color: #fb7185; background: rgba(251, 113, 133, .08); }
+.jl-sinais .tom-distraido { border-left-color: #94a3b8; background: rgba(148, 163, 184, .09); }
+.jl-leu-pe { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, .07); flex: none; }
+.jl-dica { font-size: 18px; line-height: 1.25; color: var(--dim); }
+.jl-leu-pe .mj-som { flex: none; }
+
+/* ---------- o jogo ---------- */
+.jl-jogo {
+  position: relative; min-height: 0; min-width: 0; border-radius: 20px; overflow: hidden; background: #07031a;
+  border: 1px solid var(--borda2);
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, .08), 0 0 50px rgba(168, 85, 247, .22), inset 0 0 60px rgba(168, 85, 247, .12);
+}
+.jl-tela { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; outline: none; }
+.jl-tela:focus-visible { outline: 2px solid var(--ciano); outline-offset: -2px; }
+
+.jl-piloto { position: absolute; left: 12px; bottom: 12px; z-index: 3; display: flex; flex-direction: column; gap: 1px; padding: 7px 12px; border-radius: 14px; background: rgba(10, 5, 24, .74); border: 1px solid rgba(251, 113, 133, .6); font-size: 18px; line-height: 1.25; pointer-events: none; max-width: min(360px, calc(100% - 80px)); animation: jl-entra .35s var(--mj-ease); }
+.jl-piloto p { margin: 0; }
+.jl-piloto b { font-weight: 800; }
+.jl-piloto span { font-weight: 700; color: #fda4af; }
+.jl-piloto small { font-size: 18px; color: var(--dim); }
+.jl-piloto.bem { border-color: rgba(52, 211, 153, .6); }
+.jl-piloto.bem span { color: #6ee7b7; }
+
+.jl-banner { position: absolute; left: 50%; top: 27%; z-index: 4; transform: translate(-50%, -8px) scale(.94); width: max-content; max-width: calc(100% - 32px); display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 22px 14px; border-radius: 18px; text-align: center; background: rgba(10, 5, 26, .66); border: 1px solid rgba(192, 132, 252, .5); box-shadow: 0 0 40px rgba(168, 85, 247, .35); opacity: 0; pointer-events: none; transition: opacity .35s var(--mj-ease), transform .35s var(--mj-ease); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.jl-banner.on { opacity: 1; transform: translate(-50%, 0) scale(1); }
+.jl-banner .n { font-size: 18px; font-weight: 700; letter-spacing: .22em; color: var(--mudo); }
+.jl-banner b { font: 900 34px/1.05 var(--mj-f); letter-spacing: .01em; background: linear-gradient(90deg, #f0abfc, #a5f3fc); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 14px rgba(168, 85, 247, .6)); }
+.jl-banner .s { font-size: 18px; line-height: 1.3; color: var(--txt); max-width: 34ch; }
+.jl-banner.alerta { border-color: rgba(248, 113, 113, .8); box-shadow: 0 0 50px rgba(239, 68, 68, .45); background: rgba(40, 6, 14, .7); }
+.jl-banner.alerta b { background: linear-gradient(90deg, #fecaca, #fb923c); -webkit-background-clip: text; background-clip: text; animation: jl-alerta .5s steps(2) infinite; }
+@keyframes jl-alerta { 50% { opacity: .55; } }
+
+.jl-aviso { position: absolute; left: 50%; top: 54%; z-index: 4; transform: translate(-50%, 10px); width: max-content; max-width: calc(100% - 32px); padding: 10px 18px; border-radius: 99px; font-size: 20px; font-weight: 800; text-align: center; background: rgba(6, 30, 26, .78); border: 1px solid rgba(52, 211, 153, .7); box-shadow: 0 0 34px rgba(52, 211, 153, .35); opacity: 0; pointer-events: none; transition: opacity .3s var(--mj-ease), transform .3s var(--mj-ease); }
+.jl-aviso.on { opacity: 1; transform: translate(-50%, 0); }
+.jl-aviso.t-escudo { background: rgba(8, 20, 48, .8); border-color: rgba(96, 165, 250, .8); box-shadow: 0 0 34px rgba(96, 165, 250, .4); }
+.jl-aviso.t-ouro { background: rgba(40, 30, 4, .8); border-color: rgba(253, 224, 71, .8); box-shadow: 0 0 34px rgba(253, 224, 71, .4); }
+
+.jl-bt-pausa { position: absolute; right: 12px; bottom: 12px; z-index: 5; width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--borda2); background: rgba(10, 5, 24, .6); color: var(--txt); font-size: 18px; cursor: pointer; display: grid; place-items: center; transition: background .2s, transform .15s var(--mj-ease); }
+.jl-bt-pausa:hover { background: rgba(168, 85, 247, .3); }
+.jl-bt-pausa:active { transform: scale(.94); }
+
+/* capa: início, pausa e "sua vez" */
+.jl-capa { position: absolute; inset: 0; z-index: 6; display: none; align-items: center; justify-content: center; padding: 18px; background: radial-gradient(circle at 50% 45%, rgba(10, 4, 26, .35), rgba(6, 2, 16, .82) 75%); }
+.jl-capa.on { display: flex; animation: jl-capa .4s var(--mj-ease); }
+@keyframes jl-capa { from { opacity: 0; } to { opacity: 1; } }
+.jl-cartao { display: flex; flex-direction: column; align-items: center; gap: 12px; width: min(520px, 100%); max-height: 100%; overflow: auto; padding: 22px 24px 20px; text-align: center; border-radius: 24px; background: rgba(14, 7, 32, .82); border: 1px solid var(--borda2); box-shadow: 0 0 60px rgba(168, 85, 247, .3), inset 0 1px 0 rgba(255, 255, 255, .08); }
+.jl-logo { font-size: 54px; line-height: 1; filter: drop-shadow(0 0 18px rgba(168, 85, 247, .7)); animation: jl-flutua 3s ease-in-out infinite; }
+@keyframes jl-flutua { 50% { transform: translateY(-6px); } }
+.jl-cartao h2 { margin: 0; font: 900 clamp(30px, 3.4vw, 44px)/1.04 var(--mj-f); letter-spacing: -.02em; background: linear-gradient(90deg, #e9d5ff, #f0abfc 40%, #67e8f9); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 20px rgba(168, 85, 247, .45)); }
+.jl-sub { margin: 0; font-size: 19px; line-height: 1.4; color: var(--txt); max-width: 40ch; }
+.jl-caminho { margin: 0; font-size: 18px; line-height: 1.35; color: #a5f3fc; max-width: 40ch; }
+.jl-bt { min-height: 56px; padding: 0 30px; border: 0; border-radius: 99px; cursor: pointer; font: 850 22px/1 var(--mj-f); color: #12062a; background: linear-gradient(90deg, #e9d5ff, #a855f7 45%, #22d3ee); box-shadow: 0 0 30px rgba(168, 85, 247, .55), 0 10px 26px rgba(0, 0, 0, .35); transition: transform .15s var(--mj-ease), box-shadow .2s; }
+.jl-bt:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 0 44px rgba(34, 211, 238, .55), 0 12px 30px rgba(0, 0, 0, .4); }
+.jl-bt:active { transform: scale(.98); }
+.jl-bt:focus-visible, .jl-bt-pausa:focus-visible { outline: 3px solid var(--ciano); outline-offset: 3px; }
+.jl-ctrl { margin: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; font-size: 18px; color: var(--mudo); }
+.jl-mini { margin: 0; font-size: 18px; line-height: 1.35; color: var(--dim); max-width: 42ch; }
+.jl-recorde { margin: 0; font-size: 18px; font-weight: 700; color: #fde68a; }
+
+/* ---------- telas menores ---------- */
+@media (max-width: 1180px) {
+  /* tablet: o diretor fica com a coluna inteira e o que o Jev leu vira uma faixa de sinais embaixo do jogo */
+  .jl { grid-template-columns: minmax(0, 1fr) minmax(280px, 330px); grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: "jogo dir" "leu dir"; }
+  .jl-dir { overflow: hidden; }
+  .jl-leu { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 10px 12px; max-height: 146px; }
+  .jl-leu .jl-cab { flex: none; }
+  .jl-leu .jl-cab p, .jl-leu .jl-dica { display: none; }
+  .jl-sinais { order: 3; flex: 1 1 100%; flex-direction: row; flex-wrap: wrap; gap: 5px; max-height: 92px; mask-image: none; -webkit-mask-image: none; }
+  .jl-sinais li { padding: 3px 8px 3px 6px; }
+  .jl-leu-pe { border-top: 0; padding-top: 0; margin-left: auto; }
+}
+@media (max-width: 760px), (max-height: 540px) {
+  .jl { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto; grid-template-areas: "jogo" "dir" "leu"; padding: 10px; gap: 10px; overflow: visible; }
+  .jl-jogo { height: min(66vh, 560px); min-height: 400px; }
+  .jl-leu, .jl-dir { overflow: visible; }
+  .jl-leu { flex-direction: column; flex-wrap: nowrap; align-items: stretch; max-height: none; }
+  .jl-leu .jl-cab p { display: block; }
+  .jl-sinais { order: 0; flex-direction: column; flex-wrap: nowrap; max-height: none; }
+  .jl-leu-pe { margin-left: 0; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, .07); }
+  .jl-reg-lista, .jl-sinais { mask-image: none; -webkit-mask-image: none; }
+  .jl-reg-lista li:nth-child(n+6) { display: none; }
+  .jl-estado .nome { font-size: 28px; }
+  .jl-banner b { font-size: 28px; }
+  .jl-cartao { padding: 18px 16px; gap: 10px; }
+  .jl-logo { font-size: 44px; }
+  .jl-piloto { left: 8px; bottom: 8px; padding: 6px 10px; max-width: calc(100% - 70px); }
+}

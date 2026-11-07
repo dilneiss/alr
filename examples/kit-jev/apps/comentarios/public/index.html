@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comentários → Oportunidades · Jev</title>
+<meta name="description" content="Cole o link de um vídeo do YouTube: o Jev lê centenas de comentários em segundos e separa leads, dúvidas sem resposta, pedidos de vídeo, críticas e spam.">
+<meta name="theme-color" content="#F2EEE3">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='5' y='5' width='54' height='54' fill='%23F2EEE3' stroke='%23141414' stroke-width='4'/%3E%3Cpath d='M14 18h36M14 28h18M14 37h18M14 46h36' stroke='%23141414' stroke-width='4'/%3E%3Cellipse cx='44' cy='33' rx='10' ry='8' fill='none' stroke='%231F4FD8' stroke-width='4'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/newsreader-opsz.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/libre-franklin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/_jev/jev.css">
+<link rel="stylesheet" href="jornal.css">
+</head>
+<body>
+<header class="jev-topbar"></header>
+<main class="jev-shell jornal">
+
+  <!-- cabeçalho do jornal -->
+  <header class="cabecalho entra" style="--i:0">
+    <div class="orelha orelha-e">
+      <span class="ol-k">Lida pelo Jev</span>
+      <b>até 300</b>
+      <span>comentários por vídeo</span>
+    </div>
+    <h1 class="nome" aria-label="Comentários → Oportunidades">
+      <span class="nome-a">Comentários</span>
+      <svg class="seta-lapis" viewBox="0 0 132 56" aria-hidden="true" focusable="false"><path class="haste" pathLength="1" d="M5 33 C 28 25, 52 35, 78 28 S 112 25, 120 27"/><path class="ponta" pathLength="1" d="M99 11 C 107 17, 115 23, 121 27 C 114 31, 106 38, 100 46"/></svg>
+      <span class="nome-b">Oportunidades</span>
+    </h1>
+    <div class="orelha orelha-d">
+      <span class="ol-k">Preço do exemplar</span>
+      <b>&lt; 1 centavo</b>
+      <span>de dólar por vídeo</span>
+    </div>
+    <p class="folio">
+      <span class="folio-data" id="hoje">Edição de hoje</span>
+      <span class="folio-ed">Edição de hoje</span>
+      <span class="folio-fim">O Jev lê centenas de comentários em segundos</span>
+    </p>
+  </header>
+
+  <!-- pauta do dia: a entrada do link -->
+  <section class="hero pauta-dia">
+    <div class="pauta-texto entra" style="--i:1">
+      <p class="retranca">Pauta do dia</p>
+      <p class="value">Cole o link de um vídeo do YouTube. O Jev lê <b>centenas de comentários em segundos</b> e separa <b>leads</b>, <b>dúvidas sem resposta</b>, <b>pedidos de vídeo</b>, críticas e spam.</p>
+      <form class="urlbar" id="form" autocomplete="off">
+        <label class="urlbar-k" for="url">Link do vídeo</label>
+        <span class="urlbar-linha">
+          <span class="yt" aria-hidden="true"></span>
+          <input id="url" type="text" inputmode="url" maxlength="400" placeholder="youtube.com/watch?v=…, youtu.be/… ou /shorts/…" aria-label="Link do vídeo do YouTube" enterkeyhint="go">
+          <button class="jev-btn jev-btn--primary" id="go" type="submit"><span>Analisar comentários</span><svg class="ico-seta" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button>
+        </span>
+      </form>
+    </div>
+    <aside class="como how entra" style="--i:2" aria-labelledby="como-t">
+      <h2 class="retranca" id="como-t">Como a redação trabalha</h2>
+      <ol>
+        <li><b>1</b><span>Baixamos até 300 comentários pela API oficial do YouTube</span></li>
+        <li><b>2</b><span>O Jev responde 4 perguntas sobre cada um, em lotes paralelos</span></li>
+        <li><b>3</b><span>Você vê quem responder primeiro, o que o público pede e o que apagar</span></li>
+      </ol>
+    </aside>
+  </section>
+
+  <!-- pautas prontas: os exemplos -->
+  <section class="prontas entra" style="--i:3" aria-labelledby="prontas-t">
+    <div class="ex-head"><h2 class="retranca" id="prontas-t">Pautas prontas</h2><span>1 clique: vídeos de exemplo (e os do seu canal, se você configurar)</span></div>
+    <div class="examples" id="examples"></div>
+  </section>
+
+  <!-- nota da redação (erros) -->
+  <section class="errcard" id="erro" hidden role="alert">
+    <span class="ic" aria-hidden="true"><svg viewBox="0 0 32 32"><path pathLength="1" d="M16 3 C 8 3, 3 9, 3 16 C 3 24, 9 29, 16 29 C 24 29, 29 23, 29 16 C 29 9, 23 3, 15 4"/><path d="M16 9v9"/><circle cx="16" cy="23" r="1.2"/></svg></span>
+    <div><span class="errk">Nota da redação</span><b id="errt">Não deu certo</b><p id="errm"></p></div>
+  </section>
+
+  <!-- primeira página: o resultado -->
+  <section id="res" hidden aria-live="polite">
+    <div class="cabeca-pagina">
+      <span class="cp-nome">Comentários → Oportunidades</span>
+      <span class="cp-data" id="cp-data">Edição de hoje</span>
+      <span class="cp-ed" id="fechamento">Edição em fechamento</span>
+    </div>
+
+    <div class="vhead">
+      <figure class="vfoto">
+        <img class="vthumb" id="vthumb" alt="">
+        <figcaption>Reprodução/YouTube</figcaption>
+      </figure>
+      <div class="vinfo">
+        <p class="retranca">Pauta</p>
+        <div class="vt" id="vtitle">Carregando vídeo…</div>
+        <div class="vm" id="vmeta"></div>
+      </div>
+      <div class="prog">
+        <div class="pbar" id="pbar"><i id="pfill"></i></div>
+        <div class="ptext" id="ptext"><span class="jev-spinner"></span> Buscando comentários no YouTube…</div>
+        <div class="speed" id="speed"></div>
+        <div class="acts" id="acts"></div>
+      </div>
+    </div>
+
+    <div class="capa">
+      <article class="manchete" id="manchete" aria-live="off"></article>
+
+      <aside class="numeros" aria-labelledby="num-t">
+        <h3 class="retranca" id="num-t">Em números</h3>
+        <div class="kpis" id="kpis"></div>
+      </aside>
+
+      <figure class="despachos">
+        <div class="card-h"><h3>Cada quadradinho é um comentário</h3><span id="mosub">cor = sentimento · marca = oportunidade</span></div>
+        <div class="mosaic" id="mosaic"></div>
+        <div class="legend" id="legend"></div>
+        <div class="humor">
+          <h4 class="retranca">Humor do público</h4>
+          <div class="sentbar" id="sentbar" aria-label="Distribuição de sentimento"></div>
+          <div class="sentlbl" id="sentlbl"></div>
+        </div>
+        <figcaption>Dados: Jev · 4 perguntas por comentário, em lotes de 20</figcaption>
+      </figure>
+
+      <aside class="indice">
+        <div class="card-h"><h3>Distribuição por tipo</h3><span>clique para filtrar</span></div>
+        <div class="types" id="types"></div>
+        <div class="editorial"><span class="retranca">Resumo da edição</span><div class="summary" id="summary"></div></div>
+      </aside>
+    </div>
+
+    <div class="lists" aria-label="Oportunidades por categoria">
+      <section class="list lead" aria-labelledby="h-leads">
+        <header class="col-h"><h3 id="h-leads"><span class="col-t">Leads quentes</span><span class="cnt" id="c-leads">0</span></h3><p class="col-s">interesse em comprar ≥ 55%</p></header>
+        <div class="items" id="l-leads"></div>
+      </section>
+      <section class="list perg" aria-labelledby="h-perg">
+        <header class="col-h"><h3 id="h-perg"><span class="col-t">Dúvidas sem resposta</span><span class="cnt" id="c-perg">0</span></h3><p class="col-s">merece resposta ≥ 60% e o canal ainda não respondeu</p></header>
+        <div class="items" id="l-perg"></div>
+      </section>
+      <section class="list ideia" aria-labelledby="h-ideias">
+        <header class="col-h"><h3 id="h-ideias"><span class="col-t">Pedidos de vídeo</span><span class="cnt" id="c-ideias">0</span></h3><p class="col-s">ideias de vídeo pedidas pelo público</p></header>
+        <div class="items" id="l-ideias"></div>
+      </section>
+      <section class="list crit" aria-labelledby="h-crit">
+        <header class="col-h"><h3 id="h-crit"><span class="col-t">Críticas</span><span class="cnt" id="c-crit">0</span></h3><p class="col-s">crítica construtiva ou reclamação</p></header>
+        <div class="items" id="l-crit"></div>
+      </section>
+      <section class="list spam" aria-labelledby="h-spam">
+        <header class="col-h"><h3 id="h-spam"><span class="col-t">Spam para remover</span><span class="cnt" id="c-spam">0</span></h3><p class="col-s">spam, golpe, autopromoção ou bot</p></header>
+        <div class="items" id="l-spam"></div>
+      </section>
+    </div>
+
+    <section class="all" id="all" aria-labelledby="all-t">
+      <div class="all-head">
+        <h3 id="all-t"><span class="cl-k">Classificados</span><span class="cl-s">todos os comentários, classificados pelo Jev</span></h3>
+        <span class="spacer"></span>
+        <label class="ordem-k" for="ordem">Ordem</label>
+        <select class="jev-select" id="ordem"><option value="rel">Ordem do YouTube (relevância)</option><option value="likes">Mais curtidos</option><option value="novos">Mais recentes</option></select>
+        <button class="jev-btn jev-btn--sm" id="csv" type="button" disabled><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>Exportar CSV</span></button>
+      </div>
+      <div class="ftabs" id="ftabs" role="group" aria-label="Filtrar os comentários"></div>
+      <div class="alllist" id="alllist"></div>
+      <div class="more"><button class="jev-btn jev-btn--sm jev-btn--ghost" id="more" type="button" hidden>Mostrar mais</button></div>
+    </section>
+  </section>
+
+  <!-- espelho da edição: o que aparece antes da primeira análise -->
+  <section class="espelho" aria-labelledby="esp-t">
+    <div class="esp-head entra" style="--i:4"><h2 class="retranca" id="esp-t">Espelho da edição</h2><span>assim fica a primeira página quando o Jev terminar de ler</span></div>
+    <div class="esp-grade">
+      <div class="esp esp-manchete entra" style="--i:5"><b>Manchete</b><span>a maior oportunidade do vídeo</span><i class="greek g1"></i><i class="greek g2"></i><i class="greek g3"></i></div>
+      <div class="esp esp-num entra" style="--i:6"><b>Em números</b><span>positivos, leads, sem resposta, spam</span><i class="greek g4"></i><i class="greek g5"></i></div>
+      <div class="esp esp-foto entra" style="--i:7"><b>Despachos</b><span>um quadradinho por comentário, pintado pelo Jev</span></div>
+      <div class="esp esp-tipo entra" style="--i:8"><b>Por tipo</b><span>10 tipos, do elogio ao spam</span><i class="greek g4"></i><i class="greek g5"></i><i class="greek g6"></i></div>
+      <div class="esp-cols">
+        <div class="esp esp-col entra" style="--i:9"><b>Leads</b><i class="greek g6"></i><i class="greek g5"></i></div>
+        <div class="esp esp-col entra" style="--i:10"><b>Dúvidas</b><i class="greek g5"></i><i class="greek g6"></i></div>
+        <div class="esp esp-col entra" style="--i:11"><b>Pedidos de vídeo</b><i class="greek g6"></i><i class="greek g4"></i></div>
+        <div class="esp esp-col entra" style="--i:12"><b>Críticas</b><i class="greek g4"></i><i class="greek g6"></i></div>
+        <div class="esp esp-col entra" style="--i:13"><b>Spam</b><i class="greek g5"></i><i class="greek g4"></i></div>
+      </div>
+    </div>
+  </section>
+</main>
+<div class="tip" id="tip" hidden></div>
+<svg class="defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><filter id="grafite" x="-10%" y="-30%" width="120%" height="160%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="ruido"/><feDisplacementMap in="SourceGraphic" in2="ruido" scale="2" xChannelSelector="R" yChannelSelector="G"/></filter></defs></svg>
+<script src="/_jev/jev-kit.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

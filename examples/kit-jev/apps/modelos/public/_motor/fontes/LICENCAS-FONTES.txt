@@ -1,0 +1,5 @@
+Fontes desta pasta, todas sob a SIL Open Font License 1.1 (https://openfontlicense.org):
+- Onest: Copyright 2023 The Onest Project Authors
+- JetBrains Mono: Copyright 2020 The JetBrains Mono Project Authors
+- Instrument Serif: Copyright 2022 The Instrument Serif Project Authors
+A licença permite usar, estudar, modificar e redistribuir as fontes junto com software, sem vendê-las sozinhas.

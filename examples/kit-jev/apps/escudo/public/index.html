@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escudo de IA · Jev</title>
+<meta name="description" content="Um firewall semântico que barra prompt injection, jailbreak, SQL injection e engenharia social em ~350 ms — lado a lado com um WAF de regex, o Jev acerta onde o regex erra.">
+<meta name="theme-color" content="#1A1D1C">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 1.5 3.5 6v9.2c0 7.7 5.3 13.2 12.5 15.3 7.2-2.1 12.5-7.6 12.5-15.3V6z' fill='%23FF6B1A'/%3E%3Cpath d='M14.6 6h2.8v20h-2.8z' fill='%231A1D1C'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/big-shoulders-stencil-display-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/barlow-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/_jev/jev.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- ícones de interface (SVG, sem emoji) -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M3.5 4.5h17v11.5H9.5L4.5 20v-4H3.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-form" viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="19" height="11" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 9.5v5M5.5 9.5h3M5.5 14.5h3" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="i-api" viewBox="0 0 24 24"><path d="M9 3.5H7.8a1.8 1.8 0 0 0-1.8 1.8V10l-2.4 2L6 14v4.7a1.8 1.8 0 0 0 1.8 1.8H9M15 3.5h1.2A1.8 1.8 0 0 1 18 5.3V10l2.4 2L18 14v4.7a1.8 1.8 0 0 1-1.8 1.8H15" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-escudo" viewBox="0 0 24 24"><path d="M12 2.4 4 5.4v6.1c0 5 3.4 8.7 8 10.1 4.6-1.4 8-5.1 8-10.1V5.4z" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linejoin="round"/><path d="M12 6.5v11" stroke="currentColor" stroke-width="2.3"/></symbol>
+  <symbol id="i-seta" viewBox="0 0 24 24"><path d="M3 12h15.5M12.5 5.5 19 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.4"/></symbol>
+  <symbol id="i-raio" viewBox="0 0 24 24"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" fill="currentColor"/></symbol>
+  <symbol id="i-bloq" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M6.8 12h10.4" stroke="currentColor" stroke-width="3.2"/></symbol>
+  <symbol id="i-ok" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M7.4 12.3l3.1 3.1 6.2-6.4" fill="none" stroke="currentColor" stroke-width="2.7"/></symbol>
+  <symbol id="i-rev" viewBox="0 0 24 24"><path d="M12 2.8 22.2 20.5H1.8z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M12 9v5.6M12 16.4v2.3" stroke="currentColor" stroke-width="2.5"/></symbol>
+  <symbol id="i-passa" viewBox="0 0 24 24"><path d="M3.5 4.5v15M20.5 4.5v15" stroke="currentColor" stroke-width="2.2"/><path d="M6.5 12h10.5M13.5 8l4 4-4 4" fill="none" stroke="currentColor" stroke-width="2.3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 7" fill="none" stroke="currentColor" stroke-width="3.2"/></symbol>
+  <symbol id="i-xis" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="3.2"/></symbol>
+  <symbol id="i-copiar" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 8.5V3.5h-12v12h5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-rodar" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 3.5v5h-5" fill="none" stroke="currentColor" stroke-width="2.3"/></symbol>
+</svg>
+
+<header class="jev-topbar"></header>
+<main class="jev-shell bunker">
+  <!-- ============ MURO (título) ============ -->
+  <header class="muro">
+    <p class="muro-kicker">Eclusa <i></i> dois postos de inspeção <i></i> porta blindada</p>
+    <h1>Escudo de IA</h1>
+    <p class="muro-lead">Um <b>firewall semântico</b> na frente de chatbots, formulários e APIs. Ele lê a <b>intenção</b> da entrada e barra
+      prompt injection, jailbreak, engenharia social, SQL injection, XSS e comando de shell em ~350 ms — numa única chamada
+      ao Jev. Ao lado, um <b>WAF de regex de verdade</b> analisa o mesmo texto: veja o Jev acertar onde o regex erra.</p>
+  </header>
+
+  <div class="deck">
+    <!-- ============ ECLUSA (entrada) ============ -->
+    <section class="eclusa" aria-labelledby="eclusaTitulo">
+      <div class="ecl-head">
+        <h2 class="ecl-title" id="eclusaTitulo">Eclusa <span>câmara de entrada</span></h2>
+        <p class="modo-hint" id="modoHint"></p>
+        <div class="tabs" id="tabs" role="tablist" aria-label="Tipo de entrada">
+          <button type="button" data-modo="chatbot" class="on" role="tab"><svg class="ico" aria-hidden="true"><use href="#i-chat"/></svg><span>Chatbot</span></button>
+          <button type="button" data-modo="formulario" role="tab"><svg class="ico" aria-hidden="true"><use href="#i-form"/></svg><span>Formulário</span></button>
+          <button type="button" data-modo="api" role="tab"><svg class="ico" aria-hidden="true"><use href="#i-api"/></svg><span>API</span></button>
+        </div>
+      </div>
+      <div class="ecl-body">
+        <div class="ecl-janela">
+          <div class="campo-row" id="campoRow" hidden>
+            <label class="jev-label" for="campo">Campo</label>
+            <input id="campo" class="jev-input" maxlength="60" value="Sobrenome">
+          </div>
+          <textarea id="entrada" class="jev-textarea" spellcheck="false" aria-label="Entrada para analisar"></textarea>
+        </div>
+        <div class="in-tools">
+          <button class="jev-btn jev-btn--primary" id="analisar" type="button"><svg class="ico" aria-hidden="true"><use href="#i-escudo"/></svg><span>Passar pelo escudo</span></button>
+          <div class="in-sub">
+            <button class="jev-btn jev-btn--ghost jev-btn--sm" id="limpar" type="button">Limpar</button>
+            <span class="chars" id="chars"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ RACK de cartuchos (testes de 1 clique) ============ -->
+    <aside class="rack" aria-labelledby="rackTitulo">
+      <div class="rack-head">
+        <h2 id="rackTitulo">Cartuchos de teste</h2>
+        <p>1 clique · ataques e entradas legítimas de verdade</p>
+      </div>
+      <div id="presets"></div>
+    </aside>
+
+    <!-- ============ INSPEÇÃO: dois postos + porta blindada ============ -->
+    <section class="inspecao" id="result" aria-label="Resultado da inspeção">
+      <div class="empty" id="empty">
+        <div class="idle-posto" aria-hidden="true">
+          <header><span class="vs-eng"><b>Posto 1</b> WAF de regex</span><span class="vs-tag">o jeito antigo</span></header>
+          <p class="idle-marca">Aguardando carga</p>
+          <i class="idle-linha"></i><i class="idle-linha curta"></i>
+        </div>
+        <div class="vs-mid" aria-hidden="true"><span>vs</span></div>
+        <div class="idle-posto jev" aria-hidden="true">
+          <header><span class="vs-eng"><b>Posto 2</b> Jev · escudo semântico</span><span class="vs-tag">lê a intenção</span></header>
+          <p class="idle-marca">Aguardando carga</p>
+          <i class="idle-linha"></i><i class="idle-linha"></i><i class="idle-linha curta"></i>
+        </div>
+        <div class="idle-msg">
+          <h3>O escudo está pronto.</h3>
+          <p>Escolha um cartucho de teste (ou escreva o seu) e passe pelo escudo: o veredito do Jev e o do WAF de regex aparecem lado a lado.</p>
+          <ul class="idle-legenda" aria-label="Os três estados da porta">
+            <li class="ok"><b>Liberado</b> segue para o sistema</li>
+            <li class="rev"><b>Em revisão</b> vai mascarado para um humano</li>
+            <li class="bloq"><b>Bloqueado</b> a porta fecha e nada passa</li>
+          </ul>
+        </div>
+        <div class="porta-col ocioso">
+          <div class="porta-box">
+            <div class="porta" aria-hidden="true">
+              <div class="porta-vao">
+                <span class="vao-destino"><svg class="ico"><use href="#i-seta"/></svg><span class="vao-rot" data-m="chatbot">assistente de IA</span><span class="vao-rot" data-m="formulario">banco de dados</span><span class="vao-rot" data-m="api">banco e servidor</span></span>
+                <i class="folha folha-e"></i><i class="folha folha-d"></i>
+              </div>
+              <i class="porta-luz"></i>
+            </div>
+            <div class="placa"><span class="placa-k">sem carga</span><div class="v-title">Em espera</div></div>
+          </div>
+          <p class="v-sub">A porta blindada só fecha quando o Jev bloqueia.</p>
+        </div>
+      </div>
+
+      <div id="out" hidden>
+        <div class="versus" id="versus">
+          <div class="diverge" id="diverge" hidden></div>
+          <div class="vs-grid">
+            <article class="vs-card waf" id="wafCard">
+              <header><span class="vs-eng"><b>Posto 1</b> WAF de regex</span><span class="vs-tag">o jeito antigo</span></header>
+              <div class="vs-verdict" id="wafVerdict">—</div>
+              <div class="vs-body" id="wafBody"></div>
+            </article>
+            <div class="vs-mid" aria-hidden="true"><span>vs</span></div>
+            <article class="vs-card jev" id="jevCard">
+              <header><span class="vs-eng"><b>Posto 2</b> Jev · escudo semântico</span><span class="vs-tag">lê a intenção</span></header>
+              <div class="vs-verdict" id="jevVerdict">—</div>
+              <div class="vs-body" id="jevBody"></div>
+              <div class="v-speed" id="vSpeed"></div>
+            </article>
+            <!-- veredito: a placa estampada na porta blindada -->
+            <div class="porta-col" id="verdictCard">
+              <div class="porta-box">
+                <div class="porta" aria-hidden="true">
+                  <div class="porta-vao">
+                    <span class="vao-destino"><svg class="ico"><use href="#i-seta"/></svg><span class="vao-rot" data-m="chatbot">assistente de IA</span><span class="vao-rot" data-m="formulario">banco de dados</span><span class="vao-rot" data-m="api">banco e servidor</span></span>
+                    <i class="folha folha-e"></i><i class="folha folha-d"></i>
+                  </div>
+                  <i class="porta-luz"></i>
+                </div>
+                <div class="placa" role="status"><span class="placa-k" id="vBadge">veredito do Jev</span><div class="v-title" id="vTitle">—</div></div>
+              </div>
+              <div class="triband" id="triband" aria-hidden="true">
+                <div class="tb permitir"><span>permitir</span><i></i><b id="tbP">0%</b></div>
+                <div class="tb revisar"><span>revisar</span><i></i><b id="tbR">0%</b></div>
+                <div class="tb bloquear"><span>bloquear</span><i></i><b id="tbB">0%</b></div>
+              </div>
+              <div class="v-sub" id="vSub">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- do outro lado da porta: atendente / revisão / bloqueio -->
+        <div class="flow-card" id="flowCard" hidden></div>
+
+        <!-- leitura completa do Jev -->
+        <div class="detail-card">
+          <p class="det-eyebrow"><svg class="ico" aria-hidden="true"><use href="#i-raio"/></svg>Leitura completa do Jev <span>a mesma chamada, todas as perguntas</span></p>
+          <div class="detail-grid">
+            <div class="det-col">
+              <h4>Tipo de ataque <span class="dim">(probabilidades do Jev)</span></h4>
+              <div id="tipoBars"></div>
+            </div>
+            <div class="det-col">
+              <h4>Alvo provável</h4>
+              <div id="alvoBars"></div>
+              <h4 class="mt">Severidade</h4>
+              <div id="sevMeter"></div>
+            </div>
+            <div class="det-col sinais-wrap">
+              <h4>Sinais que o Jev enxergou <span class="dim">(noul · probabilidade de “sim”)</span></h4>
+              <div class="sinais" id="sinais"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============ PLACAR ============ -->
+  <section class="placar-card" aria-labelledby="placarTitulo">
+    <div class="pl-top">
+      <div class="soc-head">
+        <h3 id="placarTitulo">Regex × Jev nos testes</h3>
+        <button class="jev-btn jev-btn--sm" id="rodarPlacar" type="button"><svg class="ico" aria-hidden="true"><use href="#i-rodar"/></svg>Rodar de novo</button>
+      </div>
+      <p class="pl-nota">Os 18 cartuchos, nos dois motores, conferidos contra o gabarito.</p>
+      <div class="placar-score" id="placarScore"></div>
+    </div>
+    <div class="placar-list" id="placarList"><div class="soc-empty">Carregando o placar…</div></div>
+  </section>
+
+  <!-- ============ SOC + REGRAS ============ -->
+  <div class="baixo">
+    <section class="soc-card" aria-labelledby="socTitulo">
+      <div class="soc-head"><h3 id="socTitulo">SOC ao vivo</h3><span class="dim" id="socSub">tentativas recentes de todos os visitantes</span></div>
+      <div class="soc-kpis" id="socKpis"></div>
+      <div class="soc-feed" id="socFeed"><div class="soc-empty">Nenhuma análise ainda. Rode um teste e ele aparece aqui (mascarado).</div></div>
+    </section>
+    <section class="regras-card" aria-labelledby="regrasTitulo">
+      <div class="soc-head"><h3 id="regrasTitulo">As regras do WAF de regex</h3><span class="dim" id="regrasSub"></span></div>
+      <p class="integ-txt">É este o “jeito antigo” que roda ao lado do Jev. Regras reais, como as de um WAF de verdade — e com os mesmos pontos cegos.</p>
+      <div class="regras-list" id="regrasList"></div>
+    </section>
+  </div>
+
+  <!-- ============ INTEGRAR ============ -->
+  <section class="integrar-card" aria-labelledby="integrarTitulo">
+    <div class="integ-l">
+      <div class="soc-head"><h3 id="integrarTitulo">Como integrar</h3><span class="dim">um POST na frente do seu sistema</span></div>
+      <p class="integ-txt">Coloque o escudo antes do seu chatbot, formulário ou API. Ele responde <code>veredito</code> em ~350 ms; você só deixa passar o que for <b>permitir</b>.</p>
+      <button class="jev-btn jev-btn--sm" id="copyCurl" type="button"><svg class="ico" aria-hidden="true"><use href="#i-copiar"/></svg>Copiar</button>
+    </div>
+    <pre class="curl" id="curl"></pre>
+  </section>
+</main>
+<script src="/_jev/jev-kit.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

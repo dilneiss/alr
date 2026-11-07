@@ -1,4 +1,9 @@
 use alr_core::State;
+use std::sync::Mutex;
+
+/// Os dois testes abaixo mexem no GlobalEmergencyStop (estado global): sem serializar,
+/// um reset de um apaga a parada de emergência do outro e o teste falha por corrida.
+static EMERGENCIA: Mutex<()> = Mutex::new(());
 use alr_execution::emergency::{EmergencyStopReason, GlobalEmergencyStop};
 use alr_models::{DistributionShiftDetector, SafeAbstentionReport};
 
@@ -50,6 +55,7 @@ fn test_extreme_novelty_triggers_safe_abstention() {
 
 #[test]
 fn test_extreme_novelty_triggers_global_emergency_stop() {
+    let _trava = EMERGENCIA.lock().unwrap_or_else(|e| e.into_inner());
     GlobalEmergencyStop::reset();
     GlobalEmergencyStop::clear_audit_log();
     assert!(!GlobalEmergencyStop::is_active());
@@ -79,6 +85,7 @@ fn test_extreme_novelty_triggers_global_emergency_stop() {
 
 #[test]
 fn test_visual_frame_novelty_safety() {
+    let _trava = EMERGENCIA.lock().unwrap_or_else(|e| e.into_inner());
     GlobalEmergencyStop::reset();
     GlobalEmergencyStop::clear_audit_log();
 

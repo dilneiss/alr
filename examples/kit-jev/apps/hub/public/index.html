@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jev Apps · os seus apps que decidem em milissegundos</title>
+<meta name="description" content="Os apps do Jev instalados na sua VPS: cada um com seu link, atrás do seu login.">
+<meta name="theme-color" content="#F3EFE6">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='3' fill='%23B23A22'/%3E%3Cpath d='M18.5 4 7.5 18h7l-1.5 10 11-14h-7z' fill='%23F3EFE6'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/fraunces-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/_jev/jev.css">
+<style>
+/* ==========================================================================
+   Jev Apps · catálogo impresso de uma exposição
+   Papel marfim, tinta, grafite e um único acento: o vermelhão.
+   Fraunces (display) · Public Sans (texto) · DM Mono (números e rótulos), servidas pelo próprio app.
+   ========================================================================== */
+@font-face { font-family: "Fraunces"; src: url("fonts/fraunces-opsz-normal.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Fraunces"; src: url("fonts/fraunces-opsz-italic.woff2") format("woff2"); font-weight: 100 900; font-style: italic; font-display: swap; }
+@font-face { font-family: "Public Sans"; src: url("fonts/public-sans-wght-normal.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "DM Mono"; src: url("fonts/dm-mono-400-normal.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "DM Mono"; src: url("fonts/dm-mono-500-normal.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+
+:root {
+  --paper: #F3EFE6;        /* papel marfim */
+  --paper-hi: #FBF9F4;     /* a folha da gravura */
+  --paper-lo: #E8E2D5;     /* papel na sombra */
+  --ink: #17140F;          /* tinta */
+  --graphite: #5B554C;     /* grafite */
+  --graphite-2: #6E675C;   /* grafite claro (ainda AA sobre o marfim) */
+  --verm: #D9432A;         /* vermelhão: o acento único */
+  --verm-deep: #B23A22;    /* vermelhão para texto pequeno e fundos com texto (AA) */
+  --rule: rgba(23,20,15,.18);
+  --rule-strong: rgba(23,20,15,.42);
+  --f-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --f-text: "Public Sans", "Helvetica Neue", sans-serif;
+  --f-mono: "DM Mono", ui-monospace, Menlo, monospace;
+  --mx: clamp(16px, 2.8vw, 40px);
+  --gut: clamp(16px, 2.2vw, 32px);
+  --ease: cubic-bezier(.2,.7,.2,1);
+}
+
+/* ---------- base: papel, tinta, grão ---------- */
+html { background: var(--paper); scrollbar-color: rgba(23,20,15,.32) var(--paper); }
+body { background: var(--paper); color: var(--ink); font: 400 16px/1.55 var(--f-text); font-kerning: normal; }
+body::before { content: none; }
+body::after {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .5; mask-image: none; -webkit-mask-image: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .09 0 0 0 0 .08 0 0 0 0 .06 0 0 0 .1 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+::selection { background: rgba(217,67,42,.24); color: var(--ink); }
+/* a camada do Jev (inspetor, diagrama, chamadas) continua escura: mantém texto e barras de rolagem claros */
+.jev-drawer { color: var(--text); }
+.jev-drawer, .jev-dg, .jev-ch { scrollbar-color: rgba(255,255,255,.22) transparent; }
+
+
+/* ---------- III · Modelos para baixar ---------- */
+.modelos { margin-top: clamp(40px, 6vw, 80px); }
+.mod-barra { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; margin: 18px 0 18px; }
+.mod-filtros { display: flex; flex-wrap: wrap; gap: 6px; }
+.mod-f { font: 500 12px/1 var(--f-mono); text-transform: uppercase; letter-spacing: .06em; padding: 8px 10px; border: 1px solid var(--rule-strong); background: transparent; color: var(--ink); cursor: pointer; border-radius: 2px; }
+.mod-f b { font-weight: 500; color: var(--graphite-2); margin-left: 4px; }
+.mod-f.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.mod-f.on b { color: var(--paper-lo); }
+.mod-busca { display: flex; align-items: center; gap: 10px; }
+.mod-busca input { width: min(320px, 70vw); height: 38px; padding: 0 12px; border: 1px solid var(--rule-strong); background: var(--paper-hi); color: var(--ink); font: 15px var(--f-text); border-radius: 2px; }
+.mod-busca span { font: 12px var(--f-mono); color: var(--graphite); }
+.mod-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); gap: 14px; }
+.mod { position: relative; display: flex; flex-direction: column; background: var(--paper-hi); border: 1px solid var(--rule); border-top: 4px solid var(--ac); transition: transform .25s var(--ease), box-shadow .25s var(--ease); }
+.mod:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(23,20,15,.12); }
+.mod-a { display: flex; flex-direction: column; gap: 8px; padding: 14px 14px 10px; color: var(--ink); text-decoration: none; flex: 1; }
+.mod-shot { display: block; margin: -14px -14px 4px; aspect-ratio: 16 / 10; overflow: hidden; background: #0a0b10; border-bottom: 1px solid var(--rule); }
+.mod-shot img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .5s var(--ease); }
+.mod:hover .mod-shot img { transform: scale(1.03); }
+.mod-a:hover { text-decoration: none; }
+.mod-top { display: flex; align-items: center; justify-content: space-between; }
+.mod-n { font: 500 12px/1 var(--f-mono); color: var(--graphite); letter-spacing: .06em; }
+.mod-vivo { display: inline-block; margin-left: 8px; padding: 3px 6px 2px; font: 600 10.5px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--paper-hi); background: var(--verm-deep); vertical-align: 1px; }
+.mod-vivo::before { content: "● "; animation: mod-vivo-pisca 1.6s ease-in-out infinite; }
+@keyframes mod-vivo-pisca { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .mod-vivo::before { animation: none; } }
+.mod-e { font-size: 30px; line-height: 1; }
+.mod h3 { margin: 2px 0 0; font: 650 19px/1.2 var(--f-display); letter-spacing: -.005em; }
+.mod p { margin: 0; font-size: 14px; line-height: 1.45; color: var(--graphite); }
+.mod-meta { display: flex; flex-wrap: wrap; gap: 4px 10px; font: 11px/1.3 var(--f-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--graphite-2); margin-top: auto; padding-top: 6px; }
+.mod-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.mod-tags span { font: 11px/1 var(--f-mono); padding: 4px 6px; border: 1px solid var(--rule); color: var(--verm-deep); }
+.mod-acts { display: flex; gap: 8px; padding: 0 14px 14px; }
+.mod-acts .btn { font-size: 13px; }
+.mod-vazio { color: var(--graphite); }
+
+/* ---------- barra do topo: cabeçalho corrido do catálogo ---------- */
+.jev-topbar { background: var(--paper); -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom: 3px double var(--ink); color: var(--ink); gap: 16px; padding: 0 clamp(10px, 2.8vw, 40px); }
+.jev-topbar .jev-brand { gap: 12px; }
+.jev-topbar .jev-logo { height: 28px; padding: 0 9px 0 8px; gap: 5px; border-radius: 2px; background: var(--verm-deep); color: var(--paper); box-shadow: none; outline: 1px solid var(--verm-deep); outline-offset: 2px; font: 500 12px/1 var(--f-mono); letter-spacing: .18em; }
+.jev-topbar .jev-logo svg { width: 13px; height: 13px; }
+.jev-topbar .jev-apptitle b { font: 600 18px/1.12 var(--f-display); letter-spacing: -.01em; color: var(--ink); }
+.jev-topbar .jev-apptitle span { font: 400 12px/1.35 var(--f-text); color: var(--graphite); }
+.jev-topbar .jev-metrics { gap: 0; }
+.jev-topbar .jev-metric { padding: 4px 12px; border: 0; border-left: 1px solid var(--rule); border-radius: 0; background: none; font: 400 10.5px/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--graphite); }
+.jev-topbar .jev-metrics .jev-metric:first-child { border-left: 0; }
+.jev-topbar .jev-metric b { font: 500 13px/1 var(--f-mono); letter-spacing: 0; text-transform: none; color: var(--ink); }
+.jev-topbar .jev-metric.flash { animation: metric-flash .9s var(--ease); }
+@keyframes metric-flash { from { background: rgba(217,67,42,.18); } to { background: transparent; } }
+.jev-topbar .lat-good b, .jev-topbar .lat-mid b { color: var(--ink); }
+.jev-topbar .lat-bad b { color: var(--verm-deep); }
+.jev-topbar .jev-btn { min-height: 36px; padding: 0 12px; gap: 7px; border: 1px solid var(--rule-strong); border-radius: 2px; background: transparent; color: var(--ink); font: 600 13px/1 var(--f-text); box-shadow: none; }
+.jev-topbar .jev-btn:hover { border-color: var(--ink); background: rgba(23,20,15,.05); text-decoration: none; }
+/* o botão do inspetor traz uma lupa em emoji (texto do kit): ela some e volta como lupa desenhada */
+.jev-topbar > button.jev-btn:not(.jev-arch-btn) { font-size: 0; gap: 0; }
+.jev-topbar > button.jev-btn:not(.jev-arch-btn) > span { font-size: 13px; }
+.jev-topbar > button.jev-btn:not(.jev-arch-btn)::before {
+  content: ""; flex: none; width: 15px; height: 15px; margin-right: 7px; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='m15.6 15.6 5.4 5.4'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='m15.6 15.6 5.4 5.4'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+@media (max-width: 900px) { .jev-topbar > button.jev-btn:not(.jev-arch-btn)::before { margin-right: 0; } }
+@media (max-width: 760px) { .jev-topbar .jev-btn { min-width: 44px; min-height: 44px; padding: 0 12px; } }
+/* larguras intermediárias: "Todos os apps" é esta própria página no hub, sai primeiro; depois o título dá lugar ao selo */
+@media (max-width: 1000px) { .jev-topbar > a.jev-btn { display: none; } }
+@media (max-width: 520px) { .jev-topbar .jev-apptitle { display: none; } .jev-topbar .jev-brand { flex-shrink: 0; } }
+@media (max-width: 400px) {
+  .jev-topbar { gap: 8px; }
+  .jev-topbar .jev-metric { padding: 4px 6px; font-size: 9px; letter-spacing: .03em; }
+}
+
+/* ---------- foco, links, botões ---------- */
+:where(.cat) a, :where(.jev-footer) a { color: inherit; }
+.cat a:focus-visible, .cat button:focus-visible, .jev-topbar a:focus-visible, .jev-topbar button:focus-visible, .jev-footer a:focus-visible { outline: 2px solid var(--verm-deep); outline-offset: 3px; border-radius: 1px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 14px; border: 1px solid var(--rule-strong); border-radius: 2px; background: transparent; color: var(--ink); font: 600 13.5px/1 var(--f-text); cursor: pointer; white-space: nowrap; text-decoration: none; transition: background-color .2s, border-color .2s, color .2s; }
+.btn:hover { border-color: var(--ink); background: rgba(23,20,15,.05); text-decoration: none; }
+.btn:active { transform: translateY(1px); }
+.btn--ink { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn--ink:hover { background: var(--verm-deep); border-color: var(--verm-deep); color: #fff; }
+.btn .ico { display: inline-flex; }
+.btn .ico svg { width: 15px; height: 15px; display: block; }
+@media (max-width: 700px), (pointer: coarse) { .btn { min-height: 44px; } }
+
+/* ---------- página ---------- */
+.jev-shell.cat { max-width: 1440px; padding: 0 var(--mx) clamp(72px, 8vw, 120px); }
+:where(.cat) h1, :where(.cat) h2, :where(.cat) h3, :where(.cat) p, :where(.cat) dl, :where(.cat) dd, :where(.cat) figure { margin: 0; }
+:where(.cat) h1, :where(.cat) h2, :where(.cat) h3 { letter-spacing: normal; line-height: 1.1; font-weight: 400; }
+.tec-name code { font: inherit; }
+.secnum { font: italic 400 19px/1 var(--f-display); color: var(--verm-deep); }
+
+/* cabeçalho corrido */
+.runhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 18px; padding: 18px 0 10px; border-bottom: 1px solid var(--ink); font: 400 11px/1.4 var(--f-mono); letter-spacing: .14em; text-transform: uppercase; }
+.runhead b { font-weight: 500; }
+.onair { display: inline-flex; align-items: center; gap: 9px; }
+.live-dot { position: relative; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--verm); }
+.live-dot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1px solid var(--verm); opacity: 0; }
+
+/* ---------- capa ---------- */
+.cover-grid { container-type: inline-size; display: grid; grid-template-columns: [a] minmax(0, 4.7fr) [b] minmax(0, 4.3fr) [c] minmax(0, 3fr) [d]; grid-template-rows: auto auto 1fr; column-gap: var(--gut); padding: clamp(18px, 2.3vw, 32px) 0 clamp(24px, 2.6vw, 38px); }
+.cover-h1 { grid-column: a / c; grid-row: 1 / 4; display: grid; grid-template-columns: subgrid; grid-template-rows: subgrid; }
+.cover-num { grid-column: a / b; grid-row: 1 / 4; align-self: start; font: 300 clamp(150px, 45.5vw, 660px)/.74 var(--f-display); letter-spacing: -.06em; color: var(--verm); font-variant-numeric: lining-nums; margin-left: -.035em; }
+/* três algarismos ("100") medem 1,3 em em Fraunces 300: a fonte encolhe para o número caber na coluna a (senão o último zero sai cortado) */
+.cover-num[data-digitos="3"] { font-size: min(660px, calc((100cqi - 2 * var(--gut)) * 4.7 / 12 / 1.3)); }
+.cover-words { grid-column: b / c; grid-row: 1; align-self: start; font: 400 clamp(38px, 4.9vw, 72px)/.96 var(--f-display); letter-spacing: -.025em; }
+.cover-words em { font-style: italic; }
+.lead { grid-column: b / c; grid-row: 2; margin-top: clamp(16px, 1.7vw, 24px); font-size: clamp(16px, 1.2vw, 17.5px); line-height: 1.55; max-width: 34em; }
+.lead b { font-weight: 650; }
+.facts { grid-column: b / c; grid-row: 3; align-self: start; list-style: none; margin: clamp(16px, 1.6vw, 22px) 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--ink); }
+.facts li { display: flex; gap: 9px; align-items: baseline; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--rule); font: 400 12.5px/1.4 var(--f-mono); letter-spacing: -.01em; }
+.facts li:nth-child(odd) { border-right: 1px solid var(--rule); }
+.facts li:nth-child(even) { padding-left: 12px; }
+.facts i { flex: none; font: italic 400 14px/1 var(--f-display); letter-spacing: 0; color: var(--verm-deep); min-width: 1.4em; }
+
+/* colofão: os números ao vivo do gateway */
+.colofao { grid-column: c / d; grid-row: 1 / 4; align-self: start; border-top: 3px double var(--ink); padding-top: 12px; }
+.colofao-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.colofao h2 { font: 500 11px/1 var(--f-mono); letter-spacing: .2em; text-transform: uppercase; }
+.aovivo { display: inline-flex; align-items: center; gap: 8px; font: 400 10.5px/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--verm-deep); }
+.colofao dl { margin-top: 10px; }
+.colofao .row { display: flex; flex-wrap: wrap; align-items: baseline; padding: 11px 0 9px; border-bottom: 1px solid var(--rule); }
+.colofao dt { flex: 1 1 auto; display: flex; align-items: baseline; gap: 8px; min-width: 0; font: 600 13.5px/1.2 var(--f-text); }
+.colofao dt::after { content: ""; flex: 1; min-width: 14px; border-bottom: 1.5px dotted rgba(23,20,15,.42); transform: translateY(-3px); }
+.colofao dd.v { margin-left: 8px; font: 500 clamp(19px, 1.75vw, 25px)/.8 var(--f-mono); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.colofao dd.s { flex-basis: 100%; margin-top: 2px; font-size: 12px; line-height: 1.35; color: var(--graphite); }
+.colofao-fecho { margin-top: 12px; font: italic 400 14px/1.45 var(--f-display); color: var(--graphite); }
+.colofao-fecho code { font: 400 12px var(--f-mono); color: var(--ink); }
+.colofao .off { display: none; margin-top: 10px; font: 400 11px/1.4 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--verm-deep); }
+.colofao.offline .off { display: block; }
+.colofao.offline .aovivo { color: var(--graphite); }
+.colofao.offline .live-dot { background: var(--graphite-2); }
+
+/* ---------- I · legenda das técnicas ---------- */
+.legenda { display: grid; grid-template-columns: minmax(0, 2.4fr) repeat(3, minmax(0, 3.2fr)); border-top: 3px double var(--ink); border-bottom: 1px solid var(--ink); }
+.legenda > * { min-width: 0; padding: 18px var(--gut) 20px; border-left: 1px solid var(--rule); }
+.legenda > :first-child { padding-left: 0; border-left: 0; }
+.legenda-cap h2 { margin-top: 10px; font: 400 clamp(24px, 2vw, 28px)/1.05 var(--f-display); letter-spacing: -.01em; }
+.legenda-cap p { margin-top: 10px; font-size: 13.5px; line-height: 1.5; color: var(--graphite); max-width: 26em; }
+.tec-name { display: flex; align-items: center; gap: 9px; font: 500 13px/1 var(--f-mono); }
+.tec-name svg, .mk { width: 16px; height: 16px; flex: none; color: var(--verm); }
+.tec-q { margin-top: 12px; font: italic 400 clamp(20px, 1.6vw, 23px)/1.15 var(--f-display); letter-spacing: -.005em; }
+.tec-d { margin-top: 5px; font-size: 13.5px; line-height: 1.5; color: var(--graphite); }
+.tec-fig { margin-top: 16px; }
+.legenda .jev-bars { gap: 7px; }
+.legenda .jev-bar { grid-template-columns: minmax(84px, 40%) minmax(0, 1fr) 44px; gap: 10px; font-size: 13px; }
+.legenda .jev-bar .lbl { font: 400 13px/1.3 var(--f-text); color: var(--graphite); }
+.legenda .jev-bar .trk { height: 9px; border-radius: 0; background: transparent; box-shadow: inset 0 0 0 1px var(--rule-strong); }
+.legenda .jev-bar .fil { border-radius: 0; background: var(--graphite); transition: width 1s var(--ease) .7s; }
+.legenda .jev-bar.top .fil { background: var(--verm); box-shadow: none; }
+.legenda .jev-bar .pct { font: 500 12px var(--f-mono); color: var(--graphite); }
+.legenda .jev-bar.top .lbl { color: var(--ink); font-weight: 600; }
+.legenda .jev-bar.top .pct { color: var(--ink); }
+.legenda .jev-score { gap: 3px; }
+.legenda .jev-score .seg { height: 9px; border-radius: 0; background: transparent; box-shadow: inset 0 0 0 1px var(--rule-strong); }
+.legenda .jev-score .seg i { transition: opacity .5s ease .8s; }
+.legenda .jev-score-legend { margin-top: 7px; font: 400 11px/1 var(--f-mono); letter-spacing: .04em; color: var(--graphite); }
+
+/* ---------- II · pranchas ---------- */
+.sec-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; column-gap: 18px; margin-top: clamp(72px, 9vw, 128px); padding-top: 14px; border-top: 3px double var(--ink); }
+.sec-head h2 { font: 400 clamp(46px, 6.2vw, 92px)/.95 var(--f-display); letter-spacing: -.03em; }
+.sec-range { font: 300 italic clamp(28px, 3.4vw, 52px)/1 var(--f-display); letter-spacing: -.02em; color: var(--graphite); white-space: nowrap; }
+.sec-note { grid-column: 2 / -1; margin-top: 14px; max-width: 60em; font-size: 14.5px; line-height: 1.55; color: var(--graphite); }
+.sec-note b { font-weight: 600; color: var(--ink); }
+
+.plates { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gut); row-gap: clamp(56px, 6.5vw, 96px); margin-top: clamp(36px, 4vw, 60px); }
+.plates:empty { grid-template-columns: minmax(0, 1fr); place-items: center; min-height: 280px; border: 1px dashed var(--rule-strong); background: repeating-linear-gradient(-45deg, rgba(23,20,15,.045) 0 1px, transparent 1px 10px); }
+.plates:empty::before { content: "Montando as pranchas…"; font: italic 400 24px var(--f-display); color: var(--graphite); background: var(--paper); padding: 4px 14px; }
+.grid-err { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; padding: 28px; border: 1px solid var(--verm-deep); font: italic 400 20px/1.4 var(--f-display); }
+
+.plate { grid-column: 1 / -1; min-width: 0; container: plate / inline-size; --tilt: -.7deg; }
+.plate:nth-child(even) { --tilt: .6deg; }
+@media (min-width: 1100px) {
+  .plate--wide { grid-column: span 7; }
+  .plate--mid { grid-column: span 5; }
+  .plate--small { grid-column: span 4; }
+  .plate--off { margin-top: 72px; }
+  .plate--off-l { margin-top: 132px; }
+}
+@media (min-width: 700px) and (max-width: 1099.98px) {
+  .plate--wide, .plate--mid, .plate--small { grid-column: span 6; }
+  .plates > .plate:nth-child(8n) { grid-column: 1 / -1; }
+  .plates > .plate:nth-child(8n+3), .plates > .plate:nth-child(8n+5), .plates > .plate:nth-child(8n+7) { margin-top: 56px; }
+}
+.plate-in { display: grid; grid-template-columns: minmax(0, 1fr); }
+@container plate (min-width: 1000px) {
+  .plate--feature .plate-in { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); column-gap: var(--gut); align-items: start; }
+  .plate--feature.plate--mirror .plate-in { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+  .plate--feature.plate--mirror .sheet { order: 2; }
+  .plate--feature .label { padding-top: 4px; }
+  .plate--feature .label-in { grid-template-columns: minmax(0, 1fr); grid-template-areas: "num" "head" "one" "specs" "foot"; }
+  .plate--feature .numeral { font-size: clamp(150px, 52cqi, 250px); margin: 0 0 18px; align-self: start; }
+  .plate--feature .title { font-size: clamp(30px, 8.6cqi, 42px); }
+  .plate--feature .one { font-size: 16px; }
+}
+
+/* a gravura: folha de papel com margem inferior assinada, deitada sobre a mesa */
+.sheet { position: relative; display: block; padding: clamp(8px, 1.1cqi, 14px) clamp(8px, 1.1cqi, 14px) 0; background: var(--paper-hi); border: 1px solid rgba(23,20,15,.12); box-shadow: 0 1px 1px rgba(23,20,15,.05), 0 7px 14px -11px rgba(23,20,15,.4); transform-origin: 50% 85%; transition: transform .55s var(--ease), box-shadow .55s var(--ease); text-decoration: none; }
+.sheet:hover { text-decoration: none; }
+.mat { position: relative; display: block; aspect-ratio: 16 / 10; overflow: hidden; background: var(--paper-lo); }
+.mat::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 1px rgba(23,20,15,.28); pointer-events: none; }
+.mat img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+.ph { position: absolute; inset: 0; display: grid; place-items: center; background: repeating-linear-gradient(-45deg, rgba(23,20,15,.07) 0 1px, transparent 1px 9px), var(--paper-lo); }
+.ph-t { padding: 3px 12px; background: var(--paper-lo); font: italic 400 16px/1.3 var(--f-display); color: var(--graphite); }
+.ph--err .ph-t { color: var(--verm-deep); }
+.sheet-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 9px 2px 10px; }
+.ed { font: 400 10.5px/1 var(--f-mono); letter-spacing: .12em; color: var(--graphite); }
+.sig { font: italic 400 17px/1 var(--f-display); color: var(--graphite); }
+@media (hover: hover) {
+  .plate:hover .sheet { transform: translateY(-10px) rotate(var(--tilt)); box-shadow: 0 2px 2px rgba(23,20,15,.04), 0 34px 48px -26px rgba(23,20,15,.6), 0 14px 20px -14px rgba(23,20,15,.3); }
+  .plate:hover .kick b { color: var(--verm-deep); }
+}
+.plate:has(:focus-visible) .sheet { transform: translateY(-6px) rotate(var(--tilt)); box-shadow: 0 30px 44px -26px rgba(23,20,15,.55); }
+
+/* a etiqueta de museu */
+.label { container: label / inline-size; padding-top: 18px; }
+.label-in { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "num head" "one one" "specs specs" "foot foot"; column-gap: clamp(12px, 3.6cqi, 22px); }
+.numeral { grid-area: num; align-self: end; font: 300 clamp(76px, 24cqi, 150px)/.74 var(--f-display); letter-spacing: -.06em; color: var(--verm); font-variant-numeric: lining-nums; margin-left: -.045em; user-select: none; }
+.head { grid-area: head; align-self: end; min-width: 0; }
+.kick { font: 400 10.5px/1.5 var(--f-mono); letter-spacing: .11em; text-transform: uppercase; color: var(--graphite); }
+.kick b { font-weight: 500; color: var(--ink); transition: color .3s; }
+.title { margin-top: 5px; font: italic 400 clamp(23px, 6.2cqi, 34px)/1.04 var(--f-display); letter-spacing: -.012em; overflow-wrap: anywhere; }
+.one { grid-area: one; margin-top: 16px; font-size: 15px; line-height: 1.5; max-width: 42em; }
+.specs { grid-area: specs; margin-top: 16px; }
+.specs > div { display: grid; grid-template-columns: 96px minmax(0, 1fr); column-gap: 12px; padding: 9px 0 10px; border-top: 1px solid var(--rule); }
+.specs dt { font: 400 10px/2 var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--graphite); }
+.specs dd { min-width: 0; font-size: 13.5px; line-height: 1.5; }
+.types { display: flex; flex-wrap: wrap; gap: 3px 12px; margin-top: 6px; font: 400 11.5px/1.5 var(--f-mono); color: var(--graphite); }
+.types:empty { display: none; }
+.ty { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.ty b { font-weight: 500; color: var(--ink); }
+.ty .mk { width: 12px; height: 12px; }
+.ty-call { flex-basis: 100%; white-space: normal; }
+.live { display: inline-block; }
+.live b { font: 500 13.5px/1.3 var(--f-mono); }
+.live.wait { font: italic 400 14px/1.4 var(--f-display); color: var(--graphite-2); }
+.foot { grid-area: foot; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; padding-top: 12px; border-top: 1px solid var(--ink); }
+.url { flex: 1 1 170px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 11.5px/1.3 var(--f-mono); color: var(--graphite); }
+.acts { display: flex; flex: none; gap: 8px; }
+@container label (min-width: 680px) {
+  .label-in { grid-template-columns: auto minmax(0, 1fr) minmax(0, 1.05fr); grid-template-areas: "num head one" "specs specs specs" "foot foot foot"; column-gap: 24px; }
+  .one { align-self: end; margin-top: 0; padding-bottom: 2px; }
+  .specs { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); margin-top: 18px; border-top: 1px solid var(--rule); }
+  .specs > div { display: block; padding: 10px 16px 12px 0; border-top: 0; }
+  .specs > div + div { padding-left: 16px; border-left: 1px solid var(--rule); }
+  .specs dt { line-height: 1.4; margin-bottom: 5px; }
+}
+
+/* ---------- III · montagem ---------- */
+.montagem { display: grid; grid-template-columns: minmax(0, 3.4fr) minmax(0, 8.6fr); column-gap: var(--gut); row-gap: 28px; align-items: start; margin-top: clamp(84px, 10vw, 140px); padding-top: 14px; border-top: 3px double var(--ink); }
+.mont-cap h2 { margin-top: 10px; font: 400 clamp(36px, 4.2vw, 60px)/1 var(--f-display); letter-spacing: -.025em; }
+.mont-cap .note { margin-top: 14px; font-size: 14.5px; line-height: 1.5; color: var(--graphite); }
+.arch-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-top: 26px; }
+.arch-actions .btn { white-space: normal; text-align: left; line-height: 1.25; padding: 10px 16px; }
+.lnk { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font: 600 14px/1.3 var(--f-text); text-decoration: underline; text-decoration-color: var(--rule-strong); text-underline-offset: 4px; }
+.lnk:hover { text-decoration-color: var(--verm); }
+.lnk svg { width: 14px; height: 14px; flex: none; }
+.arch-actions .note { font-size: 13px; line-height: 1.5; color: var(--graphite); max-width: 30em; }
+.arch-actions .note b { color: var(--ink); font-weight: 600; }
+.planta { container: planta / inline-size; padding: clamp(12px, 2vw, 28px) clamp(12px, 2vw, 28px) 14px; background-color: var(--paper-hi); background-image: linear-gradient(rgba(23,20,15,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(23,20,15,.05) 1px, transparent 1px); background-size: 16px 16px; border: 1px solid var(--rule-strong); }
+.planta svg { display: block; width: 100%; height: auto; }
+.planta .arch-v { display: none; }
+.planta figcaption { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--rule); font: 400 10.5px/1.5 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--graphite); }
+@container planta (max-width: 620px) {
+  .planta .arch-h { display: none; }
+  .planta .arch-v { display: block; max-width: 400px; margin: 0 auto; }
+}
+
+/* ---------- rodapé e avisos ---------- */
+.jev-footer { position: relative; max-width: 1440px; padding: 16px var(--mx) 30px; border-top: 0; font: 400 12.5px/1.5 var(--f-text); color: var(--graphite); }
+.jev-footer::before { content: ""; position: absolute; top: 0; left: var(--mx); right: var(--mx); border-top: 3px double var(--ink); }
+.jev-footer .jev-text { background: none; color: var(--verm-deep); }
+.jev-footer a { text-decoration: underline; text-decoration-color: var(--rule-strong); text-underline-offset: 3px; color: var(--ink); }
+.jev-toast { background: var(--paper-hi); color: var(--ink); border: 1px solid var(--ink); border-radius: 2px; box-shadow: 0 18px 36px -18px rgba(23,20,15,.5); font: 500 14px/1.45 var(--f-text); }
+.jev-toast.err { box-shadow: inset 4px 0 0 var(--verm), 0 18px 36px -18px rgba(23,20,15,.5); }
+
+/* ---------- responsivo ---------- */
+@media (max-width: 1099.98px) {
+  .cover-grid { grid-template-columns: [a] minmax(0, 5fr) [b] minmax(0, 7fr) [c d]; grid-template-rows: auto auto auto auto; }
+  .cover-h1 { grid-column: a / c; grid-row: 1 / 4; }
+  .cover-num[data-digitos="3"] { font-size: calc((100cqi - var(--gut)) * 5 / 12 / 1.3); }
+  .colofao { grid-column: a / d; grid-row: 4; margin-top: 36px; }
+  .colofao dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--gut); }
+  .legenda { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .legenda > .legenda-cap { grid-column: 1 / -1; padding: 20px 0 4px; border-bottom: 1px solid var(--rule); }
+  .legenda > .tec:nth-child(2) { border-left: 0; padding-left: 0; }
+  .montagem { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .runhead-mid { display: none; }
+  .cover-grid { display: block; padding-top: 18px; }
+  .cover-h1 { display: block; }
+  .cover-num { display: block; font-size: clamp(150px, 64vw, 380px); }
+  .cover-num[data-digitos="3"] { font-size: min(380px, calc(100cqi / 1.3)); }
+  .cover-words { display: block; margin-top: 18px; font-size: clamp(38px, 11vw, 64px); }
+  .cover-words em { display: inline; }
+  .facts { grid-template-columns: minmax(0, 1fr); }
+  .facts li:nth-child(odd) { border-right: 0; }
+  .facts li:nth-child(even) { padding-left: 0; }
+  .colofao dl { grid-template-columns: minmax(0, 1fr); }
+  .legenda { grid-template-columns: minmax(0, 1fr); }
+  .legenda > * { padding: 18px 0 20px; border-left: 0; }
+  .legenda > * + * { border-top: 1px solid var(--rule); }
+  .legenda > .legenda-cap { border-bottom: 0; }
+  .sec-head { grid-template-columns: auto minmax(0, 1fr); }
+  .sec-range { grid-column: 2; }
+  .sec-note { grid-column: 1 / -1; }
+}
+@media (max-width: 380px) {
+  .specs > div { grid-template-columns: minmax(0, 1fr); row-gap: 2px; }
+  .specs dt { line-height: 1.5; }
+}
+
+/* ---------- movimento: entrada orquestrada e micro-interações ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .rv { animation: rv-rise .9s var(--ease) both; animation-delay: calc(var(--i, 0) * 110ms + 60ms); }
+  .cover-num.rv { animation-name: rv-ink; animation-duration: 1.25s; }
+  .plate.in { animation: plate-rise .95s var(--ease) both; animation-delay: var(--d, 0ms); }
+  .plate.in .numeral { animation: rv-ink 1.1s var(--ease) both; animation-delay: calc(var(--d, 0ms) + 220ms); }
+  .live-dot::after { animation: ping 2.6s var(--ease) infinite; }
+  .arrive { animation: arrive .8s var(--ease) both; }
+  .tick { animation: tick 1.8s var(--ease); background: linear-gradient(var(--verm), var(--verm)) no-repeat 0 100% / 100% 0; }
+}
+@keyframes rv-rise { from { opacity: 0; transform: translateY(18px); } }
+@keyframes plate-rise { from { opacity: 0; transform: translateY(34px); } }
+@keyframes rv-ink { from { clip-path: inset(100% -12% -20% -12%); transform: translateY(10%); } to { clip-path: inset(-20% -12% -20% -12%); transform: none; } }
+@keyframes ping { 0% { transform: scale(.4); opacity: .9; } 70%, 100% { transform: scale(1.7); opacity: 0; } }
+@keyframes arrive { from { opacity: 0; transform: translateY(.35em); } }
+@keyframes tick { 0% { color: var(--verm-deep); background-size: 0% 2px; } 35% { background-size: 100% 2px; } 100% { background-size: 100% 0; } }
+
+/* ---------- impressão: o catálogo também vai para o papel ---------- */
+@media print {
+  .jev-topbar, .jev-footer, .acts, .arch-actions, .jev-drawer, .jev-drawer-backdrop, .jev-dg, .jev-toasts { display: none !important; }
+  html, body { background: #fff; }
+  body::after { display: none; }
+  .plate { break-inside: avoid; opacity: 1 !important; transform: none !important; animation: none !important; }
+  .plate .numeral { animation: none !important; clip-path: none !important; }
+  .sheet { box-shadow: none; transform: none !important; }
+  .legenda, .montagem, .sec-head { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<header class="jev-topbar"></header>
+<main class="jev-shell cat">
+  <section class="cover" aria-labelledby="titulo">
+    <div class="runhead rv" style="--i:0">
+      <span>Catálogo da mostra</span>
+      <span class="runhead-mid">Jev Apps · sua instalação</span>
+      <span class="onair"><span class="live-dot" aria-hidden="true"></span><span><b id="n-apps">100</b> apps no ar</span></span>
+    </div>
+    <div class="cover-grid">
+      <h1 class="cover-h1" id="titulo">
+        <span class="cover-num rv" style="--i:1" id="n-apps-h" data-digitos="3">100</span>
+        <span class="cover-words rv" style="--i:2">apps que decidem <em>em milissegundos</em></span>
+      </h1>
+      <p class="lead rv" style="--i:3">O Jev, da TypeSafe, não escreve texto: recebe dados e perguntas tipadas e devolve <b>probabilidades</b> numa única passada — rápido o bastante para tempo real e barato o bastante para rodar em tudo. Cada demo abaixo tem seu próprio link e usa o Jev de verdade.</p>
+      <ul class="facts rv" style="--i:4" aria-label="O Jev em quatro números">
+        <li><i aria-hidden="true">i.</i>~0,3 s por decisão</li>
+        <li><i aria-hidden="true">ii.</i>US$ 0,042 por milhão de tokens</li>
+        <li><i aria-hidden="true">iii.</i>só responde opções válidas</li>
+        <li><i aria-hidden="true">iv.</i>dezenas de perguntas por chamada</li>
+      </ul>
+      <aside class="colofao rv" style="--i:5" id="live" aria-labelledby="colofao-t">
+        <div class="colofao-head">
+          <h2 id="colofao-t">Colofão</h2>
+          <span class="aovivo"><span class="live-dot" aria-hidden="true"></span>ao vivo</span>
+        </div>
+        <dl>
+          <div class="row"><dt>Decisões tomadas</dt><dd class="v" id="k-q">—</dd><dd class="s">perguntas respondidas pelo Jev</dd></div>
+          <div class="row"><dt>Chamadas ao Jev</dt><dd class="v" id="k-c">—</dd><dd class="s">em todos os demos</dd></div>
+          <div class="row"><dt>Custo total</dt><dd class="v" id="k-cost">—</dd><dd class="s">OpenRouter, desde o lançamento</dd></div>
+          <div class="row"><dt>Latência mediana</dt><dd class="v" id="k-p50">—</dd><dd class="s">servidor → Jev → servidor</dd></div>
+        </dl>
+        <p class="off" role="status">Gateway fora do ar agora · tentando de novo</p>
+        <p class="colofao-fecho">Composto em Fraunces, Public Sans e DM Mono sobre papel marfim. Números do gateway do Jev (<code id="k-model">typesafe/jev-1.13</code>), atualizados a cada 10 s.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="legenda rv" style="--i:6" aria-labelledby="legenda-t">
+    <div class="legenda-cap">
+      <p class="secnum" aria-hidden="true">I</p>
+      <h2 id="legenda-t">Legenda das técnicas</h2>
+      <p>Toda obra desta mostra é feita de três tipos de pergunta. As marcas voltam na etiqueta de cada prancha.</p>
+    </div>
+    <div class="tec">
+      <p class="tec-name"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2.75" fill="currentColor"/></svg><code>choice</code></p>
+      <p class="tec-q">“Qual destas opções?”</p>
+      <p class="tec-d">Escolhe 1 entre N rótulos e dá a probabilidade de cada um.</p>
+      <div class="tec-fig" id="p-choice"></div>
+    </div>
+    <div class="tec">
+      <p class="tec-name"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.25" y="4.75" width="13.5" height="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1.25" y="4.75" width="8.5" height="6.5" fill="currentColor"/></svg><code>score</code></p>
+      <p class="tec-q">“Onde isto cai numa escala?”</p>
+      <p class="tec-d">Nota contínua numa régua de 2 a 10 níveis descritos.</p>
+      <div class="tec-fig" id="p-score"></div>
+    </div>
+    <div class="tec">
+      <p class="tec-name"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.75a6.25 6.25 0 0 1 0 12.5z" fill="currentColor"/></svg><code>noul</code></p>
+      <p class="tec-q">“Isto é verdade?”</p>
+      <p class="tec-d">Probabilidade calibrada de sim. 0,5 = não sei.</p>
+      <div class="tec-fig" id="p-noul"></div>
+    </div>
+  </section>
+
+  <section class="pranchas" aria-labelledby="pranchas-t">
+    <header class="sec-head">
+      <p class="secnum" aria-hidden="true">II</p>
+      <h2 id="pranchas-t">Pranchas</h2>
+      <p class="sec-range" id="pr-range" aria-hidden="true">01—17</p>
+      <p class="sec-note">Clique numa prancha para abrir o demo. Em cada app, o botão <b>Ver o que o Jev vê</b> mostra as perguntas e respostas reais, e o botão <b>Arquitetura</b> mostra onde o Jev entra.</p>
+    </header>
+    <div class="plates" id="grid" aria-busy="true"></div>
+  </section>
+
+
+  <section class="pranchas modelos" id="modelos" aria-labelledby="modelos-t">
+    <header class="sec-head">
+      <p class="secnum" aria-hidden="true">III</p>
+      <h2 id="modelos-t">Modelos para adaptar</h2>
+      <p class="sec-range" id="mod-range" aria-hidden="true">modelos</p>
+      <p class="sec-note">Apps-modelo prontos para adaptar: abra e aperte <b>▶ Ver funcionando</b>. Cada um é definido num arquivo só (<code>apps/modelos/public/&lt;id&gt;/app.config.mjs</code> na pasta do kit): peça ao seu agente para adaptá-lo ao seu negócio e publicar.</p>
+    </header>
+    <div class="mod-barra">
+      <div class="mod-filtros" id="mod-filtros" role="toolbar" aria-label="Filtrar por categoria"></div>
+      <label class="mod-busca"><input id="mod-busca" type="search" placeholder="Buscar: WhatsApp, golpe, planilha…" aria-label="Buscar modelos"><span id="mod-n"></span></label>
+    </div>
+    <div class="mod-grade" id="mod-grade" aria-live="polite"></div>
+  </section>
+
+  <section class="montagem" aria-labelledby="montagem-t">
+    <div class="mont-cap">
+      <p class="secnum" aria-hidden="true">IV</p>
+      <h2 id="montagem-t">Como está montado</h2>
+      <p class="note">Uma VPS da Hostinger · Docker · HTTPS automático</p>
+      <div class="arch-actions">
+        <button class="btn btn--ink" id="archDiagram" type="button" aria-haspopup="dialog">Ver o diagrama completo da plataforma</button>
+        <a class="lnk" href="/arquiteturas.html" target="_blank" rel="noopener">Todos os diagramas numa página <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 11 11 5M6 5h5v5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        <p class="note">Cada prancha acima também tem o botão <b>Diagrama</b>, e cada app tem o botão <b>Arquitetura</b> no topo.</p>
+      </div>
+    </div>
+    <figure class="planta" id="arch"></figure>
+  </section>
+</main>
+<script src="/_jev/jev-kit.js"></script>
+<script src="hub.js"></script>
+<script src="modelos.js"></script>
+</body>
+</html>

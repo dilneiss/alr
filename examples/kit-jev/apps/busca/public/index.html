@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR" class="entrando">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Busca que Entende · Jev</title>
+<meta name="description" content="Escreva do seu jeito e o Jev avalia os 120 produtos da loja a cada pausa na digitação — lado a lado com a busca comum por palavra-chave.">
+<meta name="theme-color" content="#FFFDF7">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M22 6h32a4 4 0 0 1 4 4v44a4 4 0 0 1-4 4H22L6 32z' fill='%23E4472B' stroke='%231F1B16' stroke-width='4' stroke-linejoin='round'/%3E%3Ccircle cx='21' cy='32' r='5' fill='%23FFFDF7' stroke='%231F1B16' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/bricolage-grotesque-vf.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/figtree-vf.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/_jev/jev.css">
+<link rel="stylesheet" href="busca.css">
+</head>
+<body>
+<header class="jev-topbar"></header>
+<main class="jev-shell">
+  <div class="layout" id="layout" data-tab="jev">
+
+    <!-- CAPA DO CATÁLOGO: título, pedido (busca) e o cupom que o Jev preenche -->
+    <section class="intro cover" aria-labelledby="titulo">
+      <div class="cover-title">
+        <p class="kicker"><span>Catálogo geral</span><span>120 artigos</span></p>
+        <h1 id="titulo"><span class="w w1">Busca</span> <span class="w w2">que</span> <span class="w w3">Entende</span></h1>
+        <p class="value">Escreva como falaria com um vendedor. A cada pausa na digitação, o Jev dá uma nota para <b>cada um dos 120 produtos</b> da loja — lado a lado com a busca comum por palavra-chave.</p>
+      </div>
+
+      <div class="cover-order">
+        <label class="field-label" for="q">O que você procura?</label>
+        <form class="searchbar" id="form" role="search" autocomplete="off">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.4 15.4 21 21"/></svg>
+          <input id="q" type="search" maxlength="300" placeholder="Ex.: presente pra minha mãe que ama jardinagem até 150 reais" aria-label="O que você procura?" enterkeyhint="search">
+          <span class="st" id="st" hidden><span class="jev-spinner"></span> avaliando 120 produtos…</span>
+          <button class="jev-btn jev-btn--primary" id="go" type="submit" aria-label="Buscar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg><span>Buscar</span></button>
+        </form>
+        <p class="field-label chips-label" id="chips-lbl">Buscas de exemplo</p>
+        <div class="chips" id="chips" aria-label="Buscas de exemplo"></div>
+      </div>
+
+      <div class="slip">
+        <div class="understood" id="understood" aria-live="polite">
+          <span class="lbl">O Jev entendeu</span>
+          <span class="pill blank"><span class="k">Intenção</span><i class="lead"></i></span>
+          <span class="pill blank"><span class="k">Departamento</span><i class="lead"></i></span>
+          <span class="pill blank"><span class="k">Destinatário</span><i class="lead"></i></span>
+          <span class="pill blank"><span class="k">Orçamento</span><i class="lead"></i></span>
+          <span class="hint">Clique num exemplo ou escreva o que procura.</span>
+        </div>
+        <div class="speed" id="speed"><span class="rc-head">Recibo do Jev</span><span class="dim">Aparece aqui a cada busca: quanto tempo e quanto custou avaliar o catálogo inteiro.</span></div>
+      </div>
+
+    </section>
+
+    <!-- PÁGINA DE ÍNDICE: o catálogo inteiro, por departamento -->
+    <section class="panel-cat index-page" aria-label="Catálogo inteiro avaliado pelo Jev">
+      <div class="cat-head">
+        <p class="kicker"><span>Índice geral</span><span>13 departamentos</span></p>
+        <h3>Catálogo inteiro · <span id="ncat">120</span> produtos</h3>
+        <span class="jev-badge violet" id="catstate">aguardando busca</span>
+      </div>
+      <div class="mosaic" id="mosaic"></div>
+      <div class="legend">
+        <span class="legend-t">Relevância para o pedido</span>
+        <span class="ramp" id="ramp"></span>
+        <span class="ov"><i></i> acima do orçamento</span>
+      </div>
+      <p class="cat-note">Cada quadradinho é um produto. O Jev dá uma nota para todos, a cada busca.</p>
+    </section>
+
+    <nav class="mtabs" id="mtabs" aria-label="Alternar resultados">
+      <button type="button" data-tab="jev" class="on" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H9l-6-8z"/><circle cx="8.5" cy="12" r="1.6"/></svg>Com Jev</button>
+      <button type="button" data-tab="kw" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18 8 6l5 12M4.6 14h6.8"/><path d="M15 12.5c.5-1.3 1.6-2 3-2 1.9 0 3 1.1 3 3V18m0-3.6c-.8-.5-1.7-.7-2.7-.7-1.8 0-3 .9-3 2.2 0 1.2 1 2.1 2.4 2.1 1.5 0 2.7-.9 3.3-2.1"/></svg>Palavra-chave</button>
+      <button type="button" data-tab="cat" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Catálogo</button>
+    </nav>
+
+    <!-- BALCÃO 1: o balconista do sistema antigo -->
+    <section class="counter counter--old panel-kw" aria-label="Resultados da busca por palavra-chave">
+      <header class="counter-head">
+        <div class="sign">
+          <svg class="strings" viewBox="0 0 100 26" preserveAspectRatio="none" aria-hidden="true"><path d="M10 26 50 1 90 26"/></svg>
+          <span class="sign-k">Balcão 1</span>
+          <h3>Busca por palavra-chave</h3>
+        </div>
+        <p class="sub">o balconista antigo, como na maioria das lojas</p>
+        <span class="jev-badge" id="kwcount" hidden></span>
+      </header>
+      <ol class="results" id="kwlist"></ol>
+      <div class="placeholder" id="kwph">
+        <svg viewBox="0 0 56 56" aria-hidden="true"><rect x="7" y="17" width="42" height="30" rx="4"/><path d="M13 17v-6h30v6M19 11V6h18v5"/><path d="M15 27h26M15 34h18M15 41h22" class="thin"/></svg>
+        <span class="ttl">Procura as palavras que você digitou</span>
+        <span class="ph-t">no nome, na descrição e na categoria dos produtos (com sinônimos simples, como “cachorro” = “cão”). Rápida, mas não entende o que você quis dizer.</span>
+      </div>
+    </section>
+
+    <!-- BALCÃO 2: o balconista que entende (Jev) -->
+    <section class="counter counter--jev panel-jev" aria-label="Resultados da busca com Jev">
+      <header class="counter-head">
+        <div class="sign">
+          <svg class="strings" viewBox="0 0 100 26" preserveAspectRatio="none" aria-hidden="true"><path d="M10 26 50 1 90 26"/></svg>
+          <span class="sign-k">Balcão 2</span>
+          <h3>Busca com Jev</h3>
+        </div>
+        <p class="sub">o balconista que entende a intenção</p>
+        <svg class="bell" id="bell" viewBox="0 0 48 40" aria-hidden="true"><g class="ding"><path d="M6 17 2 14M42 17l4-3M24 5V1"/></g><path d="M24 15v-4M20 10.5h8" fill="none"/><path class="bell-dome" d="M8 31a16 16 0 0 1 32 0z"/><rect class="bell-base" x="4" y="31" width="40" height="5" rx="2"/></svg>
+        <span class="jev-badge info" id="jevcount" hidden></span>
+      </header>
+      <div id="jevnone" hidden></div>
+      <ol class="results" id="jevlist"></ol>
+      <div class="placeholder" id="jevph">
+        <svg viewBox="0 0 56 56" aria-hidden="true"><path d="M20 12h26a3 3 0 0 1 3 3v26a3 3 0 0 1-3 3H20L7 28z"/><circle cx="19" cy="28" r="4"/><path d="M27 23h14M27 29h10M27 35h12" class="thin"/></svg>
+        <span class="ttl">Entende o que você quer dizer</span>
+        <span class="ph-t">para quem é, a ocasião, o orçamento — e dá uma nota de relevância para cada um dos 120 produtos, em paralelo, em menos de um segundo.</span>
+      </div>
+      <div class="overbudget" id="overbudget" hidden></div>
+    </section>
+  </div>
+</main>
+<div class="tip" id="tip" hidden></div>
+<script src="/_jev/jev-kit.js"></script>
+<script src="keyword.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
