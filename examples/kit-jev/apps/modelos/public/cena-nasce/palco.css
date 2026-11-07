@@ -50,6 +50,17 @@
 .t-chuva .cn-ceu-cinza { opacity: .78; }
 .t-tempestade .cn-ceu-cinza { opacity: .92; }
 .t-neve .cn-ceu-cinza { opacity: .46; }
+.t-nevasca .cn-ceu-cinza { opacity: .6; }
+.t-garoa .cn-ceu-cinza { opacity: .55; }
+.t-granizo .cn-ceu-cinza { opacity: .72; filter: brightness(1.08) saturate(.7); }
+.t-neblina .cn-ceu-cinza { opacity: .64; filter: brightness(1.18) saturate(.55); }
+.t-vendaval .cn-ceu-cinza { opacity: .5; }
+.t-furacao .cn-ceu-cinza { opacity: .9; }
+.t-tornado .cn-ceu-cinza { opacity: .88; filter: sepia(.35); }
+.t-tempestade_areia .cn-ceu-cinza { opacity: .88; filter: sepia(.9) saturate(1.7) hue-rotate(-12deg); }
+.t-geada .cn-ceu-cinza { opacity: .5; filter: brightness(1.2) saturate(.5); }
+.t-calor .cn-ceu-cinza { opacity: .12; filter: sepia(.5) saturate(1.6); }
+.t-aurora .cn-ceu-cinza { opacity: .3; }
 .ceu-espaco .cn-ceu-cinza, .ceu-agua .cn-ceu-cinza { opacity: 0; }
 
 /* estrelas (noite limpa e espaço) */
@@ -59,6 +70,9 @@
 .h-noite .cn-estrelas, .ceu-espaco .cn-estrelas { opacity: 1; }
 .h-noite.t-nublado .cn-estrelas, .h-noite.t-chuva .cn-estrelas, .h-noite.t-tempestade .cn-estrelas { opacity: .12; }
 .h-noite.t-neve .cn-estrelas { opacity: .45; }
+.h-noite.t-neblina .cn-estrelas, .h-noite.t-tempestade_areia .cn-estrelas { opacity: .2; }
+.h-noite.t-aurora .cn-estrelas { opacity: .9; }
+.h-noite.t-chuva_estrelas .cn-estrelas { opacity: 1; }
 .ceu-espaco .cn-estrelas { opacity: 1 !important; }
 .ceu-agua .cn-estrelas { opacity: 0 !important; }
 
@@ -91,6 +105,11 @@
 .h-noite .cn-lua { top: 25%; opacity: 1; }
 .t-nublado .cn-sol, .t-chuva .cn-sol, .t-tempestade .cn-sol { opacity: .18; }
 .t-neve .cn-sol { opacity: .5; }
+.t-garoa .cn-sol { opacity: .35; }
+.t-granizo .cn-sol, .t-neblina .cn-sol, .t-tempestade_areia .cn-sol, .t-tornado .cn-sol, .t-furacao .cn-sol { opacity: .12; }
+.t-calor .cn-sol { opacity: 1; transform: scale(1.12); }
+.t-geada .cn-sol { opacity: .55; }
+.t-aurora .cn-lua { opacity: .5; }
 .h-noite.t-chuva .cn-lua, .h-noite.t-tempestade .cn-lua { opacity: .2; }
 .ceu-espaco .cn-sol, .ceu-agua .cn-sol, .ceu-espaco .cn-lua, .ceu-agua .cn-lua { opacity: 0 !important; }
 

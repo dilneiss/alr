@@ -209,7 +209,7 @@ export async function montar(api) {
     clima.medir();
     const paleta = ['deserto', 'praia'].includes(cena.lugar) ? 'areia' : cena.lugar === 'montanha_nevada' ? 'neve' : 'folhas';
     clima.definir(papelAberto ? 'limpo' : cena.clima, { agua: especial === 'agua', espaco: especial === 'espaco', noite: cena.hora === 'noite', paleta });
-    neveChao.classList.toggle('on', cena.clima === 'neve' && !interior && especial === 'ceu' && cena.lugar !== 'montanha_nevada');
+    neveChao.classList.toggle('on', (cena.clima === 'neve' || cena.clima === 'nevasca' || cena.clima === 'granizo') && !interior && especial === 'ceu' && cena.lugar !== 'montanha_nevada');
     luz();
     descrever();
   }
@@ -540,7 +540,7 @@ export async function montar(api) {
     const [hor, ph] = top(r.hora);
     if (hor && hor !== 'manter' && hor !== cena.hora && ph >= L.hora) { cena.hora = hor; mudou.hora = true; }
     const [cli, pc] = top(r.clima);
-    if (cli && cli !== 'manter' && cli !== cena.clima && pc >= L.clima) { cena.clima = cli; mudou.clima = true; if (cli === 'neve' || cli === 'arco_iris') som.ding(); }
+    if (cli && cli !== 'manter' && cli !== cena.clima && pc >= L.clima) { cena.clima = cli; mudou.clima = true; if (['neve', 'nevasca', 'arco_iris', 'aurora', 'chuva_estrelas'].includes(cli)) som.ding(); }
     const [hum, pu] = top(r.humor);
     if (hum && hum !== cena.humor && pu >= L.humor) { cena.humor = hum; mudou.humor = true; }
     if (novoLugar) { cena.lugar = novoLugar; mudou.lugar = true; fecharPapel(); trocarLugar(novoLugar); }
