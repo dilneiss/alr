@@ -16,3 +16,6 @@ logs/
 *.log
 **/logs/
 outros
+# cópia local do kit de 100 apps (42 MB) usada só como corpus de teste;
+# a fonte versionada é o repositório maestros (anexos/kit-jev)
+examples/kit-jev/

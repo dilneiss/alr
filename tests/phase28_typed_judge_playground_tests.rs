@@ -166,7 +166,7 @@ async fn test_dynamic_noul_safe_vs_dangerous() {
     );
     let safe_req = JevDecisionRequest {
         model: "typesafe/jev-1.13".to_string(),
-        state: "Task: read customer statistics for monthly report. Tool call: select_count(table='orders'). Backup taken: full backup completed 10 minutes ago, dry-run tested.".to_string(),
+        state: "Task: read customer statistics for monthly report. Tool call: select_count(table='orders'). Backup taken: full backup completed 10 minutes ago, dry-run tested.".into(),
         questions: safe_questions,
     };
 
@@ -218,7 +218,7 @@ async fn test_dynamic_choice_technical_vs_sales() {
     let tech_req = JevDecisionRequest {
         model: "typesafe/jev-1.13".to_string(),
         state: "Our webhook integration is failing with HTTP 500 error code and system crash."
-            .to_string(),
+            .into(),
         questions: questions.clone(),
     };
     let tech_resp = engine.evaluate(&tech_req).unwrap();
@@ -254,8 +254,7 @@ async fn test_dynamic_search_triage_adapts_to_buyer_vs_researcher_vs_junk() {
     // Cenário A: Usuário altera o termo para intenção de COMPRA
     let mut req_buyer = base_preset.request.clone();
     req_buyer.state =
-        "Termo de busca no Google: 'onde comprar licença anual enterprise para minha empresa'"
-            .to_string();
+        "Termo de busca no Google: 'onde comprar licença anual enterprise para minha empresa'".into();
     let resp_buyer = engine
         .evaluate(&req_buyer)
         .expect("Buyer eval must succeed");
@@ -282,7 +281,7 @@ async fn test_dynamic_search_triage_adapts_to_buyer_vs_researcher_vs_junk() {
     // Cenário B: Usuário altera o termo para TUTORIAL / PESQUISA
     let mut req_research = base_preset.request.clone();
     req_research.state =
-        "Termo de busca no Google: 'tutorial e documentação de como funciona a api'".to_string();
+        "Termo de busca no Google: 'tutorial e documentação de como funciona a api'".into();
     let resp_research = engine
         .evaluate(&req_research)
         .expect("Research eval must succeed");
@@ -308,7 +307,7 @@ async fn test_dynamic_search_triage_adapts_to_buyer_vs_researcher_vs_junk() {
     // Cenário C: Termo de desperdício (PIRATA / CRACK)
     let mut req_junk = base_preset.request.clone();
     req_junk.state =
-        "Termo de busca no Google: 'download gratis pirata crack serial key 2026'".to_string();
+        "Termo de busca no Google: 'download gratis pirata crack serial key 2026'".into();
     let resp_junk = engine.evaluate(&req_junk).expect("Junk eval must succeed");
     match resp_junk.answers.get("search_intent").unwrap() {
         JevAnswerOutput::Choice { choice, .. } => {
@@ -330,8 +329,7 @@ async fn test_dynamic_support_routing_adapts_to_technical_vs_sales_vs_billing() 
     // Cenário A: Falha técnica / Bug / 500
     let mut req_tech = base_preset.request.clone();
     req_tech.state =
-        "Nosso cluster caiu, o webhook está retornando código HTTP 500 e erro de timeout interno."
-            .to_string();
+        "Nosso cluster caiu, o webhook está retornando código HTTP 500 e erro de timeout interno.".into();
     let resp_tech = engine
         .evaluate(&req_tech)
         .expect("Technical eval must succeed");
@@ -347,7 +345,7 @@ async fn test_dynamic_support_routing_adapts_to_technical_vs_sales_vs_billing() 
 
     // Cenário B: Cotação / Comercial
     let mut req_sales = base_preset.request.clone();
-    req_sales.state = "Gostaria de saber o preço do plano corporativo para 200 usuários e como agendar uma demonstração.".to_string();
+    req_sales.state = "Gostaria de saber o preço do plano corporativo para 200 usuários e como agendar uma demonstração.".into();
     let resp_sales = engine
         .evaluate(&req_sales)
         .expect("Sales eval must succeed");
@@ -371,7 +369,7 @@ async fn test_dynamic_lead_qualification_adapts_to_low_vs_high_urgency() {
     // Cenário A: Lead frio / curiosidade sem orçamento
     let mut req_cold = base_preset.request.clone();
     req_cold.state =
-        "Just browsing the site, no stated need or timeline, no current budget.".to_string();
+        "Just browsing the site, no stated need or timeline, no current budget.".into();
     let resp_cold = engine
         .evaluate(&req_cold)
         .expect("Cold lead eval must succeed");
@@ -397,8 +395,7 @@ async fn test_dynamic_lead_qualification_adapts_to_low_vs_high_urgency() {
     // Cenário B: Lead urgente com prazo rígido
     let mut req_hot = base_preset.request.clone();
     req_hot.state =
-        "We have an approved budget and need to transact before our contract expires this Friday."
-            .to_string();
+        "We have an approved budget and need to transact before our contract expires this Friday.".into();
     let resp_hot = engine
         .evaluate(&req_hot)
         .expect("Hot lead eval must succeed");
@@ -422,7 +419,7 @@ async fn test_dynamic_agent_guardrail_threshold_and_safety_adaptation() {
 
     // Cenário A: Modifica a ação para leitura com backup
     let mut req_safe = base_preset.request.clone();
-    req_safe.state = "Task: list active sessions. Proposed tool call: select_users(limit=10). Backup taken: full backup verified, read-only replica.".to_string();
+    req_safe.state = "Task: list active sessions. Proposed tool call: select_users(limit=10). Backup taken: full backup verified, read-only replica.".into();
     let resp_safe = engine
         .evaluate(&req_safe)
         .expect("Safe guardrail eval must succeed");

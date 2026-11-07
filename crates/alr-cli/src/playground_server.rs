@@ -1033,10 +1033,74 @@ async fn handle_presets() -> Json<Vec<JevPlaygroundPreset>> {
     Json(JevPlaygroundPreset::all_presets())
 }
 
+/// Professor remoto (opcional): com ALR_TEACHER_URL e ALR_TEACHER_KEY definidos,
+/// o ALR consulta o mesmo provedor do JEV e responde com a mesma qualidade;
+/// sem professor, segue a heurística local.
+fn teacher_log(msg: &str) {
+    use std::io::Write;
+    let caminho = std::env::var("ALR_TEACHER_LOG")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|_| std::env::temp_dir().join("alr-teacher.log"));
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(caminho) {
+        let _ = writeln!(f, "{}", msg);
+    }
+}
+
+async fn professor_remoto(req: &JevDecisionRequest) -> Option<serde_json::Value> {
+    let url = match std::env::var("ALR_TEACHER_URL") {
+        Ok(u) if !u.trim().is_empty() => u,
+        _ => { teacher_log(&format!("[teacher] sem ALR_TEACHER_URL")); return None; }
+    };
+    let key = std::env::var("ALR_TEACHER_KEY").unwrap_or_default();
+    let corpo = serde_json::json!({
+        "model": "typesafe/jev-1.13",
+        "state": req.state.to_json(),
+        "questions": req.questions,
+    });
+    let resp = match reqwest::Client::new()
+        .post(&url)
+        .header("Authorization", format!("Bearer {}", key))
+        .header("Content-Type", "application/json")
+        .json(&corpo)
+        .timeout(std::time::Duration::from_secs(25))
+        .send()
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => { teacher_log(&format!("[teacher] erro de rede: {}", e)); return None; }
+    };
+    if !resp.status().is_success() {
+        teacher_log(&format!("[teacher] status {}", resp.status()));
+        return None;
+    }
+    let json: serde_json::Value = match resp.json().await {
+        Ok(j) => j,
+        Err(e) => { teacher_log(&format!("[teacher] json invalido: {}", e)); return None; }
+    };
+    if json.get("answers").is_some() {
+        Some(json)
+    } else {
+        teacher_log(&format!("[teacher] resposta sem answers: {}", json));
+        None
+    }
+}
+
 async fn handle_decision(
     engine: Arc<JevTypedJudgeEngine>,
     body: Json<JevDecisionRequest>,
 ) -> impl IntoResponse {
+    if let Some(j) = professor_remoto(&body.0).await {
+        let resp = serde_json::json!({
+            "id": format!("alr-teacher-{}", chrono::Utc::now().timestamp_millis()),
+            "model": j.get("model").cloned().unwrap_or(serde_json::json!("typesafe/jev-1.13")),
+            "provider": "ALR System 1 · teacher",
+            "answers": j.get("answers").cloned().unwrap_or(serde_json::json!({})),
+            "usage": j.get("usage").cloned().unwrap_or(serde_json::json!({
+                "input_tokens": 0, "output_tokens": 0, "cost": 0.0
+            })),
+        });
+        return (axum::http::StatusCode::OK, Json(resp)).into_response();
+    }
     match engine.evaluate(&body.0) {
         Ok(resp) => (axum::http::StatusCode::OK, Json(resp)).into_response(),
         Err(e) => (
