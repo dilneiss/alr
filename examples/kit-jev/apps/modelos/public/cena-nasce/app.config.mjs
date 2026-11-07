@@ -219,7 +219,7 @@ export default {
   categoria: 'ao-vivo',
   ordem: 0.4,
   resumo: 'Conte uma história em voz alta e ela vira um desenho animado na sua frente: o cenário, os personagens e o tempo mudam enquanto você fala.',
-  descricao: 'A cada pausa da sua fala, uma chamada só ao Jev decide o lugar, a hora, o tempo, o clima da cena, quem está em cena (um sim ou não para cada um dos 447 personagens e objetos — do mundo real e do Minecraft) e o que cada um faz. A cena acompanha a frase, inclusive quando você muda de ideia no meio, e só desenha o que existe na lista (gerar imagem com IA levaria de 10 a 30 s por quadro). Adapte trocando o catálogo: personagens do seu livro infantil, o cenário de uma aula ou os produtos de uma vitrine.',
+  descricao: 'A cada pausa da sua fala, uma chamada só ao Jev decide o lugar, a hora, o tempo, o clima da cena, quem está em cena (um sim ou não para cada um dos 849 personagens e objetos — 404 do mundo real, incluindo 60 bichos e 85 objetos de casa, e 407 do Minecraft) e o que cada um faz. A cena acompanha a frase, inclusive quando você muda de ideia no meio, e só desenha o que existe na lista (gerar imagem com IA levaria de 10 a 30 s por quadro). Adapte trocando o catálogo: personagens do seu livro infantil, o cenário de uma aula ou os produtos de uma vitrine.',
   marcas: ['imediato', 'volume', 'lista fechada', 'limiar'],
   motor: 'palco',
   tema: { acento: '#38bdf8', acento2: '#a3e635' },
