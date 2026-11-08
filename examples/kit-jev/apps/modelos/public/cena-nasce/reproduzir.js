@@ -1,9 +1,10 @@
 /**
  * Player de roteiro: módulo puro (sem DOM, sem fetch, sem voz) para rodar no node e no navegador.
  *
- * Ele NÃO narra e NÃO anda sozinho: emite a frase atual uma vez (para o teleprompter e para a cena),
- * e só avança quando o palco manda — pela fala reconhecida do microfone (`receberFala`) ou pelo
- * botão "Próxima frase" (`proxima`). Assim a história nunca conta por cima de quem está lendo.
+ * Ele NÃO narra e NÃO anda sozinho. São dois momentos separados:
+ *   1. `aoFrase` — só MOSTRA a frase no teleprompter (a cena ainda não acontece);
+ *   2. `aoConsumir` — dispara quando a leitura daquela frase é reconhecida; é aqui que a cena nasce.
+ * Assim a história só acontece depois da leitura, nunca antes.
  */
 
 const PALAVRAS_VAZIAS = new Set(['de', 'da', 'do', 'das', 'dos', 'a', 'o', 'as', 'os', 'e', 'que', 'com', 'para', 'na', 'no', 'um', 'uma', 'em', 'por', 'se', 'ao', 'mais', 'mas']);
@@ -38,6 +39,7 @@ export function cobertura(alvo, dito) {
 export function criarPlayer({
   roteiro,
   aoFrase = () => {},
+  aoConsumir = () => {},
   aoFim = () => {},
   coberturaMinima = 0.6,
 } = {}) {
@@ -65,7 +67,10 @@ export function criarPlayer({
     }
   };
 
+  // a frase só é "consumida" (vira cena) depois que a leitura dela foi reconhecida
   const avancar = () => {
+    if (morto) return;
+    aoConsumir(frases[indice], indice);
     if (morto) return;
     indice += 1;
     if (indice >= total) { encerrar(); return; }
@@ -82,16 +87,6 @@ export function criarPlayer({
   /** Desliga de verdade: nenhum callback volta a mexer no palco. */
   const parar = () => { morto = true; estado = 'parado'; };
 
-  /** Avanço manual. Com `indiceEsperado`, gatilho atrasado é ignorado (não pula frase). */
-  const proxima = (indiceEsperado) => {
-    if (morto) return false;
-    if (estado === 'fim' || indice >= total) return false;
-    if (indiceEsperado !== undefined && indiceEsperado !== indice) return false;
-    if (estado === 'idle') { tocar(); return true; }
-    avancar();
-    return true;
-  };
-
   /**
    * Texto novo vindo do microfone. Só a frase atual pode ser concluída por fala, uma vez, e com
    * pelo menos duas palavras-chave casadas — repetir a frase antiga não faz a história voltar.
@@ -106,7 +101,7 @@ export function criarPlayer({
     if (acertos < Math.min(2, quantasChave)) return false;
     if (quanto < coberturaMinima) return false;
     ditoAcumulado = '';
-    if (estado === 'idle') { tocar(); return true; }   // a fala só dá o start
+    if (estado === 'idle') tocar();   // sem mostrar nada até aqui: a primeira frase entra na tela
     avancar();
     return true;
   };
@@ -121,5 +116,5 @@ export function criarPlayer({
     frase: frases[indice] || null,
   });
 
-  return { tocar, proxima, receberFala, zerarEscuta, parar, estado: descrever, total, frases };
+  return { tocar, receberFala, zerarEscuta, parar, estado: descrever, total, frases };
 }

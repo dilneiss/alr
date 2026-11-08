@@ -136,12 +136,11 @@ export async function montar(api) {
   const teleFrase = el('p', { class: 'cn-tele-frase', 'aria-live': 'polite', 'aria-atomic': 'true', text: '' });
   const teleContador = el('span', { class: 'cn-tele-progresso', text: '' });
   const teleModo = el('span', { class: 'cn-tele-modo', text: '🎙 fale a frase' });
-  const teleProxima = el('button', { class: 'cn-tele-btn', type: 'button', onclick: () => proximaFrase() }, ['Próxima frase →']);
   const teleParar = el('button', { class: 'cn-tele-btn ghost', type: 'button', onclick: () => pararRoteiro() }, ['Parar']);
   const teleprompter = el('div', { class: 'cn-teleprompter oculto' }, [
     el('div', { class: 'cn-tele-cab' }, [teleModo, teleContador]),
     teleFrase,
-    el('div', { class: 'cn-tele-acoes' }, [teleProxima, teleParar]),
+    el('div', { class: 'cn-tele-acoes' }, [teleParar]),
   ]);
 
   // o roteiro é um teleprompter: aparece o texto e a pessoa conta em voz alta
@@ -995,18 +994,16 @@ export async function montar(api) {
     teleprompter.classList.add('oculto');
   }
 
-  function proximaFrase() {
-    if (!playerAtual) return;
-    const st = playerAtual.estado();
-    playerAtual.proxima(st.indice);
-  }
-
-  // cada frase entra na transcrição da sessão e vai INTEIRA para a mesma entrada do microfone
+  // mostrar não é acontecer: a frase aparece para ser lida, e a cena só nasce no `aoConsumir`
   function aoFrase(frase, indice) {
-    transcriptSessao = (transcriptSessao + ' ' + frase).trim();
     const total = playerAtual ? playerAtual.total : 0;
     teleFrase.textContent = frase;
     teleContador.textContent = `frase ${indice + 1} de ${total}`;
+  }
+
+  // leitura reconhecida: só agora a transcrição anda e a cena recebe o trecho
+  function aoConsumir(frase) {
+    transcriptSessao = (transcriptSessao + ' ' + frase).trim();
     aoFalar(transcriptSessao);
   }
 
@@ -1021,8 +1018,9 @@ export async function montar(api) {
       },
       // voz.js chama onEstado sempre (ligou/erro/parou): sem isso o callback quebra em navegador real
       onEstado: (estado, msg) => {
-        if (estado === 'ouvindo') teleModo.textContent = '🎙 ouvindo você';
-        else if (estado === 'erro') { teleModo.textContent = '🎙 leitura manual'; teleContador.textContent = msg || 'microfone indisponível'; }
+        if (estado === 'ouvindo') { if (!playerAtual || playerAtual.estado().estado !== 'fim') teleModo.textContent = '🎙 ouvindo você'; }
+        else if (estado === 'erro') { teleModo.textContent = '🎙 microfone indisponível'; teleContador.textContent = msg || 'use o microfone para a história andar'; }
+        else if (estado === 'parado' && (!playerAtual || playerAtual.estado().estado !== 'fim')) teleModo.textContent = '🎙 fale a frase';
       },
       onNivel: () => {},
     });
@@ -1047,7 +1045,8 @@ export async function montar(api) {
     playerAtual = criarPlayer({
       roteiro: rot,
       aoFrase: (frase, indice) => { if (minhaSessao === sessaoRoteiro) aoFrase(frase, indice); },
-      aoFim: () => { teleContador.textContent = 'fim da história'; fecharEscuta(); },
+      aoConsumir: (frase, indice) => { if (minhaSessao === sessaoRoteiro) aoConsumir(frase, indice); },
+      aoFim: () => { teleModo.textContent = '✓ concluído'; teleContador.textContent = 'fim da história'; fecharEscuta(); },
     });
     playerAtual.tocar();
     abrirEscuta();

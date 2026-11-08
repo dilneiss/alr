@@ -1,7 +1,8 @@
 /**
- * Roteiros prontos: histórias curtas que o palco consegue assistir sozinho (voz) ou ler (microfone).
+ * Roteiros prontos: textos de teleprompter para a pessoa LER em voz alta.
  *
- * Cada roteiro é uma fala contínua quebrada em frases. Regras que o teste cobra:
+ * O palco mostra a frase e espera; cada frase só passa quando o microfone reconhece a leitura
+ * (sem botão de avançar e sem narração automática). Regras que o teste cobra:
  * - a PRIMEIRA frase fixa cenário e elenco inicial (quem está em cena);
  * - as seguintes só dizem quem entra, sai ou age — nada de "o mesmo menino fez outra coisa";
  * - no mínimo 6 palavras por frase (senão o reconhecimento não tem o que casar);
