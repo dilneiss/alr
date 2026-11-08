@@ -1131,12 +1131,15 @@ export async function montar(api) {
       const ids = el2.map(([id]) => id);
       for (const [id, a] of [...atores.entries()]) {
         if (!ids.includes(id)) {
+          a.saindo = false;
           a.el.remove();
           a.tag?.remove();
           atores.delete(id);
         }
       }
       el2.forEach(([id, ac], i) => entrar(id, ac || 'parado', i * 90));
+      posicionar();
+      descrever();
       desenharChips({}, {});
     },
     estado: () => ({ ...cena, elenco: elenco() }),
