@@ -147,12 +147,16 @@ export class QaRun {
   async run() {
     const t0 = Date.now();
     this.emit('inicio', { maxSteps: this.maxSteps, maxMs: this.maxMs });
+    // usa o Chrome instalado (o Chromium do Playwright pode não estar baixado nesta máquina).
+    // Aqui é ESM: 'require' não existe, então a checagem usa o fs importado no topo — com require a lista
+    // inteira dava false e o app morria em "Executable doesn't exist ... chrome-headless-shell".
     const CHROME = process.env.CHROME_PATH || [
           'C:/Program Files/Google/Chrome/Application/chrome.exe',
           'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
           '/usr/bin/google-chrome',
+          '/usr/bin/chromium',
           '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-        ].find((p) => { try { return require('node:fs').existsSync(p); } catch { return false; } });
+        ].find((p) => { try { return fs.existsSync(p); } catch { return false; } });
         const browser = await chromium.launch({ headless: true, ...(CHROME ? { executablePath: CHROME } : {}), args: ['--disable-dev-shm-usage', '--no-sandbox'] });
     const context = await browser.newContext({ viewport: { width: 1200, height: 780 }, deviceScaleFactor: 1, locale: 'pt-BR' });
     context.setDefaultTimeout(3000);
