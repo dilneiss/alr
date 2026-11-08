@@ -18,7 +18,7 @@ export function cenario(id, u, { casa = null, estadoCasa = {} } = {}) {
   const c = resolver(alvo, u);
   if (!c) {
     // Não deveria acontecer: o guard estrutural garante que todo id tem desenho.
-    console.error('[cenarios] sem desenho para', id);
+    console.warn('[cenarios] sem desenho para', id, '— usando campo');
     return resolver('campo', u);
   }
   const desenhoCasa = casaDollhouse(casa, estadoCasa);

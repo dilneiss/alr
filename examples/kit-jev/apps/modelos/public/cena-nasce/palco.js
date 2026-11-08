@@ -295,9 +295,9 @@ export async function montar(api) {
     if (interior && canvas.parentNode !== ceu) ceu.append(canvas);
     if (!interior && canvas.parentNode !== tela) tela.insertBefore(canvas, flash);
     clima.medir();
-    const paleta = ['deserto', 'praia'].includes(cena.lugar) ? 'areia' : cena.lugar === 'montanha_nevada' ? 'neve' : 'folhas';
+    const paleta = ['deserto', 'praia'].includes(cena.lugar) ? 'areia' : cena.lugar === 'montanha' ? 'neve' : 'folhas';
     clima.definir(papelAberto ? 'limpo' : cena.clima, { agua: especial === 'agua', espaco: especial === 'espaco', noite: cena.hora === 'noite', paleta });
-    neveChao.classList.toggle('on', (cena.clima === 'neve' || cena.clima === 'nevasca' || cena.clima === 'granizo') && !interior && especial === 'ceu' && cena.lugar !== 'montanha_nevada');
+    neveChao.classList.toggle('on', (cena.clima === 'neve' || cena.clima === 'nevasca' || cena.clima === 'granizo') && !interior && especial === 'ceu' && cena.lugar !== 'montanha');
     luz();
     descrever();
   }
@@ -771,7 +771,7 @@ export async function montar(api) {
   function descrever() {
     const quem = [...atores.values()].filter((a) => !a.saindo).map((a) => `${a.item.nome}${a.item.tipo === 'personagem' ? ' ' + FALAS_ACAO[a.acao] : ''}`);
     tela.setAttribute('aria-label', papelAberto ? 'Cena em branco: conte uma história para ela nascer'
-      : `Cena: ${cena.lugar ? LUG[cena.lugar].nome : 'campo'}, ${HOR[cena.hora].nome.toLowerCase()}, ${CLI[cena.clima].nome.toLowerCase()}, clima ${HUM[cena.humor].nome.toLowerCase()}. ${quem.length ? 'Em cena: ' + quem.join(', ') + '.' : 'Ninguém em cena.'}`);
+      : `Cena: ${cena.lugar ? (LUG[cena.lugar]?.nome || cena.lugar) : 'campo'}, ${HOR[cena.hora].nome.toLowerCase()}, ${CLI[cena.clima].nome.toLowerCase()}, clima ${HUM[cena.humor].nome.toLowerCase()}. ${quem.length ? 'Em cena: ' + quem.join(', ') + '.' : 'Ninguém em cena.'}`);
   }
 
   // ---------- conversa com o Jev ----------

@@ -52,6 +52,20 @@ export function criarClima(canvas, { aoRelampago, somLigado, reduzMovimento } = 
     chuva_estrelas: { meteoros: 1 },
   };
 
+  // contagem segura: NaN/Infinity nunca podem virar Array.length ("Invalid array length")
+  let avisoContagem = false;
+  function conta(x, base) {
+    const v = Math.round(x * base);
+    if (!Number.isFinite(v) || v < 0) {
+      if (!avisoContagem) {
+        avisoContagem = true;
+        console.warn('[clima] densidade inválida, usando 0', { x, base, W, H });
+      }
+      return 0;
+    }
+    return v;
+  }
+
   function definir(t, { agua = false, espaco = false, noite = false, paleta: p = 'folhas' } = {}) {
     tipo = t;
     if (PALETAS[p] && PALETAS[p] !== paleta) { paleta = PALETAS[p]; folhas = []; }
@@ -117,7 +131,7 @@ export function criarClima(canvas, { aoRelampago, somLigado, reduzMovimento } = 
     const vel = rapido ? 1.55 : 1;   // vendaval/furacão/areia: tudo mais rápido
 
     // chuva
-    const nG = Math.round(atual.chuva * (W / 1280) * 380);
+    const nG = conta(atual.chuva * (W / 1280), 380);
     while (gotas.length < nG) gotas.push(novaGota(true));
     if (gotas.length > nG) gotas.length = nG;
     if (gotas.length) {
@@ -132,7 +146,7 @@ export function criarClima(canvas, { aoRelampago, somLigado, reduzMovimento } = 
       }
     }
     // neve
-    const nF = Math.round(atual.neve * (W / 1280) * 220);
+    const nF = conta(atual.neve * (W / 1280), 220);
     while (flocos.length < nF) flocos.push(novoFloco(true));
     if (flocos.length > nF) flocos.length = nF;
     if (flocos.length) {
@@ -145,7 +159,7 @@ export function criarClima(canvas, { aoRelampago, somLigado, reduzMovimento } = 
       }
     }
     // ventania: folhas e pétalas voando de lado
-    const nV = Math.round(vento * (paleta.t < 1 ? 120 : 46));
+    const nV = conta(vento, paleta.t < 1 ? 120 : 46);
     while (folhas.length < nV) folhas.push(novaFolha(true));
     if (folhas.length > nV) folhas.length = nV;
     for (const f of folhas) {
@@ -155,7 +169,7 @@ export function criarClima(canvas, { aoRelampago, somLigado, reduzMovimento } = 
       ctx.beginPath(); ctx.ellipse(0, 0, f.t * 1.6, f.t * 0.7, 0, 0, 6.283); ctx.fill(); ctx.restore();
     }
     // bolhas (fundo do mar)
-    const nB = bolhas ? Math.round((W / 1280) * 40) : 0;
+    const nB = bolhas ? conta(W / 1280, 40) : 0;
     while (bolhasP.length < nB) bolhasP.push(novaBolha(false));
     if (bolhasP.length > nB) bolhasP.length = nB;
     if (bolhasP.length) {
@@ -168,7 +182,7 @@ export function criarClima(canvas, { aoRelampago, somLigado, reduzMovimento } = 
       }
     }
     // granizo: pedrinhas de gelo caindo rápido
-    const nP = Math.round(atual.granizo * (W / 1280) * 150);
+    const nP = conta(atual.granizo * (W / 1280), 150);
     while (pedras.length < nP) pedras.push(novaPedra(true));
     if (pedras.length > nP) pedras.length = nP;
     if (pedras.length) {
@@ -196,7 +210,7 @@ export function criarClima(canvas, { aoRelampago, somLigado, reduzMovimento } = 
       }
     }
     // geada: brilhos de gelo piscando
-    const nBrilho = Math.round(atual.geada * (W / 1280) * 130);
+    const nBrilho = conta(atual.geada * (W / 1280) * 130, 1);
     while (brilhos.length < nBrilho) brilhos.push(novoBrilho());
     if (brilhos.length > nBrilho) brilhos.length = nBrilho;
     if (brilhos.length) {
@@ -244,7 +258,7 @@ export function criarClima(canvas, { aoRelampago, somLigado, reduzMovimento } = 
       }
     }
     // tornado: funil de poeira girando, mais largo em cima
-    const nVolta = Math.round(atual.tornado * 420);
+    const nVolta = conta(atual.tornado * 420, 1);
     while (voltas.length < nVolta) voltas.push(novaVolta());
     if (voltas.length > nVolta) voltas.length = nVolta;
     if (voltas.length && atual.tornado > 0.04) {
