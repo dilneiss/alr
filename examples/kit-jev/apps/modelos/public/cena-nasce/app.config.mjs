@@ -9,6 +9,7 @@ import { CATALOGO_EXTRA } from './catalogo-extra.mjs';
 import { CATALOGO_MARKETING } from './catalogo-marketing.mjs';
 import { ACOES_100 } from './catalogo-acoes-100.mjs';
 import { EXPRESSOES_100 } from './catalogo-expressoes-100.mjs';
+import { CATALOGO_HISTORIAS, HISTORIAS_JEV } from './historias-catalogo.mjs';
 
 // ---------- o catálogo: quem pode entrar em cena ----------
 // apelidos = outros nomes que valem para o mesmo personagem (vão para o Jev e servem para a tela achar quem foi citado)
@@ -222,15 +223,28 @@ const expandidoMkt = CATALOGO_MARKETING.map(([id, nome, emoji, altura, olha, tip
   id, nome, emoji, altura, olha, tipo, apelidos: [...new Set([nome, ...apelidos].map((a) => String(a).toLowerCase().trim()).filter(Boolean))],
   img: 'emoji/1f4e6.svg'
 }));
-const CATALOGO = [...CATALOGO_BASE, ...CATALOGO_EXTRA, ...expandidoMkt];
+const POR_ID_BASE = new Set([...CATALOGO_BASE, ...CATALOGO_EXTRA, ...expandidoMkt].map((c) => c.id));
+// o catálogo das histórias entra por último: se um id repetir, o da história não sobrescreve o base
+const CATALOGO = [...CATALOGO_BASE, ...CATALOGO_EXTRA, ...expandidoMkt, ...CATALOGO_HISTORIAS.filter((h) => !POR_ID_BASE.has(h.id))];
 const POR_ID = Object.fromEntries(CATALOGO.map((c) => [c.id, c]));
 const corta = (s, n) => { s = String(s ?? '').replace(/\s+/g, ' ').trim(); return s.length > n ? '…' + s.slice(-n) : s; };
 const semAcento = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 // palavras que contam como "citou este personagem" (a tela usa para perguntar a ação de quem acabou de chegar)
 const PALAVRAS = Object.fromEntries(CATALOGO.map((c) => [c.id, [c.nome, ...c.apelidos].map((p) => semAcento(p).replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim()).filter((p) => p.length >= 2)]));
+// devolve os ids na ordem em que aparecem no texto (quem foi citado primeiro vem primeiro),
+// para que o cap de alvos por trecho fique com quem acabou de ser mencionado.
 function citados(texto) {
   const t = ' ' + semAcento(texto).replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ') + ' ';
-  return CATALOGO.filter((c) => PALAVRAS[c.id].some((p) => t.includes(' ' + p + ' '))).map((c) => c.id);
+  const achados = [];
+  for (const c of CATALOGO) {
+    let menor = -1;
+    for (const p of PALAVRAS[c.id]) {
+      const i = t.indexOf(' ' + p + ' ');
+      if (i >= 0 && (menor < 0 || i < menor)) menor = i;
+    }
+    if (menor >= 0) achados.push([c.id, menor]);
+  }
+  return achados.sort((a, b) => a[1] - b[1]).map(([id]) => id);
 }
 const nomeDe = (lista, id) => (lista.find((x) => x.id === id) || {}).nome;
 const valido = (lista, id) => lista.some((x) => x.id === id);
@@ -379,6 +393,8 @@ export default {
     comoTestar: 'aperte o microfone e conte uma história como para uma criança: diga onde ela acontece, quem aparece e o que cada um faz. No meio, mude tudo ("de repente começou a nevar!", "e chegou um dragão comilão") e veja a cena acompanhar.',
   },
   catalogo: CATALOGO,
+  // as 100+ histórias de domínio público: o que o Jev usa para saber de que conto se fala
+  historias: HISTORIAS_JEV,
   lugares: LUGARES, horas: HORAS, climas: CLIMAS, humores: HUMORES, acoes: ACOES, expressoes: EXPRESSOES_100,
   // quanto o Jev precisa ter de certeza para a tela mudar (o resto fica como está)
   limiar: { lugar: 0.45, hora: 0.45, clima: 0.45, humor: 0.4, entra: 0.6, sai: 0.35, acao: 0.3 },
@@ -449,8 +465,16 @@ export default {
         const c = lerCena(d);
         const naTela = new Set(c.elenco.map((e) => e.id));
         const acaoDe = Object.fromEntries(c.elenco.map((e) => [e.id, e.acao]));
-        const recentes = citados(corta(d.historia, 500));
         const trecho = corta(d.novo || d.historia, 500);
+        // os alvos do turno saem do trecho NOVO: usar o histórico acumulado mantinha os mesmos
+        // quatro lugares ocupados para sempre e o que acabou de ser dito nunca entrava em cena.
+        let recentes = citados(corta(trecho, 500));
+        if (d.modoMinecraft) {
+          // no modo blocos, "zumbi"/"esqueleto"/"lobo" citados valem a versão mc_ correspondente
+          const mc = recentes.filter((id) => id.startsWith('mc_'));
+          const outros = recentes.filter((id) => !id.startsWith('mc_') && !mc.includes('mc_' + id));
+          recentes = [...mc, ...outros];
+        }
         const qs = [
           { chave: 'cenario', decisao: 'cenario', opcoes: opcoesComManter(LUGARES, c.lugar ? nomeDe(LUGARES, c.lugar) : 'nenhum lugar ainda', 'o lugar') },
           { chave: 'hora', decisao: 'hora', opcoes: opcoesComManter(HORAS, nomeDe(HORAS, c.hora), 'a hora') },

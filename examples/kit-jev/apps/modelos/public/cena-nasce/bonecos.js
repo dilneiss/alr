@@ -2,6 +2,8 @@
 // licença MIT, em assets/); quem no emoji é só cabeça ou busto ganha aqui um corpo desenhado em SVG, no mesmo estilo,
 // com braços e pernas separados (classes braco-e/braco-d/perna-e/perna-d) para o CSS mexer conforme a ação.
 // Para adaptar: um personagem novo precisa só de uma linha em CAIXA (a parte desenhada do PNG de 256 px).
+// Os personagens das 100 histórias entram por CORPO_POR_ID (historias-catalogo.mjs): arquétipo → corpo.
+import { CORPO_POR_ID } from './historias-catalogo.mjs';
 
 // parte desenhada de cada PNG [x, y, largura, altura] — a base da caixa é o chão (o pé do personagem)
 const CAIXA = {
@@ -460,6 +462,9 @@ const COMPOSTO = {
   mkt_smartphone_desmontado: 'mkt_smartphone_desmontado',
   mkt_calendario_horarios: 'mkt_calendario_horarios',
 };
+
+// personagens das histórias: cada id aponta para o corpo do seu arquétipo
+Object.assign(COMPOSTO, CORPO_POR_ID);
 
 // devolve { caixa:[x,y,w,h], svg } de um item do catálogo; u(arquivo) = endereço do asset
 const USA_ROUPA = new Set([

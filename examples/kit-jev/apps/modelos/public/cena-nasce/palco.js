@@ -786,7 +786,7 @@ export async function montar(api) {
 
   async function aoFalar(texto) {
     if (palavras(texto) < 3) return;
-    const dados = { historia: texto.slice(-900), novo: trechoNovo(texto).slice(-300), cena: { lugar: cena.lugar, hora: cena.hora, clima: cena.clima }, elenco: elenco() };
+    const dados = { historia: texto.slice(-900), novo: trechoNovo(texto).slice(-300), modoMinecraft, cena: { lugar: cena.lugar, hora: cena.hora, clima: cena.clima }, elenco: elenco() };
     emVoo++;
     let r;
     try { r = await perguntar('cena', dados, `"${texto.slice(-38)}"`); } catch { r = null; } finally { emVoo--; }
