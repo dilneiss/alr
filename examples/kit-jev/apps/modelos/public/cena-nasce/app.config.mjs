@@ -192,12 +192,24 @@ function expressoesDoTrecho(texto) {
       : /feliz|alegr|sorri|rindo|gargalh|orgulh|carinho|amor|encantad/.test(t) ? 'alegria_'
         : /surpres|assust|medo|apavor|chocad|espant|confus|curios/.test(t) ? 'surpresa_'
           : /cansad|calm|concentr|focad|determina|dor|esforc|aliv|sonolent/.test(t) ? 'calma_' : null;
-  if (!prefixo) return [
-    { id: 'calma_neutra', rotulo: 'Neutralidade', desc: 'olhos abertos, sobrancelhas neutras e boca em repouso' },
-    { id: 'manter', rotulo: 'Manter', desc: 'manter a expressão atual quando a história não descreve o rosto' },
-  ];
+  if (!prefixo) return [];
   const candidatas = EXPRESSOES_100.filter((e) => e.id.startsWith(prefixo)).slice(0, 4);
   return [...candidatas.map((e) => ({ id: e.id, rotulo: e.nome, desc: `${e.nome}: olhos ${e.olhos}, sobrancelhas ${e.sobrancelhas}, boca ${e.boca}` })), { id: 'manter', rotulo: 'Manter', desc: 'manter a expressão atual quando a história não descreve o rosto' }];
+}
+function contextoExpressao(texto, item, personagens) {
+  const normalizado = ` ${semAcento(texto).replace(/[^a-z0-9]+/g, ' ').trim()} `;
+  const posicao = (alvo) => [alvo.nome, ...alvo.apelidos]
+    .map((nome) => ` ${semAcento(nome).replace(/[^a-z0-9]+/g, ' ').trim()} `)
+    .map((nome) => ({ pos: normalizado.indexOf(nome), len: nome.length }))
+    .filter((match) => match.pos >= 0)
+    .sort((a, b) => a.pos - b.pos)[0];
+  const correspondencias = personagens.map((alvo) => ({ id: alvo.id, ...posicao(alvo) })).filter((match) => match.pos != null);
+  const atual = correspondencias.find((match) => match.id === item.id);
+  if (!atual) return '';
+  const proxima = correspondencias.filter((match) => match.pos > atual.pos).sort((a, b) => a.pos - b.pos)[0];
+  const inicio = atual.pos;
+  const fim = proxima ? proxima.pos : normalizado.length;
+  return normalizado.slice(inicio, fim);
 }
 
 // ---------- testes (trechos de história com o esperado; rodam no Jev de verdade com tools/testar.mjs) ----------
@@ -375,12 +387,16 @@ export default {
           qs.push({ chave: 'p_' + it.id, decisao: 'presente', alvo: `${it.tipo === 'personagem' ? 'Personagem' : 'Objeto'}: ${it.nome} (também vale: ${it.apelidos.join(', ')}).` });
         }
         const quem = [...ativos];
-        quem.filter((id) => POR_ID[id].tipo === 'personagem').forEach((id) => {
-          const it = POR_ID[id];
+        const personagensAtivos = quem.filter((id) => POR_ID[id].tipo === 'personagem').map((id) => POR_ID[id]);
+        personagensAtivos.forEach((it) => {
+          const id = it.id;
           const agora = naTela.has(id) ? (ACOES.find((a) => a.id === acaoDe[id]) || ACOES[0]).nome : 'ainda não está na tela (acabou de ser citado)';
-          qs.push({ chave: 'acao_' + id, decisao: 'acao', opcoes: acoesDoTrecho(trecho).map((a) => ({ id: a.id, rotulo: a.nome, icone: a.icone, desc: a.desc })), alvo: `Personagem: ${it.nome} (também vale: ${it.apelidos.join(', ')}). O que ele faz na tela agora: ${agora}.` });
-          const expressao = naTela.has(id) ? c.elenco.find((e) => e.id === id)?.expressao || 'nenhuma indicada' : 'ainda não está na tela';
-          qs.push({ chave: 'expressao_' + id, decisao: 'expressao', opcoes: expressoesDoTrecho(trecho), alvo: `Personagem: ${it.nome} (também vale: ${it.apelidos.join(', ')}). Expressão atual: ${expressao}.` });
+          qs.push({ chave: 'acao_' + id, decisao: 'acao', opcoes: acoesDoTrecho(contextoExpressao(trecho, it, personagensAtivos)).map((a) => ({ id: a.id, rotulo: a.nome, icone: a.icone, desc: a.desc })), alvo: `Personagem: ${it.nome} (também vale: ${it.apelidos.join(', ')}). O que ele faz na tela agora: ${agora}.` });
+          const opcoesExpressao = expressoesDoTrecho(contextoExpressao(trecho, it, personagensAtivos));
+          if (opcoesExpressao.length) {
+            const expressao = naTela.has(id) ? c.elenco.find((e) => e.id === id)?.expressao || 'nenhuma indicada' : 'ainda não está na tela';
+            qs.push({ chave: 'expressao_' + id, decisao: 'expressao', opcoes: opcoesExpressao, alvo: `Personagem: ${it.nome} (também vale: ${it.apelidos.join(', ')}). Expressão atual: ${expressao}.` });
+          }
         });
         quem.filter((id) => POR_ID[id].veiculo).forEach((id) => {
           const it = POR_ID[id];
