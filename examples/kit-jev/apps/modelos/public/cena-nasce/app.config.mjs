@@ -237,14 +237,14 @@ const CATALOGO = [...CATALOGO_BASE, ...CATALOGO_EXTRA, ...expandidoMkt, ...CATAL
 // Céu ambiente: o palco JÁ desenha sol, lua, estrelas, nuvens, arco-íris e aurora conforme a hora e o
 // clima. Esses objetos do catálogo são a mesma coisa em dobro, então não são instanciados como ator —
 // só o tipo 'objeto' entra aqui (a "lua" personagem, deusa do conto, continua sendo gente em cena).
-const AMBIENTE = new Set(['sol', 'lua_cheia', 'h_lua_cheia', 'estrela', 'h_estrela', 'cometa', 'planeta', 'mc_nuvem', 'h_nuvem']);
-for (const c of CATALOGO) if (AMBIENTE.has(c.id) && c.tipo === 'objeto') c.ambiente = true;
-
-// Paisagem e estrutura de cenário vão para a linha do fundo; nunca personagem (as árvores de história são criaturas).
-const NO_FUNDO = new Set([
+// Céu (sol, lua, estrela, nuvem) e paisagem (montanha, rio, caverna...) já existem no cenário: o palco
+// desenha o céu pela hora/clima e o relevo pelo lugar. Instanciá-los como ator cola um emoji no meio da
+// cena, então eles NÃO viram presença. Só 'objeto' entra aqui: a lua personagem e as árvores falantes são gente.
+const AMBIENTE = new Set([
+  'sol', 'lua_cheia', 'h_lua_cheia', 'estrela', 'h_estrela', 'cometa', 'planeta', 'mc_nuvem', 'h_nuvem',
   'montanha', 'vulcao', 'cachoeira', 'rio', 'lago', 'ilha', 'caverna', 'ponte', 'muro', 'montanha_russa',
 ]);
-for (const c of CATALOGO) if (NO_FUNDO.has(c.id) && c.tipo === 'objeto') c.fundo = true;
+for (const c of CATALOGO) if (AMBIENTE.has(c.id) && c.tipo === 'objeto') c.ambiente = true;
 const POR_ID = Object.fromEntries(CATALOGO.map((c) => [c.id, c]));
 const corta = (s, n) => { s = String(s ?? '').replace(/\s+/g, ' ').trim(); return s.length > n ? '…' + s.slice(-n) : s; };
 const semAcento = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
