@@ -631,7 +631,8 @@ export function desenhoCubico(item, u, perfil = null) {
 }
 
 export function desenho(item, u, perfil = null, { voxel = false } = {}) {
-  if (voxel) {
+  // só personagem ganha corpo cúbico: objeto (arco, flecha, baú) continua sendo o próprio desenho
+  if (voxel && item.tipo === 'personagem') {
     return desenhoCubico(item, u, perfil);
   }
   const c = COMPOSTO[item.id];

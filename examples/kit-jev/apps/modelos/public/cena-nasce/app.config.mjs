@@ -225,7 +225,15 @@ const expandidoMkt = CATALOGO_MARKETING.map(([id, nome, emoji, altura, olha, tip
 }));
 const POR_ID_BASE = new Set([...CATALOGO_BASE, ...CATALOGO_EXTRA, ...expandidoMkt].map((c) => c.id));
 // o catálogo das histórias entra por último: se um id repetir, o da história não sobrescreve o base
-const CATALOGO = [...CATALOGO_BASE, ...CATALOGO_EXTRA, ...expandidoMkt, ...CATALOGO_HISTORIAS.filter((h) => !POR_ID_BASE.has(h.id))];
+// objeto de história que repete o nome de um cenário (ex.: "floresta") não vira presença em cena:
+// o lugar já é decidido por `cenario`, e um `p_h_floresta` só gastaria alvo e poluiria a cena
+const nomesDeLugar = new Set(LUGARES.flatMap((l) => [
+  l.id,
+  String(l.nome).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_'),
+]));
+const CATALOGO_HIST = CATALOGO_HISTORIAS.filter((h) =>
+  !POR_ID_BASE.has(h.id) && !(h.tipo === 'objeto' && nomesDeLugar.has(h.id.replace(/^h_/, ''))));
+const CATALOGO = [...CATALOGO_BASE, ...CATALOGO_EXTRA, ...expandidoMkt, ...CATALOGO_HIST];
 const POR_ID = Object.fromEntries(CATALOGO.map((c) => [c.id, c]));
 const corta = (s, n) => { s = String(s ?? '').replace(/\s+/g, ' ').trim(); return s.length > n ? '…' + s.slice(-n) : s; };
 const semAcento = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -233,16 +241,29 @@ const semAcento = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-�
 const PALAVRAS = Object.fromEntries(CATALOGO.map((c) => [c.id, [c.nome, ...c.apelidos].map((p) => semAcento(p).replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim()).filter((p) => p.length >= 2)]));
 // devolve os ids na ordem em que aparecem no texto (quem foi citado primeiro vem primeiro),
 // para que o cap de alvos por trecho fique com quem acabou de ser mencionado.
+// Alias usado por vários itens ("menina" existe no catálogo base e em três contos) não decide
+// sozinho: personagem de conto só entra por alias único ou quando o título do conto é citado.
 function citados(texto) {
   const t = ' ' + semAcento(texto).replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ') + ' ';
+  const usos = new Map();
+  for (const c of CATALOGO) for (const p of PALAVRAS[c.id]) usos.set(p, (usos.get(p) || 0) + 1);
+  const tituloNaFala = (c) => {
+    if (!c.historia) return false;
+    const tit = semAcento(c.historia).replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+    return tit.length > 2 && t.includes(' ' + tit + ' ');
+  };
   const achados = [];
   for (const c of CATALOGO) {
-    let menor = -1;
+    let menor = -1, soGenerico = true;
     for (const p of PALAVRAS[c.id]) {
       const i = t.indexOf(' ' + p + ' ');
-      if (i >= 0 && (menor < 0 || i < menor)) menor = i;
+      if (i < 0) continue;
+      if (menor < 0 || i < menor) menor = i;
+      if ((usos.get(p) || 0) <= 1) soGenerico = false;
     }
-    if (menor >= 0) achados.push([c.id, menor]);
+    if (menor < 0) continue;
+    if (c.historia && soGenerico && !tituloNaFala(c)) continue;
+    achados.push([c.id, menor]);
   }
   return achados.sort((a, b) => a[1] - b[1]).map(([id]) => id);
 }

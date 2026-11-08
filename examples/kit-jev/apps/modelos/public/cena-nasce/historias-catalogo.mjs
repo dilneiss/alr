@@ -55,10 +55,13 @@ const vistos = new Set();
 const itens = [];
 
 const limpa = (s) => String(s || '').trim();
+// o motor só aceita chaves [a-z0-9_]: um id acentuado (ex.: "irmã_feia_1") invalida a jogada inteira
+const slug = (s) => limpa(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 
 for (const [idHist, titulo, origem, cenario, elenco, objetos] of HISTORIAS) {
-  for (const [id, nome, arq, cor, ...apelidos] of elenco) {
-    if (vistos.has(id)) continue;
+  for (const [idBruto, nome, arq, cor, ...apelidos] of elenco) {
+    const id = slug(idBruto);
+    if (!id || vistos.has(id)) continue;
     vistos.add(id);
     const animal = ehAnimal(arq);
     if (!animal) {
@@ -81,8 +84,8 @@ for (const [idHist, titulo, origem, cenario, elenco, objetos] of HISTORIAS) {
     });
   }
   for (const obj of objetos || []) {
-    const idObj = 'h_' + limpa(obj).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-    if (!idObj || vistos.has(idObj)) continue;
+    const idObj = 'h_' + slug(obj);
+    if (idObj === 'h_' || vistos.has(idObj)) continue;
     vistos.add(idObj);
     itens.push({
       id: idObj,
@@ -105,6 +108,6 @@ export const HISTORIAS_JEV = HISTORIAS.map(([id, titulo, origem, cenario, elenco
   titulo,
   origem,
   cenario,
-  elenco: elenco.map(([eid, nome]) => ({ id: eid, nome })),
+  elenco: elenco.map(([eid, nome]) => ({ id: slug(eid), nome })),
   apelidos: [titulo, titulo.replace(/^(os|as|o|a)\s+/i, '')],
 }));

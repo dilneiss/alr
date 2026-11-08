@@ -64,7 +64,7 @@ export const ANIMAIS_100 = [
   ['anim_tartaruga_marinha_ancia', 'Tartaruga-Marinha Anciã', '🐢', 130, 'esq', 'personagem', 'tartaruga-marinha anciã', 'tartaruga de casco lendário'],
   ['anim_agua_viva_brilhante', 'Água-Viva Bioluminescente', '🪼', 105, 'frente', 'personagem', 'água-viva bioluminescente', 'medusa mágica luminosa'],
   ['anim_narval_chifre_mar', 'Narval Unicórnio do Mar', '🐋', 180, 'esq', 'personagem', 'narval unicórnio', 'baleia de chifre longo'],
-  ['anim_lontra_marinha_brincalhona', 'Lontra-Marinha das Algas', '🦦', 105, 'esq', 'personagem', 'lontra-marinha', 'lontra que quebra conchas'],
+  ['anim_lontra_marinha_brinca', 'Lontra-Marinha das Algas', '🦦', 105, 'esq', 'personagem', 'lontra-marinha', 'lontra que quebra conchas'],
   ['anim_lula_colossal_abismo', 'Lula-Colossal do Abismo', '🦑', 190, 'esq', 'personagem', 'lula-colossal', 'monstro marinho de tentáculos longos'],
   ['anim_peixe_palhaco_anemona', 'Peixe-Palhaço da Anêmona', '🐠', 65, 'esq', 'personagem', 'peixe-palhaço da anêmona', 'peixinho laranja e branco'],
 
@@ -110,5 +110,5 @@ export const ANIMAIS_100 = [
   ['anim_mc_camelo_duas_selas', 'Camelo de Duas Pessoas', '🐫', 190, 'esq', 'personagem', 'camelo de duas pessoas', 'montaria alta do deserto'],
   ['anim_mc_dragao_end_cristal', 'Dragão do End com Asas Negras', '🐉', 260, 'esq', 'personagem', 'dragão do end com asas', 'chefe final do fim'],
   ['anim_mc_wither_tres_cranios', 'Wither das Três Caveiras', '☠️', 225, 'frente', 'personagem', 'wither das três caveiras', 'monstro voador de três cabeças'],
-  ['anim_mc_sniffer_farejador_antigo', 'Sniffer com Flor Antiga', '🦕', 185, 'esq', 'personagem', 'sniffer com flor', 'farejador ancestral'],
+  ['anim_mc_sniffer_antigo', 'Sniffer com Flor Antiga', '🦕', 185, 'esq', 'personagem', 'sniffer com flor', 'farejador ancestral'],
 ];
