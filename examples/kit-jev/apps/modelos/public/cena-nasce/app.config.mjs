@@ -70,6 +70,9 @@ const LUGARES = [
   { id: 'fazenda', nome: 'Fazenda', icone: '🐄', desc: 'fazenda: sítio, roça, celeiro, curral, horta, plantação, campo com vacas e galinhas' },
   { id: 'escola', nome: 'Escola', icone: '🏫', desc: 'escola: sala de aula, recreio, aula, professora, lousa' },
   { id: 'quarto', nome: 'Quarto', icone: '🛏️', desc: 'quarto ou dentro de casa: cama, sala, cozinha, hora de dormir em casa' },
+  { id: 'nether', nome: 'Nether', icone: '🔥', desc: 'nether: inferno de lava, fortaleza do nether, mundo vermelho, fogo, lava e rocha negra' },
+  { id: 'the_end', nome: 'The End', icone: '🔮', desc: 'the end: dimensão do fim, ilha do dragão, espaço do end, torre de obsidiana, dragão final' },
+  { id: 'mina_caverna', nome: 'Mina ou Caverna', icone: '⛏️', desc: 'mina ou caverna: subterrâneo, debaixo da terra, minérios, diamante, tochas e trilhos' },
 ];
 const HORAS = [
   { id: 'amanhecer', nome: 'Amanhecer', icone: '🌅', desc: 'amanhecer: nascer do sol, de manhãzinha, bem cedo, o galo cantou' },

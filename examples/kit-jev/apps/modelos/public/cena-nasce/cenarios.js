@@ -344,6 +344,142 @@ const LUGARES = {
       luzes: svg(`<circle cx="580" cy="520" r="210" fill="url(#qu-luz)"/>`, rad('qu-luz', [[0, '#fff1b8', 0.75], [0.5, '#ffd36b', 0.25], [1, '#ffd36b', 0]])),
     };
   },
+  nether: (u) => {
+    return {
+      chao: 690,
+      ceu: 'ceu-nether',
+      longe: svg(`<rect x="-200" y="0" width="2000" height="900" fill="url(#ne-fundo)"/>
+        <path d="M-200 480 H1800 V900 H-200 Z" fill="#3a111a"/>
+        <path d="M-200 380 L100 440 L400 360 L800 430 L1200 370 L1500 440 L1800 390 V900 H-200 Z" fill="#521724"/>
+        <g fill="#21080e">
+          <rect x="220" y="160" width="70" height="420"/>
+          <rect x="200" y="140" width="110" height="30"/>
+          <rect x="940" y="180" width="80" height="400"/>
+          <rect x="910" y="160" width="140" height="30"/>
+          <rect x="1420" y="210" width="60" height="370"/>
+        </g>`,
+        lin('ne-fundo', [[0, '#380a14'], [0.65, '#5c131a'], [1, '#852115']])),
+      meio: svg(`<g>
+        <path d="M-200 520 L60 520 L180 560 L380 560 L500 520 L760 520 L900 570 L1180 570 L1320 520 L1800 520 V900 H-200 Z" fill="#691d24"/>
+        <!-- cachoeiras de lava cúbicas -->
+        <rect x="220" y="170" width="28" height="390" fill="#ff6b00"/>
+        <rect x="224" y="170" width="16" height="390" fill="#ffe066"/>
+        <rect x="960" y="190" width="32" height="380" fill="#ff6b00"/>
+        <rect x="966" y="190" width="20" height="380" fill="#ffe066"/>
+        <rect x="-200" y="740" width="2000" height="160" fill="url(#ne-lava)"/>
+      </g>`,
+      lin('ne-lava', [[0, '#ff7a00'], [0.4, '#ff4800'], [1, '#b31e00']])),
+      perto: svg(`<g>
+        <!-- degraus de netherrack e basalto -->
+        <path d="M-200 680 H180 320 V710 H520 V680 H960 V710 H1240 V680 H1800 V900 H-200 Z" fill="#4d141b"/>
+        <rect x="-200" y="680" width="2000" height="24" fill="#751e29"/>
+        <!-- blocos de fogo e magma -->
+        <rect x="180" y="656" width="32" height="24" fill="#ff7a00"/>
+        <rect x="184" y="660" width="24" height="20" fill="#fff185"/>
+        <rect x="680" y="656" width="36" height="24" fill="#ff4800"/>
+        <rect x="1120" y="656" width="40" height="24" fill="#ff7a00"/>
+      </g>`),
+      frente: '',
+      luzes: svg(`<circle cx="234" cy="460" r="180" fill="url(#ne-brilho-l)"/>
+        <circle cx="976" cy="480" r="190" fill="url(#ne-brilho-l)"/>`,
+        rad('ne-brilho-l', [[0, '#ffb84d', 0.85], [0.45, '#ff5e00', 0.35], [1, '#ff3b00', 0]])),
+    };
+  },
+  the_end: (u) => {
+    return {
+      chao: 690,
+      ceu: 'ceu-the-end',
+      longe: svg(`<rect x="-200" y="0" width="2000" height="900" fill="#08060f"/>
+        <!-- pilares monumentais de obsidiana -->
+        <g fill="#120e1f" stroke="#221b3b" stroke-width="6">
+          <rect x="40" y="240" width="110" height="460"/>
+          <rect x="360" y="160" width="130" height="540"/>
+          <rect x="760" y="110" width="150" height="590"/>
+          <rect x="1180" y="180" width="130" height="520"/>
+          <rect x="1540" y="260" width="110" height="440"/>
+        </g>
+        <!-- cristais do end no topo dos pilares -->
+        <g fill="#df7bf7" stroke="#ffffff" stroke-width="4">
+          <rect x="80" y="210" width="30" height="30" transform="rotate(45 95 225)"/>
+          <rect x="410" y="130" width="34" height="34" transform="rotate(45 427 147)"/>
+          <rect x="820" y="76" width="38" height="38" transform="rotate(45 839 95)"/>
+          <rect x="1230" y="150" width="32" height="32" transform="rotate(45 1246 166)"/>
+          <rect x="1580" y="230" width="28" height="28" transform="rotate(45 1594 244)"/>
+        </g>`),
+      meio: svg(`<g>
+        <!-- ilhas flutuantes secundárias de end stone -->
+        <path d="M-120 540 H180 L220 580 L120 620 L-60 620 Z" fill="#d2d0a1"/>
+        <path d="M1380 520 H1720 L1760 560 L1660 610 L1440 600 Z" fill="#d2d0a1"/>
+      </g>`),
+      perto: svg(`<g>
+        <!-- grande ilha principal do end -->
+        <path d="M-200 680 H1800 V900 H-200 Z" fill="#bbb987"/>
+        <rect x="-200" y="680" width="2000" height="22" fill="#e2e0b5"/>
+        <path d="M-200 702 H1800 V740 H-200 Z" fill="#9e9b6a"/>
+        <!-- blocos de portal e partículas -->
+        <rect x="740" y="666" width="120" height="14" fill="#0b1b1c" stroke="#36a394" stroke-width="4"/>
+      </g>`),
+      frente: '',
+      luzes: svg(`<circle cx="427" cy="147" r="140" fill="url(#end-luz)"/>
+        <circle cx="839" cy="95" r="160" fill="url(#end-luz)"/>
+        <circle cx="1246" cy="166" r="140" fill="url(#end-luz)"/>`,
+        rad('end-luz', [[0, '#f5c6ff', 0.8], [0.5, '#b446e8', 0.25], [1, '#6a1296', 0]])),
+    };
+  },
+  mina_caverna: (u) => {
+    return {
+      chao: 690,
+      interior: true,
+      ceu: 'ceu-caverna',
+      longe: svg(`<rect x="-200" y="0" width="2000" height="900" fill="#1b1c21"/>
+        <!-- teto e paredes de pedra/ardósia -->
+        <path d="M-200 0 H1800 V340 L1600 290 L1400 360 L1100 280 L800 350 L500 270 L200 350 L-200 280 Z" fill="#2c2d36"/>
+        <path d="M-200 0 H1800 V230 L1500 180 L1200 240 L900 170 L600 240 L300 170 L-200 220 Z" fill="#3c3d47"/>`),
+      meio: svg(`<g>
+        <!-- vigas de madeira de sustentação da mina -->
+        <rect x="180" y="240" width="36" height="460" fill="#6a4325"/>
+        <rect x="420" y="240" width="36" height="460" fill="#6a4325"/>
+        <rect x="160" y="240" width="320" height="34" fill="#84532e"/>
+
+        <rect x="1080" y="220" width="36" height="480" fill="#6a4325"/>
+        <rect x="1340" y="220" width="36" height="480" fill="#6a4325"/>
+        <rect x="1060" y="220" width="340" height="34" fill="#84532e"/>
+
+        <!-- tochas na parede com chamas cúbicas -->
+        <rect x="224" y="380" width="10" height="38" fill="#5c381c"/>
+        <rect x="222" y="372" width="14" height="14" fill="#ff9900"/>
+        <rect x="225" y="374" width="8" height="8" fill="#fff799"/>
+
+        <rect x="1124" y="360" width="10" height="38" fill="#5c381c"/>
+        <rect x="1122" y="352" width="14" height="14" fill="#ff9900"/>
+        <rect x="1125" y="354" width="8" height="8" fill="#fff799"/>
+      </g>`),
+      perto: svg(`<g>
+        <!-- chão de pedra e ardósia com minérios -->
+        <path d="M-200 680 H1800 V900 H-200 Z" fill="#3b3c46"/>
+        <rect x="-200" y="680" width="2000" height="20" fill="#545663"/>
+        <!-- trilhos de trem de mina -->
+        <path d="M-200 688 H1800" stroke="#777a8a" stroke-width="8"/>
+        <path d="M-200 694 H1800" stroke="#484a54" stroke-width="4"/>
+        ${Array.from({ length: 30 }, (_, i) => `<rect x="${-180 + i * 68}" y="684" width="22" height="14" fill="#613c20"/>`).join('')}
+        <!-- blocos de minério de diamante azul -->
+        <g fill="#4deeea">
+          <rect x="620" y="720" width="18" height="18"/>
+          <rect x="644" y="736" width="14" height="14"/>
+          <rect x="1420" y="718" width="18" height="18"/>
+        </g>
+        <!-- minério de ouro -->
+        <g fill="#ffd700">
+          <rect x="70" y="730" width="16" height="16"/>
+          <rect x="880" y="724" width="18" height="18"/>
+        </g>
+      </g>`),
+      frente: '',
+      luzes: svg(`<circle cx="229" cy="379" r="160" fill="url(#mina-luz)"/>
+        <circle cx="1129" cy="359" r="170" fill="url(#mina-luz)"/>`,
+        rad('mina-luz', [[0, '#ffe699', 0.9], [0.45, '#ff9900', 0.3], [1, '#ff6600', 0]])),
+    };
+  },
 };
 
 /**

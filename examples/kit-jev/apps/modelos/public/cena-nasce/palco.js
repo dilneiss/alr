@@ -4,6 +4,7 @@
 import { desenho, cabecaDe, DEFS, resolverAparencia, camadasAparencia } from './bonecos.js';
 import { cenario as desenharCenario } from './cenarios.js';
 import { criarClima } from './clima.js';
+import { tocarSomBloco, tocarSomPop, tocarSomDano, tocarSomLevelUp } from './audio-minecraft.js';
 
 // a história da demonstração (▶): duas viradas — a neve na praia e o dragão que só queria bolo
 const DEMO = [
@@ -24,7 +25,13 @@ const PRONTAS = [
   { rotulo: '🧜‍♀️ No fundo do mar', texto: 'No fundo do mar, uma sereia nadava com um pinguim. De repente, eles acharam um baú de tesouro!' },
   { rotulo: '👻 Noite de tempestade', texto: 'Era noite na floresta e caiu uma tempestade. Um fantasma apareceu e a coruja ficou com medo.' },
 ];
-
+const PRONTAS_MINECRAFT = [
+  { rotulo: '🗡️ Steve e a invasão do Nether', texto: 'Steve entrou no portal do Nether e encontrou um zumbi com espada no meio da lava.' },
+  { rotulo: '🐉 A batalha do Dragão do End', texto: 'Alex subiu na torre de obsidiana no The End para lutar contra o Dragão do End.' },
+  { rotulo: '💎 Mineração na caverna', texto: 'Na caverna escura, Steve achou diamantes e colocou tochas, mas um Creeper apareceu!' },
+  { rotulo: '🏡 Construindo a vila', texto: 'Na planície ensolarada, os aldeões construíram uma casa de blocos com Steve.' },
+  { rotulo: '🏹 Noite com esqueletos', texto: 'Anoiteceu na floresta de blocos e esqueletos com arco começaram a atirar flechas.' },
+];
 const MUNDO_L = 1600, MUNDO_A = 900;
 const PROF = { longe: 0.22, meio: 0.55, perto: 1, frente: 1.35, luzes: 0.55 };
 const CHAO_PERS = 716, CHAO_FUNDO = 664, CHAO_FRENTE = 742;
@@ -66,6 +73,8 @@ export async function montar(api) {
   const { el, sleep } = ui;
   const reduz = !!ui.reduzMovimento;
   const L = spec.limiar;
+  let modoMinecraft = false;
+  try { modoMinecraft = localStorage.getItem('cn_modo_minecraft') === '1'; } catch (_) {}
   const CAT = Object.fromEntries(spec.catalogo.map((c) => [c.id, c]));
   const classeAcao = Object.fromEntries(spec.acoes.map((a) => [a.id, a.classeCss || `ac-${a.id}`]));
   const familiaAcao = Object.fromEntries(spec.acoes.filter((a) => a.familia).map((a) => [a.id, `familia-${a.familia}`]));
@@ -135,15 +144,23 @@ export async function montar(api) {
   const legFin = el('span', { class: 'fin' }), legPar = el('span', { class: 'par' });
   const legenda = el('p', { class: 'cn-legenda vazia' }, [legFin, legPar]);
 
-  // página em branco: o começo
-  const btsProntas = PRONTAS.map((p) => el('button', { class: 'cn-pronta', type: 'button', onclick: () => contarPronta(p.texto) }, [p.rotulo]));
+  const prontasCont = el('div', { class: 'cn-prontas' });
+  function desenharProntas() {
+    prontasCont.replaceChildren(el('span', { text: modoMinecraft ? 'ou viva uma aventura no Minecraft:' : 'ou comece por uma destas:' }));
+    const lista = modoMinecraft ? PRONTAS_MINECRAFT : PRONTAS;
+    lista.forEach((p) => {
+      const bt = el('button', { class: 'cn-pronta', type: 'button', onclick: () => contarPronta(p.texto) }, [p.rotulo]);
+      prontasCont.append(bt);
+    });
+  }
+  desenharProntas();
   const papel = el('div', { class: 'cn-papel' }, [
     el('div', { class: 'cn-rabiscos', 'aria-hidden': 'true', html: `<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice"><g fill="none" stroke="#7cc8f0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".55"><path class="risco" d="M-20 700 C200 660 420 690 640 676 C880 660 1100 694 1340 676 C1460 668 1540 676 1620 690"/><circle class="risco" cx="230" cy="190" r="58"/><path class="risco" d="M230 106 v-26 M230 274 v26 M146 190 h-26 M314 190 h26 M170 130 l-18 -18 M290 130 l18 -18 M170 250 l-18 18 M290 250 l18 18"/><path class="risco" d="M1180 220 c-40 0 -54 -50 -14 -62 c6 -40 66 -46 82 -12 c30 -18 70 6 60 40 c34 10 30 56 -8 58 Z"/><path class="risco" d="M1330 610 l60 -130 l60 130 M1352 560 h76 M260 640 c0 -60 30 -90 60 -90 c30 0 60 30 60 90"/></g></svg>` }),
     el('div', { class: 'cn-papel-txt' }, [
       el('p', { class: 'cn-papel-sobre', text: 'Fale e a cena nasce' }),
       el('h2', { text: 'Era uma vez…' }),
       el('p', { class: 'cn-papel-dica', text: 'Aperte o microfone e conte uma história: o lugar, quem aparece e o que cada um faz viram desenho enquanto você fala.' }),
-      el('div', { class: 'cn-prontas' }, [el('span', { text: 'ou comece por uma destas:' }), ...btsProntas]),
+      prontasCont,
     ]),
   ]);
 
@@ -156,9 +173,12 @@ export async function montar(api) {
     onPausa: (texto) => aoFalar(texto),
   });
   const btNova = el('button', { class: 'cn-nova', type: 'button', onclick: () => { pararDemo(); novaHistoria(); } }, ['↺ Nova história']);
-  raiz.append(defs, el('div', { class: 'cn-palco' }, [tela, legenda]), el('div', { class: 'cn-controles' }, [barra.no, btNova, som.botao(el)]));
+  const btMinecraft = el('button', { class: 'cn-btn-minecraft' + (modoMinecraft ? ' ativo' : ''), type: 'button', onclick: () => alternarModoMinecraft() }, [
+    el('span', { text: '⛏️' }),
+    el('span', { class: 'cn-txt-mc', text: modoMinecraft ? 'Minecraft: ON' : 'Minecraft: OFF' }),
+  ]);
+  raiz.append(defs, el('div', { class: 'cn-palco' }, [tela, legenda]), el('div', { class: 'cn-controles' }, [barra.no, btMinecraft, btNova, som.botao(el)]));
   area.append(raiz);
-
   // durante ou depois da demonstração, falar ou digitar começa uma história nova (a demonstração para na hora)
   barra.no.addEventListener('click', (e) => { if ((historiaDaDemo || ctlDemo) && e.target.closest('.mj-voz-mic')) { pararDemo(); novaHistoria(); } }, true);
   barra.no.addEventListener('keydown', (e) => { if ((historiaDaDemo || ctlDemo) && e.key === 'Enter' && e.target.closest('.mj-voz-campo')) { pararDemo(); novaHistoria({ manterCampo: true }); } }, true);
@@ -210,7 +230,7 @@ export async function montar(api) {
   // ---------- céu, hora, tempo e clima da cena ----------
   function aplicarCeu() {
     const especial = cenarioAtual ? cenarioAtual.ceu : 'ceu';
-    tela.className = ['cn-tela', 'h-' + cena.hora, 't-' + cena.clima, 'm-' + cena.humor, 'l-' + (cena.lugar || 'vazio'), 'ceu-' + especial, cenarioAtual && cenarioAtual.interior ? 'interior' : '', papelAberto ? 'com-papel' : ''].filter(Boolean).join(' ');
+    tela.className = ['cn-tela', 'h-' + cena.hora, 't-' + cena.clima, 'm-' + cena.humor, 'l-' + (cena.lugar || 'vazio'), 'ceu-' + especial, cenarioAtual && cenarioAtual.interior ? 'interior' : '', papelAberto ? 'com-papel' : '', modoMinecraft ? 'modo-minecraft' : ''].filter(Boolean).join(' ');
     // dentro de casa a chuva e a neve só aparecem pela janela: as partículas vão para trás da parede
     const interior = !!(cenarioAtual && cenarioAtual.interior);
     if (interior && canvas.parentNode !== ceu) ceu.append(canvas);
@@ -268,7 +288,7 @@ export async function montar(api) {
   function criarAtor(id, perfil = null) {
     const item = CAT[id];
     const aparencia = perfil || resolverAparencia(item);
-    const d = desenho(item, u, aparencia);
+    const d = desenho(item, u, aparencia, { voxel: modoMinecraft });
     const [x0, y0, w, h] = d.caixa;
     const alt = item.altura * (item.fundo ? 1 : ESCALA[item.tipo] || 1) * (aparencia?.escala || 1);
     const larg = alt * w / h;
@@ -360,8 +380,7 @@ export async function montar(api) {
     palcoAtores.append(a.el);
     garantirMundo();
     mostrarTag(a, a.item.nome, atraso + 380);
-    setTimeout(() => { if (!a.saindo) som.pop(); }, atraso + 60);
-    setTimeout(() => a.el.classList.remove('entra'), atraso + 950);
+    setTimeout(() => { if (!a.saindo) { if (modoMinecraft) tocarSomPop({ mudo: !som.ligado }); else som.pop(); } }, atraso + 60);
   }
 
   function sair(id) {
@@ -731,8 +750,13 @@ export async function montar(api) {
     if (cli && cli !== 'manter' && cli !== cena.clima && pc >= L.clima) { cena.clima = cli; mudou.clima = true; if (['neve', 'nevasca', 'arco_iris', 'aurora', 'chuva_estrelas'].includes(cli)) som.ding(); }
     const [hum, pu] = top(r.humor);
     if (hum && hum !== cena.humor && pu >= L.humor) { cena.humor = hum; mudou.humor = true; }
-    if (novoLugar) { cena.lugar = novoLugar; mudou.lugar = true; fecharPapel(); trocarLugar(novoLugar); }
-    else if (mudou.hora || mudou.clima || mudou.humor) aplicarCeu();
+    if (novoLugar) {
+      cena.lugar = novoLugar;
+      mudou.lugar = true;
+      fecharPapel();
+      trocarLugar(novoLugar);
+      if (modoMinecraft) tocarSomBloco({ mudo: !som.ligado });
+    }
 
     // quem entra, quem sai e o que cada um faz (o castelo não entra como objeto quando ele já é o cenário; a casa,
     // quando a cena é dentro de casa)
@@ -833,7 +857,8 @@ export async function montar(api) {
     }, 750);
     mostrarTag(alvo, '💥 ' + alvo.item.nome + ' sentiu o impacto');
     anunciarEvento(`⚔️ ${atacante.item.nome} atingiu ${alvo.item.nome}`);
-    som.pop();
+    if (modoMinecraft) tocarSomDano({ mudo: !som.ligado });
+    else som.pop();
   }
   function emitirChipDirecao(icone, texto) {
     const chip = el('div', { class: 'cn-chip-direcao' }, [el('span', { 'aria-hidden': 'true', text: icone }), el('span', { text: texto })]);
@@ -900,6 +925,36 @@ export async function montar(api) {
     novaHistoria();
     await sleep(350);
     barra.simular(texto).catch(() => {});
+  }
+
+  function alternarModoMinecraft() {
+    modoMinecraft = !modoMinecraft;
+    try { localStorage.setItem('cn_modo_minecraft', modoMinecraft ? '1' : '0'); } catch (_) {}
+    if (modoMinecraft) {
+      tela.classList.add('modo-minecraft');
+      btMinecraft.classList.add('ativo');
+      btMinecraft.querySelector('.cn-txt-mc').textContent = 'Minecraft: ON';
+      tocarSomLevelUp({ mudo: !som.ligado });
+    } else {
+      tela.classList.remove('modo-minecraft');
+      btMinecraft.classList.remove('ativo');
+      btMinecraft.querySelector('.cn-txt-mc').textContent = 'Minecraft: OFF';
+      tocarSomBloco({ mudo: !som.ligado });
+    }
+    desenharProntas();
+    for (const id of atores.keys()) {
+      const a = atores.get(id);
+      if (!a || a.saindo) continue;
+      const d = desenho(a.item, u, a.aparencia, { voxel: modoMinecraft });
+      const sprite = a.corpo.querySelector('.cn-sprite');
+      if (sprite) {
+        sprite.setAttribute('viewBox', `${d.caixa[0]} ${d.caixa[1]} ${d.caixa[2]} ${d.caixa[3]}`);
+        sprite.innerHTML = d.svg;
+      }
+    }
+  }
+  if (modoMinecraft) {
+    tela.classList.add('modo-minecraft');
   }
 
   // ---------- demonstração (▶) ----------

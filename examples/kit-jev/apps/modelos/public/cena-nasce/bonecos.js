@@ -296,7 +296,135 @@ export function camadasAparencia(perfil) {
   return `<g class="cn-aparencia" data-roupa="${roupaId}" data-acessorio="${acessorioId}" pointer-events="none">${roupa}${acessorio}</g>`;
 }
 
-export function desenho(item, u, perfil = null) {
+export function desenhoCubico(item, u, perfil = null) {
+  const pele = perfil?.corCorpo || '#d49b6a';
+  const roupa = perfil?.corRoupa || '#00a8a8';
+  const calca = '#2b3990';
+  const sapato = '#4a4a4a';
+  const caixa = [12, 12, 232, 352];
+
+  // Identificação de mobs especiais de Minecraft
+  const id = item.id || '';
+  if (id.includes('creeper')) {
+    return {
+      caixa,
+      svg: `<g class="cn-voxel-creeper">
+        <!-- 4 pernas cúbicas -->
+        <rect x="88" y="270" width="34" height="80" fill="#4fa83b" stroke="#2e7d32" stroke-width="4"/>
+        <rect x="134" y="270" width="34" height="80" fill="#4fa83b" stroke="#2e7d32" stroke-width="4"/>
+        <rect x="80" y="325" width="44" height="25" fill="#1b4d1b"/>
+        <rect x="132" y="325" width="44" height="25" fill="#1b4d1b"/>
+        <!-- corpo retangular -->
+        <rect x="94" y="150" width="68" height="124" fill="#57b842" stroke="#2e7d32" stroke-width="4"/>
+        <!-- cabeça quadrada -->
+        <rect x="82" y="54" width="92" height="92" fill="#57b842" stroke="#2e7d32" stroke-width="4"/>
+        <!-- rosto icônico do creeper em pixels -->
+        <g fill="#1a3318">
+          <rect x="98" y="78" width="18" height="18"/>
+          <rect x="140" y="78" width="18" height="18"/>
+          <rect x="116" y="96" width="24" height="26"/>
+          <rect x="108" y="112" width="40" height="24"/>
+          <rect x="108" y="130" width="12" height="16"/>
+          <rect x="136" y="130" width="12" height="16"/>
+        </g>
+      </g>`,
+    };
+  }
+
+  if (id.includes('zumbi') || id.includes('zombie')) {
+    return {
+      caixa,
+      svg: `<g class="cn-voxel-zumbi">
+        <rect x="96" y="270" width="28" height="80" fill="#3f51b5" stroke="#1a237e" stroke-width="3"/>
+        <rect x="132" y="270" width="28" height="80" fill="#3f51b5" stroke="#1a237e" stroke-width="3"/>
+        <rect x="94" y="336" width="32" height="14" fill="#333"/>
+        <rect x="130" y="336" width="32" height="14" fill="#333"/>
+        <rect x="88" y="154" width="80" height="116" fill="#009688" stroke="#004d40" stroke-width="4"/>
+        <!-- braços esticados para frente -->
+        <rect x="60" y="156" width="28" height="96" fill="#009688"/>
+        <rect x="60" y="228" width="28" height="24" fill="#4caf50"/>
+        <rect x="168" y="156" width="28" height="96" fill="#009688"/>
+        <rect x="168" y="228" width="28" height="24" fill="#4caf50"/>
+        <!-- cabeça quadrada verde -->
+        <rect x="84" y="62" width="88" height="88" fill="#4caf50" stroke="#2e7d32" stroke-width="4"/>
+        <rect x="84" y="62" width="88" height="24" fill="#1b5e20"/>
+        <!-- olhos zumbi -->
+        <rect x="98" y="96" width="16" height="14" fill="#1b5e20"/>
+        <rect x="142" y="96" width="16" height="14" fill="#1b5e20"/>
+      </g>`,
+    };
+  }
+
+  if (id.includes('esqueleto') || id.includes('skeleton')) {
+    return {
+      caixa,
+      svg: `<g class="cn-voxel-esqueleto">
+        <rect x="104" y="270" width="16" height="80" fill="#dcdcdc" stroke="#9e9e9e" stroke-width="2"/>
+        <rect x="136" y="270" width="16" height="80" fill="#dcdcdc" stroke="#9e9e9e" stroke-width="2"/>
+        <rect x="98" y="154" width="60" height="116" fill="#e0e0e0" stroke="#9e9e9e" stroke-width="3"/>
+        <!-- costelas -->
+        <rect x="104" y="180" width="48" height="8" fill="#757575"/>
+        <rect x="104" y="204" width="48" height="8" fill="#757575"/>
+        <rect x="104" y="228" width="48" height="8" fill="#757575"/>
+        <!-- braços -->
+        <rect x="76" y="156" width="18" height="96" fill="#dcdcdc"/>
+        <rect x="162" y="156" width="18" height="96" fill="#dcdcdc"/>
+        <!-- crânio quadrado -->
+        <rect x="84" y="62" width="88" height="88" fill="#ededed" stroke="#9e9e9e" stroke-width="4"/>
+        <!-- olhos vazados -->
+        <rect x="98" y="94" width="18" height="18" fill="#212121"/>
+        <rect x="140" y="94" width="18" height="18" fill="#212121"/>
+        <rect x="120" y="122" width="16" height="12" fill="#212121"/>
+      </g>`,
+    };
+  }
+
+  // Humanoide padrão (Steve, Alex ou personagem transformado em bloco)
+  return {
+    caixa,
+    svg: `<g class="cn-voxel-steve">
+      <!-- pernas retangulares cúbicas -->
+      <g class="perna perna-e">
+        <rect x="96" y="270" width="28" height="80" fill="${calca}" stroke="#1a237e" stroke-width="3"/>
+        <rect x="94" y="336" width="32" height="14" fill="${sapato}"/>
+      </g>
+      <g class="perna perna-d">
+        <rect x="132" y="270" width="28" height="80" fill="${calca}" stroke="#1a237e" stroke-width="3"/>
+        <rect x="130" y="336" width="32" height="14" fill="${sapato}"/>
+      </g>
+      <!-- braços articulados em blocos -->
+      <g class="braco braco-e">
+        <rect x="62" y="154" width="26" height="50" fill="${roupa}"/>
+        <rect x="62" y="204" width="26" height="66" fill="${pele}" stroke="#8d5b34" stroke-width="2"/>
+      </g>
+      <g class="braco braco-d">
+        <rect x="168" y="154" width="26" height="50" fill="${roupa}"/>
+        <rect x="168" y="204" width="26" height="66" fill="${pele}" stroke="#8d5b34" stroke-width="2"/>
+      </g>
+      <!-- tronco cúbico -->
+      <rect x="88" y="154" width="80" height="116" fill="${roupa}" stroke="#00695c" stroke-width="3"/>
+      <!-- cabeça quadrada de bloco (88x88) -->
+      <rect x="84" y="62" width="88" height="88" fill="${pele}" stroke="#8d5b34" stroke-width="4"/>
+      <!-- cabelo de bloco no topo -->
+      <rect x="84" y="62" width="88" height="24" fill="#4a2e18"/>
+      <rect x="84" y="86" width="14" height="20" fill="#4a2e18"/>
+      <rect x="158" y="86" width="14" height="20" fill="#4a2e18"/>
+      <!-- olhos retos de pixel (branco + azul/íris) -->
+      <rect x="98" y="100" width="18" height="10" fill="#ffffff"/>
+      <rect x="108" y="100" width="8" height="10" fill="#2b3990"/>
+      <rect x="140" y="100" width="18" height="10" fill="#ffffff"/>
+      <rect x="140" y="100" width="8" height="10" fill="#2b3990"/>
+      <!-- nariz e boca retos -->
+      <rect x="120" y="112" width="16" height="8" fill="#bc7a4c"/>
+      <rect x="114" y="126" width="28" height="8" fill="#6a351d"/>
+    </g>` + socketsDe(item),
+  };
+}
+
+export function desenho(item, u, perfil = null, { voxel = false } = {}) {
+  if (voxel) {
+    return desenhoCubico(item, u, perfil);
+  }
   const c = COMPOSTO[item.id];
   const desenhoBase = c
     ? CORPOS[c](u)

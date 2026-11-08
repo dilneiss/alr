@@ -781,3 +781,160 @@
 @keyframes cn-pose-oficio { from { transform: rotate(var(--pose-angle-neg, -20deg)); } to { transform: rotate(var(--pose-angle, 20deg)); } }
 @keyframes cn-pose-gesto { from { transform: rotate(var(--pose-angle-neg, -20deg)); } to { transform: rotate(var(--pose-angle, 20deg)); } }
 @keyframes cn-pose-respiro { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.012, var(--pose-scale, 1.02)); } }
+/* ==========================================================================
+   MODO MINECRAFT (VOXEL SYSTEM: TUDO QUADRADO)
+   ========================================================================== */
+
+/* 1. Zerar todos os arredondamentos da interface e palco */
+.modo-minecraft,
+.modo-minecraft * {
+  border-radius: 0 !important;
+}
+
+/* 2. Molduras chanfradas clássicas de Minecraft (alto relevo de pedra/madeira) */
+.modo-minecraft .cn-tela {
+  border: 4px solid #2b2b2b;
+  box-shadow: inset -4px -4px 0 #1b1b1b, inset 4px 4px 0 #5c5c5c, 0 16px 40px rgba(0,0,0,0.6);
+  image-rendering: pixelated;
+}
+
+.modo-minecraft .cn-chip {
+  background: #484848 !important;
+  border: 2px solid #1e1e1e !important;
+  box-shadow: inset 2px 2px 0 #727272, inset -2px -2px 0 #282828, 0 4px 10px rgba(0,0,0,0.4);
+  color: #ffffff;
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.modo-minecraft .cn-tag {
+  background: #c6c6c6 !important;
+  color: #1e1e1e !important;
+  border: 2px solid #000000 !important;
+  box-shadow: inset 2px 2px 0 #ffffff, inset -2px -2px 0 #555555, 0 6px 14px rgba(0,0,0,0.4);
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-weight: 800;
+}
+
+.modo-minecraft .cn-legenda {
+  background: rgba(30, 30, 30, 0.92) !important;
+  border: 3px solid #141414 !important;
+  box-shadow: inset 3px 3px 0 #525252, inset -3px -3px 0 #181818, 0 8px 24px rgba(0,0,0,0.6);
+  font-family: ui-monospace, 'Courier New', monospace;
+  letter-spacing: -0.02em;
+}
+
+.modo-minecraft .cn-nova,
+.modo-minecraft .cn-pronta,
+.modo-minecraft .cn-controles .mj-som,
+.modo-minecraft .cn-btn-minecraft {
+  background: #737373 !important;
+  border: 2px solid #1a1a1a !important;
+  box-shadow: inset 2px 2px 0 #a8a8a8, inset -2px -2px 0 #3a3a3a, 0 4px 8px rgba(0,0,0,0.3);
+  color: #ffffff !important;
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-weight: 800;
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.modo-minecraft .cn-nova:hover,
+.modo-minecraft .cn-pronta:hover,
+.modo-minecraft .cn-btn-minecraft:hover {
+  background: #858585 !important;
+  box-shadow: inset 2px 2px 0 #c2c2c2, inset -2px -2px 0 #2b2b2b;
+}
+
+.modo-minecraft .cn-nova:active,
+.modo-minecraft .cn-pronta:active,
+.modo-minecraft .cn-btn-minecraft:active {
+  box-shadow: inset -2px -2px 0 #c2c2c2, inset 2px 2px 0 #2b2b2b;
+}
+
+/* 3. Astros Celestes 100% Quadrados */
+.modo-minecraft .cn-sol {
+  width: 96px;
+  height: 96px;
+  background: #fffb78;
+  border: 4px solid #f6d83b;
+  box-shadow: 0 0 0 12px rgba(255, 238, 88, 0.35), 0 0 0 24px rgba(255, 214, 0, 0.18);
+  animation: none !important;
+}
+
+.modo-minecraft .cn-sol img {
+  display: none !important;
+}
+
+.modo-minecraft .cn-sol::before {
+  display: none !important;
+}
+
+.modo-minecraft .cn-lua {
+  width: 84px;
+  height: 84px;
+  background: #f1f5f9;
+  border: 4px solid #94a3b8;
+  box-shadow: inset 8px 8px 0 #cbd5e1, 0 0 0 12px rgba(255, 255, 255, 0.25);
+  animation: none !important;
+}
+
+.modo-minecraft .cn-lua img {
+  display: none !important;
+}
+
+.modo-minecraft .cn-lua::before {
+  display: none !important;
+}
+
+/* 4. Estrelas Cúbicas sem formato circular */
+.modo-minecraft .cn-estrelas i {
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+}
+
+/* 5. Sombras Retangulares no Chão */
+.modo-minecraft .cn-sombra {
+  background: rgba(10, 15, 25, 0.52) !important;
+  height: 18px !important;
+  border-radius: 0 !important;
+}
+
+/* 6. Nuvens Retangulares de Minecraft */
+.modo-minecraft .cn-nuvem {
+  border-radius: 0 !important;
+  box-shadow: inset 0 -6px 0 rgba(148, 163, 184, 0.45), 0 8px 20px rgba(0,0,0,0.15) !important;
+}
+
+/* 7. Partículas Cúbicas (fogo, farelos, fumaça) */
+.modo-minecraft .cn-faíscas i,
+.modo-minecraft .fx-farelo,
+.modo-minecraft .fx-bolha {
+  border-radius: 0 !important;
+  image-rendering: pixelated;
+}
+
+/* 8. Botão Seletor de Modo Minecraft */
+.cn-btn-minecraft {
+  flex: none;
+  height: 58px;
+  padding: 0 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(56, 189, 248, .4);
+  background: rgba(15, 23, 42, .88);
+  color: #f8fafc;
+  font: 750 16px/1 var(--mj-f);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all .2s;
+  white-space: nowrap;
+}
+
+.cn-btn-minecraft.ativo {
+  background: #5b8731 !important;
+  border-color: #3e5e21 !important;
+  color: #ffffff !important;
+  box-shadow: inset 0 6px 0 #7bb842, inset 0 -4px 0 #3e5e21;
+}
