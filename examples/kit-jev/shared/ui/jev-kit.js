@@ -362,13 +362,27 @@
     opts = opts || {};
     const init = { method: opts.method || (body === undefined ? 'GET' : 'POST'), headers: {} };
     if (body !== undefined) { init.headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(body); }
-    let res, data;
-    try {
-      res = await fetch(path, init);
-      data = await res.json().catch(() => ({}));
-    } catch (e) {
+    // O servidor do app sobe no primeiro acesso (e pode estar reiniciando): GET tenta de novo antes de
+    // desistir, senão a tela mostra "não consegui carregar" por causa de um 404/502 passageiro.
+    const tentativas = init.method === 'GET' ? 3 : 1;
+    let res, data, ultimoErro = null;
+    for (let i = 0; i < tentativas; i++) {
+      try {
+        res = await fetch(path, init);
+        data = await res.json().catch(() => ({}));
+        ultimoErro = null;
+        const passageiro = !res.ok && [404, 502, 503, 504].includes(res.status);
+        if (passageiro && i < tentativas - 1) { res = null; data = null; }
+        else break;
+      } catch (e) {
+        ultimoErro = e;
+        if (i === tentativas - 1) break;
+      }
+      await new Promise((r) => setTimeout(r, 350 * (i + 1) * (i + 1)));
+    }
+    if (ultimoErro) {
       if (!opts.silent) toast('Sem conexão com o servidor. Tente de novo.', 'err');
-      throw e;
+      throw ultimoErro;
     }
     if (!res.ok || data.ok === false) {
       const msg = data.error || `Erro ${res.status}`;
