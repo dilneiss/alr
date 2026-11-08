@@ -108,8 +108,10 @@ export async function montar(api) {
   // personagens com a camada da frente (com a luz da hora) — assim janela acesa nunca passa por cima de ninguém
   const mundo = el('div', { class: 'cn-mundo cn-mundo-cenario', 'aria-hidden': 'true' });
   const mundoLuz = el('div', { class: 'cn-mundo cn-mundo-luz', 'aria-hidden': 'true' });
+  // sol, lua, estrela e nuvem ficam AQUI: atrás das luzes e muito atrás de quem está em cena
+  const mundoCeu = el('div', { class: 'cn-mundo cn-mundo-ceu', 'aria-hidden': 'true' });
   const mundoAtores = el('div', { class: 'cn-mundo cn-mundo-atores' });
-  const MUNDOS = [mundo, mundoLuz, mundoAtores];
+  const MUNDOS = [mundo, mundoCeu, mundoLuz, mundoAtores];
   const neveChao = el('div', { class: 'cn-neve-chao', 'aria-hidden': 'true', html: `<svg viewBox="-200 0 2000 260" preserveAspectRatio="none"><path d="M-200 18 C0 0 200 26 400 12 C600 -2 800 24 1000 10 C1200 -2 1400 22 1600 10 C1700 4 1760 12 1800 14 L1800 260 L-200 260 Z" fill="#fbfdff"/><path d="M-200 30 C100 18 300 40 600 26 C900 14 1200 38 1500 24 C1650 18 1750 28 1800 30" stroke="#d7e6f8" stroke-width="10" fill="none"/></svg>` });
   const palcoAtores = el('div', { class: 'cn-atores' });
   mundo.append(neveChao);
@@ -185,7 +187,7 @@ export async function montar(api) {
     ]),
   ]);
 
-  const tela = el('div', { class: 'cn-tela h-dia', role: 'img', 'aria-label': 'Cena em branco: conte uma história para ela nascer' }, [ceu, mundo, mundoLuz, mundoAtores, canvas, flash, vinheta, etiquetas, hud, papel]);
+  const tela = el('div', { class: 'cn-tela h-dia', role: 'img', 'aria-label': 'Cena em branco: conte uma história para ela nascer' }, [ceu, mundo, mundoCeu, mundoLuz, mundoAtores, canvas, flash, vinheta, etiquetas, hud, papel]);
 
   const barra = api.voz.barraVoz({
     dica: 'Aperte o microfone e conte uma história',
@@ -428,7 +430,8 @@ export async function montar(api) {
     posicionar();
     a.el.style.setProperty('--atraso', atraso + 'ms');
     a.el.classList.add('entra');
-    palcoAtores.append(a.el);
+    if (a.item.ceu) a.el.classList.add('no-ceu');
+    (a.item.ceu ? mundoCeu : palcoAtores).append(a.el);
     garantirMundo();
     mostrarTag(a, a.item.nome, atraso + 380);
     setTimeout(() => { if (!a.saindo) { if (modoMinecraft) tocarSomPop({ mudo: !som.ligado }); else som.pop(); } }, atraso + 60);
@@ -624,6 +627,9 @@ export async function montar(api) {
   // objetos grandes (castelo, casa, árvore, foguete…) ficam atrás; o bolo vai para perto de quem come e o balão, de
   // quem pode segurar
   const FUNDO_X = [0.84, 0.15, 0.5, 0.95, 0.05, 0.66, 0.33];
+  // céu: bem espalhado no alto, e nunca no meio da fila de personagens
+  const CEU_X = [0.18, 0.74, 0.46, 0.88, 0.06, 0.62, 0.3];
+  const CEU_Y = [250, 196, 300, 232, 214, 276, 188];
   const SEGURA = ['menina', 'menino', 'vovo', 'pirata', 'astronauta', 'super_heroi', 'bruxa', 'mago', 'robo', 'alienigena', 'macaco'];
   function posicionar(semAnimar = false) {
     const lista = [...atores.values()].filter((a) => !a.saindo).sort((a, b) => a.ordem - b.ordem);
@@ -632,7 +638,7 @@ export async function montar(api) {
     const humano = lista.find((a) => SEGURA.includes(a.id));
     const presoBolo = (a) => a.id === 'bolo' && comedor;
     const presoBalao = (a) => a.id === 'balao' && humano;
-    const fila = lista.filter((a) => !a.item.fundo && !presoBolo(a) && !presoBalao(a));
+    const fila = lista.filter((a) => !a.item.fundo && !a.item.ceu && !presoBolo(a) && !presoBalao(a));
     const gap = 46, m = Math.min(110, larg * 0.07);
     const total = fila.reduce((t, a) => t + a.larg, 0) + gap * Math.max(0, fila.length - 1);
     const k = Math.max(0.6, Math.min(1, (larg - 2 * m) / Math.max(1, total)));
@@ -647,9 +653,18 @@ export async function montar(api) {
       a.y = a.item.tipo === 'personagem' ? CHAO_PERS + (fila.length > 2 ? (i % 2 ? 12 : -6) : 0) : CHAO_FRENTE;
       a.anda = Math.max(14, Math.min(82, (gap * k + passoExtra) / 2 + 6));
     });
-    let iF = 0;
+    let iF = 0, iCe = 0;
     for (const a of lista) {
       if (fila.includes(a)) continue;
+      if (a.item.ceu) {
+        // céu: fora da fila do chão, alto e com escala de distância
+        a.k = 0.72;
+        a.anda = 24;
+        a.x = vis.x0 + larg * CEU_X[iCe % CEU_X.length];
+        a.y = CEU_Y[iCe % CEU_Y.length];
+        iCe += 1;
+        continue;
+      }
       a.k = 1; a.anda = 40;
       if (presoBolo(a)) { a.k = comedor.k || 1; a.x = comedor.x + comedor.larg * a.k * 0.42; a.y = comedor.y + 34; continue; }
       // o balão flutua ao lado da cabeça de quem segura, e o barbante desce até a mão
@@ -672,7 +687,7 @@ export async function montar(api) {
       s.setProperty('--x', a.x.toFixed(1)); s.setProperty('--y', a.y.toFixed(1)); s.setProperty('--k', (a.k || 1).toFixed(3));
       s.setProperty('--anda', (a.anda || 40).toFixed(0));
       if (a.corda) { s.setProperty('--corda', a.corda[0].toFixed(0)); s.setProperty('--corda-ang', a.corda[1].toFixed(3) + 'rad'); }
-      s.zIndex = String(Math.round(a.y * 2) + (a.acao === 'correndo' ? 400 : 0));
+      s.zIndex = a.item.ceu ? '' : String(Math.round(a.y * 2) + (a.acao === 'correndo' ? 400 : 0));
       a.el.classList.toggle('preso', presoBalao(a) && true);
       if (a.acao === 'correndo') {
         s.setProperty('--saida', (vis.x1 + 160 - a.x).toFixed(0));

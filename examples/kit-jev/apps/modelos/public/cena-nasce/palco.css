@@ -1122,3 +1122,9 @@
   .cn-teleprompter { position: static; translate: none; width: auto; margin-top: 8px; }
   .cn-cartao-modo { max-width: none; }
 }
+
+/* camada do céu: sol, lua, estrela e nuvem ficam atrás de tudo que é gente */
+.cn-mundo-ceu { z-index: 2; translate: calc(var(--cam, 0) * 0.35px) 0; }
+.cn-mundo-ceu .cn-ator { z-index: auto; }
+.cn-no-ceu .cn-sombra { display: none; }
+.cn-no-ceu .cn-pop { animation-duration: 1.2s; }
