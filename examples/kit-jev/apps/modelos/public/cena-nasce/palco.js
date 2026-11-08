@@ -694,7 +694,12 @@ export async function montar(api) {
   // sem lugar ainda e alguém entrou: o campo aparece em volta
   function garantirMundo() {
     if (papelAberto) fecharPapel();
-    if (!cena.lugar && !cenarioAtual) trocarLugar('campo', { silencioso: true });
+    // sem lugar definido, a cena não pode ficar num vazio: entra o campo (e o chip passa a dizer onde é)
+    if (!cena.lugar && !cenarioAtual) {
+      cena.lugar = 'campo';
+      trocarLugar('campo', { silencioso: true });
+      desenharChips();
+    }
   }
 
   // ---------- a página em branco ----------

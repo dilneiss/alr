@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="caldeirao" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a4f63"/>
+      <stop offset="1" stop-color="#242735"/>
+    </linearGradient>
+    <linearGradient id="pocao" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9be15d"/>
+      <stop offset="1" stop-color="#3fa34d"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="128" cy="222" rx="78" ry="14" fill="#000" opacity=".18"/>
+  <path d="M52 138h152c0 44-30 74-76 74s-76-30-76-74Z" fill="url(#caldeirao)"/>
+  <ellipse cx="128" cy="138" rx="76" ry="18" fill="#5a6076"/>
+  <ellipse cx="128" cy="138" rx="62" ry="13" fill="url(#pocao)"/>
+  <circle cx="106" cy="136" r="5" fill="#d4ff8e" opacity=".9"/>
+  <circle cx="140" cy="140" r="4" fill="#d4ff8e" opacity=".8"/>
+  <circle cx="124" cy="130" r="3.5" fill="#d4ff8e" opacity=".75"/>
+  <path d="M74 96c10-16 30-22 54-22s44 6 54 22" fill="none" stroke="#8b90a6" stroke-width="9" stroke-linecap="round"/>
+  <path d="M58 150c-10 6-16 16-14 26" fill="none" stroke="#3a3f52" stroke-width="8" stroke-linecap="round"/>
+  <path d="M198 150c10 6 16 16 14 26" fill="none" stroke="#3a3f52" stroke-width="8" stroke-linecap="round"/>
+</svg>

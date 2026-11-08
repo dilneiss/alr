@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <ellipse cx="128" cy="220" rx="70" ry="14" fill="#000" opacity=".18"/>
+  <!-- cesta -->
+  <path d="M56 132h144l-16 76c-2 10-10 16-20 16H92c-10 0-18-6-20-16Z" fill="#c98f4f"/>
+  <path d="M56 132h144l-4 20H60Z" fill="#b57c3f"/>
+  <path d="M78 132c0-30 22-54 50-54s50 24 50 54" fill="none" stroke="#a86f36" stroke-width="12" stroke-linecap="round"/>
+  <!-- doces -->
+  <circle cx="92" cy="118" r="16" fill="#f26d6d"/>
+  <circle cx="126" cy="112" r="14" fill="#ffd166"/>
+  <rect x="140" y="98" width="30" height="26" rx="6" fill="#8ecae6"/>
+  <path d="M72 168h112M72 190h112" stroke="#a86f36" stroke-width="7" stroke-linecap="round" opacity=".7"/>
+</svg>

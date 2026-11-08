@@ -246,6 +246,52 @@ const AMBIENTE = new Set([
 ]);
 for (const c of CATALOGO) if (AMBIENTE.has(c.id) && c.tipo === 'objeto') c.ambiente = true;
 
+// ---------- arte: quem estava com a caixa 📦 de placeholder ganha arte ou sai do catálogo ----------
+// O emoji 📦 (1f4e6) é o "sem figura" que sobrou da importação: na tela virava uma caixa de papelão.
+const ARTE_EMOJI = {
+  apresentador: '1f399', tecnico_celular: '1f527', analista_dados: '1f4bb', atendente_recepcao: '1f469-200d-2695',
+  mkt_etiqueta_frete: '1f5a8', mkt_caminhao_logistica: '1f69a', mkt_totem_marketplaces: '1f3ea', mkt_selo_zero_comissao: '2b50',
+  mkt_balcao_loja: '1f3ea', mkt_smartphone_desmontado: '1f4f1', mkt_termo_garantia_os: '1f4c4', mkt_lupa_tecnica: '1f52c',
+  mkt_pilha_seminovos: '1f4f1', mkt_pdv_caixa: '1f9fe', mkt_contrato_fechado: '1f4c4', mkt_trofeu_sucesso: '1f3c5',
+  mkt_notificacao_whatsapp: '1f4f1', mkt_raio_clickhouse: '26a1', mkt_ia_observabilidade: '1f916',
+  mkt_moeda_economia: '1f4b5', mkt_grafico_crescimento: '1f3c5',
+  mkt_selo_reducao_faltas: '1f3af', mkt_poltrona_espera: '1f6cb',
+  h_pocao: '1f9ea',
+};
+const ARTE_PROPRIA = {
+  castelo_de_areia: 'emoji/castelo_de_areia.svg',
+  h_caldeirao: 'emoji/h_caldeirao.svg',
+  h_cesta_de_doces: 'emoji/h_cesta_de_doces.svg',
+  h_capuz_vermelho: 'emoji/h_capuz_vermelho.svg',
+  mkt_esteira_pedidos: 'emoji/mkt_esteira_pedidos.svg',
+  mkt_servidor_rack: 'emoji/mkt_servidor_rack.svg',
+  mkt_dashboard_holografico: 'emoji/mkt_dashboard_holografico.svg',
+  mkt_caixa_encomenda: 'emoji/1f4e6.svg',   // aqui a caixa é o objeto certo (pacote)
+};
+const ehPlaceholder = (c) => /1f4e6/.test(c.img || '');
+const porIdBruto = new Map(CATALOGO.map((c) => [c.id, c]));
+for (const c of CATALOGO) {
+  if (!ehPlaceholder(c)) continue;
+  if (ARTE_PROPRIA[c.id]) { c.img = ARTE_PROPRIA[c.id]; continue; }
+  if (ARTE_EMOJI[c.id]) { c.img = 'emoji/' + ARTE_EMOJI[c.id] + '.svg'; continue; }
+  // herda do item base (h_casa_de_palha → casa, mc_shulker → ? ) quando existe arte de verdade
+  const base = c.id.replace(/^h_/, '');
+  const tentativas = [base, base.split('_')[0], c.id.split('_').slice(0, 2).join('_'), 'mc_' + base, 'mc_' + base.split('_')[0]];
+  const herdeiro = tentativas.map((t) => porIdBruto.get(t)).find((b) => b && b !== c && b.img && !ehPlaceholder(b));
+  if (herdeiro) { c.img = herdeiro.img; continue; }
+  c.semArte = true;   // sem figura nenhuma: melhor não existir do que aparecer como caixa
+}
+// arquivos que nunca existiram no pacote de arte (404 no console): troca por arte equivalente
+const ARTE_SUBSTITUTA = {
+  'bau.svg': 'emoji/1f9f0.svg',              // baú
+  'guerreiro.png': 'emoji/1f93a.svg',        // esgrimista/cavaleiro
+  'aldeao.png': 'emoji/1f9d1-200d-1f33e.svg',// camponês
+  'apresentador.png': 'emoji/1f3a4.svg',     // microfone
+};
+for (const c of CATALOGO) if (ARTE_SUBSTITUTA[c.img]) c.img = ARTE_SUBSTITUTA[c.img];
+
+for (let i = CATALOGO.length - 1; i >= 0; i--) if (CATALOGO[i].semArte) CATALOGO.splice(i, 1);
+
 // arte própria: o emoji genérico de castelo 🏰 virava um castelo de pedra no meio da areia
 // "bolo de chocolate" é UM objeto: sem esse alias, a barra de chocolate entrava junto do bolo
 const BOLO = CATALOGO.find((c) => c.id === 'bolo');
