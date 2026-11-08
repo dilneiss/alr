@@ -483,21 +483,21 @@ export function camadasAparencia(perfil) {
   const corRoupa = CORES_APARENCIA.some((x) => x.cor === perfil.corRoupa) ? perfil.corRoupa : '#2f80ed';
   const corAcessorio = CORES_APARENCIA.some((x) => x.cor === perfil.corAcessorio) ? perfil.corAcessorio : '#f2bd35';
   const roupa = roupaId === 'capa'
-    ? `<path d="M82 140 Q128 154 174 140 L196 246 Q128 222 60 246 Z" fill="${corRoupa}" opacity=".92"/>`
+    ? `<path d="M82 226 Q128 240 174 226 L196 324 Q128 300 60 324 Z" fill="${corRoupa}" opacity=".92"/>`
     : roupaId === 'armadura'
-      ? `<path d="M90 148 Q128 132 166 148 L178 226 L128 248 L78 226 Z" fill="${corRoupa}" stroke="#d7dce5" stroke-width="7"/><path d="M98 164 H158 M93 184 H163 M88 204 H168" stroke="#fff" stroke-opacity=".45" stroke-width="5"/>`
-      : `<path d="M91 150 Q128 136 165 150 L176 232 Q128 248 80 232 Z" fill="${corRoupa}"/><path d="M104 154 L128 178 L152 154" fill="none" stroke="${corAcessorio}" stroke-width="8"/>`;
+      ? `<path d="M90 226 Q128 214 166 226 L178 296 L128 316 L78 296 Z" fill="${corRoupa}" stroke="#d7dce5" stroke-width="7"/><path d="M98 244 H158 M93 264 H163 M88 284 H168" stroke="#fff" stroke-opacity=".45" stroke-width="5"/>`
+      : `<path d="M91 226 Q128 216 165 226 L176 302 Q128 316 80 302 Z" fill="${corRoupa}"/><path d="M104 228 L128 252 L152 228" fill="none" stroke="${corAcessorio}" stroke-width="8"/>`;
   const acessorio = acessorioId === 'chapeu'
     ? `<path d="M78 71 Q128 47 178 71 L170 92 Q128 78 86 92 Z" fill="${corAcessorio}"/><path d="M68 93 Q128 80 188 93 L184 104 Q128 92 72 104 Z" fill="${corAcessorio}"/>`
     : acessorioId === 'cachecol'
-      ? `<path d="M91 142 Q128 157 165 142 L160 160 Q128 176 96 160 Z" fill="${corAcessorio}"/>`
+      ? `<path d="M91 218 Q128 232 165 218 L160 236 Q128 250 96 236 Z" fill="${corAcessorio}"/>`
       : acessorioId === 'oculos'
         ? `<g fill="none" stroke="${corAcessorio}" stroke-width="7"><circle cx="105" cy="118" r="16"/><circle cx="151" cy="118" r="16"/><path d="M121 118 H135"/></g>`
         : acessorioId === 'mochila'
-          ? `<path d="M43 158 Q54 145 72 152 L82 218 Q56 231 40 214 Z" fill="${corAcessorio}" stroke="#fff" stroke-width="4"/>`
+          ? `<path d="M43 234 Q54 220 72 228 L82 296 Q56 308 40 292 Z" fill="${corAcessorio}" stroke="#fff" stroke-width="4"/>`
           : acessorioId === 'faixa'
-            ? `<path d="M78 102 Q128 88 178 102 L175 112 Q128 100 81 112 Z" fill="${corAcessorio}"/>`
-            : `<path d="M112 181 L128 166 L144 181 L128 196 Z" fill="${corAcessorio}" stroke="#fff" stroke-width="3"/>`;
+            ? `<path d="M78 82 Q128 68 178 82 L175 92 Q128 80 81 92 Z" fill="${corAcessorio}"/>`
+            : `<path d="M112 254 L128 239 L144 254 L128 269 Z" fill="${corAcessorio}" stroke="#fff" stroke-width="3"/>`;
   return `<g class="cn-aparencia" data-roupa="${roupaId}" data-acessorio="${acessorioId}" pointer-events="none">${roupa}${acessorio}</g>`;
 }
 
