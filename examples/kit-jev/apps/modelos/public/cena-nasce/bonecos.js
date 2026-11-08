@@ -303,26 +303,12 @@ const CORPOS = {
       + cabeca(u, 'fantasma.png', 16, 12, 224),
   }),
   fada: (u) => ({
-    caixa: [10, 10, 236, 350],
-    svg: `<g class="asas-fada" opacity=".82">
-        <path d="M72 210 Q10 160 38 230 Q68 246 80 234 Z" fill="#e0f2fe" stroke="#38bdf8" stroke-width="2"/>
-        <path d="M184 210 Q246 160 218 230 Q188 246 176 234 Z" fill="#e0f2fe" stroke="#38bdf8" stroke-width="2"/>
-      </g>`
-      + perna('e', 106, 306, 42, 14, pele, '#f472b6', 112, 348, 14, 8)
-      + perna('d', 136, 306, 42, 14, pele, '#f472b6', 142, 348, 14, 8)
-      + braco('e', 78, 236, 48, 14, pele) + braco('d', 164, 236, 48, 14, pele)
-      + `<path d="M96 226 C112 218 144 218 160 226 L178 300 C180 308 174 314 164 314 L92 314 C82 314 76 308 78 300 Z" fill="#fbcfe8"/>`
-      + `<path d="M84 290 Q128 316 172 290" fill="none" stroke="#f472b6" stroke-width="4"/>`
-      + cabeca(u, 'fada.png', 16, 10, 224),
+    caixa: [16, 16, 224, 224],
+    svg: `<image href="${u('fada.png')}" x="0" y="0" width="256" height="256"/>`,
   }),
   sereia: (u) => ({
-    caixa: [10, 10, 236, 350],
-    svg: braco('e', 76, 234, 50, 16, pele) + braco('d', 164, 234, 50, 16, pele)
-      + `<path d="M96 226 C112 218 144 218 160 226 L164 278 L92 278 Z" fill="${pele}"/>`
-      + `<circle cx="112" cy="242" r="14" fill="url(#cn-g-sereia-conchas)"/><circle cx="144" cy="242" r="14" fill="url(#cn-g-sereia-conchas)"/>`
-      + `<path d="M90 274 H166 L158 316 Q146 348 116 350 Q94 330 98 296 Z" fill="url(#cn-g-sereia-cauda)"/>`
-      + `<path d="M116 346 Q90 356 68 340 Q104 366 118 356 Q132 366 168 340 Q146 356 120 346 Z" fill="url(#cn-g-sereia-cauda)"/>`
-      + cabeca(u, 'sereia.png', 16, 12, 224),
+    caixa: [16, 16, 224, 224],
+    svg: `<image href="${u('sereia.png')}" x="0" y="0" width="256" height="256"/>`,
   }),
   aldeao: (u) => ({
     caixa: [14, 12, 228, 352],
@@ -486,16 +472,20 @@ const USA_ROUPA = new Set([
 export function camadasAparencia(perfil, itemId = '') {
   if (!perfil) return '';
   if (itemId && !USA_ROUPA.has(itemId)) return '';
-  const roupaId = ['tunica', 'colete', 'capa', 'armadura', 'aventureiro'].includes(perfil.roupa) ? perfil.roupa : 'tunica';
-  const acessorioId = ['faixa', 'broche', 'cachecol', 'chapeu', 'oculos', 'mochila'].includes(perfil.acessorio) ? perfil.acessorio : 'broche';
+  const roupaId = perfil.roupa && ['tunica', 'colete', 'capa', 'armadura', 'aventureiro'].includes(perfil.roupa) ? perfil.roupa : null;
+  const acessorioId = perfil.acessorio && ['faixa', 'broche', 'cachecol', 'chapeu', 'oculos', 'mochila'].includes(perfil.acessorio) ? perfil.acessorio : null;
+  if (!roupaId && !acessorioId) return '';
+
   const corRoupa = CORES_APARENCIA.some((x) => x.cor === perfil.corRoupa) ? perfil.corRoupa : '#2f80ed';
   const corAcessorio = CORES_APARENCIA.some((x) => x.cor === perfil.corAcessorio) ? perfil.corAcessorio : '#f2bd35';
-  const roupa = roupaId === 'capa'
+
+  const roupa = !roupaId ? '' : roupaId === 'capa'
     ? `<path d="M82 226 Q128 240 174 226 L196 324 Q128 300 60 324 Z" fill="${corRoupa}" opacity=".92"/>`
     : roupaId === 'armadura'
       ? `<path d="M90 226 Q128 214 166 226 L178 296 L128 316 L78 296 Z" fill="${corRoupa}" stroke="#d7dce5" stroke-width="7"/><path d="M98 244 H158 M93 264 H163 M88 284 H168" stroke="#fff" stroke-opacity=".45" stroke-width="5"/>`
       : `<path d="M91 226 Q128 216 165 226 L176 302 Q128 316 80 302 Z" fill="${corRoupa}"/><path d="M104 228 L128 252 L152 228" fill="none" stroke="${corAcessorio}" stroke-width="8"/>`;
-  const acessorio = acessorioId === 'chapeu'
+
+  const acessorio = !acessorioId ? '' : acessorioId === 'chapeu'
     ? `<path d="M78 71 Q128 47 178 71 L170 92 Q128 78 86 92 Z" fill="${corAcessorio}"/><path d="M68 93 Q128 80 188 93 L184 104 Q128 92 72 104 Z" fill="${corAcessorio}"/>`
     : acessorioId === 'cachecol'
       ? `<path d="M91 218 Q128 232 165 218 L160 236 Q128 250 96 236 Z" fill="${corAcessorio}"/>`
@@ -506,7 +496,8 @@ export function camadasAparencia(perfil, itemId = '') {
           : acessorioId === 'faixa'
             ? `<path d="M78 82 Q128 68 178 82 L175 92 Q128 80 81 92 Z" fill="${corAcessorio}"/>`
             : `<path d="M112 254 L128 239 L144 254 L128 269 Z" fill="${corAcessorio}" stroke="#fff" stroke-width="3"/>`;
-  return `<g class="cn-aparencia" data-roupa="${roupaId}" data-acessorio="${acessorioId}" pointer-events="none">${roupa}${acessorio}</g>`;
+
+  return `<g class="cn-aparencia" data-roupa="${roupaId || ''}" data-acessorio="${acessorioId || ''}" pointer-events="none">${roupa}${acessorio}</g>`;
 }
 
 export function desenhoCubico(item, u, perfil = null) {
@@ -659,13 +650,13 @@ const hashAparencia = (id) => [...String(id)].reduce((hash, char) => (hash * 31 
 export function resolverAparencia(item, texto = '', anterior = null) {
   if (!item || item.tipo !== 'personagem') return null;
   const hash = hashAparencia(item.id);
-  const base = anterior || {
-    corCorpo: ['#f2bf8f', '#9b5a3c', '#e6b98a', '#6b8e5a'][hash % 4],
-    corRoupa: CORES_APARENCIA[hash % CORES_APARENCIA.length].cor,
-    corAcessorio: CORES_APARENCIA[(hash + 3) % CORES_APARENCIA.length].cor,
-    escala: [0.88, 0.96, 1.04, 1.12][hash % 4],
-    roupa: ['tunica', 'colete', 'capa', 'aventureiro'][hash % 4],
-    acessorio: ['faixa', 'broche', 'cachecol', 'chapeu'][hash % 4],
+  const base = anterior ? { ...anterior } : {
+    corCorpo: null,
+    corRoupa: null,
+    corAcessorio: null,
+    escala: 1,
+    roupa: null,
+    acessorio: null,
   };
   const t = TEXTO_APARENCIA(texto);
   const corpoExplicit = /\b(pele|corpo|rosto)\b/.test(t);

@@ -1129,7 +1129,13 @@ export async function montar(api) {
       if (lugar) { cena.lugar = lugar; fecharPapel(); trocarLugar(lugar, { silencioso: true }); }
       aplicarCeu();
       const ids = el2.map(([id]) => id);
-      for (const id of [...atores.keys()]) if (!ids.includes(id)) sair(id);
+      for (const [id, a] of [...atores.entries()]) {
+        if (!ids.includes(id)) {
+          a.el.remove();
+          a.tag?.remove();
+          atores.delete(id);
+        }
+      }
       el2.forEach(([id, ac], i) => entrar(id, ac || 'parado', i * 90));
       desenharChips({}, {});
     },
