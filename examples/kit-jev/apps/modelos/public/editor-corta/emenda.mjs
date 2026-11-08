@@ -714,7 +714,11 @@ export function emendar(pcm, sr, plano) {
 //  - comando de edição (dividir): sai o comando e, se ele mandar, o que foi dito antes (ou tudo);
 //  - a mesma frase recomeçada (mesmoComeco): só a ÚLTIMA tentativa fica. Se a última ficar pela metade e for
 //    abandonada, a tentativa anterior volta a valer (só sai quando a nova se completa).
-export const LIMIAR = { tipo: 0.5, refaz: 0.5, continua: 0.5, apagar: 0.6, refazComeco: 0.35 };
+// Cortar sem a pessoa mandar é o erro mais caro deste app: os limiares são altos de propósito.
+// `refaz` mais alto porque "recomeçou a mesma frase" tira a frase anterior do corte.
+export const LIMIAR = { tipo: 0.5, refaz: 0.62, continua: 0.5, apagar: 0.6, refazComeco: 0.35 };
+// frase longa só sai com evidência forte: hesitação/bastidor são curtos por natureza
+const LONGA = { palavras: 7, confianca: 0.8 };
 export const MOTIVO = { hesitacao: 'hesitação', bastidor: 'bastidor', metade: 'pela metade', repeticao: 'repetição', refeita: 'refeita', apagada: 'mandou cortar', comando: 'comando', manual: 'você cortou', sem_texto: 'sem fala' };
 const JANELA = { frases: 10, segundos: 45 };   // até onde olhar para trás atrás de outra tentativa da mesma frase
 
@@ -841,6 +845,10 @@ export function criarEdicao(op = {}) {
     const pt = (r && r.tipo && r.tipo.probabilities) || {};
     const [top, pTop] = Object.entries(pt).sort((a, b) => b[1] - a[1])[0] || ['conteudo', 1];
     let tipo = top !== 'conteudo' && pTop >= L.tipo ? top : 'conteudo';
+    // frase longa classificada como hesitação/bastidor/repetição com pouca confiança continua sendo conteúdo:
+    // sem isso, uma frase normal da gravação podia "sair" sem ninguém ter mandado cortar
+    const palavras = String(f.texto || '').trim().split(/\s+/).filter(Boolean).length;
+    if (tipo !== 'conteudo' && tipo !== 'metade' && palavras >= LONGA.palavras && pTop < LONGA.confianca) tipo = 'conteudo';
     const refaz = r && r.refaz ? r.refaz.noul : 0, apagar = r && r.apagar ? r.apagar.noul : 0;
     let continua = r && r.continua ? r.continua.noul : 0;
     const c = f._c, m = f._m;
@@ -848,7 +856,7 @@ export function criarEdicao(op = {}) {
     f.confianca = tipo === 'conteudo' ? (pt.conteudo ?? 1) : pTop;
     if (r && r.gancho && r.gancho.probabilities) f.gancho = +Object.entries(r.gancho.probabilities).sort((a, b) => b[1] - a[1])[0][0];
     // o Jev ouviu uma ordem de cortar que o código não conhecia ("isso não ficou bom, de novo"): vira comando
-    if (apagar >= L.apagar && ['bastidor', 'hesitacao'].includes(tipo)) { f.comando = 'anterior'; f.confianca = apagar; return aplicarComando(f); }
+    if (apagar >= L.apagar && ['bastidor', 'hesitacao'].includes(tipo) && palavras <= 8) { f.comando = 'anterior'; f.confianca = apagar; return aplicarComando(f); }
     const novas = ['bastidor', 'hesitacao'].includes(tipo) ? [] : tentativas(f, refaz);
     if (m && novas.includes(m)) continua = 0;          // recomeçou a frase do zero: não é a continuação dela
     if (novas.length && tipo === 'repeticao') tipo = 'conteudo';
