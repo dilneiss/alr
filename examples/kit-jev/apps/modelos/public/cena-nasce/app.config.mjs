@@ -61,26 +61,99 @@ const CATALOGO_BASE = [
 ];
 
 // ---------- os lugares (cenários desenhados na tela) e o resto da lista fechada ----------
-const LUGARES = [
-  { id: 'praia', nome: 'Praia', icone: '🏖️', desc: 'praia ou mar: beira-mar, areia, ondas, ilha, ilha do tesouro, navegando no mar, conchinhas' },
-  { id: 'floresta', nome: 'Floresta', icone: '🌳', desc: 'floresta: mata, bosque, selva, trilha no meio das árvores' },
-  { id: 'cidade', nome: 'Cidade', icone: '🏙️', desc: 'cidade: rua, avenida, prédios, praça, loja, trânsito' },
-  { id: 'espaco', nome: 'Espaço', icone: '🪐', desc: 'espaço sideral: lá em cima, entre as estrelas, outro planeta, a Lua, Marte' },
-  { id: 'fundo_do_mar', nome: 'Fundo do mar', icone: '🐠', desc: 'fundo do mar: debaixo d’água, mergulhando até o fundo, recife de corais, peixes lá embaixo' },
-  { id: 'castelo', nome: 'Castelo', icone: '🏰', desc: 'castelo: reino, palácio, torre da princesa, salão do rei' },
-  { id: 'deserto', nome: 'Deserto', icone: '🏜️', desc: 'deserto: dunas de areia sem mar, oásis, cactos, camelos' },
-  { id: 'montanha_nevada', nome: 'Montanha nevada', icone: '🏔️', desc: 'montanha nevada: pico gelado, Polo Norte, Polo Sul, geleira, iglu, pista de esqui' },
-  { id: 'fazenda', nome: 'Fazenda', icone: '🐄', desc: 'fazenda: sítio, roça, celeiro, curral, horta, plantação, campo com vacas e galinhas' },
-  { id: 'escola', nome: 'Escola', icone: '🏫', desc: 'escola: sala de aula, recreio, aula, professora, lousa' },
-  { id: 'quarto', nome: 'Quarto', icone: '🛏️', desc: 'quarto ou dentro de casa: cama, sala, cozinha, hora de dormir em casa' },
-  { id: 'nether', nome: 'Nether', icone: '🔥', desc: 'nether: inferno de lava, fortaleza do nether, mundo vermelho, fogo, lava e rocha negra' },
-  { id: 'the_end', nome: 'The End', icone: '🔮', desc: 'the end: dimensão do fim, ilha do dragão, espaço do end, torre de obsidiana, dragão final' },
-  { id: 'mina_caverna', nome: 'Mina ou Caverna', icone: '⛏️', desc: 'mina ou caverna: subterrâneo, debaixo da terra, minérios, diamante, tochas e trilhos' },
-  { id: 'galpao_hubiss', nome: 'Galpão Hubiss', icone: '🏢', desc: 'galpão hubiss: galpão logístico, e-commerce, dropshipping, esteira de caixas, encomendas e frete' },
-  { id: 'loja_celit', nome: 'Loja e Assistência CELIT', icone: '📱', desc: 'loja celit: loja de celulares, assistência técnica, conserto de smartphone, bancada, os e balcão' },
-  { id: 'datacenter_datasnap', nome: 'Datacenter DataSnap', icone: '⚡', desc: 'datacenter datasnap: big data, servidores de logs, clickhouse, painel holográfico e telemetria' },
-  { id: 'clinica_qualhora', nome: 'Clínica QualHora', icone: '⏰', desc: 'clínica qualhora: recepção, agendamento online, horário marcado, consultas e lembrete whatsapp' },
-];
+// ---------- os lugares: derivados de cenarios-variantes.js ----------
+// Uma lista só. Nome e ícone vêm da base; o `desc` casa o que a pessoa fala com a variante certa
+// (primeiro as palavras da base, depois os gatilhos da variante).
+import { VARIANTES } from './cenarios-variantes.js';
+
+const NOME_BASE = {
+  campo: ['Campo', '🌾'],
+  praia: ['Praia', '🏖️'],
+  floresta: ['Floresta', '🌳'],
+  cidade: ['Cidade', '🏙️'],
+  espaco: ['Espaço', '🪐'],
+  fundo_do_mar: ['Fundo do mar', '🐠'],
+  castelo: ['Castelo', '🏰'],
+  deserto: ['Deserto', '🏜️'],
+  montanha: ['Montanha', '⛰️'],
+  fazenda: ['Fazenda', '🐄'],
+  escola: ['Escola', '🏫'],
+  casa_quarto: ['Casa', '🏠'],
+  nether: ['Nether', '🔥'],
+  the_end: ['The End', '🔮'],
+  mina_caverna: ['Mina ou caverna', '⛏️'],
+  galpao_hubiss: ['Galpão Hubiss', '🏢'],
+  loja_celit: ['Loja e Assistência CELIT', '📱'],
+  datacenter_datasnap: ['Datacenter DataSnap', '⚡'],
+  clinica_qualhora: ['Clínica QualHora', '⏰'],
+};
+
+const DESC_BASE = {
+  campo: 'campo aberto: grama, colina, céu grande',
+  praia: 'praia ou mar: beira-mar, areia, ondas, ilha, navegando no mar',
+  floresta: 'floresta: mata, bosque, selva, trilha no meio das árvores',
+  cidade: 'cidade: rua, avenida, prédios, praça, loja, trânsito',
+  espaco: 'espaço sideral: lá em cima, entre as estrelas, outro planeta, a Lua, Marte',
+  fundo_do_mar: 'fundo do mar: debaixo d”água, recife de corais, peixes lá embaixo',
+  castelo: 'castelo: reino, palácio, torre da princesa, salão do rei',
+  deserto: 'deserto: dunas de areia sem mar, oásis, cactos, camelos',
+  montanha: 'montanha: pico, serra, Polo Norte, neve, iglu, pista de esqui',
+  fazenda: 'fazenda: sítio, roça, celeiro, curral, horta, plantação, vacas e galinhas',
+  escola: 'escola: sala de aula, recreio, aula, professora, lousa',
+  casa_quarto: 'dentro de casa: quarto, cama, sala, cozinha, banheiro, hora de dormir',
+  nether: 'nether: inferno de lava, fortaleza do nether, mundo vermelho, rocha negra',
+  the_end: 'the end: dimensão do fim, ilha do dragão, torre de obsidiana',
+  mina_caverna: 'mina ou caverna: subterrâneo, debaixo da terra, minérios, tochas e trilhos',
+  galpao_hubiss: 'galpão hubiss: galpão logístico, e-commerce, esteira de caixas, encomendas',
+  loja_celit: 'loja celit: loja de celulares, assistência técnica, bancada, conserto',
+  datacenter_datasnap: 'datacenter datasnap: servidores, logs, telemetria, racks',
+  clinica_qualhora: 'clínica qualhora: recepção, agendamento, consultas, sala de espera',
+};
+
+// gatilhos: o que a pessoa fala para escolher a variante
+const GATILHO = {
+  campo_florido: 'cheio de flores, flores por todo lado',
+  floresta_outono: 'outono, folhas secas, tudo laranja e amarelo',
+  floresta_encantada: 'encantada, mágica, cogumelos brilhando, vaga-lumes',
+  floresta_queimada: 'queimada, árvores pretas, fumaça, depois do incêndio',
+  praia_deserta: 'vazia, deserta, sem ninguém',
+  praia_cheia: 'cheia de gente, movimento, guarda-sol, verão',
+  praia_rochosa: 'pedras na água, costão, falésias, rochas',
+  deserto_dunas: 'só dunas, areia até o horizonte',
+  deserto_oasis: 'oásis, palmeiras no deserto, água no meio da areia',
+  montanha_pico_gelado: 'pico gelado, topo da montanha, muito gelo',
+  cidade_vilarejo: 'vilarejo, cidade pequena, casinhas',
+  cidade_metropole: 'metrópole, cidade grande, arranha-céus',
+  castelo_em_festa: 'festa no castelo, bandeirinhas, comemoração',
+  castelo_ruinas: 'em ruínas, castelo quebrado, abandonado',
+  espaco_lua: 'na Lua, crateras, solo lunar',
+  espaco_planeta_alienigena: 'planeta alienígena, outro mundo, cristais',
+  espaco_nebulosa: 'nebulosa, nuvem colorida no espaço',
+  fundo_do_mar_recife: 'recife de corais, corais coloridos',
+  fundo_do_mar_fossa: 'fossa, fundo escuro, muito fundo',
+  escola_sala_de_aula: 'sala de aula, dentro da sala, carteiras',
+  escola_vazia_de_ferias: 'escola vazia, férias, ninguém na escola',
+  casa_sala: 'na sala, sofá, televisão',
+  casa_cozinha: 'na cozinha, fogão, panela',
+  casa_banheiro: 'no banheiro, banheira, escovando os dentes',
+  fazenda_curral: 'curral, sem bicho solto, vazio',
+  nether_fortaleza: 'fortaleza do nether, tochas, tijolos do nether',
+  the_end_ilha_do_dragao: 'ilha do dragão, sem mais ninguém',
+  mina_cavando: 'cavando, picareta na mão',
+  mina_caverna_trilhos: 'trilhos, trilho de mina, carrinho',
+  galpao_hubiss_black_friday: 'black friday, pico de pedidos, muita caixa',
+  galpao_hubiss_esteira_parada: 'esteira parada, galpão vazio',
+  datacenter_datasnap_pane_nos_servidores: 'pane, tudo apitando, servidor com problema',
+  clinica_qualhora_sala_de_espera_cheia: 'sala de espera cheia, muita gente esperando',
+};
+
+export const LUGARES = Object.entries(VARIANTES).map(([id, v]) => {
+  const [nome, icone] = NOME_BASE[v.base] || [v.base, '📍'];
+  const sufixo = id === v.base ? '' : ' — ' + id.slice(v.base.length + 1).replace(/_/g, ' ');
+  const base = DESC_BASE[v.base] || v.base;
+  const g = GATILHO[id];
+  return { id, nome: nome + sufixo, icone, desc: g ? base + '; ' + g : base };
+});
 const HORAS = [
   { id: 'amanhecer', nome: 'Amanhecer', icone: '🌅', desc: 'amanhecer: nascer do sol, de manhãzinha, bem cedo, o galo cantou' },
   { id: 'dia', nome: 'Dia', icone: '☀️', desc: 'dia: manhã, meio-dia, tarde, dia de sol, dia claro, no dia seguinte, outro dia' },
@@ -262,11 +335,11 @@ const TESTES = [
   T('o macaco navega', 'O macaco subiu num barco e saiu navegando pelo mar.', 'O macaco subiu num barco e saiu navegando pelo mar.', cena('praia'), [], { p_barco: true, mov_barco: 'andando', cenario: ['praia', 'manter'] }),
   T('tempestade na floresta', 'Era noite na floresta e caiu uma tempestade. Um fantasma apareceu e a coruja ficou com medo.', 'Era noite na floresta e caiu uma tempestade. Um fantasma apareceu e a coruja ficou com medo.', cena(null), [], { cenario: 'floresta', hora: 'noite', clima: 'tempestade', p_fantasma: true, p_coruja: true, acao_coruja: 'com_medo', humor: 'suspense' }),
   T('a bruxa de vassoura', 'Numa noite de lua cheia, uma bruxa passou voando de vassoura por cima da floresta.', 'Numa noite de lua cheia, uma bruxa passou voando de vassoura por cima da floresta.', cena(null), [], { cenario: 'floresta', hora: 'noite', p_bruxa: true, p_mago: false, acao_bruxa: 'voando' }),
-  T('hora de dormir no quarto', 'À noite, o menino deitou na cama do seu quarto e dormiu.', 'À noite, o menino deitou na cama do seu quarto e dormiu.', cena(null), [], { cenario: 'quarto', hora: 'noite', acao_menino: 'dormindo', humor: 'calmo' }),
-  T('no dia seguinte, a escola', 'À noite, o menino deitou na cama do seu quarto e dormiu. No dia seguinte, ele foi para a escola.', 'No dia seguinte, ele foi para a escola.', cena('quarto', 'noite'), elenco(['menino', 'dormindo']), { cenario: 'escola', hora: ['dia', 'amanhecer'], acao_menino: 'andando', p_menino: true }),
+  T('hora de dormir no quarto', 'À noite, o menino deitou na cama do seu quarto e dormiu.', 'À noite, o menino deitou na cama do seu quarto e dormiu.', cena(null), [], { cenario: 'casa_quarto', hora: 'noite', acao_menino: 'dormindo', humor: 'calmo' }),
+  T('no dia seguinte, a escola', 'À noite, o menino deitou na cama do seu quarto e dormiu. No dia seguinte, ele foi para a escola.', 'No dia seguinte, ele foi para a escola.', cena('casa_quarto', 'noite'), elenco(['menino', 'dormindo']), { cenario: 'escola', hora: ['dia', 'amanhecer'], acao_menino: 'andando', p_menino: true }),
   T('o robô passeia na cidade', 'O robô passeava pela cidade cheia de prédios.', 'O robô passeava pela cidade cheia de prédios.', cena(null), [], { cenario: 'cidade', p_robo: true, acao_robo: 'andando' }),
   T('o leão no deserto', 'O leão atravessava o deserto debaixo de um sol quente.', 'O leão atravessava o deserto debaixo de um sol quente.', cena(null), [], { cenario: 'deserto', p_leao: true, acao_leao: 'andando', hora: ['dia', 'manter'], clima: ['limpo', 'manter'] }),
-  T('pinguins na montanha', 'Os pinguins escorregavam pela montanha cheia de neve.', 'Os pinguins escorregavam pela montanha cheia de neve.', cena(null), [], { cenario: 'montanha_nevada', p_pinguim: true }),
+  T('pinguins na montanha', 'Os pinguins escorregavam pela montanha cheia de neve.', 'Os pinguins escorregavam pela montanha cheia de neve.', cena(null), [], { cenario: 'montanha', p_pinguim: true }),
   T('amanhecer na fazenda', 'O galo cantou e o sol nasceu na fazenda. A vovó acordou e foi dar comida para os bichos.', 'O galo cantou e o sol nasceu na fazenda. A vovó acordou e foi dar comida para os bichos.', cena(null), [], { hora: 'amanhecer', cenario: 'fazenda', p_vovo: true, acao_vovo: 'andando' }),
   T('o unicórnio e o castelo da princesa', 'Um unicórnio voava em volta do castelo da princesa.', 'Um unicórnio voava em volta do castelo da princesa.', cena(null), [], { cenario: 'castelo', p_unicornio: true, p_menina: true, acao_unicornio: 'voando' }),
   T('o super-herói salva a cidade', 'Um super-herói chegou voando para salvar a cidade.', 'Um super-herói chegou voando para salvar a cidade.', cena(null), [], { cenario: 'cidade', p_super_heroi: true, acao_super_heroi: 'voando' }),
@@ -277,11 +350,11 @@ const TESTES = [
   T('o céu fica nublado', 'Na fazenda, o céu foi ficando cinza e cheio de nuvens.', 'Na fazenda, o céu foi ficando cinza e cheio de nuvens.', cena('fazenda'), [], { clima: 'nublado', cenario: ['fazenda', 'manter'] }),
   T('o pôr do sol', 'O pirata e o macaco remaram até a praia. No fim da tarde, o sol foi se pondo no mar.', 'No fim da tarde, o sol foi se pondo no mar.', cena('praia'), elenco(['pirata', 'andando'], ['macaco', 'andando']), { hora: 'entardecer', cenario: ['praia', 'manter'], p_pirata: true, p_macaco: true }),
   // ações e clima da cena
-  T('a vovó fez um bolo', 'A vovó fez um bolo de chocolate e todo mundo comeu.', 'A vovó fez um bolo de chocolate e todo mundo comeu.', cena('quarto'), elenco(['vovo', 'parado'], ['menino', 'parado']), { p_bolo: true, p_vovo: true, acao_menino: 'comendo', acao_vovo: 'comendo' }),
+  T('a vovó fez um bolo', 'A vovó fez um bolo de chocolate e todo mundo comeu.', 'A vovó fez um bolo de chocolate e todo mundo comeu.', cena('casa_quarto'), elenco(['vovo', 'parado'], ['menino', 'parado']), { p_bolo: true, p_vovo: true, acao_menino: 'comendo', acao_vovo: 'comendo' }),
   T('a trapalhada do macaco', 'Na floresta, o macaco escorregou numa casca de banana e todo mundo riu.', 'Na floresta, o macaco escorregou numa casca de banana e todo mundo riu.', cena('floresta'), elenco(['macaco', 'andando'], ['sapo', 'parado']), { humor: 'engracado', acao_sapo: 'rindo', cenario: ['floresta', 'manter'] }),
-  T('a menina chora', 'A menina ganhou um presente, mas o cachorro rasgou tudo e ela começou a chorar.', 'A menina ganhou um presente, mas o cachorro rasgou tudo e ela começou a chorar.', cena('quarto'), [], { acao_menina: 'chorando', humor: 'triste', p_menina: true, p_cachorro: true }),
-  T('o gato fica bravo', 'O gato estava dormindo no quarto. O cachorro latiu, acordou o gato e o gato ficou muito bravo.', 'O cachorro latiu, acordou o gato e o gato ficou muito bravo.', cena('quarto'), elenco(['gato', 'dormindo']), { acao_gato: 'bravo', p_gato: true, p_cachorro: true }),
-  T('o dragão furioso', 'Um dragão vivia na montanha nevada. Quando o pirata tentou roubar o seu tesouro, o dragão ficou furioso e soltou fogo.', 'Quando o pirata tentou roubar o seu tesouro, o dragão ficou furioso e soltou fogo.', cena('montanha_nevada'), elenco(['dragao', 'parado']), { acao_dragao: 'bravo', humor: 'suspense', p_pirata: true }),
+  T('a menina chora', 'A menina ganhou um presente, mas o cachorro rasgou tudo e ela começou a chorar.', 'A menina ganhou um presente, mas o cachorro rasgou tudo e ela começou a chorar.', cena('casa_quarto'), [], { acao_menina: 'chorando', humor: 'triste', p_menina: true, p_cachorro: true }),
+  T('o gato fica bravo', 'O gato estava dormindo no quarto. O cachorro latiu, acordou o gato e o gato ficou muito bravo.', 'O cachorro latiu, acordou o gato e o gato ficou muito bravo.', cena('casa_quarto'), elenco(['gato', 'dormindo']), { acao_gato: 'bravo', p_gato: true, p_cachorro: true }),
+  T('o dragão furioso', 'Um dragão vivia na montanha nevada. Quando o pirata tentou roubar o seu tesouro, o dragão ficou furioso e soltou fogo.', 'Quando o pirata tentou roubar o seu tesouro, o dragão ficou furioso e soltou fogo.', cena('montanha'), elenco(['dragao', 'parado']), { acao_dragao: 'bravo', humor: 'suspense', p_pirata: true }),
   T('o dinossauro acha um presente', 'Um dinossauro achou um presente na floresta e pulou de alegria.', 'Um dinossauro achou um presente na floresta e pulou de alegria.', cena(null), [], { cenario: 'floresta', p_dinossauro: true, p_presente: true, acao_dinossauro: 'pulando' }),
   T('corrida de carro', 'O menino e o macaco apostaram corrida de carro pela cidade.', 'O menino e o macaco apostaram corrida de carro pela cidade.', cena(null), [], { cenario: 'cidade', p_carro: true, mov_carro: 'correndo' }),
   // fala de verdade (sem pontuação), frase pela metade e nada novo
