@@ -1,7 +1,7 @@
 // Tela do "Fale e a Cena Nasce": você conta uma história e ela vira desenho animado. A cada pausa da fala vai UMA chamada
 // (jogada "cena") e a resposta do Jev mexe em tudo: o lugar se monta como um livro pop-up, o céu muda com a hora, o tempo
 // cai em partículas, a luz da cena acompanha a hora e o clima, e cada personagem entra, sai e faz a sua ação.
-import { desenho, cabecaDe, DEFS } from './bonecos.js';
+import { desenho, cabecaDe, DEFS, resolverAparencia, camadasAparencia } from './bonecos.js';
 import { cenario as desenharCenario } from './cenarios.js';
 import { criarClima } from './clima.js';
 
@@ -265,14 +265,16 @@ export async function montar(api) {
 
   // ---------- personagens e objetos ----------
   const VEICULO_ACAO = { parado: 'parado', andando: 'andando', correndo: 'correndo', voando: 'voando' };
-  function criarAtor(id) {
+  function criarAtor(id, perfil = null) {
     const item = CAT[id];
-    const d = desenho(item, u);
+    const aparencia = perfil || resolverAparencia(item);
+    const d = desenho(item, u, aparencia);
     const [x0, y0, w, h] = d.caixa;
-    const alt = item.altura * (item.fundo ? 1 : ESCALA[item.tipo] || 1);
+    const alt = item.altura * (item.fundo ? 1 : ESCALA[item.tipo] || 1) * (aparencia?.escala || 1);
     const larg = alt * w / h;
     const no = el('div', { class: `cn-ator tipo-${item.tipo}${item.veiculo ? ' veiculo' : ''}${item.voa ? ' flutua' : ''} id-${id} ac-parado`, 'data-id': id });
     no.style.setProperty('--w', larg.toFixed(1)); no.style.setProperty('--h', alt);
+    if (aparencia?.corCorpo) no.style.setProperty('--cn-corpo', aparencia.corCorpo);
     const cab = cabecaDe(item);
     no.style.setProperty('--hx', cab.x); no.style.setProperty('--hy', cab.y); no.style.setProperty('--oy', cab.olhos);
     if (cab.boca) { no.style.setProperty('--bx', cab.boca[0]); no.style.setProperty('--by', cab.boca[1]); }
@@ -282,7 +284,7 @@ export async function montar(api) {
     if (id === 'balao') no.querySelector('.cn-mov').insertAdjacentHTML('afterbegin', '<i class="cn-cordao"></i>');
     const tag = el('div', { class: 'cn-tag' });
     etiquetas.append(tag);
-    const ator = { id, item, el: no, acao: 'parado', ordem: ++ordem, x: 800, y: CHAO_PERS, saindo: false, olha: item.olha, alt, larg, fx: no.querySelector('.cn-fx'), corpo: no.querySelector('.cn-corpo'), tag };
+    const ator = { id, item, aparencia, el: no, acao: 'parado', ordem: ++ordem, x: 800, y: CHAO_PERS, saindo: false, olha: item.olha, alt, larg, altBase: alt / (aparencia?.escala || 1), largBase: larg / (aparencia?.escala || 1), fx: no.querySelector('.cn-fx'), corpo: no.querySelector('.cn-corpo'), tag };
     return ator;
   }
   function equipar(a, tipo, slot = 'mao-d') {
@@ -330,10 +332,25 @@ export async function montar(api) {
     }
   }
 
-  function entrar(id, acao, atraso = 0) {
+  function atualizarAparencia(a, texto = '') {
+    const aparencia = texto && typeof texto === 'object' ? texto : resolverAparencia(a.item, texto, a.aparencia);
+    if (!aparencia) return;
+    a.aparencia = aparencia;
+    const sprite = a.corpo.querySelector('.cn-sprite');
+    sprite.querySelector('.cn-aparencia')?.remove();
+    const camada = camadasAparencia(aparencia);
+    const face = sprite.querySelector('.cn-face-overlay');
+    if (face) face.insertAdjacentHTML('beforebegin', camada);
+    else sprite.insertAdjacentHTML('beforeend', camada);
+    a.larg = a.largBase * (aparencia.escala || 1);
+    a.el.style.setProperty('--w', a.larg.toFixed(1));
+    a.el.style.setProperty('--h', a.alt);
+    if (aparencia.corCorpo) a.el.style.setProperty('--cn-corpo', aparencia.corCorpo);
+  }
+  function entrar(id, acao, atraso = 0, aparencia = null) {
     if ([...atores.values()].some((ator) => Object.values(ator.equipamentos || {}).includes(id))) return;
-    if (atores.has(id)) { const a = atores.get(id); if (a.saindo) { a.saindo = false; a.el.classList.remove('sai'); } if (acao) definirAcao(a, acao); return; }
-    const a = criarAtor(id);
+    if (atores.has(id)) { const a = atores.get(id); if (a.saindo) { a.saindo = false; a.el.classList.remove('sai'); } if (aparencia) atualizarAparencia(a, aparencia); if (acao) definirAcao(a, acao); return; }
+    const a = criarAtor(id, aparencia);
     if (a.item.casa) a.el.classList.add('cn-casa-catalogo');
     atores.set(id, a);
     definirAcao(a, acao || 'parado', true);
@@ -701,6 +718,10 @@ export async function montar(api) {
   function aplicar(r, texto) {
     const trechoRecente = texto.startsWith(textoAplicado) ? texto.slice(textoAplicado.length).trim() : texto;
     textoAplicado = texto;
+    for (const ator of atores.values()) {
+      const textoAtor = contextoAparencia(ator.item, trechoRecente);
+      if (!ator.saindo && textoAtor) atualizarAparencia(ator, textoAtor);
+    }
     const mudou = {};
     const [lug, pl] = top(r.cenario);
     const novoLugar = lug && lug !== 'manter' && lug !== cena.lugar && pl >= L.lugar ? lug : null;
@@ -739,7 +760,8 @@ export async function montar(api) {
     const lotados = [...atores.values()].filter((a) => !a.saindo && a.item.tipo === 'personagem').length;
     entram.sort((a, b) => b[1] - a[1]).forEach(([it], i) => {
       if (it.tipo === 'personagem' && lotados + i >= 9) return;
-      entrar(it.id, acaoDe(it.id), (novoLugar ? 520 : 0) + i * 150);
+      const perfil = resolverAparencia(it, contextoAparencia(it, trechoRecente));
+      entrar(it.id, acaoDe(it.id), (novoLugar ? 520 : 0) + i * 150, perfil);
       const [expressao, probabilidade] = top(r['expressao_' + it.id]);
       const ator = atores.get(it.id);
       if (ator && expressao && expressao !== 'manter' && probabilidade >= L.acao) aplicarExpressao(ator, expressao);
@@ -763,6 +785,21 @@ export async function montar(api) {
       const termo = semAcento(nome).replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
       return termo.length > 1 && normal.includes(' ' + termo + ' ');
     });
+  }
+  function contextoAparencia(item, texto) {
+    const norm = semAcento(texto);
+    const termos = (alvo) => [alvo.nome, ...(alvo.apelidos || [])]
+      .map((nome) => semAcento(nome).replace(/[^a-z0-9]+/g, ' ').trim()).filter((nome) => nome.length > 1);
+    const posicao = (alvo) => {
+      const matches = termos(alvo).map((nome) => ({ pos: norm.indexOf(nome), len: nome.length })).filter((x) => x.pos >= 0);
+      return matches.sort((a, b) => a.pos - b.pos)[0];
+    };
+    const atual = posicao(item);
+    if (!atual) return '';
+    const proximos = spec.catalogo.map((alvo) => ({ ...posicao(alvo), id: alvo.id }))
+      .filter((match) => match.pos > atual.pos).sort((a, b) => a.pos - b.pos);
+    const fim = proximos[0]?.pos ?? norm.length;
+    return texto.slice(atual.pos, fim);
   }
   function aplicarCombate(texto) {
     const t = semAcento(texto);

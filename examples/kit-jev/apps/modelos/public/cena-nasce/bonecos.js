@@ -52,7 +52,7 @@ export const DEFS = `
 `;
 
 // ---------- peças comuns ----------
-const pele = 'url(#cn-g-pele)';
+const pele = 'var(--cn-corpo, url(#cn-g-pele))';
 const brilho = (d) => `<path d="${d}" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="6" stroke-linecap="round"/>`;
 // braço: retângulo arredondado pendurado no ombro + mão; o grupo gira em volta do ombro (topo da caixa)
 function braco(lado, x, y, comp, larg, manga, mao = pele) {
@@ -271,13 +271,80 @@ const COMPOSTO = { menina: 'menina', menino: 'menino', vovo: 'vovo', pirata: 'pi
   super_heroi: 'heroi', bruxa: 'bruxa', mago: 'mago', leao: 'leao', sapo: 'sapo', unicornio: 'unicornio', bau: 'bau', flor: 'flor', foguete: 'foguete', barco: 'barco' };
 
 // devolve { caixa:[x,y,w,h], svg } de um item do catálogo; u(arquivo) = endereço do asset
-export function desenho(item, u) {
+export function camadasAparencia(perfil) {
+  if (!perfil) return '';
+  const roupaId = ['tunica', 'colete', 'capa', 'armadura', 'aventureiro'].includes(perfil.roupa) ? perfil.roupa : 'tunica';
+  const acessorioId = ['faixa', 'broche', 'cachecol', 'chapeu', 'oculos', 'mochila'].includes(perfil.acessorio) ? perfil.acessorio : 'broche';
+  const corRoupa = CORES_APARENCIA.some((x) => x.cor === perfil.corRoupa) ? perfil.corRoupa : '#2f80ed';
+  const corAcessorio = CORES_APARENCIA.some((x) => x.cor === perfil.corAcessorio) ? perfil.corAcessorio : '#f2bd35';
+  const roupa = roupaId === 'capa'
+    ? `<path d="M82 140 Q128 154 174 140 L196 246 Q128 222 60 246 Z" fill="${corRoupa}" opacity=".92"/>`
+    : roupaId === 'armadura'
+      ? `<path d="M90 148 Q128 132 166 148 L178 226 L128 248 L78 226 Z" fill="${corRoupa}" stroke="#d7dce5" stroke-width="7"/><path d="M98 164 H158 M93 184 H163 M88 204 H168" stroke="#fff" stroke-opacity=".45" stroke-width="5"/>`
+      : `<path d="M91 150 Q128 136 165 150 L176 232 Q128 248 80 232 Z" fill="${corRoupa}"/><path d="M104 154 L128 178 L152 154" fill="none" stroke="${corAcessorio}" stroke-width="8"/>`;
+  const acessorio = acessorioId === 'chapeu'
+    ? `<path d="M78 71 Q128 47 178 71 L170 92 Q128 78 86 92 Z" fill="${corAcessorio}"/><path d="M68 93 Q128 80 188 93 L184 104 Q128 92 72 104 Z" fill="${corAcessorio}"/>`
+    : acessorioId === 'cachecol'
+      ? `<path d="M91 142 Q128 157 165 142 L160 160 Q128 176 96 160 Z" fill="${corAcessorio}"/>`
+      : acessorioId === 'oculos'
+        ? `<g fill="none" stroke="${corAcessorio}" stroke-width="7"><circle cx="105" cy="118" r="16"/><circle cx="151" cy="118" r="16"/><path d="M121 118 H135"/></g>`
+        : acessorioId === 'mochila'
+          ? `<path d="M43 158 Q54 145 72 152 L82 218 Q56 231 40 214 Z" fill="${corAcessorio}" stroke="#fff" stroke-width="4"/>`
+          : acessorioId === 'faixa'
+            ? `<path d="M78 102 Q128 88 178 102 L175 112 Q128 100 81 112 Z" fill="${corAcessorio}"/>`
+            : `<path d="M112 181 L128 166 L144 181 L128 196 Z" fill="${corAcessorio}" stroke="#fff" stroke-width="3"/>`;
+  return `<g class="cn-aparencia" data-roupa="${roupaId}" data-acessorio="${acessorioId}" pointer-events="none">${roupa}${acessorio}</g>`;
+}
+
+export function desenho(item, u, perfil = null) {
   const c = COMPOSTO[item.id];
   const desenhoBase = c
     ? CORPOS[c](u)
     : { caixa: CAIXA[item.id] || [16, 16, 224, 224], svg: `<image href="${u(item.img)}" x="0" y="0" width="256" height="256"/>` };
   const face = item.tipo === 'personagem' ? faceOverlay() : '';
-  return { ...desenhoBase, svg: desenhoBase.svg + face + socketsDe(item) };
+  return { ...desenhoBase, svg: desenhoBase.svg + camadasAparencia(perfil) + face + socketsDe(item) };
+}
+const CORES_APARENCIA = [
+  { id: 'azul', cor: '#2f80ed' }, { id: 'vermelho', cor: '#e94b4b' }, { id: 'verde', cor: '#39a96b' },
+  { id: 'roxo', cor: '#8b5cf6' }, { id: 'amarelo', cor: '#f2bd35' }, { id: 'rosa', cor: '#e45a9a' },
+  { id: 'laranja', cor: '#ed8736' }, { id: 'turquesa', cor: '#26a69a' },
+];
+const TEXTO_APARENCIA = (texto) => String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const hashAparencia = (id) => [...String(id)].reduce((hash, char) => (hash * 31 + char.charCodeAt(0)) >>> 0, 2166136261);
+
+// Perfil determinístico; qualificadores citados no trecho substituem só os campos correspondentes.
+export function resolverAparencia(item, texto = '', anterior = null) {
+  if (!item || item.tipo !== 'personagem') return null;
+  const hash = hashAparencia(item.id);
+  const base = anterior || {
+    corCorpo: ['#f2bf8f', '#9b5a3c', '#e6b98a', '#6b8e5a'][hash % 4],
+    corRoupa: CORES_APARENCIA[hash % CORES_APARENCIA.length].cor,
+    corAcessorio: CORES_APARENCIA[(hash + 3) % CORES_APARENCIA.length].cor,
+    escala: [0.88, 0.96, 1.04, 1.12][hash % 4],
+    roupa: ['tunica', 'colete', 'capa', 'aventureiro'][hash % 4],
+    acessorio: ['faixa', 'broche', 'cachecol', 'chapeu'][hash % 4],
+  };
+  const t = TEXTO_APARENCIA(texto);
+  const corpoExplicit = /\b(pele|corpo|rosto)\b/.test(t);
+  const cor = CORES_APARENCIA.find(({ id }) => {
+    const base = id.endsWith('o') ? id.slice(0, -1) : id;
+    return new RegExp(`\\b(?:${id}|${base}a)s?\\b`).test(t);
+  });
+  if (cor && corpoExplicit) base.corCorpo = cor.cor;
+  else if (cor) base.corRoupa = cor.cor;
+  if (/\b(pequeno|baixinho|miudo|baixa)\b/.test(t)) base.escala = 0.82;
+  if (/\b(grande|gigante|enorme|alto|alta)\b/.test(t)) base.escala = 1.18;
+  const roupa = [
+    [/\b(capa|manto)\b/, 'capa'], [/\b(armadura|armado|armada)\b/, 'armadura'],
+    [/\b(colete)\b/, 'colete'], [/\b(tunica|vestido|camisa)\b/, 'tunica'],
+  ].find(([regex]) => regex.test(t));
+  if (roupa) base.roupa = roupa[1];
+  const acessorio = [
+    [/\b(chapeu|capacete|coroa)\b/, 'chapeu'], [/\b(cachecol|lenco)\b/, 'cachecol'],
+    [/\b(oculos)\b/, 'oculos'], [/\b(mochila)\b/, 'mochila'],
+  ].find(([regex]) => regex.test(t));
+  if (acessorio) base.acessorio = acessorio[1];
+  return base;
 }
 
 // onde fica a cabeça de cada um (para pôr os efeitos: zzz, lágrimas, notas…): [x, y] em fração da caixa
