@@ -417,10 +417,12 @@ export async function montar(api) {
     a.aparencia = aparencia;
     const sprite = a.corpo.querySelector('.cn-sprite');
     sprite.querySelector('.cn-aparencia')?.remove();
-    const camada = camadasAparencia(aparencia);
-    const face = sprite.querySelector('.cn-face-overlay');
-    if (face) face.insertAdjacentHTML('beforebegin', camada);
-    else sprite.insertAdjacentHTML('beforeend', camada);
+    const camada = camadasAparencia(aparencia, a.item.id);
+    if (camada) {
+      const face = sprite.querySelector('.cn-face-overlay');
+      if (face) face.insertAdjacentHTML('beforebegin', camada);
+      else sprite.insertAdjacentHTML('beforeend', camada);
+    }
     a.larg = a.largBase * (aparencia.escala || 1);
     a.el.style.setProperty('--w', a.larg.toFixed(1));
     a.el.style.setProperty('--h', a.alt);

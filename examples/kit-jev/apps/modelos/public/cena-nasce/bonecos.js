@@ -476,8 +476,16 @@ const COMPOSTO = {
 };
 
 // devolve { caixa:[x,y,w,h], svg } de um item do catálogo; u(arquivo) = endereço do asset
-export function camadasAparencia(perfil) {
+const USA_ROUPA = new Set([
+  'menina', 'menino', 'vovo', 'pirata', 'robo', 'alien', 'alienigena', 'astronauta', 'heroi', 'super_heroi', 'bruxa', 'mago',
+  'zumbi', 'mc_zumbi', 'mc_zumbi_bebe', 'esqueleto', 'mc_esqueleto', 'mc_esqueleto_wither',
+  'aldeao', 'mc_villager', 'campones', 'guerreiro', 'pers_guerreiro', 'soldado',
+  'apresentador', 'tecnico_celular', 'analista_dados', 'atendente_recepcao'
+]);
+
+export function camadasAparencia(perfil, itemId = '') {
   if (!perfil) return '';
+  if (itemId && !USA_ROUPA.has(itemId)) return '';
   const roupaId = ['tunica', 'colete', 'capa', 'armadura', 'aventureiro'].includes(perfil.roupa) ? perfil.roupa : 'tunica';
   const acessorioId = ['faixa', 'broche', 'cachecol', 'chapeu', 'oculos', 'mochila'].includes(perfil.acessorio) ? perfil.acessorio : 'broche';
   const corRoupa = CORES_APARENCIA.some((x) => x.cor === perfil.corRoupa) ? perfil.corRoupa : '#2f80ed';
@@ -634,8 +642,10 @@ export function desenho(item, u, perfil = null, { voxel = false } = {}) {
   const desenhoBase = c
     ? CORPOS[c](u)
     : { caixa: CAIXA[item.id] || [16, 16, 224, 224], svg: `<image href="${u(item.img)}" x="0" y="0" width="256" height="256"/>` };
-  const face = item.tipo === 'personagem' ? faceOverlay() : '';
-  return { ...desenhoBase, svg: desenhoBase.svg + camadasAparencia(perfil) + face + socketsDe(item) };
+  const usaRoupa = USA_ROUPA.has(item.id) || (c && USA_ROUPA.has(c));
+  const camada = usaRoupa ? camadasAparencia(perfil, item.id) : '';
+  const face = item.tipo === 'personagem' && usaRoupa ? faceOverlay() : '';
+  return { ...desenhoBase, svg: desenhoBase.svg + camada + face + socketsDe(item) };
 }
 const CORES_APARENCIA = [
   { id: 'azul', cor: '#2f80ed' }, { id: 'vermelho', cor: '#e94b4b' }, { id: 'verde', cor: '#39a96b' },
