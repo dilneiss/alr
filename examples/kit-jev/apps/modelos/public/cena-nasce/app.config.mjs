@@ -245,6 +245,14 @@ const AMBIENTE = new Set([
   'montanha', 'vulcao', 'cachoeira', 'rio', 'lago', 'ilha', 'caverna', 'ponte', 'muro', 'montanha_russa',
 ]);
 for (const c of CATALOGO) if (AMBIENTE.has(c.id) && c.tipo === 'objeto') c.ambiente = true;
+
+// arte própria: o emoji genérico de castelo 🏰 virava um castelo de pedra no meio da areia
+// "bolo de chocolate" é UM objeto: sem esse alias, a barra de chocolate entrava junto do bolo
+const BOLO = CATALOGO.find((c) => c.id === 'bolo');
+if (BOLO && !BOLO.apelidos.includes('bolo de chocolate')) BOLO.apelidos.push('bolo de chocolate', 'bolo de aniversario');
+
+const CASTELO_AREIA = CATALOGO.find((c) => c.id === 'castelo_de_areia');
+if (CASTELO_AREIA) { CASTELO_AREIA.img = 'emoji/castelo_de_areia.svg'; CASTELO_AREIA.emoji = '🏖️'; }
 const POR_ID = Object.fromEntries(CATALOGO.map((c) => [c.id, c]));
 const corta = (s, n) => { s = String(s ?? '').replace(/\s+/g, ' ').trim(); return s.length > n ? '…' + s.slice(-n) : s; };
 const semAcento = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -254,7 +262,7 @@ const PALAVRAS = Object.fromEntries(CATALOGO.map((c) => [c.id, [c.nome, ...c.ape
 // para que o cap de alvos por trecho fique com quem acabou de ser mencionado.
 // Alias usado por vários itens ("menina" existe no catálogo base e em três contos) não decide
 // sozinho: personagem de conto só entra por alias único ou quando o título do conto é citado.
-function citados(texto) {
+function citados(texto, { prefereMc = false } = {}) {
   const t = ' ' + semAcento(texto).replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ') + ' ';
   const usos = new Map();
   for (const c of CATALOGO) for (const p of PALAVRAS[c.id]) usos.set(p, (usos.get(p) || 0) + 1);
@@ -263,21 +271,80 @@ function citados(texto) {
     const tit = semAcento(c.historia).replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
     return tit.length > 2 && t.includes(' ' + tit + ' ');
   };
+
+  // 1) tudo o que casou, com o trecho ocupado: "castelo de areia" casa o nome inteiro E a palavra
+  //    "castelo" de outro item — os dois não podem entrar, senão a cena ganha dois castelos
   const achados = [];
   for (const c of CATALOGO) {
-    let menor = -1, soGenerico = true;
+    let soGenerico = true;
     for (const p of PALAVRAS[c.id]) {
-      const i = t.indexOf(' ' + p + ' ');
-      if (i < 0) continue;
-      if (menor < 0 || i < menor) menor = i;
+      let de = t.indexOf(' ' + p + ' ');
+      if (de < 0) continue;
       if ((usos.get(p) || 0) <= 1) soGenerico = false;
+      while (de >= 0) {
+        const ini = de + 1;
+        achados.push({ id: c.id, ini, fim: ini + p.length, len: p.length, item: c });
+        de = t.indexOf(' ' + p + ' ', de + p.length);
+      }
     }
-    if (menor < 0) continue;
     if (c.historia && soGenerico && !tituloNaFala(c)) continue;
-    achados.push([c.id, menor]);
   }
-  return achados.sort((a, b) => a[1] - b[1]).map(([id]) => id);
+
+  // 2) o mais longo manda: quem cai dentro de um trecho já tomado é descartado (aliases repetidos idem)
+  // no modo blocos, o mesmo trecho deve valer o item mc_ (empate exato: "esqueletos" → mc_esqueleto)
+  achados.sort((a, b) => b.len - a.len || a.ini - b.ini
+    || ((b.id.startsWith('mc_') ? 1 : 0) - (a.id.startsWith('mc_') ? 1 : 0)) * (prefereMc ? 1 : -1));
+  const tomados = [];
+  const escolhidos = [];
+  const ids = new Set();
+  for (const a of achados) {
+    if (ids.has(a.id)) continue;
+    const batalha = tomados.some((x) => a.ini < x.fim && x.ini < a.fim);
+    if (batalha) continue;
+    tomados.push({ ini: a.ini, fim: a.fim });
+    ids.add(a.id);
+    escolhidos.push(a);
+  }
+  return escolhidos.sort((a, b) => a.ini - b.ini).map((a) => a.id);
 }
+// Objetos citados por um nome que só existe nele ("castelo de areia", "castelo", "disco voador") entram na
+// cena mesmo se o Jev não confirmar: o risco aqui é a pessoa citar e nada aparecer. Personagem não entra
+// por aqui — para ele a ação/expressão importa, e quem decide isso é o Jev.
+export function citadosFortes(texto, { soComposto = false, permiteMc = false } = {}) {
+  const t = ' ' + semAcento(texto).replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ') + ' ';
+  const usos = new Map();
+  for (const c of CATALOGO) for (const p of PALAVRAS[c.id]) usos.set(p, (usos.get(p) || 0) + 1);
+  const achados = [];
+  for (const c of CATALOGO) {
+    if (c.ambiente) continue;
+    if (!permiteMc && c.id.startsWith('mc_')) continue;   // fora do modo blocos, nada de textura de Minecraft
+    if (!soComposto && c.tipo !== 'objeto') continue;     // personagem: só pelo Jev
+    for (const p of PALAVRAS[c.id]) {
+      if (soComposto && !p.includes(' ')) continue;       // só nome composto
+      if (!soComposto && !p.includes(' ') && (usos.get(p) || 0) > 1) continue;   // palavra ambígua fica com o Jev
+      let de = t.indexOf(' ' + p + ' ');
+      while (de >= 0) {
+        const ini = de + 1;
+        achados.push({ id: c.id, ini, fim: ini + p.length, len: p.length });
+        de = t.indexOf(' ' + p + ' ', de + p.length);
+      }
+    }
+  }
+  // o nome maior manda: "castelo de areia" vence "castelo" no mesmo trecho
+  achados.sort((a, b) => b.len - a.len || a.ini - b.ini);
+  const tomados = [];
+  const escolhidos = [];
+  const ids = new Set();
+  for (const a of achados) {
+    if (ids.has(a.id)) continue;
+    if (tomados.some((x) => a.ini < x.fim && x.ini < a.fim)) continue;
+    tomados.push({ ini: a.ini, fim: a.fim });
+    ids.add(a.id);
+    escolhidos.push(a);
+  }
+  return escolhidos.sort((a, b) => a.ini - b.ini).map((a) => a.id);
+}
+
 const nomeDe = (lista, id) => (lista.find((x) => x.id === id) || {}).nome;
 const valido = (lista, id) => lista.some((x) => x.id === id);
 
@@ -500,7 +567,16 @@ export default {
         const trecho = corta(d.novo || d.historia, 500);
         // os alvos do turno saem do trecho NOVO: usar o histórico acumulado mantinha os mesmos
         // quatro lugares ocupados para sempre e o que acabou de ser dito nunca entrava em cena.
-        let recentes = citados(corta(trecho, 500));
+        let recentes = citados(corta(trecho, 500), { prefereMc: !!d.modoMinecraft });
+        if (!d.modoMinecraft) {
+          // "Caldeirão", "Poção", "Gato Preto" existem nas duas listas: fora do Minecraft vale o item normal,
+          // e o que só existe em blocos fica de fora (senão a cena de fantasia ganha textura de Minecraft).
+          recentes = recentes.flatMap((id) => {
+            if (!id.startsWith('mc_')) return [id];
+            const base = id.slice(3);
+            return POR_ID[base] ? [base] : [];
+          });
+        }
         if (d.modoMinecraft) {
           // no modo blocos, "zumbi"/"esqueleto"/"lobo" citados valem a versão mc_ correspondente
           const mc = recentes.filter((id) => id.startsWith('mc_'));

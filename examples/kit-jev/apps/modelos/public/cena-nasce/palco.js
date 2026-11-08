@@ -7,6 +7,7 @@ import { criarClima } from './clima.js';
 import { tocarSomBloco, tocarSomPop, tocarSomDano, tocarSomLevelUp } from './audio-minecraft.js';
 import { ROTEIROS, roteirosDoModo } from './roteiros.mjs';
 import { criarPlayer } from './reproduzir.js';
+import { citadosFortes } from './app.config.mjs';
 
 
 // a história da demonstração (▶): duas viradas — a neve na praia e o dragão que só queria bolo
@@ -818,7 +819,8 @@ export async function montar(api) {
 
     // quem entra, quem sai e o que cada um faz (o castelo não entra como objeto quando ele já é o cenário; a casa,
     // quando a cena é dentro de casa)
-    const redundante = (id) => (id === 'castelo' && cena.lugar === 'castelo') || (id === 'casa' && ['quarto', 'escola'].includes(cena.lugar));
+    const redundante = (id) => (id === 'castelo' && cena.lugar === 'castelo')
+      || (id === 'casa' && (String(cena.lugar || '').startsWith('casa') || cena.lugar === 'escola'));
     const entram = [];
     for (const it of spec.catalogo) {
       const p = r['p_' + it.id] && r['p_' + it.id].noul;
@@ -838,6 +840,13 @@ export async function montar(api) {
       if (ac) definirAcao(a, ac);
       const [expressao, probabilidade] = top(r['expressao_' + a.id]);
       if (expressao && expressao !== 'manter' && probabilidade >= L.acao) aplicarExpressao(a, expressao);
+    }
+    // nome composto citado ("castelo de areia") entra mesmo se o Jev não confirmou: é específico demais para faltar
+    for (const id of citadosFortes(trechoRecente, { permiteMc: modoMinecraft })) {
+      const it = CAT[id];
+      if (!it || it.ambiente || redundante(id)) continue;
+      if (atores.has(id) && !atores.get(id).saindo) continue;
+      if (!entram.some(([x]) => x.id === id)) entram.push([it, 1]);
     }
     const lotados = [...atores.values()].filter((a) => !a.saindo && a.item.tipo === 'personagem').length;
     entram.sort((a, b) => b[1] - a[1]).forEach(([it], i) => {

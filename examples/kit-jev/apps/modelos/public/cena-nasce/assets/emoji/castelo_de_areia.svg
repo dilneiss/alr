@@ -1,0 +1,49 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="areiaClara" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7dfae"/>
+      <stop offset="1" stop-color="#e8c184"/>
+    </linearGradient>
+    <linearGradient id="areiaEscura" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e6c089"/>
+      <stop offset="1" stop-color="#d3a469"/>
+    </linearGradient>
+  </defs>
+
+  <!-- montinho de areia -->
+  <ellipse cx="128" cy="216" rx="104" ry="22" fill="#e9c78f" opacity=".55"/>
+  <path d="M28 214c14-10 42-15 100-15s86 5 100 15Z" fill="#dcb279" opacity=".7"/>
+
+  <!-- torre esquerda -->
+  <g>
+    <path d="M56 214V150h14v-10h12v10h14v-10h12v10h14v64Z" fill="url(#areiaEscura)"/>
+    <rect x="69" y="176" width="15" height="20" rx="7" fill="#b98a55"/>
+  </g>
+
+  <!-- torre direita -->
+  <g>
+    <path d="M170 214V138h14v-12h12v12h14v-12h12v12h14v76Z" fill="url(#areiaEscura)"/>
+    <rect x="186" y="166" width="15" height="20" rx="7" fill="#b98a55"/>
+  </g>
+
+  <!-- torre central -->
+  <g>
+    <path d="M96 214V118h12v-12h10v12h10v-12h10v12h12v96Z" fill="url(#areiaClara)"/>
+    <path d="M120 214v-40a18 18 0 0 1 36 0v40Z" fill="#c79a61"/>
+    <circle cx="110" cy="140" r="6" fill="#c79a61"/>
+    <circle cx="152" cy="140" r="6" fill="#c79a61"/>
+  </g>
+
+  <!-- muralha de ligação -->
+  <path d="M84 214v-38h88v38Z" fill="url(#areiaClara)"/>
+  <path d="M84 176h88v8H84Z" fill="#dcb279" opacity=".75"/>
+
+  <!-- bandeirinha -->
+  <rect x="124" y="62" width="4" height="34" rx="2" fill="#a97a49"/>
+  <path d="M128 64l34 11-34 11Z" fill="#ff7a6b"/>
+
+  <!-- brilho e conchinhas -->
+  <circle cx="66" cy="120" r="4" fill="#fff" opacity=".7"/>
+  <path d="M196 208c4-6 10-6 14 0Z" fill="#f6e2bd"/>
+  <path d="M44 206c4-5 9-5 13 0Z" fill="#f6e2bd"/>
+</svg>
