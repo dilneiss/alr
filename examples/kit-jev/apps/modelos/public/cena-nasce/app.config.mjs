@@ -39,6 +39,8 @@ const CATALOGO_BASE = [
   { id: 'mago', nome: 'mago', tipo: 'personagem', img: 'mago.png', altura: 186, olha: 'frente', apelidos: ['feiticeiro', 'bruxo', 'mágico', 'magos'] },
   { id: 'fada', nome: 'fada', tipo: 'personagem', img: 'fada.png', altura: 150, olha: 'frente', voa: true, apelidos: ['fadinha', 'fada-madrinha', 'fadas'] },
   { id: 'super_heroi', nome: 'super-herói', tipo: 'personagem', img: 'super_heroi.png', altura: 180, olha: 'frente', apelidos: ['super-heroína', 'herói', 'heroína', 'super-heróis'] },
+  { id: 'zumbi', nome: 'zumbi', tipo: 'personagem', img: 'emoji/1f9df.svg', altura: 176, olha: 'frente', apelidos: ['zumbis', 'zombie', 'morto-vivo', 'mortos-vivos'] },
+  { id: 'esqueleto', nome: 'esqueleto', tipo: 'personagem', img: 'emoji/1f480.svg', altura: 176, olha: 'frente', apelidos: ['esqueletos', 'skeleton', 'homem de ossos'] },
   // objetos
   { id: 'castelo', nome: 'castelo', tipo: 'objeto', img: 'castelo.png', altura: 330, olha: 'frente', fundo: true, apelidos: ['palácio', 'castelos'] },
   { id: 'casa', nome: 'casa', tipo: 'objeto', img: 'casa.png', altura: 250, olha: 'frente', fundo: true, apelidos: ['casinha', 'cabana', 'casas'] },

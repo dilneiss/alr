@@ -49,6 +49,14 @@ export const DEFS = `
 <linearGradient id="cn-g-bau" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9823f"/><stop offset="1" stop-color="#7a4520"/></linearGradient>
 <linearGradient id="cn-g-bau-tampa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dc9450"/><stop offset="1" stop-color="#8f5427"/></linearGradient>
 <radialGradient id="cn-g-tesouro" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff6c2" stop-opacity=".95"/><stop offset=".6" stop-color="#ffd84a" stop-opacity=".45"/><stop offset="1" stop-color="#ffd84a" stop-opacity="0"/></radialGradient>
+<linearGradient id="cn-g-zumbi-pele" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#76ba53"/><stop offset="1" stop-color="#4e8334"/></linearGradient>
+<linearGradient id="cn-g-zumbi-roupa" x1="0" y1="0" x2=".6" y2="1"><stop offset="0" stop-color="#3b6991"/><stop offset="1" stop-color="#1f3d57"/></linearGradient>
+<linearGradient id="cn-g-esqueleto" x1="0" y1="0" x2=".4" y2="1"><stop offset="0" stop-color="#f8f6ee"/><stop offset="1" stop-color="#cfcab6"/></linearGradient>
+<linearGradient id="cn-g-espectral" x1="0" y1="0" x2=".5" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".95"/><stop offset=".6" stop-color="#e0f7fa" stop-opacity=".85"/><stop offset="1" stop-color="#b2ebf2" stop-opacity=".4"/></linearGradient>
+<linearGradient id="cn-g-sereia-cauda" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00d2d3"/><stop offset="1" stop-color="#0984e3"/></linearGradient>
+<linearGradient id="cn-g-sereia-conchas" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9ff3"/><stop offset="1" stop-color="#f368e0"/></linearGradient>
+<linearGradient id="cn-g-armadura" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8fafc"/><stop offset=".5" stop-color="#cbd5e1"/><stop offset="1" stop-color="#64748b"/></linearGradient>
+<linearGradient id="cn-g-tunica-aldeao" x1="0" y1="0" x2=".4" y2="1"><stop offset="0" stop-color="#8d5b34"/><stop offset="1" stop-color="#5a381d"/></linearGradient>
 `;
 
 // ---------- peças comuns ----------
@@ -69,7 +77,7 @@ const cabeca = (u, arq, x = 0, y = 0, t = 256) => `<image class="cab" href="${u(
 function socketsDe(item) {
   if (item.tipo !== 'personagem') return '';
   const c = COMPOSTO[item.id];
-  const anchors = c && ['menina', 'menino', 'vovo', 'pirata', 'robo', 'alien', 'astronauta', 'heroi', 'bruxa', 'mago'].includes(c)
+  const anchors = c && ['menina', 'menino', 'vovo', 'pirata', 'robo', 'alien', 'astronauta', 'heroi', 'bruxa', 'mago', 'zumbi', 'esqueleto', 'fantasma', 'fada', 'sereia', 'aldeao', 'guerreiro'].includes(c)
     ? { 'socket-mao-d': [187, 294], 'socket-mao-e': [69, 294], 'socket-costas': [54, 220] }
     : { 'socket-mao-d': [190, 190], 'socket-mao-e': [66, 190], 'socket-costas': [48, 144] };
   return Object.entries(anchors).map(([name, [x, y]]) => {
@@ -264,11 +272,98 @@ const CORPOS = {
       + `<g class="chama-foguete"><image href="${u('fx-fogo.png')}" x="94" y="228" width="68" height="88"/></g>`
       + `<g class="cn-recorte" clip-path="url(#cn-clip-foguete)"><image href="${u('foguete.png')}" x="0" y="0" width="256" height="256" transform="rotate(-45 128 128)"/></g>`,
   }),
+  zumbi: (u) => ({
+    caixa: [12, 12, 232, 352],
+    svg: perna('e', 104, 308, 42, 18, '#1e3850', '#2d3748', 111, 350, 18, 10)
+      + perna('d', 134, 308, 42, 18, '#1e3850', '#2d3748', 145, 350, 18, 10)
+      + `<path d="M106 322 l8 6 l-6 8 Z" fill="url(#cn-g-zumbi-pele)"/>`
+      + braco('e', 76, 236, 50, 17, 'url(#cn-g-zumbi-roupa)', 'url(#cn-g-zumbi-pele)')
+      + braco('d', 161, 236, 50, 17, 'url(#cn-g-zumbi-roupa)', 'url(#cn-g-zumbi-pele)')
+      + `<path d="M88 226 C108 218 148 218 168 226 L174 292 L162 284 L152 296 L138 286 L124 298 L110 286 L98 296 L82 286 Z" fill="url(#cn-g-zumbi-roupa)"/>`
+      + `<path d="M88 288 L168 288 L170 324 L142 320 L130 330 L118 318 L90 326 Z" fill="#1b2a38"/>`
+      + cabeca(u, 'emoji/1f9df.svg', 16, 10, 224),
+  }),
+  esqueleto: (u) => ({
+    caixa: [16, 12, 224, 352],
+    svg: `<g class="perna perna-e"><rect x="108" y="302" width="11" height="48" rx="4" fill="url(#cn-g-esqueleto)"/><circle cx="113.5" cy="326" r="6" fill="#a8a29e"/><ellipse cx="113" cy="350" rx="14" ry="7" fill="#e7e5e4"/></g>`
+      + `<g class="perna perna-d"><rect x="137" y="302" width="11" height="48" rx="4" fill="url(#cn-g-esqueleto)"/><circle cx="142.5" cy="326" r="6" fill="#a8a29e"/><ellipse cx="143" cy="350" rx="14" ry="7" fill="#e7e5e4"/></g>`
+      + `<g class="braco braco-e"><rect x="80" y="238" width="10" height="52" rx="4" fill="url(#cn-g-esqueleto)"/><circle cx="85" cy="292" r="6" fill="#e7e5e4"/></g>`
+      + `<g class="braco braco-d"><rect x="166" y="238" width="10" height="52" rx="4" fill="url(#cn-g-esqueleto)"/><circle cx="171" cy="292" r="6" fill="#e7e5e4"/></g>`
+      + `<rect x="94" y="232" width="68" height="66" rx="12" fill="#1c1917"/>`
+      + `<rect x="123" y="224" width="10" height="78" rx="4" fill="url(#cn-g-esqueleto)"/>`
+      + `<path d="M98 244 h60 M102 256 h52 M106 268 h44 M110 280 h36" stroke="url(#cn-g-esqueleto)" stroke-width="5" stroke-linecap="round"/>`
+      + `<path d="M112 292 L144 292 L136 308 L120 308 Z" fill="url(#cn-g-esqueleto)"/>`
+      + cabeca(u, 'emoji/1f480.svg', 20, 12, 216),
+  }),
+  fantasma: (u) => ({
+    caixa: [12, 12, 232, 340],
+    svg: `<path d="M68 220 C68 180 188 180 188 220 L196 312 C196 332 176 336 166 318 C156 336 136 336 128 318 C120 336 100 336 90 318 C80 336 60 328 60 308 Z" fill="url(#cn-g-espectral)"/>`
+      + `<g class="braco braco-e"><path d="M72 230 Q46 250 56 276 Q70 264 80 246 Z" fill="url(#cn-g-espectral)"/></g>`
+      + `<g class="braco braco-d"><path d="M184 230 Q210 250 200 276 Q186 264 176 246 Z" fill="url(#cn-g-espectral)"/></g>`
+      + cabeca(u, 'fantasma.png', 16, 12, 224),
+  }),
+  fada: (u) => ({
+    caixa: [10, 10, 236, 350],
+    svg: `<g class="asas-fada" opacity=".82">
+        <path d="M72 210 Q10 160 38 230 Q68 246 80 234 Z" fill="#e0f2fe" stroke="#38bdf8" stroke-width="2"/>
+        <path d="M184 210 Q246 160 218 230 Q188 246 176 234 Z" fill="#e0f2fe" stroke="#38bdf8" stroke-width="2"/>
+      </g>`
+      + perna('e', 106, 306, 42, 14, pele, '#f472b6', 112, 348, 14, 8)
+      + perna('d', 136, 306, 42, 14, pele, '#f472b6', 142, 348, 14, 8)
+      + braco('e', 78, 236, 48, 14, pele) + braco('d', 164, 236, 48, 14, pele)
+      + `<path d="M96 226 C112 218 144 218 160 226 L178 300 C180 308 174 314 164 314 L92 314 C82 314 76 308 78 300 Z" fill="#fbcfe8"/>`
+      + `<path d="M84 290 Q128 316 172 290" fill="none" stroke="#f472b6" stroke-width="4"/>`
+      + cabeca(u, 'fada.png', 16, 10, 224),
+  }),
+  sereia: (u) => ({
+    caixa: [10, 10, 236, 350],
+    svg: braco('e', 76, 234, 50, 16, pele) + braco('d', 164, 234, 50, 16, pele)
+      + `<path d="M96 226 C112 218 144 218 160 226 L164 278 L92 278 Z" fill="${pele}"/>`
+      + `<circle cx="112" cy="242" r="14" fill="url(#cn-g-sereia-conchas)"/><circle cx="144" cy="242" r="14" fill="url(#cn-g-sereia-conchas)"/>`
+      + `<path d="M90 274 H166 L158 316 Q146 348 116 350 Q94 330 98 296 Z" fill="url(#cn-g-sereia-cauda)"/>`
+      + `<path d="M116 346 Q90 356 68 340 Q104 366 118 356 Q132 366 168 340 Q146 356 120 346 Z" fill="url(#cn-g-sereia-cauda)"/>`
+      + cabeca(u, 'sereia.png', 16, 12, 224),
+  }),
+  aldeao: (u) => ({
+    caixa: [14, 12, 228, 352],
+    svg: perna('e', 104, 314, 38, 18, '#5a381d', '#29180c', 111, 352, 18, 9)
+      + perna('d', 134, 314, 38, 18, '#5a381d', '#29180c', 145, 352, 18, 9)
+      + braco('e', 74, 236, 54, 20, 'url(#cn-g-tunica-aldeao)', pele)
+      + braco('d', 162, 236, 54, 20, 'url(#cn-g-tunica-aldeao)', pele)
+      + `<path d="M90 224 C108 216 148 216 166 224 L176 324 L80 324 Z" fill="url(#cn-g-tunica-aldeao)"/>`
+      + `<path d="M94 224 L128 252 L162 224" fill="none" stroke="#4d7c0f" stroke-width="12" stroke-linecap="round"/>`
+      + `<rect x="86" y="282" width="84" height="10" rx="3" fill="#29180c"/>`
+      + cabeca(u, 'emoji/1f9d1-200d-1f33e.svg', 16, 12, 224),
+  }),
+  guerreiro: (u) => ({
+    caixa: [10, 10, 236, 352],
+    svg: perna('e', 102, 304, 46, 20, '#475569', '#1e293b', 110, 350, 19, 10)
+      + perna('d', 134, 304, 46, 20, '#475569', '#1e293b', 146, 350, 19, 10)
+      + `<rect x="100" y="318" width="22" height="24" rx="6" fill="url(#cn-g-armadura)"/>`
+      + `<rect x="134" y="318" width="22" height="24" rx="6" fill="url(#cn-g-armadura)"/>`
+      + braco('e', 72, 232, 52, 19, 'url(#cn-g-armadura)', '#334155')
+      + braco('d', 165, 232, 52, 19, 'url(#cn-g-armadura)', '#334155')
+      + `<path d="M88 226 C108 218 148 218 168 226 L174 296 L82 296 Z" fill="url(#cn-g-armadura)"/>`
+      + `<rect x="66" y="226" width="30" height="24" rx="8" fill="url(#cn-g-armadura)"/>`
+      + `<rect x="160" y="226" width="30" height="24" rx="8" fill="url(#cn-g-armadura)"/>`
+      + `<rect x="84" y="286" width="88" height="12" rx="4" fill="#78350f"/>`
+      + `<rect x="120" y="283" width="16" height="18" rx="3" fill="#fbbf24"/>`
+      + cabeca(u, 'emoji/1f9dd.svg', 16, 10, 224),
+  }),
 };
 
 // quem usa corpo desenhado (o resto é a imagem sozinha)
-const COMPOSTO = { menina: 'menina', menino: 'menino', vovo: 'vovo', pirata: 'pirata', robo: 'robo', alienigena: 'alien', astronauta: 'astronauta',
-  super_heroi: 'heroi', bruxa: 'bruxa', mago: 'mago', leao: 'leao', sapo: 'sapo', unicornio: 'unicornio', bau: 'bau', flor: 'flor', foguete: 'foguete', barco: 'barco' };
+const COMPOSTO = {
+  menina: 'menina', menino: 'menino', vovo: 'vovo', pirata: 'pirata', robo: 'robo', alienigena: 'alien', astronauta: 'astronauta',
+  super_heroi: 'heroi', bruxa: 'bruxa', mago: 'mago', leao: 'leao', sapo: 'sapo', unicornio: 'unicornio', bau: 'bau', flor: 'flor', foguete: 'foguete', barco: 'barco',
+  zumbi: 'zumbi', mc_zumbi: 'zumbi', mc_zumbi_bebe: 'zumbi',
+  esqueleto: 'esqueleto', mc_esqueleto: 'esqueleto', mc_esqueleto_wither: 'esqueleto',
+  fantasma: 'fantasma',
+  fada: 'fada',
+  sereia: 'sereia',
+  mc_villager: 'aldeao', aldeao: 'aldeao', campones: 'aldeao',
+  pers_guerreiro: 'guerreiro', guerreiro: 'guerreiro', soldado: 'guerreiro',
+};
 
 // devolve { caixa:[x,y,w,h], svg } de um item do catálogo; u(arquivo) = endereço do asset
 export function camadasAparencia(perfil) {
