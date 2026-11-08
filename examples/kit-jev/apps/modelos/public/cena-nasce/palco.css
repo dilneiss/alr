@@ -1074,7 +1074,7 @@
 }
 
 /* ==========================================================================
-   ROTEIRO PRONTO: teleprompter e cartões de modo (assistir / ler)
+   ROTEIRO PRONTO: teleprompter (o texto aparece, a pessoa fala)
    ========================================================================== */
 .cn-teleprompter {
   position: absolute; left: 50%; bottom: 96px; translate: -50% 0; z-index: 14;
@@ -1112,7 +1112,6 @@
   transition: background .2s, border-color .2s;
 }
 .cn-cartao-acao:hover { background: #f2fde0; border-color: var(--lima); }
-.cn-cartao-acao.on { background: var(--lima); border-color: var(--lima); color: #14210a; }
 .cn-cartao-acao:focus-visible { outline: 3px solid var(--tinta); outline-offset: 2px; }
 
 /* 9:16 do estúdio: o teleprompter sobe para não brigar com a legenda grande */

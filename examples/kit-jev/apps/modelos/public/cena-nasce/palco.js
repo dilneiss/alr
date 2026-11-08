@@ -6,7 +6,7 @@ import { cenario as desenharCenario } from './cenarios.js';
 import { criarClima } from './clima.js';
 import { tocarSomBloco, tocarSomPop, tocarSomDano, tocarSomLevelUp } from './audio-minecraft.js';
 import { ROTEIROS, roteirosDoModo } from './roteiros.mjs';
-import { criarPlayer, duracaoDaFrase } from './reproduzir.js';
+import { criarPlayer } from './reproduzir.js';
 import { criarMicrofone } from '../_motor/voz.js';
 
 // a história da demonstração (▶): duas viradas — a neve na praia e o dragão que só queria bolo
@@ -135,7 +135,7 @@ export async function montar(api) {
   // teleprompter: a frase atual do roteiro, com contador e controles
   const teleFrase = el('p', { class: 'cn-tele-frase', 'aria-live': 'polite', 'aria-atomic': 'true', text: '' });
   const teleContador = el('span', { class: 'cn-tele-progresso', text: '' });
-  const teleModo = el('span', { class: 'cn-tele-modo', text: '▶ assistindo' });
+  const teleModo = el('span', { class: 'cn-tele-modo', text: '🎙 fale a frase' });
   const teleProxima = el('button', { class: 'cn-tele-btn', type: 'button', onclick: () => proximaFrase() }, ['Próxima frase →']);
   const teleParar = el('button', { class: 'cn-tele-btn ghost', type: 'button', onclick: () => pararRoteiro() }, ['Parar']);
   const teleprompter = el('div', { class: 'cn-teleprompter oculto' }, [
@@ -144,16 +144,15 @@ export async function montar(api) {
     el('div', { class: 'cn-tele-acoes' }, [teleProxima, teleParar]),
   ]);
 
-  // modos de reprodução: assistir (a história se conta sozinha) ou ler (a pessoa conta e a cena acompanha)
-  let modoReproducao = (() => { try { return localStorage.getItem('cn_modo_reproducao') === 'ler' ? 'ler' : 'assistir'; } catch (_) { return 'assistir'; } })();
+  // o roteiro é um teleprompter: aparece o texto e a pessoa conta em voz alta
   const modoDosCartoes = () => (modoMinecraft ? 'minecraft' : presetAtual === 'livre' ? 'livre' : presetAtual);
   const ROTULO_MODOS = {
-    livre: 'ou assista/leia uma história livre:',
-    minecraft: 'ou viva uma aventura no Minecraft:',
-    hubiss: 'ou veja uma apresentação da Hubiss:',
-    celit: 'ou veja uma apresentação do CELIT:',
-    datasnap: 'ou veja uma apresentação do DataSnap:',
-    qualhora: 'ou veja uma apresentação da QualHora:',
+    livre: 'ou pratique com uma história livre:',
+    minecraft: 'ou pratique uma aventura no Minecraft:',
+    hubiss: 'ou pratique uma apresentação da Hubiss:',
+    celit: 'ou pratique uma apresentação do CELIT:',
+    datasnap: 'ou pratique uma apresentação do DataSnap:',
+    qualhora: 'ou pratique uma apresentação da QualHora:',
   };
 
   const prontasCont = el('div', { class: 'cn-prontas' });
@@ -166,17 +165,11 @@ export async function montar(api) {
         el('span', { class: 'cn-cartao-titulo', text: rot.titulo }),
         el('div', { class: 'cn-cartao-acoes' }, [
           el('button', {
-            class: 'cn-cartao-acao' + (modoReproducao === 'assistir' ? ' on' : ''),
+            class: 'cn-cartao-acao',
             type: 'button',
-            title: 'A história se conta sozinha, com voz e tudo',
-            onclick: () => iniciarRoteiro(rot.id, 'assistir'),
-          }, ['▶ assistir']),
-          el('button', {
-            class: 'cn-cartao-acao' + (modoReproducao === 'ler' ? ' on' : ''),
-            type: 'button',
-            title: 'Você conta em voz alta e a cena acompanha; ou use Próxima frase',
-            onclick: () => iniciarRoteiro(rot.id, 'ler'),
-          }, ['🎙 ler']),
+            title: 'Mostra o texto e a cena nasce conforme você conta em voz alta',
+            onclick: () => iniciarRoteiro(rot.id),
+          }, ['🎙 falar agora']),
         ]),
       ]);
       prontasCont.append(cartao);
@@ -980,33 +973,11 @@ export async function montar(api) {
     mostrarLegenda('', '');
     desenharChips();
   }
-  // ---------- roteiro: assistir (com voz ou silencioso) e ler (voz da pessoa) ----------
+  // ---------- roteiro: o texto aparece e SÓ avança com a sua voz (ou pelo botão) ----------
   let playerAtual = null;
   let transcriptSessao = '';
-  let timerFala = null;
   let micLeitura = null;
   let ultimoDito = '';
-
-  const vozDisponivel = () => typeof window !== 'undefined'
-    && 'speechSynthesis' in window && typeof window.SpeechSynthesisUtterance === 'function';
-  // navegador sem voz pt-BR (ou TTS que "termina" na hora) não pode virar avanço instantâneo:
-  // nesses casos a história anda pelo tempo estimado da frase
-  let vozQuebrada = false;
-  let autoDoPlayer = false;   // quem agenda o avanço: o player (tempo) ou a fala
-  const temVozPt = () => {
-    try {
-      const vozes = window.speechSynthesis.getVoices?.() || [];
-      return vozes.some((v) => /^pt/i.test(v.lang || ''));
-    } catch (_) { return false; }
-  };
-  // com o som desligado o assistir é silencioso: quem anda é o temporizador, não o TTS
-  const comVozAgora = () => modoReproducao === 'assistir' && som.ligado && vozDisponivel() && !vozQuebrada && temVozPt();
-
-  const limparTimerFala = () => { if (timerFala) { clearTimeout(timerFala); timerFala = null; } };
-  function pararFala() {
-    limparTimerFala();
-    if (vozDisponivel()) { try { window.speechSynthesis.cancel(); } catch (_) {} }
-  }
 
   function fecharEscuta() {
     // a API do microfone é { ligar, desligar, ligado } — sem 'parar'
@@ -1014,12 +985,10 @@ export async function montar(api) {
     ultimoDito = '';
   }
 
-  // toda troca de roteiro invalida a sessão anterior: nenhum callback atrasado (fala, microfone, sleep)
-  // pode mexer na cena do roteiro novo
+  // toda troca de roteiro invalida a sessão anterior: callback atrasado do microfone não mexe na cena nova
   let sessaoRoteiro = 0;
   function pararRoteiro() {
     sessaoRoteiro += 1;
-    pararFala();
     fecharEscuta();
     if (playerAtual) { try { playerAtual.parar(); } catch (_) {} }
     playerAtual = null;
@@ -1029,62 +998,16 @@ export async function montar(api) {
   function proximaFrase() {
     if (!playerAtual) return;
     const st = playerAtual.estado();
-    pararFala();
     playerAtual.proxima(st.indice);
   }
 
   // cada frase entra na transcrição da sessão e vai INTEIRA para a mesma entrada do microfone
   function aoFrase(frase, indice) {
     transcriptSessao = (transcriptSessao + ' ' + frase).trim();
-    const dono = playerAtual;              // quem chamou agora é o dono desta fala
-    const sessao = sessaoRoteiro;
-    const total = dono ? dono.total : 0;
+    const total = playerAtual ? playerAtual.total : 0;
     teleFrase.textContent = frase;
     teleContador.textContent = `frase ${indice + 1} de ${total}`;
     aoFalar(transcriptSessao);
-    if (modoReproducao === 'assistir') falarFrase(frase, indice, dono, sessao);
-  }
-
-  // só avança se a sessão e o player ainda forem os mesmos: callback atrasado de um roteiro
-  // encerrado não pode empurrar o roteiro novo (os dois começam no índice 0)
-  const aindaVale = (dono, sessao) => sessao === sessaoRoteiro && playerAtual === dono && dono;
-
-  // avança pelo tempo estimado: caminho de segurança quando não há voz pt-BR de verdade
-  function avancarPorTempo(frase, indice, dono, sessao, fator = 1) {
-    limparTimerFala();   // sem isso o timeout de segurança órfão cancela a próxima frase
-    timerFala = setTimeout(() => {
-      timerFala = null;
-      if (aindaVale(dono, sessao)) dono.proxima(indice);
-    }, Math.round(duracaoDaFrase(frase) * fator));
-  }
-
-  function falarFrase(frase, indice, dono, sessao) {
-    // sem voz: se o player já anda sozinho pelo tempo, não agenda outro avanço (pularia frase)
-    if (!comVozAgora()) { if (!autoDoPlayer) avancarPorTempo(frase, indice, dono, sessao); return; }
-    pararFala();
-    const avancar = () => {
-      if (!aindaVale(dono, sessao)) return;   // cancelar o TTS dispara onend/onerror depois
-      if (dono.estado().indice !== indice) return;   // gatilho atrasado da frase que já passou
-      pararFala();
-      dono.proxima(indice);
-    };
-    const comecou = Date.now();
-    try {
-      const u = new SpeechSynthesisUtterance(frase);
-      u.lang = 'pt-BR';
-      u.rate = 0.98;
-      u.onend = () => {
-        // "terminou" em 250 ms uma frase de vários segundos: não há voz de verdade, cai no tempo
-        if (Date.now() - comecou < 250) { vozQuebrada = true; avancarPorTempo(frase, indice, dono, sessao); return; }
-        avancar();
-      };
-      u.onerror = () => { vozQuebrada = true; avancarPorTempo(frase, indice, dono, sessao); };
-      timerFala = setTimeout(avancar, Math.round(duracaoDaFrase(frase) * 1.5));
-      window.speechSynthesis.speak(u);
-    } catch (_) {
-      vozQuebrada = true;
-      avancarPorTempo(frase, indice, dono, sessao);
-    }
   }
 
   function abrirEscuta() {
@@ -1100,27 +1023,22 @@ export async function montar(api) {
       onEstado: (estado, msg) => {
         if (estado === 'ouvindo') teleModo.textContent = '🎙 ouvindo você';
         else if (estado === 'erro') { teleModo.textContent = '🎙 leitura manual'; teleContador.textContent = msg || 'microfone indisponível'; }
-        else teleModo.textContent = '🎙 lendo em voz alta';
       },
       onNivel: () => {},
     });
     try { micLeitura.ligar(); } catch (_) {}
   }
 
-  async function iniciarRoteiro(id, modo = modoReproducao) {
+  async function iniciarRoteiro(id) {
     const rot = ROTEIROS[id];
     if (!rot) return;
     pararDemo();
     pararRoteiro();
     const minhaSessao = sessaoRoteiro;   // pararRoteiro acabou de incrementar
     novaHistoria();
-    modoReproducao = modo === 'ler' ? 'ler' : 'assistir';
-    try { localStorage.setItem('cn_modo_reproducao', modoReproducao); } catch (_) {}
     desenharProntas();
     transcriptSessao = '';
-    const comVoz = comVozAgora();
-    autoDoPlayer = modoReproducao === 'assistir' && !comVoz;
-    teleModo.textContent = modoReproducao === 'ler' ? '🎙 lendo em voz alta' : comVoz ? '▶ assistindo com voz' : '▶ assistindo';
+    teleModo.textContent = '🎙 fale a frase';
     teleFrase.textContent = '';
     teleContador.textContent = 'preparando…';
     teleprompter.classList.remove('oculto');
@@ -1129,12 +1047,10 @@ export async function montar(api) {
     playerAtual = criarPlayer({
       roteiro: rot,
       aoFrase: (frase, indice) => { if (minhaSessao === sessaoRoteiro) aoFrase(frase, indice); },
-      aoFim: () => { teleContador.textContent = 'fim da história'; pararFala(); fecharEscuta(); },
-      // com voz, quem manda é o fim da fala; sem voz (ou lendo), o modo decide
-      autoAvancar: autoDoPlayer,
+      aoFim: () => { teleContador.textContent = 'fim da história'; fecharEscuta(); },
     });
     playerAtual.tocar();
-    if (modoReproducao === 'ler') abrirEscuta();
+    abrirEscuta();
   }
 
   function alternarModoMinecraft() {
@@ -1293,8 +1209,8 @@ export async function montar(api) {
     },
     estado: () => ({ ...cena, elenco: elenco() }),
     nova: () => { pararRoteiro(); novaHistoria(); },
-    roteiro: (id, modo) => iniciarRoteiro(id, modo),
-    reproducao: () => ({ modo: modoReproducao, estado: playerAtual ? playerAtual.estado() : null, frase: teleFrase.textContent }),
+    roteiro: (id) => iniciarRoteiro(id),
+    reproducao: () => ({ estado: playerAtual ? playerAtual.estado() : null, frase: teleFrase.textContent, contador: teleContador.textContent }),
     pararRoteiro: () => pararRoteiro(),
   };
 

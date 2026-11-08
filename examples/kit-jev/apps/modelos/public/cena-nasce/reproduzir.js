@@ -1,10 +1,9 @@
 /**
- * Player de roteiro: módulo puro (sem DOM, sem fetch) para poder rodar no node e no navegador.
+ * Player de roteiro: módulo puro (sem DOM, sem fetch, sem voz) para rodar no node e no navegador.
  *
- * Modo assistir: avança sozinho pelo temporizador — ou pelo palco, que chama `proxima()` quando a
- * voz termina de falar a frase. Modo ler: `receberFala(delta)` recebe o texto novo do microfone e
- * avança quando o que foi dito cobre a frase atual. Em ambos os caminhos a frase é consumida uma vez
- * só: temporizador atrasado e fala atrasada não podem fazer a mesma frase aparecer duas vezes.
+ * Ele NÃO narra e NÃO anda sozinho: emite a frase atual uma vez (para o teleprompter e para a cena),
+ * e só avança quando o palco manda — pela fala reconhecida do microfone (`receberFala`) ou pelo
+ * botão "Próxima frase" (`proxima`). Assim a história nunca conta por cima de quem está lendo.
  */
 
 const PALAVRAS_VAZIAS = new Set(['de', 'da', 'do', 'das', 'dos', 'a', 'o', 'as', 'os', 'e', 'que', 'com', 'para', 'na', 'no', 'um', 'uma', 'em', 'por', 'se', 'ao', 'mais', 'mas']);
@@ -36,44 +35,27 @@ export function cobertura(alvo, dito) {
   return coberturaDetalhe(alvo, dito).quanto;
 }
 
-const palavrasDoTexto = (t) => (String(t).match(/[\p{L}\p{N}]+/gu) || []).length;
-
-/** Duração confortável de leitura/fala: 150 ms por palavra, entre 1,6 s e 6 s. */
-export const duracaoDaFrase = (frase) => Math.min(6000, Math.max(1600, palavrasDoTexto(frase) * 150));
-
 export function criarPlayer({
   roteiro,
   aoFrase = () => {},
   aoFim = () => {},
-  agendar = (fn, ms) => setTimeout(fn, ms),
-  cancelar = (h) => clearTimeout(h),
   coberturaMinima = 0.6,
-  // assistir sem voz e os testes usam o temporizador; assistir com TTS e o modo ler dirigem por evento
-  autoAvancar = true,
 } = {}) {
   const frases = (roteiro?.frases || []).filter((f) => typeof f === 'string' && f.trim());
   const total = frases.length;
   let estado = 'idle';
   let indice = 0;
-  let timer = null;
+  let morto = false;
   const consumidas = new Set();
   let ditoAcumulado = '';
 
-  const limparTimer = () => { if (timer !== null) { cancelar(timer); timer = null; } };
-
-  // desligar de verdade: mata o temporizador e nenhum callback volta a tocar no palco
-  let morto = false;
-  const parar = () => { morto = true; limparTimer(); estado = 'parado'; };
-
-
   const encerrar = () => {
-    limparTimer();
     if (morto) return;
     estado = 'fim';
     aoFim();
   };
 
-  // Emite a frase atual uma única vez e (se for o caso) programa o avanço automático.
+  // Emite a frase atual uma única vez; quem avança é o palco.
   const emitir = () => {
     if (morto) return;
     if (indice >= total) { encerrar(); return; }
@@ -81,47 +63,29 @@ export function criarPlayer({
       consumidas.add(indice);
       aoFrase(frases[indice], indice);
     }
-    limparTimer();
-    if (autoAvancar) timer = agendar(avancar, duracaoDaFrase(frases[indice]));
   };
 
   const avancar = () => {
-    limparTimer();
-    if (morto || estado === 'parado') return;
-    if (estado === 'pausado') return;
-    if (estado === 'fim') return;
+    if (morto) return;
     indice += 1;
     if (indice >= total) { encerrar(); return; }
     emitir();
   };
 
   const tocar = () => {
-    if (morto) return;
-    if (estado === 'tocando') return;
+    if (morto || estado === 'tocando') return;
     if (estado === 'fim' || indice >= total) return;
     estado = 'tocando';
     emitir();
   };
 
-  const pausar = () => {
-    if (estado !== 'tocando') return;
-    limparTimer();
-    estado = 'pausado';
-  };
+  /** Desliga de verdade: nenhum callback volta a mexer no palco. */
+  const parar = () => { morto = true; estado = 'parado'; };
 
-  const retomar = () => {
-    if (estado !== 'pausado') return;
-    estado = 'tocando';
-    limparTimer();
-    if (autoAvancar) timer = agendar(avancar, duracaoDaFrase(frases[indice] || ''));
-  };
-
-  /** Avanço manual (botão "Próxima", fim da fala, timeout de segurança). Idempotente por frase. */
+  /** Avanço manual. Com `indiceEsperado`, gatilho atrasado é ignorado (não pula frase). */
   const proxima = (indiceEsperado) => {
     if (morto) return false;
     if (estado === 'fim' || indice >= total) return false;
-    // dois gatilhos para o mesmo passo (onend do TTS + timeout de segurança) não podem pular frase:
-    // chame proxima(indiceDaFrase) e só o primeiro passa; o atrasado cai aqui
     if (indiceEsperado !== undefined && indiceEsperado !== indice) return false;
     if (estado === 'idle') { tocar(); return true; }
     avancar();
@@ -129,8 +93,8 @@ export function criarPlayer({
   };
 
   /**
-   * Texto novo vindo do microfone. Só a frase atual pode ser concluída por fala, e uma frase já
-   * consumida nunca é reaberta — repetir a mesma coisa não faz a história voltar.
+   * Texto novo vindo do microfone. Só a frase atual pode ser concluída por fala, uma vez, e com
+   * pelo menos duas palavras-chave casadas — repetir a frase antiga não faz a história voltar.
    */
   const receberFala = (texto) => {
     if (morto || estado === 'fim' || total === 0) return false;
@@ -139,17 +103,15 @@ export function criarPlayer({
     ditoAcumulado = (ditoAcumulado + ' ' + pedaco).trim();
     const alvo = frases[indice] || '';
     const { quanto, acertos, total: quantasChave } = coberturaDetalhe(alvo, ditoAcumulado);
-    // cobertura alta sozinha não basta: uma palavra só ("menina") não pode consumir a frase inteira
     if (acertos < Math.min(2, quantasChave)) return false;
     if (quanto < coberturaMinima) return false;
     ditoAcumulado = '';
-    // primeira frase: a fala só dá o start (ela aparece e toca normalmente)
-    if (estado === 'idle') { tocar(); return true; }
+    if (estado === 'idle') { tocar(); return true; }   // a fala só dá o start
     avancar();
     return true;
   };
 
-  /** Chamado quando a sessão recomeça (nova história): apaga o texto dito, mantém o roteiro. */
+  /** Recomeço da escuta: apaga só o texto dito, mantém o roteiro e a frase atual. */
   const zerarEscuta = () => { ditoAcumulado = ''; };
 
   const descrever = () => ({
@@ -157,8 +119,7 @@ export function criarPlayer({
     indice,
     total,
     frase: frases[indice] || null,
-    progresso: total ? Math.min(1, (indice + (estado === 'fim' ? 0 : 0)) / total) : 0,
   });
 
-  return { tocar, pausar, retomar, proxima, receberFala, zerarEscuta, parar, estado: descrever, total, frases };
+  return { tocar, proxima, receberFala, zerarEscuta, parar, estado: descrever, total, frases };
 }
