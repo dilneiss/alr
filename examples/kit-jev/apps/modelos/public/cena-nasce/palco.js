@@ -32,6 +32,22 @@ const PRONTAS_MINECRAFT = [
   { rotulo: '🏡 Construindo a vila', texto: 'Na planície ensolarada, os aldeões construíram uma casa de blocos com Steve.' },
   { rotulo: '🏹 Noite com esqueletos', texto: 'Anoiteceu na floresta de blocos e esqueletos com arco começaram a atirar flechas.' },
 ];
+const PRONTAS_HUBISS = [
+  { rotulo: '🏢 Pitch Hubiss Dropshipping', texto: 'Um lojista queria vender no Mercado Livre e Shopee sem ter estoque próprio. Com a Hubiss, as vendas caem direto no painel, a etiqueta oficial do frete sai impressa na hora e o caminhão já leva a encomenda. Sem comissões abusivas e com logística 100% automatizada!' },
+  { rotulo: '🏷️ Expedição com Etiqueta Oficial', texto: 'Na doca do galpão da Hubiss, a esteira rolante trouxe os pacotes e a impressora soltou a etiqueta oficial do frete na hora!' },
+];
+const PRONTAS_CELIT = [
+  { rotulo: '📱 Pitch CELIT Assistência e ERP', texto: 'O cliente chegou com a tela do celular quebrada e com pressa. O técnico abriu a Ordem de Serviço no CELIT com fotos de avarias, trocou a peça na bancada e imprimiu o termo legal de garantia de 90 dias. O cliente pagou no balcão e saiu sorrindo com segurança jurídica total!' },
+  { rotulo: '🏪 Trade-in no Balcão da Loja', texto: 'No balcão da loja CELIT, o lojista avaliou a pilha de smartphones seminovos, gerou o termo de procedência com IMEI e vendeu no caixa PDV.' },
+];
+const PRONTAS_DATASNAP = [
+  { rotulo: '⚡ Pitch DataSnap Big Data ClickHouse', texto: 'A empresa gastava fortunas com servidores de logs lentos que travavam nas buscas. Ao ligar o DataSnap em ClickHouse, bilhões de registros foram consultados em milissegundos com um painel holográfico em tempo real, economizando 80% do custo de nuvem!' },
+  { rotulo: '🖲️ Análise de Logs com IA', texto: 'No datacenter futurista da DataSnap, o engenheiro de dados ativou a IA de observabilidade para monitorar os racks de servidores em tempo real.' },
+];
+const PRONTAS_QUALHORA = [
+  { rotulo: '⏰ Pitch QualHora Agendamento Online', texto: 'A clínica vivia com horários vazios e pacientes que esqueciam as consultas. Com a QualHora, os clientes agendam pelo link em menos de um minuto e recebem lembretes automáticos no WhatsApp. A agenda ficou cheia e as faltas caíram 98%!' },
+  { rotulo: '🗓️ Grade de Horários Lotada', texto: 'Na recepção da clínica QualHora, o calendário de agendamento na parede preencheu todos os horários e o WhatsApp confirmou os atendimentos.' },
+];
 const MUNDO_L = 1600, MUNDO_A = 900;
 const PROF = { longe: 0.22, meio: 0.55, perto: 1, frente: 1.35, luzes: 0.55 };
 const CHAO_PERS = 716, CHAO_FUNDO = 664, CHAO_FRENTE = 742;
@@ -73,8 +89,7 @@ export async function montar(api) {
   const { el, sleep } = ui;
   const reduz = !!ui.reduzMovimento;
   const L = spec.limiar;
-  let modoMinecraft = false;
-  try { modoMinecraft = localStorage.getItem('cn_modo_minecraft') === '1'; } catch (_) {}
+  let modoMinecraft = false, modoEstudio = false, presetAtual = 'livre';
   const CAT = Object.fromEntries(spec.catalogo.map((c) => [c.id, c]));
   const classeAcao = Object.fromEntries(spec.acoes.map((a) => [a.id, a.classeCss || `ac-${a.id}`]));
   const familiaAcao = Object.fromEntries(spec.acoes.filter((a) => a.familia).map((a) => [a.id, `familia-${a.familia}`]));
@@ -146,8 +161,25 @@ export async function montar(api) {
 
   const prontasCont = el('div', { class: 'cn-prontas' });
   function desenharProntas() {
-    prontasCont.replaceChildren(el('span', { text: modoMinecraft ? 'ou viva uma aventura no Minecraft:' : 'ou comece por uma destas:' }));
-    const lista = modoMinecraft ? PRONTAS_MINECRAFT : PRONTAS;
+    let lista = PRONTAS;
+    let label = 'ou comece por uma destas:';
+    if (modoMinecraft) {
+      lista = PRONTAS_MINECRAFT;
+      label = 'ou viva uma aventura no Minecraft:';
+    } else if (presetAtual === 'hubiss') {
+      lista = PRONTAS_HUBISS;
+      label = 'ou veja uma apresentação da Hubiss:';
+    } else if (presetAtual === 'celit') {
+      lista = PRONTAS_CELIT;
+      label = 'ou veja uma apresentação do CELIT:';
+    } else if (presetAtual === 'datasnap') {
+      lista = PRONTAS_DATASNAP;
+      label = 'ou veja uma apresentação do DataSnap:';
+    } else if (presetAtual === 'qualhora') {
+      lista = PRONTAS_QUALHORA;
+      label = 'ou veja uma apresentação da QualHora:';
+    }
+    prontasCont.replaceChildren(el('span', { text: label }));
     lista.forEach((p) => {
       const bt = el('button', { class: 'cn-pronta', type: 'button', onclick: () => contarPronta(p.texto) }, [p.rotulo]);
       prontasCont.append(bt);
@@ -177,7 +209,33 @@ export async function montar(api) {
     el('span', { text: '⛏️' }),
     el('span', { class: 'cn-txt-mc', text: modoMinecraft ? 'Minecraft: ON' : 'Minecraft: OFF' }),
   ]);
-  raiz.append(defs, el('div', { class: 'cn-palco' }, [tela, legenda]), el('div', { class: 'cn-controles' }, [barra.no, btMinecraft, btNova, som.botao(el)]));
+  const btEstudio = el('button', { class: 'cn-btn-estudio', type: 'button', onclick: () => alternarModoEstudio() }, [
+    el('span', { text: '🎬' }),
+    el('span', { text: 'Estúdio 16:9' }),
+  ]);
+
+  // Barra de Presets de Marcas Corporativas
+  const marcasPresets = [
+    { id: 'hubiss', label: '🏢 Hubiss', lugar: 'galpao_hubiss' },
+    { id: 'celit', label: '📱 CELIT', lugar: 'loja_celit' },
+    { id: 'datasnap', label: '⚡ DataSnap', lugar: 'datacenter_datasnap' },
+    { id: 'qualhora', label: '⏰ QualHora', lugar: 'clinica_qualhora' },
+    { id: 'livre', label: '🎨 Modo Livre', lugar: 'praia' },
+  ];
+  const barPresets = el('div', { class: 'cn-presets-marcas' });
+  marcasPresets.forEach((m) => {
+    const bt = el('button', {
+      class: 'cn-btn-preset' + (presetAtual === m.id ? ' ativo' : ''),
+      type: 'button',
+      onclick: () => selecionarPresetMarca(m)
+    }, [m.label]);
+    barPresets.append(bt);
+  });
+
+  const badgeMetrica = el('div', { class: 'cn-badge-metrica' });
+  tela.append(badgeMetrica);
+
+  raiz.append(defs, barPresets, el('div', { class: 'cn-palco' }, [tela, legenda]), el('div', { class: 'cn-controles' }, [barra.no, btEstudio, btMinecraft, btNova, som.botao(el)]));
   area.append(raiz);
   // durante ou depois da demonstração, falar ou digitar começa uma história nova (a demonstração para na hora)
   barra.no.addEventListener('click', (e) => { if ((historiaDaDemo || ctlDemo) && e.target.closest('.mj-voz-mic')) { pararDemo(); novaHistoria(); } }, true);
@@ -737,6 +795,7 @@ export async function montar(api) {
   function aplicar(r, texto) {
     const trechoRecente = texto.startsWith(textoAplicado) ? texto.slice(textoAplicado.length).trim() : texto;
     textoAplicado = texto;
+    detectarMetricasDeNegocio(texto);
     for (const ator of atores.values()) {
       const textoAtor = contextoAparencia(ator.item, trechoRecente);
       if (!ator.saindo && textoAtor) atualizarAparencia(ator, textoAtor);
@@ -950,6 +1009,64 @@ export async function montar(api) {
       if (sprite) {
         sprite.setAttribute('viewBox', `${d.caixa[0]} ${d.caixa[1]} ${d.caixa[2]} ${d.caixa[3]}`);
         sprite.innerHTML = d.svg;
+      }
+    }
+  }
+
+  function alternarModoEstudio() {
+    modoEstudio = !modoEstudio;
+    btEstudio.classList.toggle('ativo', modoEstudio);
+    raiz.classList.toggle('modo-estudio', modoEstudio);
+    document.body.classList.toggle('modo-estudio', modoEstudio);
+    medir();
+  }
+
+  function selecionarPresetMarca(m) {
+    presetAtual = m.id;
+    barPresets.querySelectorAll('.cn-btn-preset').forEach((b, i) => {
+      b.classList.toggle('ativo', marcasPresets[i].id === m.id);
+    });
+    desenharProntas();
+    if (m.id !== 'livre') {
+      pararDemo();
+      novaHistoria();
+      setTimeout(() => {
+        window.cenaNasce.mostrar({
+          lugar: m.lugar,
+          hora: 'dia',
+          clima: 'limpo',
+          humor: 'alegre',
+          elenco: [['apresentador', 'andando']]
+        });
+      }, 250);
+    }
+  }
+
+  let timerBadge = null;
+  function emitirBadgeMetrica(icone, texto) {
+    clearTimeout(timerBadge);
+    badgeMetrica.replaceChildren(el('span', { text: icone }), el('span', { text }));
+    badgeMetrica.classList.remove('on');
+    void badgeMetrica.offsetWidth;
+    badgeMetrica.classList.add('on');
+    som.ding();
+    timerBadge = setTimeout(() => badgeMetrica.classList.remove('on'), 3600);
+  }
+
+  function detectarMetricasDeNegocio(t) {
+    const norm = semAcento(t);
+    const metricas = [
+      { regex: /zero comiss(ao|oes)|sem comiss(ao|oes)/, icone: '⭐', texto: '0% DE COMISSÃO' },
+      { regex: /98%|98 por cento|redu(cao|z) de faltas/, icone: '🎯', texto: '98% MENOS FALTAS' },
+      { regex: /80%|80 por cento|economia de nuvem/, icone: '💰', texto: '80% ECONOMIA EM NUVEM' },
+      { regex: /garantia de 90 dias|termo legal/, icone: '🛡️', texto: 'GARANTIA DE 90 DIAS' },
+      { regex: /milissegundos|clickhouse/, icone: '⚡', texto: 'CONSULTAS EM MILISSEGUNDOS' },
+      { regex: /logistica 100% automatizada|etiqueta oficial/, icone: '🚚', texto: 'LOGÍSTICA AUTOMATIZADA' },
+    ];
+    for (const m of metricas) {
+      if (m.regex.test(norm)) {
+        emitirBadgeMetrica(m.icone, m.texto);
+        break;
       }
     }
   }

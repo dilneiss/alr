@@ -480,6 +480,246 @@ const LUGARES = {
         rad('mina-luz', [[0, '#ffe699', 0.9], [0.45, '#ff9900', 0.3], [1, '#ff6600', 0]])),
     };
   },
+  galpao_hubiss: (u) => {
+    return {
+      chao: 690,
+      interior: true,
+      ceu: 'ceu-galpao',
+      longe: svg(`<rect x="-200" y="0" width="2000" height="900" fill="#1e2430"/>
+        <!-- estrutura metálica industrial do galpão -->
+        <g stroke="#334155" stroke-width="6">
+          <line x1="-200" y1="200" x2="1800" y2="200"/>
+          <line x1="200" y1="0" x2="200" y2="900"/>
+          <line x1="800" y1="0" x2="800" y2="900"/>
+          <line x1="1400" y1="0" x2="1400" y2="900"/>
+          <line x1="-200" y1="80" x2="600" y2="200"/>
+          <line x1="600" y1="200" x2="1400" y2="80"/>
+        </g>
+        <!-- logo luminoso Hubiss na parede de fundo -->
+        <g transform="translate(800 130)">
+          <rect x="-140" y="-36" width="280" height="72" rx="12" fill="#0f172a" stroke="#38bdf8" stroke-width="4"/>
+          <text x="0" y="14" font-family="system-ui, sans-serif" font-weight="900" font-size="34" fill="#38bdf8" text-anchor="middle" letter-spacing="2">HUBISS</text>
+        </g>`),
+      meio: svg(`<g>
+        <!-- prateleiras porta-paletes altas com caixas de encomendas -->
+        <g fill="#f59e0b">
+          <rect x="-160" y="320" width="280" height="360" rx="4" fill="#1e293b" stroke="#475569" stroke-width="6"/>
+          <rect x="-140" y="360" width="100" height="70" rx="4"/>
+          <rect x="-20" y="360" width="110" height="70" rx="4"/>
+          <rect x="-140" y="470" width="110" height="75" rx="4"/>
+          <rect x="-10" y="470" width="100" height="75" rx="4"/>
+          <rect x="-140" y="580" width="220" height="80" rx="4"/>
+
+          <rect x="1460" y="320" width="300" height="360" rx="4" fill="#1e293b" stroke="#475569" stroke-width="6"/>
+          <rect x="1490" y="360" width="110" height="70" rx="4"/>
+          <rect x="1620" y="360" width="110" height="70" rx="4"/>
+          <rect x="1490" y="470" width="110" height="75" rx="4"/>
+          <rect x="1620" y="470" width="110" height="75" rx="4"/>
+          <rect x="1490" y="580" width="230" height="80" rx="4"/>
+        </g>
+        <!-- doca de expedição no centro com esteira de caixas -->
+        <g>
+          <rect x="260" y="540" width="1080" height="34" rx="6" fill="#334155" stroke="#64748b" stroke-width="4"/>
+          <!-- roletes da esteira -->
+          ${Array.from({ length: 24 }, (_, i) => `<line x1="${290 + i * 44}" y1="544" x2="${290 + i * 44}" y2="570" stroke="#94a3b8" stroke-width="6" stroke-linecap="round"/>`).join('')}
+          <!-- caixas em trânsito com etiqueta oficial -->
+          <g>
+            <rect x="380" y="468" width="94" height="72" rx="4" fill="#d97706"/>
+            <rect x="430" y="480" width="34" height="24" rx="2" fill="#fff"/>
+            <rect x="740" y="456" width="110" height="84" rx="4" fill="#b45309"/>
+            <rect x="800" y="470" width="40" height="28" rx="2" fill="#fff"/>
+            <rect x="1080" y="468" width="94" height="72" rx="4" fill="#d97706"/>
+            <rect x="1130" y="480" width="34" height="24" rx="2" fill="#fff"/>
+          </g>
+        </g>
+      </g>`),
+      perto: svg(`<g>
+        <!-- piso de concreto com faixa amarela de empilhadeira -->
+        <rect x="-200" y="680" width="2000" height="220" fill="#334155"/>
+        <rect x="-200" y="680" width="2000" height="18" fill="#eab308"/>
+        ${Array.from({ length: 22 }, (_, i) => `<rect x="${-180 + i * 90}" y="680" width="40" height="18" fill="#1e293b"/>`).join('')}
+      </g>`),
+      frente: '',
+      luzes: svg(`<circle cx="800" cy="130" r="220" fill="url(#hubiss-luz)"/>`,
+        rad('hubiss-luz', [[0, '#38bdf8', 0.65], [0.5, '#0284c7', 0.2], [1, '#0f172a', 0]])),
+    };
+  },
+  loja_celit: (u) => {
+    return {
+      chao: 690,
+      interior: true,
+      ceu: 'ceu-loja',
+      longe: svg(`<rect x="-200" y="0" width="2000" height="900" fill="#0f172a"/>
+        <!-- painel ripado elegante de loja com logo CELIT -->
+        <g fill="#1e293b">
+          ${Array.from({ length: 35 }, (_, i) => `<rect x="${-180 + i * 58}" y="80" width="34" height="600" rx="3"/>`).join('')}
+        </g>
+        <!-- logo CELIT luminoso -->
+        <g transform="translate(800 120)">
+          <rect x="-160" y="-40" width="320" height="80" rx="14" fill="#0284c7" stroke="#38bdf8" stroke-width="4"/>
+          <text x="0" y="16" font-family="system-ui, sans-serif" font-weight="900" font-size="38" fill="#ffffff" text-anchor="middle" letter-spacing="3">CELIT ERP</text>
+        </g>`),
+      meio: svg(`<g>
+        <!-- vitrine iluminada de smartphones -->
+        <g transform="translate(240 380)">
+          <rect x="-140" y="0" width="280" height="300" rx="10" fill="rgba(15, 23, 42, 0.85)" stroke="#38bdf8" stroke-width="5"/>
+          <rect x="-110" y="30" width="60" height="100" rx="8" fill="#0284c7"/>
+          <rect x="-105" y="35" width="50" height="90" rx="5" fill="#f8fafc"/>
+          <rect x="50" y="30" width="60" height="100" rx="8" fill="#10b981"/>
+          <rect x="55" y="35" width="50" height="90" rx="5" fill="#f8fafc"/>
+          <text x="0" y="180" font-family="system-ui, sans-serif" font-weight="800" font-size="16" fill="#94a3b8" text-anchor="middle">VITRINE TRADE-IN</text>
+        </g>
+
+        <!-- bancada técnica com manta antiestática azul -->
+        <g transform="translate(1360 440)">
+          <rect x="-160" y="0" width="320" height="240" rx="8" fill="#1e293b" stroke="#64748b" stroke-width="4"/>
+          <rect x="-140" y="20" width="280" height="80" rx="6" fill="#0284c7"/>
+          <!-- lupa/microscópio técnico -->
+          <circle cx="-60" cy="50" r="24" fill="none" stroke="#f8fafc" stroke-width="6"/>
+          <line x1="-42" y1="66" x2="-20" y2="88" stroke="#f8fafc" stroke-width="8" stroke-linecap="round"/>
+          <text x="40" y="60" font-family="system-ui, sans-serif" font-weight="800" font-size="14" fill="#ffffff">ASSISTÊNCIA</text>
+        </g>
+
+        <!-- balcão de checkout e caixa -->
+        <rect x="560" y="520" width="480" height="160" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="5"/>
+        <rect x="580" y="540" width="140" height="30" rx="4" fill="#0284c7"/>
+        <text x="650" y="560" font-family="system-ui, sans-serif" font-weight="800" font-size="14" fill="#fff" text-anchor="middle">CAIXA PDV</text>
+        <rect x="860" y="480" width="90" height="40" rx="6" fill="#0f172a" stroke="#22c55e" stroke-width="3"/>
+        <text x="905" y="505" font-family="system-ui, sans-serif" font-weight="900" font-size="14" fill="#22c55e" text-anchor="middle">R$ OK</text>
+      </g>`),
+      perto: svg(`<rect x="-200" y="680" width="2000" height="220" fill="#0f172a"/>
+        <line x1="-200" y1="680" x2="1800" y2="680" stroke="#38bdf8" stroke-width="6"/>`),
+      frente: '',
+      luzes: svg(`<circle cx="800" cy="120" r="200" fill="url(#celit-luz)"/>`,
+        rad('celit-luz', [[0, '#38bdf8', 0.65], [0.5, '#0284c7', 0.2], [1, '#0f172a', 0]])),
+    };
+  },
+  datacenter_datasnap: (u) => {
+    return {
+      chao: 690,
+      interior: true,
+      ceu: 'ceu-datacenter',
+      longe: svg(`<rect x="-200" y="0" width="2000" height="900" fill="#05070f"/>
+        <!-- perspectiva profunda de racks de servidores com cabeamento de teto -->
+        <g stroke="#1e293b" stroke-width="4">
+          <line x1="800" y1="160" x2="-200" y2="0"/>
+          <line x1="800" y1="160" x2="1800" y2="0"/>
+          <line x1="800" y1="680" x2="-200" y2="900"/>
+          <line x1="800" y1="680" x2="1800" y2="900"/>
+        </g>
+        <!-- logo luminoso DataSnap -->
+        <g transform="translate(800 110)">
+          <rect x="-180" y="-36" width="360" height="72" rx="12" fill="#020617" stroke="#00f2fe" stroke-width="4"/>
+          <text x="0" y="14" font-family="system-ui, sans-serif" font-weight="900" font-size="32" fill="#00f2fe" text-anchor="middle" letter-spacing="3">DATASNAP.CLOUD</text>
+        </g>`),
+      meio: svg(`<g>
+        <!-- racks de servidores laterais com LEDs piscando -->
+        <g fill="#0b0f19" stroke="#00f2fe" stroke-width="4">
+          <rect x="-150" y="240" width="260" height="440" rx="6"/>
+          <rect x="1490" y="240" width="260" height="440" rx="6"/>
+        </g>
+        <!-- leds dos servidores -->
+        <g fill="#22c55e">
+          ${Array.from({ length: 14 }, (_, i) => `<circle cx="-40" cy="${270 + i * 28}" r="4"/>`).join('')}
+          ${Array.from({ length: 14 }, (_, i) => `<circle cx="1590" cy="${270 + i * 28}" r="4"/>`).join('')}
+        </g>
+        <g fill="#38bdf8">
+          ${Array.from({ length: 14 }, (_, i) => `<circle cx="-10" cy="${270 + i * 28}" r="4"/>`).join('')}
+          ${Array.from({ length: 14 }, (_, i) => `<circle cx="1620" cy="${270 + i * 28}" r="4"/>`).join('')}
+        </g>
+        <g fill="#f59e0b">
+          ${Array.from({ length: 14 }, (_, i) => `<circle cx="20" cy="${270 + i * 28}" r="4"/>`).join('')}
+          ${Array.from({ length: 14 }, (_, i) => `<circle cx="1650" cy="${270 + i * 28}" r="4"/>`).join('')}
+        </g>
+
+        <!-- painel holográfico de telemetria ClickHouse no centro -->
+        <g transform="translate(800 460)">
+          <rect x="-240" y="-120" width="480" height="240" rx="16" fill="rgba(2, 6, 23, 0.78)" stroke="#4facfe" stroke-width="4"/>
+          <text x="0" y="-70" font-family="ui-monospace, monospace" font-weight="900" font-size="20" fill="#00f2fe" text-anchor="middle">CLICKHOUSE REAL-TIME</text>
+          <!-- barras de gráfico animadas -->
+          <rect x="-180" y="-30" width="36" height="110" rx="4" fill="#00f2fe"/>
+          <rect x="-120" y="-60" width="36" height="140" rx="4" fill="#4facfe"/>
+          <rect x="-60" y="-10" width="36" height="90" rx="4" fill="#00f2fe"/>
+          <rect x="0" y="-80" width="36" height="160" rx="4" fill="#38bdf8"/>
+          <rect x="60" y="-50" width="36" height="130" rx="4" fill="#00f2fe"/>
+          <rect x="120" y="-95" width="36" height="175" rx="4" fill="#22c55e"/>
+        </g>
+      </g>`),
+      perto: svg(`<rect x="-200" y="680" width="2000" height="220" fill="#020617"/>
+        <line x1="-200" y1="680" x2="1800" y2="680" stroke="#00f2fe" stroke-width="6"/>
+        <g stroke="rgba(0, 242, 254, 0.25)" stroke-width="2">
+          ${Array.from({ length: 18 }, (_, i) => `<line x1="${-180 + i * 110}" y1="680" x2="${-180 + i * 110}" y2="900"/>`).join('')}
+        </g>`),
+      frente: '',
+      luzes: svg(`<circle cx="800" cy="460" r="260" fill="url(#data-luz)"/>`,
+        rad('data-luz', [[0, '#00f2fe', 0.65], [0.5, '#4facfe', 0.25], [1, '#05070f', 0]])),
+    };
+  },
+  clinica_qualhora: (u) => {
+    return {
+      chao: 690,
+      interior: true,
+      ceu: 'ceu-clinica',
+      longe: svg(`<rect x="-200" y="0" width="2000" height="900" fill="#f8fafc"/>
+        <!-- parede clean contemporânea com moldura e logo QualHora -->
+        <rect x="-200" y="0" width="2000" height="680" fill="#f1f5f9"/>
+        <g transform="translate(800 120)">
+          <rect x="-170" y="-36" width="340" height="72" rx="14" fill="#0284c7" stroke="#38bdf8" stroke-width="4"/>
+          <text x="0" y="14" font-family="system-ui, sans-serif" font-weight="900" font-size="34" fill="#ffffff" text-anchor="middle" letter-spacing="2">QUAL HORA</text>
+        </g>`),
+      meio: svg(`<g>
+        <!-- calendário dinâmico de agendamento na parede esquerda -->
+        <g transform="translate(260 400)">
+          <rect x="-140" y="-120" width="280" height="240" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="4"/>
+          <rect x="-140" y="-120" width="280" height="48" rx="12" fill="#0284c7"/>
+          <text x="0" y="-88" font-family="system-ui, sans-serif" font-weight="900" font-size="18" fill="#ffffff" text-anchor="middle">GRADE DE HORÁRIOS</text>
+          <!-- slots de horários com check verde -->
+          <g fill="#dcfce7" stroke="#22c55e" stroke-width="2">
+            <rect x="-110" y="-50" width="90" height="36" rx="6"/>
+            <rect x="20" y="-50" width="90" height="36" rx="6"/>
+            <rect x="-110" y="0" width="90" height="36" rx="6"/>
+            <rect x="20" y="0" width="90" height="36" rx="6"/>
+            <rect x="-110" y="50" width="90" height="36" rx="6"/>
+            <rect x="20" y="50" width="90" height="36" rx="6"/>
+          </g>
+          <g font-family="system-ui, sans-serif" font-weight="800" font-size="12" fill="#15803d" text-anchor="middle">
+            <text x="-65" y="-27">09:00 ✓</text>
+            <text x="65" y="-27">10:00 ✓</text>
+            <text x="-65" y="23">11:00 ✓</text>
+            <text x="65" y="23">14:00 ✓</text>
+            <text x="-65" y="73">15:00 ✓</text>
+            <text x="65" y="73">16:00 ✓</text>
+          </g>
+        </g>
+
+        <!-- relógio de parede moderno no topo direito -->
+        <g transform="translate(1380 260)">
+          <circle r="48" fill="#ffffff" stroke="#0284c7" stroke-width="6"/>
+          <line x1="0" y1="0" x2="0" y2="-28" stroke="#0f172a" stroke-width="5" stroke-linecap="round"/>
+          <line x1="0" y1="0" x2="20" y2="0" stroke="#0284c7" stroke-width="4" stroke-linecap="round"/>
+          <circle r="4" fill="#0f172a"/>
+        </g>
+
+        <!-- poltronas de espera confortáveis à direita -->
+        <g transform="translate(1360 550)">
+          <rect x="-100" y="0" width="200" height="130" rx="16" fill="#e2e8f0" stroke="#94a3b8" stroke-width="4"/>
+          <rect x="-80" y="20" width="160" height="80" rx="10" fill="#0284c7"/>
+          <text x="0" y="120" font-family="system-ui, sans-serif" font-weight="800" font-size="14" fill="#475569" text-anchor="middle">SALA DE ESPERA</text>
+        </g>
+
+        <!-- balcão de recepção elegante central -->
+        <rect x="580" y="520" width="440" height="160" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="5"/>
+        <rect x="620" y="470" width="70" height="50" rx="6" fill="#0f172a" stroke="#94a3b8" stroke-width="3"/>
+        <rect x="740" y="540" width="120" height="34" rx="6" fill="#22c55e"/>
+        <text x="800" y="562" font-family="system-ui, sans-serif" font-weight="900" font-size="14" fill="#ffffff" text-anchor="middle">WHATSAPP ON</text>
+      </g>`),
+      perto: svg(`<rect x="-200" y="680" width="2000" height="220" fill="#e2e8f0"/>
+        <line x1="-200" y1="680" x2="1800" y2="680" stroke="#0284c7" stroke-width="6"/>`),
+      frente: '',
+      luzes: svg(`<circle cx="800" cy="120" r="190" fill="url(#qualhora-luz)"/>`,
+        rad('qualhora-luz', [[0, '#38bdf8', 0.55], [0.5, '#bae6fd', 0.15], [1, '#f8fafc', 0]])),
+    };
+  },
 };
 
 /**

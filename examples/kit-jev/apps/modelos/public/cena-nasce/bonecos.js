@@ -77,7 +77,7 @@ const cabeca = (u, arq, x = 0, y = 0, t = 256) => `<image class="cab" href="${u(
 function socketsDe(item) {
   if (item.tipo !== 'personagem') return '';
   const c = COMPOSTO[item.id];
-  const anchors = c && ['menina', 'menino', 'vovo', 'pirata', 'robo', 'alien', 'astronauta', 'heroi', 'bruxa', 'mago', 'zumbi', 'esqueleto', 'fantasma', 'fada', 'sereia', 'aldeao', 'guerreiro'].includes(c)
+  const anchors = c && ['menina', 'menino', 'vovo', 'pirata', 'robo', 'alien', 'astronauta', 'heroi', 'bruxa', 'mago', 'zumbi', 'esqueleto', 'fantasma', 'fada', 'sereia', 'aldeao', 'guerreiro', 'apresentador', 'tecnico_celular', 'analista_dados', 'atendente_recepcao'].includes(c)
     ? { 'socket-mao-d': [187, 294], 'socket-mao-e': [69, 294], 'socket-costas': [54, 220] }
     : { 'socket-mao-d': [190, 190], 'socket-mao-e': [66, 190], 'socket-costas': [48, 144] };
   return Object.entries(anchors).map(([name, [x, y]]) => {
@@ -350,6 +350,107 @@ const CORPOS = {
       + `<rect x="120" y="283" width="16" height="18" rx="3" fill="#fbbf24"/>`
       + cabeca(u, 'emoji/1f9dd.svg', 16, 10, 224),
   }),
+  apresentador: (u) => ({
+    caixa: [12, 12, 232, 352],
+    svg: perna('e', 104, 308, 42, 18, '#1e293b', '#0f172a', 111, 350, 18, 10)
+      + perna('d', 134, 308, 42, 18, '#1e293b', '#0f172a', 145, 350, 18, 10)
+      + braco('e', 76, 236, 50, 18, '#1e293b', pele)
+      + braco('d', 162, 236, 50, 18, '#1e293b', pele)
+      + `<path d="M88 226 C108 218 148 218 168 226 L174 300 L82 300 Z" fill="#1e293b"/>`
+      + `<polygon points="116,226 140,226 128,260" fill="#ffffff"/>`
+      + `<polygon points="125,230 131,230 130,270 126,270" fill="#ef4444"/>`
+      + `<rect x="88" y="296" width="80" height="10" rx="3" fill="#0f172a"/>`
+      + cabeca(u, 'menino.png', 16, 12, 224),
+  }),
+  tecnico_celular: (u) => ({
+    caixa: [12, 12, 232, 352],
+    svg: perna('e', 104, 308, 42, 18, '#334155', '#1e293b', 111, 350, 18, 10)
+      + perna('d', 134, 308, 42, 18, '#334155', '#1e293b', 145, 350, 18, 10)
+      + braco('e', 76, 236, 50, 18, '#0284c7', pele)
+      + braco('d', 162, 236, 50, 18, '#0284c7', pele)
+      + `<path d="M88 226 C108 218 148 218 168 226 L174 302 L82 302 Z" fill="#0284c7"/>`
+      + `<rect x="98" y="244" width="30" height="24" rx="4" fill="#0369a1"/>`
+      + `<rect x="138" y="244" width="22" height="34" rx="4" fill="#0f172a"/>`
+      + `<rect x="88" y="298" width="80" height="10" rx="3" fill="#1e293b"/>`
+      + cabeca(u, 'menino.png', 16, 12, 224),
+  }),
+  analista_dados: (u) => ({
+    caixa: [12, 12, 232, 352],
+    svg: perna('e', 104, 308, 42, 18, '#1e293b', '#0f172a', 111, 350, 18, 10)
+      + perna('d', 134, 308, 42, 18, '#1e293b', '#0f172a', 145, 350, 18, 10)
+      + braco('e', 76, 236, 50, 18, '#0f766e', pele)
+      + braco('d', 162, 236, 50, 18, '#0f766e', pele)
+      + `<path d="M88 226 C108 218 148 218 168 226 L174 300 L82 300 Z" fill="#0f766e"/>`
+      + `<rect x="118" y="238" width="20" height="26" rx="3" fill="#00f2fe" stroke="#fff" stroke-width="2"/>`
+      + `<rect x="88" y="296" width="80" height="10" rx="3" fill="#0f172a"/>`
+      + cabeca(u, 'menino.png', 16, 12, 224),
+  }),
+  atendente_recepcao: (u) => ({
+    caixa: [12, 12, 232, 352],
+    svg: perna('e', 104, 314, 38, 16, pele, '#0284c7', 111, 350, 16, 9)
+      + perna('d', 134, 314, 38, 16, pele, '#0284c7', 145, 350, 16, 9)
+      + braco('e', 78, 236, 48, 16, '#0369a1', pele)
+      + braco('d', 162, 236, 48, 16, '#0369a1', pele)
+      + `<path d="M90 224 C108 216 148 216 166 224 L180 306 L76 306 Z" fill="#0369a1"/>`
+      + `<polygon points="116,224 140,224 128,252" fill="#ffffff"/>`
+      + `<circle cx="128" cy="240" r="5" fill="#f59e0b"/>`
+      + cabeca(u, 'menina.png', 16, 12, 224),
+  }),
+  mkt_esteira_pedidos: () => ({
+    caixa: [0, 0, 256, 180],
+    svg: `<rect x="10" y="70" width="236" height="40" rx="8" fill="#334155" stroke="#64748b" stroke-width="4"/>
+      ${Array.from({ length: 12 }, (_, i) => `<line x1="${24 + i * 18}" y1="74" x2="${24 + i * 18}" y2="106" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>`).join('')}
+      <rect x="50" y="30" width="60" height="44" rx="4" fill="#d97706"/>
+      <rect x="70" y="38" width="22" height="16" rx="2" fill="#ffffff"/>
+      <rect x="140" y="24" width="70" height="50" rx="4" fill="#b45309"/>
+      <rect x="165" y="32" width="24" height="18" rx="2" fill="#ffffff"/>`,
+  }),
+  mkt_servidor_rack: () => ({
+    caixa: [0, 0, 200, 280],
+    svg: `<rect x="20" y="10" width="160" height="260" rx="8" fill="#0f172a" stroke="#00f2fe" stroke-width="4"/>
+      ${Array.from({ length: 8 }, (_, i) => `
+        <rect x="30" y="${24 + i * 30}" width="140" height="22" rx="3" fill="#1e293b"/>
+        <circle cx="44" cy="${35 + i * 30}" r="3.5" fill="#22c55e"/>
+        <circle cx="56" cy="${35 + i * 30}" r="3.5" fill="#38bdf8"/>
+        <circle cx="68" cy="${35 + i * 30}" r="3.5" fill="#f59e0b"/>
+        <line x1="88" y1="${35 + i * 30}" x2="156" y2="${35 + i * 30}" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+      `).join('')}`,
+  }),
+  mkt_dashboard_holografico: () => ({
+    caixa: [0, 0, 260, 200],
+    svg: `<rect x="10" y="20" width="240" height="160" rx="14" fill="rgba(2, 6, 23, 0.85)" stroke="#00f2fe" stroke-width="4"/>
+      <text x="130" y="52" font-family="ui-monospace, monospace" font-weight="900" font-size="14" fill="#00f2fe" text-anchor="middle">METRICS DASHBOARD</text>
+      <rect x="30" y="80" width="30" height="70" rx="3" fill="#00f2fe"/>
+      <rect x="74" y="60" width="30" height="90" rx="3" fill="#38bdf8"/>
+      <rect x="118" y="95" width="30" height="55" rx="3" fill="#00f2fe"/>
+      <rect x="162" y="45" width="30" height="105" rx="3" fill="#4facfe"/>
+      <rect x="206" y="70" width="24" height="80" rx="3" fill="#22c55e"/>`,
+  }),
+  mkt_smartphone_desmontado: () => ({
+    caixa: [0, 0, 180, 220],
+    svg: `<rect x="30" y="20" width="120" height="180" rx="14" fill="#1e293b" stroke="#38bdf8" stroke-width="4"/>
+      <rect x="42" y="34" width="96" height="152" rx="6" fill="#0284c7"/>
+      <!-- bateria interna -->
+      <rect x="50" y="50" width="40" height="80" rx="3" fill="#334155" stroke="#94a3b8" stroke-width="2"/>
+      <text x="70" y="94" font-family="system-ui, sans-serif" font-weight="900" font-size="11" fill="#fff" text-anchor="middle">BAT</text>
+      <!-- placa-mãe -->
+      <rect x="96" y="50" width="34" height="60" rx="3" fill="#15803d"/>
+      <circle cx="113" cy="70" r="5" fill="#facc15"/>`,
+  }),
+  mkt_calendario_horarios: () => ({
+    caixa: [0, 0, 220, 200],
+    svg: `<rect x="20" y="20" width="180" height="160" rx="12" fill="#ffffff" stroke="#0284c7" stroke-width="4"/>
+      <rect x="20" y="20" width="180" height="36" rx="12" fill="#0284c7"/>
+      <text x="110" y="44" font-family="system-ui, sans-serif" font-weight="900" font-size="14" fill="#ffffff" text-anchor="middle">QUALHORA</text>
+      <rect x="36" y="70" width="66" height="28" rx="4" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+      <text x="69" y="89" font-family="system-ui, sans-serif" font-weight="800" font-size="11" fill="#15803d" text-anchor="middle">09:00 ✓</text>
+      <rect x="118" y="70" width="66" height="28" rx="4" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+      <text x="151" y="89" font-family="system-ui, sans-serif" font-weight="800" font-size="11" fill="#15803d" text-anchor="middle">10:00 ✓</text>
+      <rect x="36" y="112" width="66" height="28" rx="4" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+      <text x="69" y="131" font-family="system-ui, sans-serif" font-weight="800" font-size="11" fill="#15803d" text-anchor="middle">14:00 ✓</text>
+      <rect x="118" y="112" width="66" height="28" rx="4" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+      <text x="151" y="131" font-family="system-ui, sans-serif" font-weight="800" font-size="11" fill="#15803d" text-anchor="middle">15:00 ✓</text>`,
+  }),
 };
 
 // quem usa corpo desenhado (o resto é a imagem sozinha)
@@ -363,6 +464,15 @@ const COMPOSTO = {
   sereia: 'sereia',
   mc_villager: 'aldeao', aldeao: 'aldeao', campones: 'aldeao',
   pers_guerreiro: 'guerreiro', guerreiro: 'guerreiro', soldado: 'guerreiro',
+  apresentador: 'apresentador',
+  tecnico_celular: 'tecnico_celular',
+  analista_dados: 'analista_dados',
+  atendente_recepcao: 'atendente_recepcao',
+  mkt_esteira_pedidos: 'mkt_esteira_pedidos',
+  mkt_servidor_rack: 'mkt_servidor_rack',
+  mkt_dashboard_holografico: 'mkt_dashboard_holografico',
+  mkt_smartphone_desmontado: 'mkt_smartphone_desmontado',
+  mkt_calendario_horarios: 'mkt_calendario_horarios',
 };
 
 // devolve { caixa:[x,y,w,h], svg } de um item do catálogo; u(arquivo) = endereço do asset

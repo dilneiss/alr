@@ -6,6 +6,7 @@
 // desenhado de quem no emoji é só cabeça) · palco.js (a tela e a demonstração) · clima.js (chuva, neve, vento, raios).
 
 import { CATALOGO_EXTRA } from './catalogo-extra.mjs';
+import { CATALOGO_MARKETING } from './catalogo-marketing.mjs';
 import { ACOES_100 } from './catalogo-acoes-100.mjs';
 import { EXPRESSOES_100 } from './catalogo-expressoes-100.mjs';
 
@@ -75,6 +76,10 @@ const LUGARES = [
   { id: 'nether', nome: 'Nether', icone: '🔥', desc: 'nether: inferno de lava, fortaleza do nether, mundo vermelho, fogo, lava e rocha negra' },
   { id: 'the_end', nome: 'The End', icone: '🔮', desc: 'the end: dimensão do fim, ilha do dragão, espaço do end, torre de obsidiana, dragão final' },
   { id: 'mina_caverna', nome: 'Mina ou Caverna', icone: '⛏️', desc: 'mina ou caverna: subterrâneo, debaixo da terra, minérios, diamante, tochas e trilhos' },
+  { id: 'galpao_hubiss', nome: 'Galpão Hubiss', icone: '🏢', desc: 'galpão hubiss: galpão logístico, e-commerce, dropshipping, esteira de caixas, encomendas e frete' },
+  { id: 'loja_celit', nome: 'Loja e Assistência CELIT', icone: '📱', desc: 'loja celit: loja de celulares, assistência técnica, conserto de smartphone, bancada, os e balcão' },
+  { id: 'datacenter_datasnap', nome: 'Datacenter DataSnap', icone: '⚡', desc: 'datacenter datasnap: big data, servidores de logs, clickhouse, painel holográfico e telemetria' },
+  { id: 'clinica_qualhora', nome: 'Clínica QualHora', icone: '⏰', desc: 'clínica qualhora: recepção, agendamento online, horário marcado, consultas e lembrete whatsapp' },
 ];
 const HORAS = [
   { id: 'amanhecer', nome: 'Amanhecer', icone: '🌅', desc: 'amanhecer: nascer do sol, de manhãzinha, bem cedo, o galo cantou' },
@@ -140,8 +145,11 @@ const MOVIMENTOS = {
 
 // +200 coisas do mundo real e +200 do Minecraft (catalogo-real.mjs / catalogo-minecraft.mjs).
 // Elas entram no mesmo catálogo: a história pode citar "creeper", "ambulância", "enderman"…
-const CATALOGO = [...CATALOGO_BASE, ...CATALOGO_EXTRA];
-
+const expandidoMkt = CATALOGO_MARKETING.map(([id, nome, emoji, altura, olha, tipo, ...apelidos]) => ({
+  id, nome, emoji, altura, olha, tipo, apelidos: [...new Set([nome, ...apelidos].map((a) => String(a).toLowerCase().trim()).filter(Boolean))],
+  img: 'emoji/1f4e6.svg'
+}));
+const CATALOGO = [...CATALOGO_BASE, ...CATALOGO_EXTRA, ...expandidoMkt];
 const POR_ID = Object.fromEntries(CATALOGO.map((c) => [c.id, c]));
 const corta = (s, n) => { s = String(s ?? '').replace(/\s+/g, ' ').trim(); return s.length > n ? '…' + s.slice(-n) : s; };
 const semAcento = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
