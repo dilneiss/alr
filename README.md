@@ -18,6 +18,87 @@
 > **"A LLM pode ensinar o agente, mas não precisa controlar permanentemente o agente."**  
 > *Um runtime local-first para aprendizado autônomo, memória, planejamento, execução de ferramentas, verificação, recuperação e reuso de habilidades em jogos, navegadores, mundos simulados e ambientes externos.*
 
+---
+
+## 🤖 Instale e Mantenha o ALR com seu Agente de IA (Copie e Cole)
+
+> **Para usuários com agentes de IA (Oh My Pi, Claude Code, Cursor, Windsurf, Roo, etc.):**  
+> Copie qualquer um dos blocos abaixo e envie diretamente para o seu agente. Ele detectará seu sistema operacional automaticamente, executará todos os passos, configurará o início no boot e abrirá a tela funcionando na sua frente.
+
+### 🚀 1. Instalação Completa, Início no Boot e Playground ao Vivo
+
+Copie este prompt e envie para o seu agente:
+
+```text
+Você é o engenheiro responsável por instalar o ALR (Autonomous Learning Runtime) nesta máquina, deixá-lo configurado para iniciar automaticamente sempre que o computador ligar, e abrir o Playground visual funcionando agora mesmo em tempo real.
+Execute todos os passos de forma autônoma:
+1. DETECÇÃO DE SISTEMA E AMBIENTE:
+   - Identifique o SO (Windows, Linux ou macOS) e a arquitetura da máquina.
+   - Se for Linux, verifique a distribuição (leia /etc/os-release ou lsb_release) identificando especificamente se é Ubuntu/Debian, Fedora, Arch, etc.
+   - Verifique ferramentas necessárias: git, curl, build-essential/gcc/clang e compilador Rust (rustc/cargo 1.80+).
+   - Se faltar Rust ou pacotes de build, instale-os usando o gerenciador nativo da plataforma (ex: apt no Ubuntu/Debian, dnf no Fedora, brew no macOS, ou rustup.rs no Windows/Linux/Mac).
+2. OBTENÇÃO DO CÓDIGO E COMPILAÇÃO:
+   - Se já estiver dentro do repositório ALR, use a pasta atual. Caso contrário, clone https://github.com/dilneiss/alr.git e entre na pasta.
+   - Compile o runtime em modo release otimizado: `cargo build --release -p alr-cli`.
+3. CONFIGURAÇÃO DE AUTOSTART (RODAR SEMPRE QUE O COMPUTADOR INICIA):
+   - Configure o serviço/tarefa em nível de usuário para iniciar o Playground automaticamente na inicialização:
+     * Linux (Ubuntu, Debian, etc): crie uma unidade systemd de usuário em ~/.config/systemd/user/alr.service chamando o binário release com os argumentos `playground --port 3000`, faça reload e ative com `systemctl --user enable --now alr.service` (e habilite lingering se aplicável via `loginctl enable-linger $USER`).
+     * macOS: crie um LaunchAgent em ~/Library/LaunchAgents/com.alr.playground.plist para o binário release com `playground --port 3000`, e carregue com `launchctl load -w ~/Library/LaunchAgents/com.alr.playground.plist`.
+     * Windows: configure uma tarefa agendada de logon do usuário via `schtasks /Create /TN "ALR_Playground" /TR "<caminho_do_alr.exe> playground --port 3000" /SC ONLOGON /F` ou crie um atalho VBS/BAT silencioso na pasta Startup (shell:startup).
+4. INICIALIZAÇÃO E VERIFICAÇÃO VISUAL EM TEMPO REAL:
+   - Garanta que o serviço ou o processo do Playground esteja ativo escutando na porta 3000.
+   - Faça uma requisição de health-check local em http://127.0.0.1:3000/ e confirme status HTTP 200.
+   - Abra automaticamente o navegador padrão do sistema em http://localhost:3000 (usando `xdg-open` no Linux/Ubuntu, `open` no macOS ou `start` no Windows).
+   - Mostre no terminal o resumo final: SO/Distro detectado, caminho do binário, método de autostart configurado, status da porta 3000 e como parar/reiniciar o serviço.
+```
+
+### 🔄 2. Atualizar o ALR Manualmente Agora
+
+Copie este prompt e envie para o seu agente sempre que quiser atualizar sob demanda:
+
+```text
+Você é o engenheiro responsável por atualizar a instalação do ALR nesta máquina para a versão mais recente do repositório oficial.
+Execute os seguintes passos com segurança:
+1. LOCALIZAR O REPOSITÓRIO:
+   - Encontre o diretório onde o ALR está instalado e entre nele.
+2. POLÍTICA DE LIMPEZA E ATUALIZAÇÃO SEGURA:
+   - Descarte apenas alterações locais rastreadas no Git com `git reset --hard HEAD` exclusivamente dentro da pasta do repositório ALR.
+   - NUNCA execute `git clean -fdx` ou apague bancos de dados (.db / .sqlite), arquivos .env ou dados locais do usuário.
+   - Atualize com `git pull origin main`.
+3. RECOMPILAÇÃO E REINICIALIZAÇÃO DO SERVIÇO:
+   - Recompile o binário atualizado: `cargo build --release -p alr-cli`.
+   - Reinicie o serviço ou processo que mantém o Playground ativo (via `systemctl --user restart alr` no Linux, `launchctl` no macOS, ou reiniciando a tarefa/processo no Windows).
+4. VALIDAÇÃO:
+   - Teste a resposta em http://127.0.0.1:3000/ confirmando HTTP 200.
+   - Imprima o novo hash do commit (`git rev-parse --short HEAD`), a confirmação de que o serviço está rodando e que as tabelas de estado/dados foram preservadas.
+```
+
+### ⏰ 3. Configurar Atualização Automática Diária (1x ao Dia)
+
+Copie este prompt e envie para o seu agente para deixar as atualizações rodando sozinhas:
+
+```text
+Você é o engenheiro responsável por configurar uma rotina diária e idempotente de verificação e atualização automática do ALR nesta máquina.
+Execute a configuração de ponta a ponta:
+1. DETECÇÃO E CRIAÇÃO DO SCRIPT DIÁRIO:
+   - Crie um script leve em scripts/alr-daily-update (extensão .sh no Linux/macOS ou .ps1/.bat no Windows).
+   - O script deve:
+     a) Rodar uma vez ao dia no horário estipulado (ex: 04:00 da manhã ou no primeiro login do dia).
+     b) Executar `git fetch origin main` no diretório do ALR.
+     c) Comparar `git rev-parse HEAD` com `git rev-parse @{u}`.
+     d) Se NÃO houver commits novos: registrar log com data/hora "ALR verificado: já na versão mais recente" e encerrar sem reiniciar nada.
+     e) Se HOUVER commits novos: aplicar `git reset --hard HEAD` (preservando arquivos não rastreados, bancos e configs), rodar `git pull origin main`, recompilar com `cargo build --release -p alr-cli`, reiniciar o serviço do ALR e registrar o sucesso no log.
+     f) Se a compilação falhar: manter o binário anterior ativo, registrar o erro no log e alertar sem interromper a execução do runtime.
+2. AGENDAMENTO NATIVO NO SISTEMA OPERACIONAL:
+   - Linux (Ubuntu/Debian/Fedora): crie uma unidade systemd de timer (~/.config/systemd/user/alr-daily-update.timer e .service) configurada para `OnCalendar=daily` e `Persistent=true`, ativando com `systemctl --user enable --now alr-daily-update.timer`.
+   - macOS: crie um LaunchAgent (~/Library/LaunchAgents/com.alr.daily-update.plist) com `StartCalendarInterval` diário e carregue com `launchctl load`.
+   - Windows: registre uma tarefa diária no Task Scheduler via `schtasks /Create /TN "ALR_Daily_Update" /SC DAILY /ST 04:00 /TR "powershell -ExecutionPolicy Bypass -File <caminho_do_script>" /F`.
+3. RELATÓRIO:
+   - Teste a execução a seco (dry-run) do script verificador.
+   - Mostre onde ficam os logs da rotina diária e forneça o comando exato para desativar o agendamento se o usuário desejar no futuro.
+```
+
+---
 <div align="center">
   <br>
   <h2>⚗️ Playground Universal com Arquitetura Dual-Sidebar (Estilo Canvas) & Decisões Tipadas (System 1)</h2>
