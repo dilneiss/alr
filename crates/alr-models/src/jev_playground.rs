@@ -2133,6 +2133,70 @@ fn question_evidence(state: &str, q: &JevQuestionInput) -> (String, Vec<String>)
     (norm, words)
 }
 
+/// Extrai das instruções (pergunta) as regras em linguagem natural que apontam
+/// para uma opção, no formato `termo, termo -> opcao`, tal como os apps do kit
+/// descrevem: "contrato, aditivo ou distrato → contratos".
+/// Retorna um mapa opcao -> lista de termos, independente de dicionário global.
+fn parse_arrow_rules(
+    instructions: &str,
+    criteria_map: &HashMap<String, String>,
+) -> HashMap<String, Vec<String>> {
+    let mut out: HashMap<String, Vec<String>> = HashMap::new();
+    let instr_norm = instructions.to_lowercase();
+    for (arrow_idx, arrow_ch) in instr_norm.match_indices(|c: char| c == '→' || c == '➜') {
+        let _ = arrow_ch;
+        let left_raw = &instr_norm[..arrow_idx];
+        let left_start = left_raw.rfind(['.', ';']).map(|i| i + 1).unwrap_or(0);
+        let left = left_raw[left_start..].trim();
+        let right_raw = &instr_norm[arrow_idx + '→'.len_utf8()..];
+        let right_end = right_raw.find([';', '.']).unwrap_or(right_raw.len());
+        let right = right_raw[..right_end].trim();
+
+        for opt_name in criteria_map.keys() {
+            let opt_norm = normalize_text(opt_name);
+            if right.starts_with(&opt_norm) || right.contains(&format!(" {} ", opt_norm)) {
+                let entry = out.entry(opt_name.clone()).or_default();
+                for term in left.split([',', ';']) {
+                    let t = term.trim_matches(|c: char| !c.is_alphanumeric() && c != ' ');
+                    if t.len() >= 3 && !t.is_empty() {
+                        entry.push(t.to_string());
+                    }
+                }
+            }
+        }
+    }
+    out
+}
+
+/// Extrai das instruções o bloco "Sim para: ... Não para: ..." de perguntas noul,
+/// devolvendo (positivos, negativos) em termos normalizados.
+fn parse_sim_nao_blocks(instructions: &str) -> (Vec<String>, Vec<String>) {
+    let norm = normalize_text(instructions);
+    let mut positives = Vec::new();
+    let mut negatives = Vec::new();
+
+    if let Some(sim_pos) = norm.find("sim para") {
+        let tail = &norm[sim_pos + "sim para".len()..];
+        let end = tail.find("nao para").unwrap_or(tail.len());
+        for term in tail[..end].split([',', ';']) {
+            let t = term.trim();
+            if t.len() >= 4 {
+                positives.push(t.to_string());
+            }
+        }
+    }
+    if let Some(nao_pos) = norm.find("nao para") {
+        let tail = &norm[nao_pos + "nao para".len()..];
+        for term in tail.split([',', ';']) {
+            let t = term.trim();
+            if t.len() >= 4 {
+                negatives.push(t.to_string());
+            }
+        }
+    }
+    (positives, negatives)
+}
+
 impl JevTypedJudgeEngine {
     pub fn new() -> Self {
         Self
@@ -2369,6 +2433,22 @@ impl JevTypedJudgeEngine {
                     {
                         user_false_tokens.push(token.to_string());
                     }
+                }
+            }
+        }
+
+        // Quando a pergunta descreve os critérios em linguagem natural
+        // ("Sim para: ... Não para: ..."), usa-os como evidência positiva/negativa.
+        if let Some(instr) = q.instructions.as_deref() {
+            let (sim_terms, nao_terms) = parse_sim_nao_blocks(instr);
+            for t in sim_terms {
+                if !user_true_tokens.iter().any(|x| x == &t) {
+                    user_true_tokens.push(t);
+                }
+            }
+            for t in nao_terms {
+                if !user_false_tokens.iter().any(|x| x == &t) {
+                    user_false_tokens.push(t);
                 }
             }
         }
@@ -2651,12 +2731,29 @@ impl JevTypedJudgeEngine {
         let mut raw_scores: HashMap<String, f32> = HashMap::new();
         let mut matched_signals: HashMap<String, Vec<String>> = HashMap::new();
 
+        // Regras em linguagem natural ("termo, termo → opcao") vindas da própria pergunta.
+        let arrow_rules: HashMap<String, Vec<String>> = q
+            .instructions
+            .as_deref()
+            .map(|instr| parse_arrow_rules(instr, &criteria_map))
+            .unwrap_or_default();
+
         for (opt_name, desc) in &criteria_map {
             let opt_norm = normalize_text(opt_name);
             let desc_norm = normalize_text(desc);
 
             let mut score = 0.05f32;
             let mut matches = Vec::new();
+
+            // 0. Regras explícitas da pergunta apontando para esta opção
+            if let Some(terms) = arrow_rules.get(opt_name) {
+                for term in terms {
+                    if has_bounded_match(&state_norm, &evidence_words, term) {
+                        score += 5.0;
+                        matches.push(term.clone());
+                    }
+                }
+            }
 
             // 1. Frases e termos diretos da descrição (frases com vírgula recebem peso maior)
             let mut seen_phrases = std::collections::HashSet::new();
@@ -3510,6 +3607,106 @@ mod tests {
                 }
                 _ => panic!("Expected choice answer"),
             }
+        }
+    }
+
+    #[test]
+    fn test_parse_arrow_rules_maps_terms_to_options() {
+        let mut criteria = HashMap::new();
+        criteria.insert("financeiro".to_string(), "boleto".to_string());
+        criteria.insert("contratos".to_string(), "contrato".to_string());
+        criteria.insert("lixo".to_string(), "descarte".to_string());
+
+        let instr = "Em qual pasta este arquivo deve ficar? Regras: contrato, aditivo ou distrato → contratos; nota, boleto e extrato → financeiro; instalador usado → lixo.";
+        let regras = parse_arrow_rules(instr, &criteria);
+
+        assert!(
+            regras
+                .get("contratos")
+                .map(|v| v.iter().any(|t| t.contains("contrato")))
+                .unwrap_or(false),
+            "regra 'contrato → contratos' deve ser extraída, obteve {:?}",
+            regras.get("contratos")
+        );
+        assert!(
+            regras
+                .get("financeiro")
+                .map(|v| v.iter().any(|t| t.contains("boleto")))
+                .unwrap_or(false),
+            "regra 'boleto → financeiro' deve ser extraída, obteve {:?}",
+            regras.get("financeiro")
+        );
+        assert!(
+            regras
+                .get("lixo")
+                .map(|v| v.iter().any(|t| t.contains("instalador")))
+                .unwrap_or(false),
+            "regra 'instalador → lixo' deve ser extraída, obteve {:?}",
+            regras.get("lixo")
+        );
+    }
+
+    #[test]
+    fn test_parse_arrow_rules_captures_item_when_rule_has_no_arrow() {
+        let mut criteria = HashMap::new();
+        criteria.insert("contratos".to_string(), "contrato".to_string());
+        let regras = parse_arrow_rules("Qual a pasta?", &criteria);
+        assert!(regras.is_empty(), "sem seta não há regra a extrair");
+    }
+
+    #[test]
+    fn test_parse_sim_nao_blocks_splits_polarities() {
+        let instr = "Este arquivo pode ir para a lixeira? Sim para: instalador já usado, download incompleto. Não para o original de documentos, contratos e fotos.";
+        let (pos, neg) = parse_sim_nao_blocks(instr);
+
+        assert!(
+            pos.iter().any(|t| t.contains("instalador")),
+            "positivo deve conter 'instalador', obteve {:?}",
+            pos
+        );
+        assert!(
+            neg.iter().any(|t| t.contains("documentos")),
+            "negativo deve conter 'documentos', obteve {:?}",
+            neg
+        );
+        assert!(
+            !pos.iter().any(|t| t.contains("documentos")),
+            "documentos não pode vazar para o lado positivo, obteve {:?}",
+            pos
+        );
+    }
+
+    #[test]
+    fn test_arrow_rule_changes_choice_between_options_with_identical_descriptions() {
+        // Duas opções com descrição idêntica: só a regra da pergunta decide.
+        let mut criteria = HashMap::new();
+        criteria.insert(
+            "financeiro".to_string(),
+            "documento de trabalho".to_string(),
+        );
+        criteria.insert("contratos".to_string(), "documento de trabalho".to_string());
+
+        let q_com_regra = JevQuestionInput {
+            r#type: "choice".to_string(),
+            instructions: Some(
+                "Em qual pasta? Regras: boleto, extrato e imposto → financeiro; contrato e distrato → contratos."
+                    .to_string(),
+            ),
+            proposition: None,
+            criteria: Some(serde_json::to_value(&criteria).unwrap()),
+            threshold: None,
+        };
+
+        let engine = JevTypedJudgeEngine::new();
+        let (ans, _) = engine
+            .evaluate_choice("Arquivo: boleto_DAS_set2026.pdf", &q_com_regra)
+            .expect("evaluate_choice deve funcionar");
+        match ans {
+            JevAnswerOutput::Choice { choice, .. } => assert_eq!(
+                choice, "financeiro",
+                "a regra 'boleto → financeiro' deve decidir o desempate"
+            ),
+            _ => panic!("Expected choice answer"),
         }
     }
 }
