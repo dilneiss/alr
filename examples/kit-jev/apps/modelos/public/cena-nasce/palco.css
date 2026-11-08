@@ -1005,11 +1005,34 @@
   color: #fff;
 }
 
-/* Quando em modo estúdio, centraliza e trava a proporção em 16:9 widescreen */
-.modo-estudio .cn-palco {
+/* Modo Estúdio 16:9 Widescreen (YouTube, Desktop, Demos) */
+.modo-estudio.formato-16-9 .cn-palco {
   aspect-ratio: 16 / 9;
   max-width: 100%;
   margin: 0 auto;
+}
+
+/* Modo Estúdio 9:16 Vertical (TikTok, Reels, Shorts, Stories) */
+.modo-estudio.formato-9-16 .cn-palco {
+  aspect-ratio: 9 / 16;
+  max-width: min(100%, 520px);
+  max-height: 86vh;
+  margin: 0 auto;
+}
+
+.modo-estudio.formato-9-16 .cn-legenda {
+  bottom: 28px !important;
+  font-size: clamp(20px, 3.8vw, 26px) !important;
+  max-width: 86% !important;
+  background: rgba(10, 15, 30, 0.9) !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.7) !important;
+  border-radius: 16px !important;
+}
+
+.modo-estudio.formato-9-16 .cn-badge-metrica {
+  top: 60px !important;
+  font-size: 16px !important;
+  padding: 8px 18px !important;
 }
 
 .modo-estudio .mj-topo,

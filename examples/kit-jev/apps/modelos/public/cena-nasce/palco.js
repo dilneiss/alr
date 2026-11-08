@@ -89,7 +89,7 @@ export async function montar(api) {
   const { el, sleep } = ui;
   const reduz = !!ui.reduzMovimento;
   const L = spec.limiar;
-  let modoMinecraft = false, modoEstudio = false, presetAtual = 'livre';
+  let modoMinecraft = false, modoEstudio = false, formatoEstudio = '16:9', presetAtual = 'livre';
   const CAT = Object.fromEntries(spec.catalogo.map((c) => [c.id, c]));
   const classeAcao = Object.fromEntries(spec.acoes.map((a) => [a.id, a.classeCss || `ac-${a.id}`]));
   const familiaAcao = Object.fromEntries(spec.acoes.filter((a) => a.familia).map((a) => [a.id, `familia-${a.familia}`]));
@@ -209,9 +209,10 @@ export async function montar(api) {
     el('span', { text: '⛏️' }),
     el('span', { class: 'cn-txt-mc', text: modoMinecraft ? 'Minecraft: ON' : 'Minecraft: OFF' }),
   ]);
-  const btEstudio = el('button', { class: 'cn-btn-estudio', type: 'button', onclick: () => alternarModoEstudio() }, [
-    el('span', { text: '🎬' }),
-    el('span', { text: 'Estúdio 16:9' }),
+  const FORMATOS_ESTUDIO = ['off', '16:9', '9:16'];
+  const ROTULOS_ESTUDIO = { 'off': '🎬 Estúdio', '16:9': '🎬 16:9 (YouTube)', '9:16': '📱 9:16 (TikTok)' };
+  const btEstudio = el('button', { class: 'cn-btn-estudio', type: 'button', onclick: () => alternarFormatoEstudio() }, [
+    el('span', { class: 'cn-txt-estudio', text: ROTULOS_ESTUDIO['off'] }),
   ]);
 
   // Barra de Presets de Marcas Corporativas
@@ -1013,11 +1014,27 @@ export async function montar(api) {
     }
   }
 
-  function alternarModoEstudio() {
-    modoEstudio = !modoEstudio;
-    btEstudio.classList.toggle('ativo', modoEstudio);
-    raiz.classList.toggle('modo-estudio', modoEstudio);
-    document.body.classList.toggle('modo-estudio', modoEstudio);
+  function alternarFormatoEstudio() {
+    const idx = FORMATOS_ESTUDIO.indexOf(modoEstudio ? formatoEstudio : 'off');
+    const proximo = FORMATOS_ESTUDIO[(idx + 1) % FORMATOS_ESTUDIO.length];
+    if (proximo === 'off') {
+      modoEstudio = false;
+      btEstudio.classList.remove('ativo');
+      btEstudio.querySelector('.cn-txt-estudio').textContent = ROTULOS_ESTUDIO['off'];
+      raiz.classList.remove('modo-estudio', 'formato-16-9', 'formato-9-16');
+      document.body.classList.remove('modo-estudio', 'formato-16-9', 'formato-9-16');
+    } else {
+      modoEstudio = true;
+      formatoEstudio = proximo;
+      btEstudio.classList.add('ativo');
+      btEstudio.querySelector('.cn-txt-estudio').textContent = ROTULOS_ESTUDIO[proximo];
+      raiz.classList.add('modo-estudio');
+      document.body.classList.add('modo-estudio');
+      raiz.classList.toggle('formato-16-9', proximo === '16:9');
+      raiz.classList.toggle('formato-9-16', proximo === '9:16');
+      document.body.classList.toggle('formato-16-9', proximo === '16:9');
+      document.body.classList.toggle('formato-9-16', proximo === '9:16');
+    }
     medir();
   }
 
