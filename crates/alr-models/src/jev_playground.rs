@@ -2537,8 +2537,8 @@ impl JevTypedJudgeEngine {
             action_text
         );
 
-        let state_snippet = if evidence_norm.len() > 60 {
-            format!("{}...", &evidence_norm[..60])
+        let state_snippet = if evidence_norm.chars().count() > 60 {
+            format!("{}...", evidence_norm.chars().take(60).collect::<String>())
         } else {
             evidence_norm.clone()
         };
@@ -2992,8 +2992,8 @@ impl JevTypedJudgeEngine {
         };
 
         // Build dynamic reasoning DAG nodes
-        let state_snippet = if state.len() > 60 {
-            format!("{}...", &state[..60])
+        let state_snippet = if state.chars().count() > 60 {
+            format!("{}...", state.chars().take(60).collect::<String>())
         } else {
             state.to_string()
         };
@@ -3492,7 +3492,7 @@ mod tests {
             threshold: None,
         };
 
-        // Executa 25 vezes para provar determinismo independente de ordem de hash map
+        // Executa 25 vezes para provar determinismo e estabilidade de avaliação
         for _ in 0..25 {
             let (ans, _rec) = engine
                 .evaluate_choice("Contrato geral", &q)
