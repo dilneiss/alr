@@ -234,16 +234,17 @@ const nomesDeLugar = new Set(LUGARES.flatMap((l) => [
 const CATALOGO_HIST = CATALOGO_HISTORIAS.filter((h) =>
   !POR_ID_BASE.has(h.id) && !(h.tipo === 'objeto' && nomesDeLugar.has(h.id.replace(/^h_/, ''))));
 const CATALOGO = [...CATALOGO_BASE, ...CATALOGO_EXTRA, ...expandidoMkt, ...CATALOGO_HIST];
-// sol, lua, estrela, nuvem etc. não são "quem está em cena": são céu. Ficam na camada de trás,
-// alta e pequena, para nunca aparecerem no meio dos personagens.
-const NO_CEU = new Set(['sol', 'lua', 'lua_cheia', 'h_lua_cheia', 'estrela', 'h_estrela', 'cometa', 'planeta', 'mc_nuvem', 'h_nuvem']);
-for (const c of CATALOGO) if (NO_CEU.has(c.id)) c.ceu = true;
-// paisagem e estrutura de cenário (montanha, rio, ponte, árvore...) também não entram na fila da frente
+// Céu ambiente: o palco JÁ desenha sol, lua, estrelas, nuvens, arco-íris e aurora conforme a hora e o
+// clima. Esses objetos do catálogo são a mesma coisa em dobro, então não são instanciados como ator —
+// só o tipo 'objeto' entra aqui (a "lua" personagem, deusa do conto, continua sendo gente em cena).
+const AMBIENTE = new Set(['sol', 'lua_cheia', 'h_lua_cheia', 'estrela', 'h_estrela', 'cometa', 'planeta', 'mc_nuvem', 'h_nuvem']);
+for (const c of CATALOGO) if (AMBIENTE.has(c.id) && c.tipo === 'objeto') c.ambiente = true;
+
+// Paisagem e estrutura de cenário vão para a linha do fundo; nunca personagem (as árvores de história são criaturas).
 const NO_FUNDO = new Set([
   'montanha', 'vulcao', 'cachoeira', 'rio', 'lago', 'ilha', 'caverna', 'ponte', 'muro', 'montanha_russa',
-  'arvore_generosa', 'arvore_passaros', 'arvore_falante',
 ]);
-for (const c of CATALOGO) if (NO_FUNDO.has(c.id)) c.fundo = true;
+for (const c of CATALOGO) if (NO_FUNDO.has(c.id) && c.tipo === 'objeto') c.fundo = true;
 const POR_ID = Object.fromEntries(CATALOGO.map((c) => [c.id, c]));
 const corta = (s, n) => { s = String(s ?? '').replace(/\s+/g, ' ').trim(); return s.length > n ? '…' + s.slice(-n) : s; };
 const semAcento = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
