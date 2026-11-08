@@ -1002,8 +1002,9 @@ export async function montar(api) {
   // com o som desligado o assistir é silencioso: quem anda é o temporizador, não o TTS
   const comVozAgora = () => modoReproducao === 'assistir' && som.ligado && vozDisponivel() && !vozQuebrada && temVozPt();
 
+  const limparTimerFala = () => { if (timerFala) { clearTimeout(timerFala); timerFala = null; } };
   function pararFala() {
-    if (timerFala) { clearTimeout(timerFala); timerFala = null; }
+    limparTimerFala();
     if (vozDisponivel()) { try { window.speechSynthesis.cancel(); } catch (_) {} }
   }
 
@@ -1035,26 +1036,38 @@ export async function montar(api) {
   // cada frase entra na transcrição da sessão e vai INTEIRA para a mesma entrada do microfone
   function aoFrase(frase, indice) {
     transcriptSessao = (transcriptSessao + ' ' + frase).trim();
-    const total = playerAtual ? playerAtual.total : 0;
+    const dono = playerAtual;              // quem chamou agora é o dono desta fala
+    const sessao = sessaoRoteiro;
+    const total = dono ? dono.total : 0;
     teleFrase.textContent = frase;
     teleContador.textContent = `frase ${indice + 1} de ${total}`;
     aoFalar(transcriptSessao);
-    if (modoReproducao === 'assistir') falarFrase(frase, indice);
+    if (modoReproducao === 'assistir') falarFrase(frase, indice, dono, sessao);
   }
 
+  // só avança se a sessão e o player ainda forem os mesmos: callback atrasado de um roteiro
+  // encerrado não pode empurrar o roteiro novo (os dois começam no índice 0)
+  const aindaVale = (dono, sessao) => sessao === sessaoRoteiro && playerAtual === dono && dono;
+
   // avança pelo tempo estimado: caminho de segurança quando não há voz pt-BR de verdade
-  function avancarPorTempo(frase, indice, fator = 1) {
+  function avancarPorTempo(frase, indice, dono, sessao, fator = 1) {
+    limparTimerFala();   // sem isso o timeout de segurança órfão cancela a próxima frase
     timerFala = setTimeout(() => {
       timerFala = null;
-      if (playerAtual) playerAtual.proxima(indice);
+      if (aindaVale(dono, sessao)) dono.proxima(indice);
     }, Math.round(duracaoDaFrase(frase) * fator));
   }
 
-  function falarFrase(frase, indice) {
+  function falarFrase(frase, indice, dono, sessao) {
     // sem voz: se o player já anda sozinho pelo tempo, não agenda outro avanço (pularia frase)
-    if (!comVozAgora()) { if (!autoDoPlayer) avancarPorTempo(frase, indice); return; }
+    if (!comVozAgora()) { if (!autoDoPlayer) avancarPorTempo(frase, indice, dono, sessao); return; }
     pararFala();
-    const avancar = () => { pararFala(); if (playerAtual) playerAtual.proxima(indice); };
+    const avancar = () => {
+      if (!aindaVale(dono, sessao)) return;   // cancelar o TTS dispara onend/onerror depois
+      if (dono.estado().indice !== indice) return;   // gatilho atrasado da frase que já passou
+      pararFala();
+      dono.proxima(indice);
+    };
     const comecou = Date.now();
     try {
       const u = new SpeechSynthesisUtterance(frase);
@@ -1062,15 +1075,15 @@ export async function montar(api) {
       u.rate = 0.98;
       u.onend = () => {
         // "terminou" em 250 ms uma frase de vários segundos: não há voz de verdade, cai no tempo
-        if (Date.now() - comecou < 250) { vozQuebrada = true; avancarPorTempo(frase, indice); return; }
+        if (Date.now() - comecou < 250) { vozQuebrada = true; avancarPorTempo(frase, indice, dono, sessao); return; }
         avancar();
       };
-      u.onerror = () => { vozQuebrada = true; avancarPorTempo(frase, indice); };
+      u.onerror = () => { vozQuebrada = true; avancarPorTempo(frase, indice, dono, sessao); };
       timerFala = setTimeout(avancar, Math.round(duracaoDaFrase(frase) * 1.5));
       window.speechSynthesis.speak(u);
     } catch (_) {
       vozQuebrada = true;
-      avancarPorTempo(frase, indice);
+      avancarPorTempo(frase, indice, dono, sessao);
     }
   }
 
