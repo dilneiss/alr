@@ -58,7 +58,11 @@ function pergunta(dec, ctx, entrada, alvo) {
   const instr = alvo ? `${dec.pergunta}\n\n${alvo}` : dec.pergunta;
   if (dec.tipo === 'choice') return { type: 'choice', instructions: instr, criteria: opcoesDe(dec, ctx, entrada) };
   if (dec.tipo === 'score') return { type: 'score', instructions: instr, criteria: niveisDe(dec) };
-  if (dec.tipo === 'noul') return { type: 'noul', instructions: instr };
+  if (dec.tipo === 'noul') {
+    const q = { type: 'noul', instructions: instr };
+    if (dec.criterios || dec.criteria) q.criteria = dec.criterios || dec.criteria;
+    return q;
+  }
   throw new Error(`decisão "${dec.id}": tipo inválido (${dec.tipo})`);
 }
 

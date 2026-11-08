@@ -4645,7 +4645,10 @@ async fn run_playground_tests() -> Result<()> {
     );
     assert_eq!(resp_1.usage.input_tokens, 384);
     assert_eq!(resp_1.usage.output_tokens, 22);
-    assert!((resp_1.usage.cost - 0.000016128).abs() < 1e-7);
+    assert_eq!(resp_1.usage.cost, 0.0, "Custo local ALR deve ser zero");
+    if let Some(comp) = &resp_1.cost_comparison {
+        assert!((comp.jev_cost - 0.000016128).abs() < 1e-7, "Custo simulado JEV deve ser 0.000016128");
+    }
     if let Some(ui) = &resp_1.ui_decision {
         println!(
             "  -> YOUR CODE WOULD:    {} ({})",
@@ -4713,7 +4716,10 @@ async fn run_playground_tests() -> Result<()> {
     assert_eq!(*probs.get("sales").unwrap_or(&0.0) as i64, 0);
     assert_eq!(resp_2.usage.input_tokens, 364);
     assert_eq!(resp_2.usage.output_tokens, 38);
-    assert!((resp_2.usage.cost - 0.000015288).abs() < 1e-7);
+    assert_eq!(resp_2.usage.cost, 0.0, "Custo local ALR deve ser zero");
+    if let Some(comp) = &resp_2.cost_comparison {
+        assert!((comp.jev_cost - 0.000015288).abs() < 1e-7, "Custo simulado JEV deve ser 0.000015288");
+    }
     if let Some(ui) = &resp_2.ui_decision {
         println!(
             "  -> YOUR CODE WOULD:    {} ({})",
@@ -4783,7 +4789,10 @@ async fn run_playground_tests() -> Result<()> {
     assert!((*score_probs.get("3").unwrap_or(&0.0) - 0.98).abs() < 1e-4);
     assert_eq!(resp_3.usage.input_tokens, 413);
     assert_eq!(resp_3.usage.output_tokens, 20);
-    assert!((resp_3.usage.cost - 0.000017346).abs() < 1e-7);
+    assert_eq!(resp_3.usage.cost, 0.0, "Custo local ALR deve ser zero");
+    if let Some(comp) = &resp_3.cost_comparison {
+        assert!((comp.jev_cost - 0.000017346).abs() < 1e-7, "Custo simulado JEV deve ser 0.000017346");
+    }
     if let Some(ui) = &resp_3.ui_decision {
         println!(
             "  -> YOUR CODE WOULD:    {} ({})",

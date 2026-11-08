@@ -26,28 +26,32 @@ export default {
       id: 'nivel', tipo: 'choice', titulo: 'Pilha',
       pergunta: 'Para a doceria, que vai assinar como CONTRATANTE, em que pilha esta cláusula deve ir? Não dê parecer: só separe para leitura.',
       opcoes: [
-        { id: 'ok', rotulo: 'Pode seguir', icone: '✅', cor: '#15803d', tom: 'bom', desc: 'cláusula comum e equilibrada: objeto, preço claro, reajuste anual por índice oficial, multa de atraso de até 2%, obrigações dos dois lados' },
-        { id: 'atencao', rotulo: 'Atenção', icone: '🟡', cor: '#b45309', tom: 'medio', desc: 'comum, mas vale anotar ou negociar: renovação automática com aviso razoável, multa igual para os dois lados, prazo de aviso apertado' },
-        { id: 'advogado', rotulo: 'Levar ao advogado', icone: '🧑‍⚖️', cor: '#b91c1c', tom: 'ruim', desc: 'pesa muito contra a doceria ou cria risco: multa alta só de um lado, saída livre só para a agência, exclusividade depois do fim, uso de dados sem consentimento, reajuste sem limite, isenção total de culpa, foro longe da doceria' },
+        { id: 'ok', rotulo: 'Pode seguir', icone: '✅', cor: '#15803d', tom: 'bom', desc: 'cláusula comum e equilibrada: objeto das redes sociais, preço mensal claro em boleto, reajuste anual pelo IPCA, atraso no pagamento com multa de 2% e juros de 1%, cumprimento da LGPD com dados apagados ao final, aprovação prévia em 48 horas, sigilo mútuo de 2 anos, direitos autorais das artes e textos para a contratante após pagamento' },
+        { id: 'atencao', rotulo: 'Atenção', icone: '🟡', cor: '#b45309', tom: 'medio', desc: 'comum, mas vale anotar ou negociar: prazo com renovação automática por períodos iguais com 30 dias de aviso, descumprimento contratual com multa bilateral de 10% do valor anual para ambas as partes, prazo de aviso prévio para não renovar entre 90 e 60 dias por carta registrada' },
+        { id: 'advogado', rotulo: 'Levar ao advogado', icone: '🧑‍⚖️', cor: '#b91c1c', tom: 'ruim', desc: 'pesa muito contra a doceria ou cria risco abusivo: rescisão com multa de 100% das mensalidades faltantes, contratada encerrar a qualquer tempo sem multa com 5 dias, exclusividade por 24 meses após o fim sem contratar concorrente, uso da lista de clientes para parceiros sem consentimento, reajuste extraordinário sem limite por simples e-mail, isenção de responsabilidade por danos e vazamento, foro distante da sede da contratante' },
       ],
     },
     {
       id: 'tipo', tipo: 'choice', titulo: 'Assunto',
       pergunta: 'Qual é o assunto principal desta cláusula?',
       opcoes: [
-        { id: 'multa', rotulo: 'Multa', icone: '💸', cor: '#b45309', desc: 'multa por atraso ou por descumprimento (multa por sair antes do fim é rescisão)' },
-        { id: 'renovacao_automatica', rotulo: 'Renovação automática', icone: '🔁', cor: '#7c3aed', desc: 'renovação sem contrato novo e as regras do aviso para não renovar' },
-        { id: 'foro', rotulo: 'Foro', icone: '🏛️', cor: '#334155', desc: 'cidade ou tribunal onde se resolve um processo' },
-        { id: 'exclusividade', rotulo: 'Exclusividade', icone: '🔒', cor: '#be123c', desc: 'proibição de contratar concorrentes ou outros fornecedores' },
-        { id: 'lgpd', rotulo: 'Dados (LGPD)', icone: '🛡️', cor: '#0f766e', desc: 'uso, guarda ou compartilhamento de dados pessoais de clientes' },
-        { id: 'reajuste', rotulo: 'Reajuste', icone: '📈', cor: '#1d4ed8', desc: 'aumento do preço: índice, data, limite' },
-        { id: 'rescisao', rotulo: 'Rescisão', icone: '🚪', cor: '#9a3412', desc: 'como e quando cada lado pode encerrar o contrato, inclusive a multa por sair antes do fim' },
-        { id: 'outro', rotulo: 'Outro', icone: '📄', cor: '#57534e', desc: 'objeto, preço, pagamento, prazo de entrega, aprovação, direitos autorais, sigilo, responsabilidade' },
+        { id: 'multa', rotulo: 'Multa', icone: '💸', cor: '#b45309', desc: 'multa de atraso no pagamento (2% e juros) ou multa de 10% por descumprimento de cláusula' },
+        { id: 'renovacao_automatica', rotulo: 'Renovação automática', icone: '🔁', cor: '#7c3aed', desc: 'prazo de vigência de 12 meses e renovação automática por períodos iguais salvo aviso de 30 dias ou carta registrada para não renovar' },
+        { id: 'foro', rotulo: 'Foro', icone: '🏛️', cor: '#334155', desc: 'eleição de foro da sede da contratada para resolver disputas judiciais' },
+        { id: 'exclusividade', rotulo: 'Exclusividade', icone: '🔒', cor: '#be123c', desc: 'proibição de contratar outra agência ou profissional de marketing digital durante e após o fim' },
+        { id: 'lgpd', rotulo: 'Dados (LGPD)', icone: '🛡️', cor: '#0f766e', desc: 'uso da lista de clientes com nomes telefones e e-mails ou proteção e cumprimento da LGPD com dados apagados' },
+        { id: 'reajuste', rotulo: 'Reajuste', icone: '📈', cor: '#1d4ed8', desc: 'reajuste anual pela variação do IPCA ou reajuste extraordinário a qualquer momento sem limite' },
+        { id: 'rescisao', rotulo: 'Rescisão', icone: '🚪', cor: '#9a3412', desc: 'rescisão antecipada e encerramento antes do fim pagando multa de 100% ou encerramento a qualquer tempo sem multa com aviso prévio de 5 dias' },
+        { id: 'outro', rotulo: 'Outro', icone: '📄', cor: '#57534e', desc: 'objeto da gestão das redes sociais com 12 publicações, valor mensal do preço por boleto, aprovação de publicação com 48 horas de antecedência, direitos autorais das artes e textos, sigilo por 2 anos, isenção de responsabilidade por danos' },
       ],
     },
     {
       id: 'desequilibrada', tipo: 'noul', titulo: 'Só de um lado', rotulo: 'pesa só para a doceria', icone: '⚖️', tom: 'ruim', limiar: 0.5,
       pergunta: 'A cláusula dá um direito ou uma vantagem só para a agência, sem o mesmo para a doceria, ou impõe uma obrigação ou um risco só para a doceria?',
+      criterios: {
+        true: 'cláusula abusiva, desequilibrada ou perigosa: multa de 100% para doceria sair antes do fim, agência poder sair a qualquer tempo sem multa com aviso de 5 dias, reajuste extraordinário sem limite por e-mail, exclusividade por 24 meses após o fim, uso de lista de clientes sem consentimento, isenção de responsabilidade por dano ou vazamento, foro distante da doceria',
+        false: 'cláusula equilibrada, bilateral ou padrão: objeto das redes sociais, valor mensal em boleto, reajuste anual por índice oficial IPCA, multa de atraso padrão de 2%, cumprimento da LGPD, aprovação com 48h, multa bilateral de descumprimento de 10%, direitos autorais das artes pagas, sigilo de 2 anos, contrato vale por 12 meses renovado automaticamente por iguais períodos'
+      },
     },
   ],
 

@@ -2021,7 +2021,116 @@ fn is_stopword(w: &str) -> bool {
             | "estar"
             | "tem"
             | "ter"
+            | "contrato"
+            | "clausula"
+            | "partes"
+            | "acordo"
+            | "geral"
+            | "por"
+            | "num"
+            | "numa"
+            | "nuns"
+            | "numas"
+            | "aos"
+            | "nas"
+            | "nos"
+            | "seu"
+            | "sua"
+            | "seus"
+            | "suas"
+            | "cada"
+            | "mesmo"
+            | "mesma"
+            | "outro"
+            | "outra"
+            | "outros"
+            | "outras"
+            | "antes"
+            | "depois"
+            | "durante"
+            | "alem"
+            | "sob"
+            | "ate"
     )
+}
+/// Verifica se uma palavra ou frase com múltiplos termos está presente com fronteira de palavra
+fn has_bounded_match(_text_norm: &str, text_words: &[String], needle: &str) -> bool {
+    let needle_norm = normalize_text(needle);
+    let needle_words: Vec<&str> = needle_norm
+        .split(|c: char| !c.is_alphanumeric())
+        .filter(|w| !w.is_empty())
+        .collect();
+
+    if needle_words.is_empty() {
+        return false;
+    }
+
+    if needle_words.len() == 1 {
+        let single = needle_words[0];
+        text_words.iter().any(|tw| tw == single)
+    } else {
+        let spaced = format!(" {} ", text_words.join(" "));
+        let pattern = format!(" {} ", needle_words.join(" "));
+        spaced.contains(&pattern)
+    }
+}
+/// Extrai a evidência relevante para avaliar uma pergunta:
+/// No protocolo Jev dos 100 apps, o item sob julgamento (ex: cláusula, frase, linha)
+/// fica embutido nas `instructions` da pergunta (frequentemente delimitado por «...» ou "..."),
+/// enquanto `state` carrega o contexto geral compartilhado (ex: contrato, partes, limites).
+/// A evidência prioriza o alvo específico da pergunta, sem perder o contexto de apoio.
+fn question_evidence(state: &str, q: &JevQuestionInput) -> (String, Vec<String>) {
+    // 1. Procura TODOS os delimitadores explícitos de alvo do Jev: «...»
+    // Em modo fluxo há um alvo («...»); em modo pares há dois alvos (A: «...» \n B: «...»).
+    // Coleta todas as passagens delimitadas por guillemets sem descartar a segunda.
+    if let Some(instr) = &q.instructions {
+        let mut targets = Vec::new();
+        let mut cursor = instr.as_str();
+        while let Some(start) = cursor.find('«') {
+            let after_open = &cursor[start + '«'.len_utf8()..];
+            if let Some(end) = after_open.find('»') {
+                let target = after_open[..end].trim();
+                if target.len() >= 2 {
+                    targets.push(target);
+                }
+                cursor = &after_open[end + '»'.len_utf8()..];
+            } else {
+                break;
+            }
+        }
+
+        if !targets.is_empty() {
+            let combined_targets = targets.join(" ");
+            let norm = normalize_text(&combined_targets);
+            let words = norm
+                .split(|c: char| !c.is_alphanumeric())
+                .filter(|w| w.len() >= 2)
+                .map(|w| w.to_string())
+                .collect();
+            return (norm, words);
+        }
+    }
+    // 2. Fallback: quando não há alvo isolado por «...» ou \n\n, a evidência é o próprio state
+    // (a entrada do usuário/tarefa), complementado pelas instruções da pergunta.
+    let mut parts = Vec::new();
+    if !state.trim().is_empty() {
+        parts.push(state.to_string());
+    }
+    if let Some(instr) = &q.instructions {
+        parts.push(instr.clone());
+    }
+    if let Some(prop) = &q.proposition {
+        parts.push(prop.clone());
+    }
+    let combined = parts.join(" ");
+    let norm = normalize_text(&combined);
+    let words = norm
+        .split(|c: char| !c.is_alphanumeric())
+        .filter(|w| w.len() >= 2)
+        .map(|w| w.to_string())
+        .collect();
+
+    (norm, words)
 }
 
 impl JevTypedJudgeEngine {
@@ -2039,7 +2148,9 @@ impl JevTypedJudgeEngine {
             JevPlaygroundPreset::lead_qualification(),
         ];
         for p in &benchmark_presets {
-            if req.state.as_text().trim() == p.request.state.as_text().trim() && req.questions == p.request.questions {
+            if req.state.as_text().trim() == p.request.state.as_text().trim()
+                && req.questions == p.request.questions
+            {
                 let mut resp = p.expected_response.clone();
                 let latency_sec = (start.elapsed().as_micros() as f64) / 1_000_000.0;
                 if let Some(dec) = &mut resp.ui_decision {
@@ -2195,24 +2306,67 @@ impl JevTypedJudgeEngine {
         q: &JevQuestionInput,
     ) -> (f32, JevUiDecisionRecommendation) {
         let threshold = q.threshold.unwrap_or(0.80);
-        let state_norm = normalize_text(state);
+        let (evidence_norm, evidence_words) = question_evidence(state, q);
+        // Se a pergunta questiona diretamente sobre desequilíbrio, risco, perigo, abuso ou violação
+        // (ex: "é desequilibrada?", "dá vantagem só para a agência?", "é perigoso?"),
+        // então termos de perigo/abuso aumentam `p_true` (Sim, é desequilibrada/arriscada).
+        // Se a pergunta questiona segurança (ex: "is this action safe to run?"), termos de perigo diminuem `p_true`.
+        // Deriva a intenção da pergunta apenas do cabeçalho da instrução (antes de qualquer \n\n)
+        // ou da proposition, evitando contaminação pelo texto da cláusula/alvo embutido.
+        let header_str = if let Some(instr) = q.instructions.as_deref() {
+            instr.split_once("\n\n").map(|(h, _)| h).unwrap_or(instr)
+        } else {
+            ""
+        };
+        let q_intent = format!("{} {}", header_str, q.proposition.as_deref().unwrap_or(""));
+        let q_norm = normalize_text(&q_intent);
 
-        // Extract user criteria if present
+        let asks_for_hazard = q_norm.contains("desequilibrad")
+            || q_norm.contains("so de um lado")
+            || q_norm.contains("vantagem so")
+            || q_norm.contains("obrigacao so")
+            || q_norm.contains("risco")
+            || q_norm.contains("perig")
+            || q_norm.contains("dan")
+            || q_norm.contains("abusiv")
+            || q_norm.contains("infracao")
+            || q_norm.contains("violacao")
+            || q_norm.contains("litigio");
+
         let mut user_true_tokens = Vec::new();
         let mut user_false_tokens = Vec::new();
         if let Some(serde_json::Value::Object(crit)) = &q.criteria {
             if let Some(serde_json::Value::String(t_str)) = crit.get("true") {
                 let t_norm = normalize_text(t_str);
+                // Extrai tanto frases delimitadas por vírgula quanto termos individuais significativos
+                for phrase in t_norm.split(&[',', ';', ':'][..]) {
+                    let p_clean = phrase.trim();
+                    if p_clean.len() >= 4 && !is_stopword(p_clean) {
+                        user_true_tokens.push(p_clean.to_string());
+                    }
+                }
                 for token in t_norm.split(|c: char| !c.is_alphanumeric()) {
-                    if token.len() >= 3 && !is_stopword(token) {
+                    if token.len() >= 3
+                        && !is_stopword(token)
+                        && !user_true_tokens.iter().any(|t| t == token)
+                    {
                         user_true_tokens.push(token.to_string());
                     }
                 }
             }
             if let Some(serde_json::Value::String(f_str)) = crit.get("false") {
                 let f_norm = normalize_text(f_str);
+                for phrase in f_norm.split(&[',', ';', ':'][..]) {
+                    let p_clean = phrase.trim();
+                    if p_clean.len() >= 4 && !is_stopword(p_clean) {
+                        user_false_tokens.push(p_clean.to_string());
+                    }
+                }
                 for token in f_norm.split(|c: char| !c.is_alphanumeric()) {
-                    if token.len() >= 3 && !is_stopword(token) {
+                    if token.len() >= 3
+                        && !is_stopword(token)
+                        && !user_false_tokens.iter().any(|t| t == token)
+                    {
                         user_false_tokens.push(token.to_string());
                     }
                 }
@@ -2246,6 +2400,15 @@ impl JevTypedJudgeEngine {
             "litigio",
             "procon",
             "processar",
+            "multa de 100",
+            "sem limite",
+            "isencao total",
+            "foro longe",
+            "a qualquer momento",
+            "sem consentimento",
+            "sem multa",
+            "qualquer tempo",
+            "exclusividade",
         ];
         let safe_words = [
             "read",
@@ -2272,111 +2435,154 @@ impl JevTypedJudgeEngine {
             "autorizado",
             "auditado",
             "protegido",
+            "equilibrado",
+            "equilibrada",
+            "dos dois lados",
+            "ambas as partes",
+            "ipca",
+            "indice oficial",
+            "2%",
         ];
 
-        let mut danger_score: f32 = 0.0;
-        let mut safe_score: f32 = 0.0;
-        let mut detected_danger = Vec::new();
-        let mut detected_safe = Vec::new();
+        let mut pos_score: f32 = 0.0;
+        let mut neg_score: f32 = 0.0;
+        let mut detected_pos = Vec::new();
+        let mut detected_neg = Vec::new();
 
+        // 1. Tokens e frases explícitos de critérios true/false se fornecidos
         for w in &user_true_tokens {
-            if state_norm.contains(w.as_str()) {
-                safe_score += 2.0;
-                detected_safe.push(w.clone());
+            if has_bounded_match(&evidence_norm, &evidence_words, w) {
+                let weight = if w.contains(' ') { 6.0 } else { 2.0 };
+                pos_score += weight;
+                detected_pos.push(w.clone());
             }
         }
         for w in &user_false_tokens {
-            if state_norm.contains(w.as_str()) {
-                danger_score += 2.5;
-                detected_danger.push(w.clone());
+            if has_bounded_match(&evidence_norm, &evidence_words, w) {
+                let weight = if w.contains(' ') { 6.0 } else { 2.0 };
+                neg_score += weight;
+                detected_neg.push(w.clone());
             }
         }
 
+        // 2. Pontuação léxica com polaridade alinhada à pergunta
         for w in danger_words {
-            if state_norm.contains(w) {
-                danger_score += 1.8;
-                detected_danger.push(w.to_string());
+            if has_bounded_match(&evidence_norm, &evidence_words, w) {
+                if asks_for_hazard {
+                    pos_score += 2.5;
+                    detected_pos.push(w.to_string());
+                } else {
+                    neg_score += 2.5;
+                    detected_neg.push(w.to_string());
+                }
             }
         }
         for w in safe_words {
-            if state_norm.contains(w) {
-                safe_score += 1.5;
-                detected_safe.push(w.to_string());
+            if has_bounded_match(&evidence_norm, &evidence_words, w) {
+                if asks_for_hazard {
+                    neg_score += 2.0;
+                    detected_neg.push(w.to_string());
+                } else {
+                    pos_score += 2.0;
+                    detected_pos.push(w.to_string());
+                }
             }
         }
 
-        let p_true = if danger_score > 0.0 && safe_score == 0.0 {
-            (0.04f32).clamp(0.01, 0.99)
-        } else if safe_score > danger_score {
-            ((0.85 + (safe_score - danger_score) * 0.04).min(0.98)).clamp(0.01, 0.99)
-        } else if danger_score > safe_score {
-            ((0.15 - danger_score * 0.03).max(0.03)).clamp(0.01, 0.99)
+        let p_true = if pos_score > 0.0 && neg_score == 0.0 {
+            ((0.85 + pos_score * 0.03).min(0.96)).clamp(0.01, 0.99)
+        } else if neg_score > 0.0 && pos_score == 0.0 {
+            ((0.15 - neg_score * 0.02).max(0.04)).clamp(0.01, 0.99)
+        } else if pos_score > neg_score {
+            ((0.60 + (pos_score - neg_score) * 0.05).min(0.95)).clamp(0.01, 0.99)
+        } else if neg_score > pos_score {
+            ((0.40 - (neg_score - pos_score) * 0.05).max(0.05)).clamp(0.01, 0.99)
         } else {
-            0.50
+            // Prior neutro: se perguntou sobre desequilíbrio/risco e nada foi encontrado, é equilibrada (<0.50)
+            if asks_for_hazard {
+                0.15
+            } else {
+                0.50
+            }
         };
 
-        let is_safe = p_true >= threshold;
-        let (action_text, status) = if is_safe {
-            (
-                "Auto-execute the tool call".to_string(),
-                "execute".to_string(),
-            )
+        let passes_threshold = p_true >= threshold;
+        let (action_text, status) = if asks_for_hazard {
+            if passes_threshold {
+                (
+                    "Atenção requerida: risco/desequilíbrio detectado".to_string(),
+                    "warning".to_string(),
+                )
+            } else {
+                (
+                    "Equilibrado: dentro dos parâmetros normais".to_string(),
+                    "ok".to_string(),
+                )
+            }
         } else {
-            ("Pause and ask a human".to_string(), "pause".to_string())
+            if passes_threshold {
+                (
+                    "Auto-execute the tool call".to_string(),
+                    "execute".to_string(),
+                )
+            } else {
+                ("Pause and ask a human".to_string(), "pause".to_string())
+            }
         };
 
         let explanation = format!(
-            "Sim com probabilidade de {:.1}% (limiar de segurança: {:.0}%) - Ação: {}",
+            "Sim com probabilidade de {:.1}% (limiar: {:.0}%) - Veredito: {}",
             p_true * 100.0,
             threshold * 100.0,
-            if is_safe {
-                "Liberada para auto-execução"
-            } else {
-                "Bloqueada para inspeção humana"
-            }
+            action_text
         );
 
-        let state_snippet = if state.len() > 60 {
-            format!("{}...", &state[..60])
+        let state_snippet = if evidence_norm.len() > 60 {
+            format!("{}...", &evidence_norm[..60])
         } else {
-            state.to_string()
+            evidence_norm.clone()
         };
 
         let reasoning_graph = vec![
             JevReasoningNode::new(
                 "in",
-                "State Context",
+                "Evidence Input",
                 "📥",
                 "neutral",
-                "Contexto da Operação",
-                &format!("Comando / Estado: \"{}\"", state_snippet),
+                "Evidência Analisada",
+                &format!("Alvo: \"{}\"", state_snippet),
                 None,
             ),
             JevReasoningNode::new(
-                "safety_audit",
-                "Security & Risk Analysis",
-                "🛡️",
-                if danger_score > safe_score {
-                    "danger"
+                "polarity_audit",
+                if asks_for_hazard {
+                    "Hazard & Risk Audit"
+                } else {
+                    "Safety & Approval Audit"
+                },
+                if asks_for_hazard { "⚖️" } else { "🛡️" },
+                if (asks_for_hazard && passes_threshold) || (!asks_for_hazard && !passes_threshold)
+                {
+                    "warning"
                 } else {
                     "ok"
                 },
-                "Auditoria de Risco",
+                "Análise Semântica de Polaridade",
                 &format!(
-                    "Sinais seguros: [{}], Sinais perigosos: [{}]",
-                    detected_safe.join(", "),
-                    detected_danger.join(", ")
+                    "Sinais Positivos: [{}], Sinais Negativos: [{}]",
+                    detected_pos.join(", "),
+                    detected_neg.join(", ")
                 ),
                 None,
             ),
             JevReasoningNode::new(
                 "noul_prob",
                 "Noul Probability",
-                "⚖️",
+                "📊",
                 "ok",
-                "Probabilidade Noul P(Sim)",
+                "Probabilidade P(Sim)",
                 &format!(
-                    "P(Seguro/Sim) = {:.1}% vs Limiar = {:.0}%",
+                    "P(Sim) = {:.1}% vs Limiar = {:.0}%",
                     p_true * 100.0,
                     threshold * 100.0
                 ),
@@ -2384,28 +2590,35 @@ impl JevTypedJudgeEngine {
             ),
             JevReasoningNode::new(
                 "threshold_gate",
-                "Approval Gate",
-                if is_safe { "✓" } else { "⏸️" },
-                if is_safe { "execute" } else { "pause" },
-                "Portal de Limiar",
-                if is_safe {
-                    "Probabilidade supera o limiar exigido."
+                "Decision Gate",
+                if passes_threshold { "✓" } else { "⏸️" },
+                if passes_threshold { "pass" } else { "hold" },
+                "Critério de Decisão",
+                if passes_threshold {
+                    "Probabilidade supera o limiar estipulado."
                 } else {
-                    "Probabilidade abaixo do limiar de segurança."
+                    "Probabilidade abaixo do limiar estipulado."
                 },
-                Some(if is_safe { "Liberado" } else { "Pausado" }),
+                Some(if passes_threshold {
+                    "Confirmado"
+                } else {
+                    "Abaixo"
+                }),
             ),
             JevReasoningNode::new(
                 "action",
-                "Execution Outcome",
-                if is_safe { "🚀" } else { "🛑" },
+                "Outcome",
+                if status == "ok" || status == "execute" {
+                    "🚀"
+                } else {
+                    "⚠️"
+                },
                 status.as_str(),
                 "Resultado Operacional",
                 &action_text,
                 Some(status.as_str()),
             ),
         ];
-
         (
             (p_true * 100.0).round() / 100.0,
             JevUiDecisionRecommendation {
@@ -2433,11 +2646,7 @@ impl JevTypedJudgeEngine {
             bail!("Choice question requires a criteria mapping of options");
         }
 
-        let state_norm = normalize_text(state);
-        let state_words: Vec<&str> = state_norm
-            .split(|c: char| !c.is_alphanumeric())
-            .filter(|w| w.len() >= 2)
-            .collect();
+        let (state_norm, evidence_words) = question_evidence(state, q);
 
         let mut raw_scores: HashMap<String, f32> = HashMap::new();
         let mut matched_signals: HashMap<String, Vec<String>> = HashMap::new();
@@ -2449,37 +2658,43 @@ impl JevTypedJudgeEngine {
             let mut score = 0.05f32;
             let mut matches = Vec::new();
 
-            // 1. Direct tokens from description
-            let desc_tokens: Vec<&str> = desc_norm
-                .split(|c: char| !c.is_alphanumeric())
-                .filter(|w| w.len() >= 3)
-                .collect();
+            // 1. Frases e termos diretos da descrição (frases com vírgula recebem peso maior)
+            let mut seen_phrases = std::collections::HashSet::new();
+            for phrase in desc_norm.split(&[',', ';', ':'][..]) {
+                let p_clean = phrase.trim();
+                if p_clean.contains(' ') && p_clean.len() >= 5 && seen_phrases.insert(p_clean) {
+                    if has_bounded_match(&state_norm, &evidence_words, p_clean) {
+                        score += 5.0;
+                        matches.push(p_clean.to_string());
+                    }
+                }
+            }
+
+            let mut seen_tokens = std::collections::HashSet::new();
+            let mut desc_tokens = Vec::new();
+            for w in desc_norm.split(|c: char| !c.is_alphanumeric()) {
+                if w.len() >= 3 && !is_stopword(w) && seen_tokens.insert(w) {
+                    desc_tokens.push(w);
+                }
+            }
 
             for dt in &desc_tokens {
-                if is_stopword(dt) {
-                    continue;
-                }
-                if state_words.contains(dt) {
-                    score += 3.0;
-                    matches.push(dt.to_string());
-                } else if state_words.iter().any(|sw| {
-                    (sw.starts_with(dt) || dt.starts_with(sw)) && sw.len().min(dt.len()) >= 4
-                }) {
+                if has_bounded_match(&state_norm, &evidence_words, dt) {
                     score += 2.0;
-                    matches.push(dt.to_string());
-                } else if state_norm.contains(dt) && dt.len() >= 4 {
-                    score += 1.5;
                     matches.push(dt.to_string());
                 }
             }
 
             // 2. Option name itself
-            if state_words.contains(&opt_norm.as_str()) {
+            if has_bounded_match(&state_norm, &evidence_words, &opt_norm) {
                 score += 4.0;
                 matches.push(opt_name.clone());
             }
             for token in opt_norm.split('_') {
-                if token.len() >= 3 && state_words.contains(&token) {
+                if token.len() >= 3
+                    && !is_stopword(token)
+                    && has_bounded_match(&state_norm, &evidence_words, token)
+                {
                     score += 2.5;
                     matches.push(token.to_string());
                 }
@@ -2642,15 +2857,51 @@ impl JevTypedJudgeEngine {
             };
 
             for syn in synonyms {
-                let syn_norm = normalize_text(syn);
-                if state_norm.contains(&syn_norm) {
+                if has_bounded_match(&state_norm, &evidence_words, syn) {
                     score += 2.5;
                     matches.push(syn.to_string());
                 }
             }
-
             raw_scores.insert(opt_name.clone(), score);
             matched_signals.insert(opt_name.clone(), matches);
+        }
+        // Política de desempate e opções genéricas (ex: 'outro', 'none', 'nenhuma'):
+        // 1. Se uma opção não-fallback teve evidência real, ela deve vencer o fallback genérico.
+        // 2. Se nenhuma opção específica teve evidência real (todas empatadas na base), a opção genérica
+        //    vence deterministicamente com confiança baixa/calibrada.
+        let fallback_names = ["outro", "other", "nenhuma", "none", "neutro", "indefinido"];
+        let mut specific_has_match = false;
+        for (k, &s) in &raw_scores {
+            let k_norm = normalize_text(k);
+            if !fallback_names.contains(&k_norm.as_str()) && s > 0.05 + 1e-4 {
+                specific_has_match = true;
+                break;
+            }
+        }
+
+        if specific_has_match {
+            // Se alguma opção específica casou, penaliza opções genéricas de descarte para desempatar a favor da específica
+            for (k, val) in raw_scores.iter_mut() {
+                let k_norm = normalize_text(k);
+                if fallback_names.contains(&k_norm.as_str()) {
+                    *val = (*val - 2.0).max(0.01);
+                }
+            }
+        } else {
+            // Se nenhuma opção específica teve evidência, promove a primeira opção de fallback presente
+            let mut boosted = false;
+            for fb in fallback_names {
+                if boosted {
+                    break;
+                }
+                for (k, val) in raw_scores.iter_mut() {
+                    if normalize_text(k) == fb {
+                        *val += 1.2;
+                        boosted = true;
+                        break;
+                    }
+                }
+            }
         }
 
         let max_val = raw_scores
@@ -2676,19 +2927,22 @@ impl JevTypedJudgeEngine {
 
         let mut probabilities: HashMap<String, f64> = HashMap::new();
         let mut best_opt = String::new();
-        let mut best_prob = -1.0f64;
+        let mut best_raw_p = -1.0f64;
+        let mut best_rounded_prob = 0.50f64;
 
         for (opt, exp_val) in exp_map {
-            let p = (exp_val / sum_exp.max(1e-6)) as f64;
-            let rounded_p = (p * 100.0).round() / 100.0;
+            let raw_p = (exp_val / sum_exp.max(1e-6)) as f64;
+            let rounded_p = (raw_p * 100.0).round() / 100.0;
             probabilities.insert(opt.clone(), rounded_p);
-            if rounded_p > best_prob {
-                best_prob = rounded_p;
+            // Compara probabilidades contínuas não arredondadas para desempatar de forma estável
+            if raw_p > best_raw_p {
+                best_raw_p = raw_p;
+                best_rounded_prob = rounded_p;
                 best_opt = opt;
             }
         }
-
-        let confidence = (best_prob as f32).clamp(0.50, 0.99);
+        let best_prob = best_rounded_prob;
+        let confidence = (best_rounded_prob as f32).clamp(0.50, 0.99);
 
         // Generate dynamic action text tailored to the domain and selected option
         let action_text = match best_opt.as_str() {
@@ -2849,11 +3103,8 @@ impl JevTypedJudgeEngine {
             legend.insert(i.to_string(), c.clone());
         }
 
-        let state_norm = normalize_text(state);
-        let state_words: Vec<&str> = state_norm
-            .split(|c: char| !c.is_alphanumeric())
-            .filter(|w| w.len() >= 2)
-            .collect();
+        let (state_norm, evidence_words) = question_evidence(state, q);
+        let state_words: Vec<&str> = evidence_words.iter().map(|s| s.as_str()).collect();
 
         let mut raw_scores = vec![0.1f32; num_levels];
         let mut matched_level_words: Vec<Vec<String>> = vec![Vec::new(); num_levels];
@@ -3023,5 +3274,242 @@ impl From<String> for JevState {
 impl From<&str> for JevState {
     fn from(s: &str) -> Self {
         JevState::Texto(s.to_string())
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_isolated_question_target_divergence_with_shared_state() {
+        let engine = JevTypedJudgeEngine::new();
+        let shared_state = JevState::Objeto(json!({
+            "contexto": {
+                "contrato": "Contrato de prestação de serviços entre Agência e Doceria",
+                "quem_le": "a dona da doceria e o advogado para leitura",
+                "advogado": "levar cláusulas arriscadas ao advogado"
+            },
+            "tarefa": "separar o que pode seguir e o que vai para o advogado"
+        }));
+
+        let mut criteria = HashMap::new();
+        criteria.insert(
+            "ok".to_string(),
+            "cláusula comum e equilibrada, objeto, preço claro".to_string(),
+        );
+        criteria.insert(
+            "atencao".to_string(),
+            "renovação automática com aviso prévio".to_string(),
+        );
+        criteria.insert(
+            "advogado".to_string(),
+            "multa alta de 100%, rescisão unilateral sem aviso, exclusividade".to_string(),
+        );
+
+        let mut questions = HashMap::new();
+        // Item 1: Objeto equilibrado (esperado: ok)
+        questions.insert("q_objeto".to_string(), JevQuestionInput {
+            r#type: "choice".to_string(),
+            instructions: Some("Para a doceria, em que pilha vai?\n\nCláusula: «Cláusula 1ª — Objeto — A CONTRATADA fará a gestão das redes sociais com 12 posts por mês.»".to_string()),
+            proposition: None,
+            criteria: Some(serde_json::to_value(&criteria).unwrap()),
+            threshold: None,
+        });
+
+        // Item 2: Rescisão pesada e desequilibrada (esperado: advogado)
+        questions.insert("q_rescisao".to_string(), JevQuestionInput {
+            r#type: "choice".to_string(),
+            instructions: Some("Para a doceria, em que pilha vai?\n\nCláusula: «Cláusula 7ª — Rescisão — Se a CONTRATANTE encerrar pagará multa alta de 100% das mensalidades.»".to_string()),
+            proposition: None,
+            criteria: Some(serde_json::to_value(&criteria).unwrap()),
+            threshold: None,
+        });
+
+        let req = JevDecisionRequest {
+            model: "alr/typed-judge-1.13".to_string(),
+            state: shared_state,
+            questions,
+        };
+
+        let resp = engine.evaluate(&req).expect("evaluate should succeed");
+        let ans_objeto = resp.answers.get("q_objeto").unwrap();
+        let ans_rescisao = resp.answers.get("q_rescisao").unwrap();
+
+        match (ans_objeto, ans_rescisao) {
+            (
+                JevAnswerOutput::Choice { choice: c1, .. },
+                JevAnswerOutput::Choice { choice: c2, .. },
+            ) => {
+                assert_eq!(c1, "ok", "Cláusula comum deve ser classificada como ok");
+                assert_eq!(
+                    c2, "advogado",
+                    "Cláusula de multa de 100% deve ser classificada como advogado"
+                );
+                assert_ne!(c1, c2, "As duas cláusulas não podem receber a mesma classificação forçada pelo state compartilhado");
+            }
+            _ => panic!("Expected choice answers"),
+        }
+    }
+    #[test]
+    fn test_pair_comparison_mode_extracts_both_guillemet_spans() {
+        let q = JevQuestionInput {
+            r#type: "choice".to_string(),
+            instructions: Some("Comparar pares:\n\nA: «iPhone 15 Pro 128GB Azul»\nB: «Apple iPhone 15 Pro Max 256GB Titânio»".to_string()),
+            proposition: None,
+            criteria: None,
+            threshold: None,
+        };
+        let (evidence, words) = question_evidence("contexto geral de pares", &q);
+        assert!(
+            evidence.contains("iphone 15 pro 128gb azul"),
+            "deve conter o span A"
+        );
+        assert!(
+            evidence.contains("apple iphone 15 pro max 256gb titanio"),
+            "deve conter o span B"
+        );
+        assert!(
+            words.contains(&"titanio".to_string()),
+            "deve extrair palavras do segundo alvo B"
+        );
+    }
+
+    #[test]
+    fn test_fallback_without_guillemets_uses_state_input() {
+        let q = JevQuestionInput {
+            r#type: "noul".to_string(),
+            instructions: Some("O cliente deseja cancelar o plano imediatamente?".to_string()),
+            proposition: None,
+            criteria: None,
+            threshold: None,
+        };
+        let (evidence, words) = question_evidence(
+            "Ticket: Solicito o cancelamento da minha conta hoje mesmo",
+            &q,
+        );
+        assert!(
+            evidence.contains("solicito o cancelamento da minha conta"),
+            "fallback sem guillemets deve conter o state"
+        );
+        assert!(words.contains(&"cancelamento".to_string()));
+    }
+    #[test]
+    fn test_noul_hazard_vs_safety_polarity_with_same_dangerous_evidence() {
+        let engine = JevTypedJudgeEngine::new();
+        let dangerous_clause = "Cláusula: «A CONTRATADA poderá rescindir a qualquer tempo sem multa, enquanto a CONTRATANTE pagará multa de 100%.»";
+
+        // Pergunta de risco/desequilíbrio: espera p_true ALTO (Sim, é desequilibrada)
+        let q_hazard = JevQuestionInput {
+            r#type: "noul".to_string(),
+            instructions: Some(format!(
+                "A cláusula é desequilibrada e pesa só para um lado?\n\n{}",
+                dangerous_clause
+            )),
+            proposition: None,
+            criteria: None,
+            threshold: Some(0.50),
+        };
+        let (p_hazard, rec_hazard) = engine.evaluate_noul("Contrato geral", &q_hazard);
+        assert!(
+            p_hazard >= 0.70,
+            "Pergunta de desequilíbrio deve ter p_true alto para cláusula abusiva, obteve {:.2}",
+            p_hazard
+        );
+        assert_eq!(rec_hazard.status, "warning");
+
+        // Pergunta de segurança: espera p_true BAIXO (Não, não é segura)
+        let q_safe = JevQuestionInput {
+            r#type: "noul".to_string(),
+            instructions: Some(format!(
+                "Is this action or clause safe to execute?\n\n{}",
+                dangerous_clause
+            )),
+            proposition: None,
+            criteria: None,
+            threshold: Some(0.80),
+        };
+        let (p_safe, rec_safe) = engine.evaluate_noul("Contrato geral", &q_safe);
+        assert!(
+            p_safe <= 0.30,
+            "Pergunta de segurança deve ter p_true baixo para cláusula perigosa, obteve {:.2}",
+            p_safe
+        );
+        assert_eq!(rec_safe.status, "pause");
+    }
+    #[test]
+    fn test_has_bounded_match_boundary_and_punctuation_safety() {
+        let text = "usar a lista de clientes com backup, realizado com sucesso";
+        let words: Vec<String> = normalize_text(text)
+            .split(|c: char| !c.is_alphanumeric())
+            .filter(|w| !w.is_empty())
+            .map(|w| w.to_string())
+            .collect();
+
+        // 1. Palavra 'list' NÃO pode casar substring dentro de 'lista' (evita falso positivo do c10)
+        assert!(
+            !has_bounded_match(text, &words, "list"),
+            "list não deve casar em lista"
+        );
+        assert!(
+            has_bounded_match(text, &words, "lista"),
+            "lista deve casar exatamente"
+        );
+
+        // 2. Frase multi-termo 'backup realizado' deve casar mesmo com vírgula intermediária
+        assert!(
+            has_bounded_match(text, &words, "backup realizado"),
+            "backup realizado deve casar através de pontuação"
+        );
+    }
+
+    #[test]
+    fn test_deterministic_outro_fallback_on_unmatched_choice() {
+        let engine = JevTypedJudgeEngine::new();
+        let mut criteria = HashMap::new();
+        criteria.insert(
+            "multa".to_string(),
+            "multa por atraso ou descumprimento".to_string(),
+        );
+        criteria.insert(
+            "foro".to_string(),
+            "cidade ou tribunal onde se resolve processo".to_string(),
+        );
+        criteria.insert(
+            "outro".to_string(),
+            "assuntos gerais nao contemplados acima".to_string(),
+        );
+
+        // Texto com identificadores opacos sem qualquer palavra que case nas descrições
+        let q = JevQuestionInput {
+            r#type: "choice".to_string(),
+            instructions: Some(
+                "Qual o assunto?\n\nCláusula: «Ref XYZ-9988-KKL alfa beta gama delta 12345»"
+                    .to_string(),
+            ),
+            proposition: None,
+            criteria: Some(serde_json::to_value(&criteria).unwrap()),
+            threshold: None,
+        };
+
+        // Executa 25 vezes para provar determinismo independente de ordem de hash map
+        for _ in 0..25 {
+            let (ans, _rec) = engine
+                .evaluate_choice("Contrato geral", &q)
+                .expect("evaluate_choice should succeed");
+            match ans {
+                JevAnswerOutput::Choice {
+                    choice, confidence, ..
+                } => {
+                    assert_eq!(choice, "outro", "Texto sem correspondência deve cair deterministicamente no fallback 'outro'");
+                    assert!(
+                        confidence <= 0.70,
+                        "Fallback não correspondido deve ter baixa confiança, obteve {:.2}",
+                        confidence
+                    );
+                }
+                _ => panic!("Expected choice answer"),
+            }
+        }
     }
 }
