@@ -5,6 +5,9 @@ import { desenho, cabecaDe, DEFS, resolverAparencia, camadasAparencia } from './
 import { cenario as desenharCenario } from './cenarios.js';
 import { criarClima } from './clima.js';
 import { tocarSomBloco, tocarSomPop, tocarSomDano, tocarSomLevelUp } from './audio-minecraft.js';
+import { ROTEIROS, roteirosDoModo } from './roteiros.mjs';
+import { criarPlayer, duracaoDaFrase } from './reproduzir.js';
+import { criarMicrofone } from '../_motor/voz.js';
 
 // a história da demonstração (▶): duas viradas — a neve na praia e o dragão que só queria bolo
 const DEMO = [
@@ -18,36 +21,6 @@ const DEMO = [
   'A neve parou, o céu se encheu de estrelas e todos dormiram felizes. Fim!',
 ];
 // começos prontos (na página em branco): passam pelo mesmo caminho da voz
-const PRONTAS = [
-  { rotulo: '🏖️ A praia que nevou', texto: 'Era um dia de sol na praia. Uma menina brincava na areia com o seu cachorro. De repente, começou a nevar!' },
-  { rotulo: '🐉 O dragão comilão', texto: 'Era uma vez um castelo. Um dia apareceu um dragão, mas ele era bonzinho e adorava comer bolo.' },
-  { rotulo: '🚀 Viagem ao espaço', texto: 'Um menino entrou num foguete e voou até o espaço. Lá ele encontrou um alienígena dançando.' },
-  { rotulo: '🧜‍♀️ No fundo do mar', texto: 'No fundo do mar, uma sereia nadava com um pinguim. De repente, eles acharam um baú de tesouro!' },
-  { rotulo: '👻 Noite de tempestade', texto: 'Era noite na floresta e caiu uma tempestade. Um fantasma apareceu e a coruja ficou com medo.' },
-];
-const PRONTAS_MINECRAFT = [
-  { rotulo: '🗡️ Steve e a invasão do Nether', texto: 'Steve entrou no portal do Nether e encontrou um zumbi com espada no meio da lava.' },
-  { rotulo: '🐉 A batalha do Dragão do End', texto: 'Alex subiu na torre de obsidiana no The End para lutar contra o Dragão do End.' },
-  { rotulo: '💎 Mineração na caverna', texto: 'Na caverna escura, Steve achou diamantes e colocou tochas, mas um Creeper apareceu!' },
-  { rotulo: '🏡 Construindo a vila', texto: 'Na planície ensolarada, os aldeões construíram uma casa de blocos com Steve.' },
-  { rotulo: '🏹 Noite com esqueletos', texto: 'Anoiteceu na floresta de blocos e esqueletos com arco começaram a atirar flechas.' },
-];
-const PRONTAS_HUBISS = [
-  { rotulo: '🏢 Pitch Hubiss Dropshipping', texto: 'Um lojista queria vender no Mercado Livre e Shopee sem ter estoque próprio. Com a Hubiss, as vendas caem direto no painel, a etiqueta oficial do frete sai impressa na hora e o caminhão já leva a encomenda. Sem comissões abusivas e com logística 100% automatizada!' },
-  { rotulo: '🏷️ Expedição com Etiqueta Oficial', texto: 'Na doca do galpão da Hubiss, a esteira rolante trouxe os pacotes e a impressora soltou a etiqueta oficial do frete na hora!' },
-];
-const PRONTAS_CELIT = [
-  { rotulo: '📱 Pitch CELIT Assistência e ERP', texto: 'O cliente chegou com a tela do celular quebrada e com pressa. O técnico abriu a Ordem de Serviço no CELIT com fotos de avarias, trocou a peça na bancada e imprimiu o termo legal de garantia de 90 dias. O cliente pagou no balcão e saiu sorrindo com segurança jurídica total!' },
-  { rotulo: '🏪 Trade-in no Balcão da Loja', texto: 'No balcão da loja CELIT, o lojista avaliou a pilha de smartphones seminovos, gerou o termo de procedência com IMEI e vendeu no caixa PDV.' },
-];
-const PRONTAS_DATASNAP = [
-  { rotulo: '⚡ Pitch DataSnap Big Data ClickHouse', texto: 'A empresa gastava fortunas com servidores de logs lentos que travavam nas buscas. Ao ligar o DataSnap em ClickHouse, bilhões de registros foram consultados em milissegundos com um painel holográfico em tempo real, economizando 80% do custo de nuvem!' },
-  { rotulo: '🖲️ Análise de Logs com IA', texto: 'No datacenter futurista da DataSnap, o engenheiro de dados ativou a IA de observabilidade para monitorar os racks de servidores em tempo real.' },
-];
-const PRONTAS_QUALHORA = [
-  { rotulo: '⏰ Pitch QualHora Agendamento Online', texto: 'A clínica vivia com horários vazios e pacientes que esqueciam as consultas. Com a QualHora, os clientes agendam pelo link em menos de um minuto e recebem lembretes automáticos no WhatsApp. A agenda ficou cheia e as faltas caíram 98%!' },
-  { rotulo: '🗓️ Grade de Horários Lotada', texto: 'Na recepção da clínica QualHora, o calendário de agendamento na parede preencheu todos os horários e o WhatsApp confirmou os atendimentos.' },
-];
 const MUNDO_L = 1600, MUNDO_A = 900;
 const PROF = { longe: 0.22, meio: 0.55, perto: 1, frente: 1.35, luzes: 0.55 };
 const CHAO_PERS = 716, CHAO_FUNDO = 664, CHAO_FRENTE = 742;
@@ -159,31 +132,55 @@ export async function montar(api) {
   const legFin = el('span', { class: 'fin' }), legPar = el('span', { class: 'par' });
   const legenda = el('p', { class: 'cn-legenda vazia' }, [legFin, legPar]);
 
+  // teleprompter: a frase atual do roteiro, com contador e controles
+  const teleFrase = el('p', { class: 'cn-tele-frase', 'aria-live': 'polite', 'aria-atomic': 'true', text: '' });
+  const teleContador = el('span', { class: 'cn-tele-progresso', text: '' });
+  const teleModo = el('span', { class: 'cn-tele-modo', text: '▶ assistindo' });
+  const teleProxima = el('button', { class: 'cn-tele-btn', type: 'button', onclick: () => proximaFrase() }, ['Próxima frase →']);
+  const teleParar = el('button', { class: 'cn-tele-btn ghost', type: 'button', onclick: () => pararRoteiro() }, ['Parar']);
+  const teleprompter = el('div', { class: 'cn-teleprompter oculto' }, [
+    el('div', { class: 'cn-tele-cab' }, [teleModo, teleContador]),
+    teleFrase,
+    el('div', { class: 'cn-tele-acoes' }, [teleProxima, teleParar]),
+  ]);
+
+  // modos de reprodução: assistir (a história se conta sozinha) ou ler (a pessoa conta e a cena acompanha)
+  let modoReproducao = (() => { try { return localStorage.getItem('cn_modo_reproducao') === 'ler' ? 'ler' : 'assistir'; } catch (_) { return 'assistir'; } })();
+  const modoDosCartoes = () => (modoMinecraft ? 'minecraft' : presetAtual === 'livre' ? 'livre' : presetAtual);
+  const ROTULO_MODOS = {
+    livre: 'ou assista/leia uma história livre:',
+    minecraft: 'ou viva uma aventura no Minecraft:',
+    hubiss: 'ou veja uma apresentação da Hubiss:',
+    celit: 'ou veja uma apresentação do CELIT:',
+    datasnap: 'ou veja uma apresentação do DataSnap:',
+    qualhora: 'ou veja uma apresentação da QualHora:',
+  };
+
   const prontasCont = el('div', { class: 'cn-prontas' });
   function desenharProntas() {
-    let lista = PRONTAS;
-    let label = 'ou comece por uma destas:';
-    if (modoMinecraft) {
-      lista = PRONTAS_MINECRAFT;
-      label = 'ou viva uma aventura no Minecraft:';
-    } else if (presetAtual === 'hubiss') {
-      lista = PRONTAS_HUBISS;
-      label = 'ou veja uma apresentação da Hubiss:';
-    } else if (presetAtual === 'celit') {
-      lista = PRONTAS_CELIT;
-      label = 'ou veja uma apresentação do CELIT:';
-    } else if (presetAtual === 'datasnap') {
-      lista = PRONTAS_DATASNAP;
-      label = 'ou veja uma apresentação do DataSnap:';
-    } else if (presetAtual === 'qualhora') {
-      lista = PRONTAS_QUALHORA;
-      label = 'ou veja uma apresentação da QualHora:';
+    const modo = modoDosCartoes();
+    const lista = roteirosDoModo(modo);
+    prontasCont.replaceChildren(el('span', { text: ROTULO_MODOS[modo] || ROTULO_MODOS.livre }));
+    for (const rot of lista) {
+      const cartao = el('div', { class: 'cn-cartao-modo', 'data-roteiro': rot.id }, [
+        el('span', { class: 'cn-cartao-titulo', text: rot.titulo }),
+        el('div', { class: 'cn-cartao-acoes' }, [
+          el('button', {
+            class: 'cn-cartao-acao' + (modoReproducao === 'assistir' ? ' on' : ''),
+            type: 'button',
+            title: 'A história se conta sozinha, com voz e tudo',
+            onclick: () => iniciarRoteiro(rot.id, 'assistir'),
+          }, ['▶ assistir']),
+          el('button', {
+            class: 'cn-cartao-acao' + (modoReproducao === 'ler' ? ' on' : ''),
+            type: 'button',
+            title: 'Você conta em voz alta e a cena acompanha; ou use Próxima frase',
+            onclick: () => iniciarRoteiro(rot.id, 'ler'),
+          }, ['🎙 ler']),
+        ]),
+      ]);
+      prontasCont.append(cartao);
     }
-    prontasCont.replaceChildren(el('span', { text: label }));
-    lista.forEach((p) => {
-      const bt = el('button', { class: 'cn-pronta', type: 'button', onclick: () => contarPronta(p.texto) }, [p.rotulo]);
-      prontasCont.append(bt);
-    });
   }
   desenharProntas();
   const papel = el('div', { class: 'cn-papel' }, [
@@ -202,9 +199,10 @@ export async function montar(api) {
     dica: 'Aperte o microfone e conte uma história',
     placeholder: 'Ou digite um pedaço da história e aperte Enter',
     onTexto: (fin, par) => mostrarLegenda(fin, par),
-    onPausa: (texto) => aoFalar(texto),
+    // falar/digitar durante um roteiro encerra o roteiro: a cena passa a ser da pessoa
+    onPausa: (texto) => { if (playerAtual) pararRoteiro(); aoFalar(texto); },
   });
-  const btNova = el('button', { class: 'cn-nova', type: 'button', onclick: () => { pararDemo(); novaHistoria(); } }, ['↺ Nova história']);
+  const btNova = el('button', { class: 'cn-nova', type: 'button', onclick: () => { pararDemo(); pararRoteiro(); novaHistoria(); } }, ['↺ Nova história']);
   const btMinecraft = el('button', { class: 'cn-btn-minecraft' + (modoMinecraft ? ' ativo' : ''), type: 'button', onclick: () => alternarModoMinecraft() }, [
     el('span', { text: '⛏️' }),
     el('span', { class: 'cn-txt-mc', text: modoMinecraft ? 'Minecraft: ON' : 'Minecraft: OFF' }),
@@ -236,7 +234,7 @@ export async function montar(api) {
   const badgeMetrica = el('div', { class: 'cn-badge-metrica' });
   tela.append(badgeMetrica);
 
-  raiz.append(defs, barPresets, el('div', { class: 'cn-palco' }, [tela, legenda]), el('div', { class: 'cn-controles' }, [barra.no, btEstudio, btMinecraft, btNova, som.botao(el)]));
+  raiz.append(defs, barPresets, el('div', { class: 'cn-palco' }, [tela, teleprompter, legenda]), el('div', { class: 'cn-controles' }, [barra.no, btEstudio, btMinecraft, btNova, som.botao(el)]));
   area.append(raiz);
   // durante ou depois da demonstração, falar ou digitar começa uma história nova (a demonstração para na hora)
   barra.no.addEventListener('click', (e) => { if ((historiaDaDemo || ctlDemo) && e.target.closest('.mj-voz-mic')) { pararDemo(); novaHistoria(); } }, true);
@@ -982,11 +980,148 @@ export async function montar(api) {
     mostrarLegenda('', '');
     desenharChips();
   }
-  async function contarPronta(texto) {
+  // ---------- roteiro: assistir (com voz ou silencioso) e ler (voz da pessoa) ----------
+  let playerAtual = null;
+  let transcriptSessao = '';
+  let timerFala = null;
+  let micLeitura = null;
+  let ultimoDito = '';
+
+  const vozDisponivel = () => typeof window !== 'undefined'
+    && 'speechSynthesis' in window && typeof window.SpeechSynthesisUtterance === 'function';
+  // navegador sem voz pt-BR (ou TTS que "termina" na hora) não pode virar avanço instantâneo:
+  // nesses casos a história anda pelo tempo estimado da frase
+  let vozQuebrada = false;
+  let autoDoPlayer = false;   // quem agenda o avanço: o player (tempo) ou a fala
+  const temVozPt = () => {
+    try {
+      const vozes = window.speechSynthesis.getVoices?.() || [];
+      return vozes.some((v) => /^pt/i.test(v.lang || ''));
+    } catch (_) { return false; }
+  };
+  // com o som desligado o assistir é silencioso: quem anda é o temporizador, não o TTS
+  const comVozAgora = () => modoReproducao === 'assistir' && som.ligado && vozDisponivel() && !vozQuebrada && temVozPt();
+
+  function pararFala() {
+    if (timerFala) { clearTimeout(timerFala); timerFala = null; }
+    if (vozDisponivel()) { try { window.speechSynthesis.cancel(); } catch (_) {} }
+  }
+
+  function fecharEscuta() {
+    // a API do microfone é { ligar, desligar, ligado } — sem 'parar'
+    if (micLeitura) { try { micLeitura.desligar(true); } catch (_) {} micLeitura = null; }
+    ultimoDito = '';
+  }
+
+  // toda troca de roteiro invalida a sessão anterior: nenhum callback atrasado (fala, microfone, sleep)
+  // pode mexer na cena do roteiro novo
+  let sessaoRoteiro = 0;
+  function pararRoteiro() {
+    sessaoRoteiro += 1;
+    pararFala();
+    fecharEscuta();
+    if (playerAtual) { try { playerAtual.parar(); } catch (_) {} }
+    playerAtual = null;
+    teleprompter.classList.add('oculto');
+  }
+
+  function proximaFrase() {
+    if (!playerAtual) return;
+    const st = playerAtual.estado();
+    pararFala();
+    playerAtual.proxima(st.indice);
+  }
+
+  // cada frase entra na transcrição da sessão e vai INTEIRA para a mesma entrada do microfone
+  function aoFrase(frase, indice) {
+    transcriptSessao = (transcriptSessao + ' ' + frase).trim();
+    const total = playerAtual ? playerAtual.total : 0;
+    teleFrase.textContent = frase;
+    teleContador.textContent = `frase ${indice + 1} de ${total}`;
+    aoFalar(transcriptSessao);
+    if (modoReproducao === 'assistir') falarFrase(frase, indice);
+  }
+
+  // avança pelo tempo estimado: caminho de segurança quando não há voz pt-BR de verdade
+  function avancarPorTempo(frase, indice, fator = 1) {
+    timerFala = setTimeout(() => {
+      timerFala = null;
+      if (playerAtual) playerAtual.proxima(indice);
+    }, Math.round(duracaoDaFrase(frase) * fator));
+  }
+
+  function falarFrase(frase, indice) {
+    // sem voz: se o player já anda sozinho pelo tempo, não agenda outro avanço (pularia frase)
+    if (!comVozAgora()) { if (!autoDoPlayer) avancarPorTempo(frase, indice); return; }
+    pararFala();
+    const avancar = () => { pararFala(); if (playerAtual) playerAtual.proxima(indice); };
+    const comecou = Date.now();
+    try {
+      const u = new SpeechSynthesisUtterance(frase);
+      u.lang = 'pt-BR';
+      u.rate = 0.98;
+      u.onend = () => {
+        // "terminou" em 250 ms uma frase de vários segundos: não há voz de verdade, cai no tempo
+        if (Date.now() - comecou < 250) { vozQuebrada = true; avancarPorTempo(frase, indice); return; }
+        avancar();
+      };
+      u.onerror = () => { vozQuebrada = true; avancarPorTempo(frase, indice); };
+      timerFala = setTimeout(avancar, Math.round(duracaoDaFrase(frase) * 1.5));
+      window.speechSynthesis.speak(u);
+    } catch (_) {
+      vozQuebrada = true;
+      avancarPorTempo(frase, indice);
+    }
+  }
+
+  function abrirEscuta() {
+    if (typeof criarMicrofone !== 'function') return;
+    fecharEscuta();
+    micLeitura = criarMicrofone({
+      onTexto: (final) => {
+        const delta = final.startsWith(ultimoDito) ? final.slice(ultimoDito.length) : final;
+        ultimoDito = final;
+        if (delta.trim() && playerAtual) playerAtual.receberFala(delta);
+      },
+      // voz.js chama onEstado sempre (ligou/erro/parou): sem isso o callback quebra em navegador real
+      onEstado: (estado, msg) => {
+        if (estado === 'ouvindo') teleModo.textContent = '🎙 ouvindo você';
+        else if (estado === 'erro') { teleModo.textContent = '🎙 leitura manual'; teleContador.textContent = msg || 'microfone indisponível'; }
+        else teleModo.textContent = '🎙 lendo em voz alta';
+      },
+      onNivel: () => {},
+    });
+    try { micLeitura.ligar(); } catch (_) {}
+  }
+
+  async function iniciarRoteiro(id, modo = modoReproducao) {
+    const rot = ROTEIROS[id];
+    if (!rot) return;
     pararDemo();
+    pararRoteiro();
+    const minhaSessao = sessaoRoteiro;   // pararRoteiro acabou de incrementar
     novaHistoria();
-    await sleep(350);
-    barra.simular(texto).catch(() => {});
+    modoReproducao = modo === 'ler' ? 'ler' : 'assistir';
+    try { localStorage.setItem('cn_modo_reproducao', modoReproducao); } catch (_) {}
+    desenharProntas();
+    transcriptSessao = '';
+    const comVoz = comVozAgora();
+    autoDoPlayer = modoReproducao === 'assistir' && !comVoz;
+    teleModo.textContent = modoReproducao === 'ler' ? '🎙 lendo em voz alta' : comVoz ? '▶ assistindo com voz' : '▶ assistindo';
+    teleFrase.textContent = '';
+    teleContador.textContent = 'preparando…';
+    teleprompter.classList.remove('oculto');
+    await sleep(280);
+    if (minhaSessao !== sessaoRoteiro) return;   // outra escolha venceu esta
+    playerAtual = criarPlayer({
+      roteiro: rot,
+      aoFrase: (frase, indice) => { if (minhaSessao === sessaoRoteiro) aoFrase(frase, indice); },
+      aoFim: () => { teleContador.textContent = 'fim da história'; pararFala(); fecharEscuta(); },
+      // com voz, quem manda é o fim da fala; sem voz (ou lendo), o modo decide
+      autoAvancar: autoDoPlayer,
+    });
+    playerAtual.tocar();
+    if (modoReproducao === 'ler') abrirEscuta();
   }
 
   function alternarModoMinecraft() {
@@ -1104,6 +1239,7 @@ export async function montar(api) {
   function pararDemo() { if (ctlDemo) { const c = ctlDemo; ctlDemo = null; c.abort(); } }
   async function tocar(sinal) {
     pararDemo();
+    pararRoteiro();
     const meu = new AbortController();
     ctlDemo = meu;
     const s = typeof AbortSignal.any === 'function' ? AbortSignal.any([sinal, meu.signal]) : sinal;
@@ -1143,7 +1279,10 @@ export async function montar(api) {
       desenharChips({}, {});
     },
     estado: () => ({ ...cena, elenco: elenco() }),
-    nova: () => novaHistoria(),
+    nova: () => { pararRoteiro(); novaHistoria(); },
+    roteiro: (id, modo) => iniciarRoteiro(id, modo),
+    reproducao: () => ({ modo: modoReproducao, estado: playerAtual ? playerAtual.estado() : null, frase: teleFrase.textContent }),
+    pararRoteiro: () => pararRoteiro(),
   };
 
   medir();
