@@ -65,6 +65,30 @@ function perna(lado, x, y, comp, larg, cor, sapato, sx, sy, srx, sry) {
     + `<ellipse cx="${sx - srx * 0.35}" cy="${sy - sry * 0.35}" rx="${srx * 0.32}" ry="${sry * 0.3}" fill="#fff" fill-opacity=".35"/></g>`;
 }
 const cabeca = (u, arq, x = 0, y = 0, t = 256) => `<image class="cab" href="${u(arq)}" x="${x}" y="${y}" width="${t}" height="${t}"/>`;
+// Slots vazios e em coordenadas locais do sprite; conteúdo pode ser inserido sem alterar o desenho-base.
+function socketsDe(item) {
+  if (item.tipo !== 'personagem') return '';
+  const c = COMPOSTO[item.id];
+  const anchors = c && ['menina', 'menino', 'vovo', 'pirata', 'robo', 'alien', 'astronauta', 'heroi', 'bruxa', 'mago'].includes(c)
+    ? { 'socket-mao-d': [187, 294], 'socket-mao-e': [69, 294], 'socket-costas': [54, 220] }
+    : { 'socket-mao-d': [190, 190], 'socket-mao-e': [66, 190], 'socket-costas': [48, 144] };
+  return Object.entries(anchors).map(([name, [x, y]]) => {
+    const slot = name.replace('socket-', '');
+    return `<g class="cn-socket ${name} slot-${slot}" data-socket="${slot}" transform="translate(${x} ${y})"></g>`;
+  }).join('');
+}
+
+// Regiões vetoriais sobre a cabeça do boneco composto. Ocultas inicialmente para preservar o emoji original;
+// palco/CSS pode revelar cada região e variar os elementos filhos via classes/data attributes.
+export function faceOverlay() {
+  return `<g class="cn-face-overlay" data-face-overlay="true" pointer-events="none">`
+    + `<g class="cn-face-region cn-face-sobrancelhas" data-face-region="sobrancelhas" opacity="0"><path class="sobrancelha sob-e" d="M96 118 Q108 111 119 118" fill="none" stroke="#49312b" stroke-width="5" stroke-linecap="round"/><path class="sobrancelha sob-d" d="M137 118 Q148 111 160 118" fill="none" stroke="#49312b" stroke-width="5" stroke-linecap="round"/></g>`
+    + `<g class="cn-face-region cn-face-olhos" data-face-region="olhos" opacity="0"><ellipse class="olho olho-e" cx="108" cy="135" rx="7" ry="9" fill="#fff"/><ellipse class="olho olho-d" cx="148" cy="135" rx="7" ry="9" fill="#fff"/><circle class="pupila pupila-e" cx="109" cy="136" r="3.5" fill="#30251f"/><circle class="pupila pupila-d" cx="149" cy="136" r="3.5" fill="#30251f"/></g>`
+    + `<g class="cn-face-region cn-face-boca" data-face-region="boca" opacity="0"><path class="boca boca-sorriso" d="M112 163 Q128 177 144 163" fill="none" stroke="#8f3f47" stroke-width="5" stroke-linecap="round"/><ellipse class="boca-aberta" cx="128" cy="166" rx="9" ry="6" fill="#8f3f47"/></g>`
+    + `<g class="cn-face-region cn-face-bochechas" data-face-region="bochechas" opacity="0"><ellipse cx="89" cy="151" rx="9" ry="5" fill="#f47e88"/><ellipse cx="167" cy="151" rx="9" ry="5" fill="#f47e88"/></g>`
+    + `</g>`;
+}
+
 
 // ---------- corpos desenhados (unidades da cabeça de 256) ----------
 const CORPOS = {
@@ -249,9 +273,11 @@ const COMPOSTO = { menina: 'menina', menino: 'menino', vovo: 'vovo', pirata: 'pi
 // devolve { caixa:[x,y,w,h], svg } de um item do catálogo; u(arquivo) = endereço do asset
 export function desenho(item, u) {
   const c = COMPOSTO[item.id];
-  if (c) return CORPOS[c](u);
-  const cx = CAIXA[item.id] || [16, 16, 224, 224];
-  return { caixa: cx, svg: `<image href="${u(item.img)}" x="0" y="0" width="256" height="256"/>` };
+  const desenhoBase = c
+    ? CORPOS[c](u)
+    : { caixa: CAIXA[item.id] || [16, 16, 224, 224], svg: `<image href="${u(item.img)}" x="0" y="0" width="256" height="256"/>` };
+  const face = item.tipo === 'personagem' ? faceOverlay() : '';
+  return { ...desenhoBase, svg: desenhoBase.svg + face + socketsDe(item) };
 }
 
 // onde fica a cabeça de cada um (para pôr os efeitos: zzz, lágrimas, notas…): [x, y] em fração da caixa

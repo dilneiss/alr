@@ -67,15 +67,21 @@ export async function montar(api) {
   const reduz = !!ui.reduzMovimento;
   const L = spec.limiar;
   const CAT = Object.fromEntries(spec.catalogo.map((c) => [c.id, c]));
+  const classeAcao = Object.fromEntries(spec.acoes.map((a) => [a.id, a.classeCss || `ac-${a.id}`]));
+  const familiaAcao = Object.fromEntries(spec.acoes.filter((a) => a.familia).map((a) => [a.id, `familia-${a.familia}`]));
+  const nomeAcao = Object.fromEntries(spec.acoes.map((a) => [a.id, a.nome]));
   const LUG = Object.fromEntries(spec.lugares.map((x) => [x.id, x]));
   const HOR = Object.fromEntries(spec.horas.map((x) => [x.id, x]));
   const CLI = Object.fromEntries(spec.climas.map((x) => [x.id, x]));
   const HUM = Object.fromEntries(spec.humores.map((x) => [x.id, x]));
+  const ACAO_POR_ID = Object.fromEntries(spec.acoes.map((acao) => [acao.id, acao]));
+  const EXPRESSAO_POR_ID = Object.fromEntries((spec.expressoes || []).map((expressao) => [expressao.id, expressao]));
   const perguntar = api.ultima();
   const u = (arq) => api.url('assets/' + arq);
 
   // ---------- estado ----------
   const cena = { lugar: null, hora: 'dia', clima: 'limpo', humor: 'calmo' };
+  let casaAtual = null, estadoCasa = { interior: false, portaAberta: false };
   const atores = new Map();          // id → ator em cena
   let ordem = 0, textoAplicado = '', emVoo = 0, historiaDaDemo = false, papelAberto = true;
   let vis = { x0: 0, x1: MUNDO_L, y0: 0, s: 1 };
@@ -121,6 +127,9 @@ export async function montar(api) {
   const chips = { lugar: chip('k-lugar', 'Lugar'), hora: chip('k-hora', 'Hora do dia'), clima: chip('k-clima', 'Tempo'), humor: chip('k-humor', 'Clima da cena') };
   const fita = el('div', { class: 'cn-fita' }, [api.fita.no]);
   const hud = el('div', { class: 'cn-hud' }, [fita, el('div', { class: 'cn-chips', 'aria-live': 'polite' }, Object.values(chips))]);
+  const evento = el('div', { class: 'cn-evento', 'aria-live': 'polite', 'aria-atomic': 'true' });
+  const direcoesHud = el('div', { class: 'cn-chips-direcao', 'aria-live': 'polite' });
+  hud.append(evento, direcoesHud);
 
   // legenda grande (a narração)
   const legFin = el('span', { class: 'fin' }), legPar = el('span', { class: 'par' });
@@ -220,9 +229,9 @@ export async function montar(api) {
 
   // ---------- lugares: troca como um livro pop-up (o velho deita, o novo levanta, de longe para perto) ----------
   let cenarioAtual = null, camadasAtuais = [];
-  function trocarLugar(id, { silencioso = false } = {}) {
-    if (cenarioAtual && cenarioAtual.id === id) return;
-    const novo = desenharCenario(id, u);
+  function trocarLugar(id, { silencioso = false, casa = casaAtual, estadoCasa: estado = estadoCasa, atualizar = false } = {}) {
+    if (cenarioAtual && cenarioAtual.id === id && !atualizar) return;
+    const novo = desenharCenario(id, u, { casa, estadoCasa: estado });
     const velhas = camadasAtuais;
     camadasAtuais = [];
     ['frente', 'perto', 'meio', 'longe', 'luzes'].forEach((nome, i) => {
@@ -243,6 +252,8 @@ export async function montar(api) {
         { duration: 680, delay: (velhas.length ? 300 : 60) + Math.min(i, 3) * 110, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' });
       else no.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, fill: 'backwards' });
     });
+    casaAtual = casa;
+    estadoCasa = estado;
     cenarioAtual = novo;
     for (const m of MUNDOS) m.style.setProperty('--chao', novo.chao);
     if (!silencioso) som.whoosh();
@@ -274,10 +285,56 @@ export async function montar(api) {
     const ator = { id, item, el: no, acao: 'parado', ordem: ++ordem, x: 800, y: CHAO_PERS, saindo: false, olha: item.olha, alt, larg, fx: no.querySelector('.cn-fx'), corpo: no.querySelector('.cn-corpo'), tag };
     return ator;
   }
+  function equipar(a, tipo, slot = 'mao-d') {
+    const aliases = {
+      espada: ['mc_espada', 'espada_brinquedo', 'katana', 'sabre', 'florete'],
+      lanca: ['lanca', 'mc_tridente', 'alabarda'],
+      arco: ['mc_arco', 'arco_brinquedo', 'mc_besta'],
+      escudo: ['mc_escudo', 'escudo_madeira'],
+      machado: ['machado', 'mc_machado'],
+      martelo: ['mc_maca_guerra', 'martelo'],
+      adaga: ['adaga', 'punhal'],
+      cajado: ['cajado_magico', 'bordao', 'varinha'],
+      picareta: ['mc_picareta', 'picareta_ferro'],
+      pa: ['mc_pa', 'pa'],
+      enxada: ['enxada'],
+      regador: ['regador'],
+      colher: ['colher'],
+      pincel: ['pincel'],
+      vassoura: ['vassoura'],
+    };
+    const candidato = (aliases[tipo] || []).map((id) => CAT[id]).find(Boolean);
+    const grupo = a.corpo.querySelector(`[data-socket="${slot}"]`);
+    if (!grupo || !candidato || a.equipamentos?.[slot] === candidato.id) return;
+    if (atores.has(candidato.id)) sair(candidato.id);
+    grupo.replaceChildren();
+    const imagem = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+    imagem.setAttribute('href', u(candidato.img));
+    imagem.setAttribute('x', slot === 'costas' ? '-28' : '-38');
+    imagem.setAttribute('y', slot === 'costas' ? '-30' : '-42');
+    imagem.setAttribute('width', slot === 'costas' ? '56' : '84');
+    imagem.setAttribute('height', slot === 'costas' ? '56' : '84');
+    imagem.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    grupo.append(imagem);
+    a.equipamentos ||= {};
+    a.equipamentos[slot] = candidato.id;
+  }
+  function guardarEquipamento(a) {
+    for (const slot of ['mao-d', 'mao-e']) {
+      const id = a.equipamentos?.[slot];
+      if (!id) continue;
+      const tipo = id.includes('escudo') ? 'escudo' : id.includes('machado') ? 'machado' : id.includes('arco') ? 'arco' : id.includes('lanca') || id.includes('tridente') ? 'lanca' : id.includes('martelo') || id.includes('maca') ? 'martelo' : id.includes('adaga') || id.includes('punhal') ? 'adaga' : 'espada';
+      equipar(a, tipo, 'costas');
+      a.corpo.querySelector(`[data-socket="${slot}"]`)?.replaceChildren();
+      delete a.equipamentos[slot];
+    }
+  }
 
   function entrar(id, acao, atraso = 0) {
+    if ([...atores.values()].some((ator) => Object.values(ator.equipamentos || {}).includes(id))) return;
     if (atores.has(id)) { const a = atores.get(id); if (a.saindo) { a.saindo = false; a.el.classList.remove('sai'); } if (acao) definirAcao(a, acao); return; }
     const a = criarAtor(id);
+    if (a.item.casa) a.el.classList.add('cn-casa-catalogo');
     atores.set(id, a);
     definirAcao(a, acao || 'parado', true);
     posicionar();
@@ -306,10 +363,31 @@ export async function montar(api) {
   function definirAcao(a, acao, primeira = false) {
     if (a.item.veiculo) acao = VEICULO_ACAO[acao] && a.item.veiculo.includes(acao) ? acao : 'parado';
     if (!primeira && a.acao === acao) return;
+    const detalhe = ACAO_POR_ID[acao];
+    if (detalhe?.tipoArma) {
+      const slotArma = detalhe.tipoArma === 'escudo' ? 'mao-e' : 'mao-d';
+      equipar(a, detalhe.tipoArma, slotArma);
+      if (acao === 'ac_corte_duplo') equipar(a, detalhe.tipoArma, 'mao-e');
+      else if (slotArma === 'mao-d') a.corpo.querySelector('[data-socket="mao-e"]')?.replaceChildren();
+      a.corpo.querySelector('[data-socket="costas"]')?.replaceChildren();
+      if (a.equipamentos) delete a.equipamentos.costas;
+    } else if (['parado', 'andando', 'correndo', 'pulando'].includes(acao) && (a.equipamentos?.['mao-d'] || a.equipamentos?.['mao-e'])) guardarEquipamento(a);
     const antes = a.acao;
-    a.el.classList.remove('ac-' + a.acao);
+    a.el.classList.remove(classeAcao[a.acao] || 'ac-' + a.acao);
+    if (familiaAcao[a.acao]) a.el.classList.remove(familiaAcao[a.acao]);
     a.acao = acao;
-    a.el.classList.add('ac-' + acao);
+    a.el.classList.add(classeAcao[acao] || 'ac-' + acao);
+    if (familiaAcao[acao]) a.el.classList.add(familiaAcao[acao]);
+    a.el.dataset.acao = acao;
+    if (detalhe?.pose != null) {
+      const pose = Number(detalhe.pose) || 0;
+      const angulo = 20 + (pose % 20) * 2;
+      a.el.style.setProperty('--pose-shift', `${-(4 + (pose % 7) * 1.4)}px`);
+      a.el.style.setProperty('--pose-angle', `${angulo}deg`);
+      a.el.style.setProperty('--pose-angle-neg', `${-angulo}deg`);
+      a.el.style.setProperty('--pose-duration', `${(0.42 + (pose % 8) * 0.045).toFixed(2)}s`);
+      a.el.style.setProperty('--pose-scale', `${(1.01 + (pose % 10) * 0.002).toFixed(3)}`);
+    }
     a.fx.innerHTML = efeitos(a);
     // decolar e pousar sem pulo seco (o corpo sobe do chão até a altura do voo)
     if (!primeira && !reduz && !a.item.veiculo && (acao === 'voando') !== (antes === 'voando')) {
@@ -317,9 +395,97 @@ export async function montar(api) {
       a.el.classList.remove('decola', 'pousa'); void a.el.offsetWidth; a.el.classList.add(cls);
       setTimeout(() => a.el.classList.remove(cls), 900);
     }
-    if (!primeira) mostrarTag(a, (a.item.veiculo ? { parado: 'parado', andando: 'andando', correndo: 'a toda!', voando: 'voando!' }[acao] : FALAS_ACAO[acao]) || acao);
+    if (!primeira) mostrarTag(a, (a.item.veiculo ? { parado: 'parado', andando: 'andando', correndo: 'a toda!', voando: 'voando!' }[acao] : FALAS_ACAO[acao] || nomeAcao[acao]) || acao);
     orientar(a);
     if (!primeira && (acao === 'comendo' || antes === 'comendo' || acao === 'correndo' || antes === 'correndo')) posicionar();
+  }
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const criarSvgNo = (nome, atributos) => {
+    const no = document.createElementNS(SVG_NS, nome);
+    for (const [chave, valor] of Object.entries(atributos)) no.setAttribute(chave, String(valor));
+    return no;
+  };
+  function aplicarExpressao(a, id) {
+    const expressao = EXPRESSAO_POR_ID[id];
+    const overlay = a.corpo.querySelector('[data-face-overlay]');
+    if (!expressao || !overlay || a.expressao === id) return;
+    const regiao = (nome) => overlay.querySelector(`[data-face-region="${nome}"]`);
+    const sobrancelhas = regiao('sobrancelhas');
+    const olhos = regiao('olhos');
+    const boca = regiao('boca');
+    const bochechas = regiao('bochechas');
+    const dSobrancelha = {
+      arqueada: ['M96 118 Q108 108 119 118', 'M137 118 Q148 108 160 118'],
+      neutra: ['M96 118 Q108 116 119 118', 'M137 118 Q148 116 160 118'],
+      erguida: ['M96 116 Q108 104 119 114', 'M137 114 Q148 104 160 116'],
+      triste: ['M96 112 Q108 118 119 124', 'M137 124 Q148 118 160 112'],
+      franzida: ['M96 122 Q108 115 119 108', 'M137 108 Q148 115 160 122'],
+      assimetrica: ['M96 112 Q108 106 119 116', 'M137 118 Q148 116 160 122'],
+    }[expressao.sobrancelhas];
+    sobrancelhas.replaceChildren(...dSobrancelha.map((d) => criarSvgNo('path', { d, fill: 'none', stroke: '#49312b', 'stroke-width': 5, 'stroke-linecap': 'round' })));
+    sobrancelhas.setAttribute('opacity', '1');
+    const ol = expressao.olhos;
+    if (ol === 'coracoes') {
+      const heart = (x) => criarSvgNo('path', { d: `M${x} 139 C${x - 17} 129 ${x - 13} 115 ${x} 125 C${x + 13} 115 ${x + 17} 129 ${x} 139 Z`, fill: '#e64b68' });
+      olhos.replaceChildren(heart(108), heart(148));
+    } else if (ol === 'fechados' || ol === 'piscando') {
+      const leftClosed = criarSvgNo('path', { d: 'M98 136 Q108 145 118 136', fill: 'none', stroke: '#30251f', 'stroke-width': 4, 'stroke-linecap': 'round' });
+      const right = ol === 'fechados'
+        ? criarSvgNo('path', { d: 'M138 136 Q148 145 158 136', fill: 'none', stroke: '#30251f', 'stroke-width': 4, 'stroke-linecap': 'round' })
+        : criarSvgNo('ellipse', { cx: 148, cy: 135, rx: 7, ry: 9, fill: '#fff', stroke: '#30251f', 'stroke-width': 2 });
+      olhos.replaceChildren(leftClosed, right);
+    } else if (ol === 'espiral') {
+      olhos.replaceChildren(...[108, 148].map((x) => criarSvgNo('path', { d: `M${x} 135 c-8 -11 -18 2 -6 9 c10 6 18 -8 9 -15`, fill: 'none', stroke: '#6444a6', 'stroke-width': 3 })));
+    } else {
+      const rx = ol === 'arregalados' ? 8 : 7, ry = ol === 'semicerrados' ? 5 : ol === 'arregalados' ? 11 : 9;
+      const dx = ol === 'distantes' ? -3 : ol === 'desviados' ? 3 : 0;
+      const eyes = [108, 148].flatMap((x) => [
+        criarSvgNo('ellipse', { cx: x, cy: 135, rx, ry, fill: '#fff', stroke: '#30251f', 'stroke-width': 1.6 }),
+        criarSvgNo('circle', { cx: x + dx, cy: 136, r: 3.5, fill: '#30251f' }),
+      ]);
+      olhos.replaceChildren(...eyes);
+    }
+    olhos.setAttribute('opacity', '1');
+    const bocas = {
+      sorriso_aberto: 'M110 161 Q128 180 146 161',
+      sorriso: 'M112 163 Q128 176 144 163',
+      gargalhada: 'M108 159 Q128 190 148 159 Q144 185 128 185 Q112 182 108 159 Z',
+      risadinha: 'M116 163 Q128 174 140 163',
+      sorriso_largo: 'M107 160 Q128 184 149 160',
+      sorriso_torto: 'M111 164 Q132 178 146 159',
+      boquiaberta_sorriso: 'M111 159 Q128 178 145 159 Q145 177 128 180 Q111 177 111 159 Z',
+      sorriso_suave: 'M114 164 Q128 173 142 164',
+      lingua: 'M110 161 Q128 180 146 161 Q144 180 128 182 Q112 178 110 161 Z',
+      sorriso_malicioso: 'M112 164 Q130 174 145 159',
+      choro_aberto: 'M112 170 Q128 150 144 170 Q144 183 128 184 Q112 183 112 170 Z',
+      tremula: 'M112 166 l6 -4 l6 5 l6 -5 l6 4 l8 -3',
+      linha: 'M115 166 H141',
+      canto_caido: 'M113 168 Q128 158 143 168',
+      suspiro: 'M115 167 Q128 164 141 167',
+      biquinho: 'M119 164 Q128 157 137 164 Q128 175 119 164 Z',
+      grito: 'M117 160 Q128 153 139 160 Q143 182 128 184 Q113 182 117 160 Z',
+      sorriso_tenso: 'M112 164 Q128 172 144 164',
+      linha_tensa: 'M114 165 l5 -2 l5 2 l5 -2 l5 2 l5 -2',
+      dentes: 'M111 160 Q128 177 145 160 V171 Q128 180 111 171 Z',
+      protesto: 'M113 169 Q128 158 143 169',
+      careta_nojo: 'M114 165 Q124 171 141 160',
+      sorriso_cetico: 'M113 164 Q128 170 144 161',
+      boquiaberta: 'M117 158 Q128 153 139 158 Q142 180 128 182 Q114 180 117 158 Z',
+      o_redondo: 'M119 157 Q128 151 137 157 Q141 181 128 183 Q115 181 119 157 Z',
+      o_pequeno: 'M121 161 Q128 157 135 161 Q138 174 128 176 Q118 174 121 161 Z',
+      bocejo: 'M115 158 Q128 151 141 158 Q145 187 128 188 Q111 187 115 158 Z',
+      careta_dor: 'M112 170 Q128 155 144 170',
+    };
+    const mouth = bocas[expressao.boca] || bocas.sorriso;
+    const aberta = ['gargalhada', 'boquiaberta_sorriso', 'choro_aberto', 'grito', 'dentes', 'boquiaberta', 'o_redondo', 'o_pequeno', 'bocejo', 'lingua'].includes(expressao.boca);
+    const forma = criarSvgNo('path', { d: mouth, fill: aberta ? '#8f3f47' : 'none', stroke: '#8f3f47', 'stroke-width': aberta ? 2 : 4, 'stroke-linecap': 'round' });
+    boca.replaceChildren(forma);
+    if (expressao.boca === 'dentes') boca.append(criarSvgNo('path', { d: 'M114 166 H142', stroke: '#fff', 'stroke-width': 3 }));
+    if (expressao.boca === 'lingua') boca.append(criarSvgNo('path', { d: 'M120 177 Q128 168 136 177 Q133 184 128 184 Q123 184 120 177', fill: '#f28a9a' }));
+    boca.setAttribute('opacity', '1');
+    bochechas.setAttribute('opacity', String(expressao.bochechas));
+    a.expressao = id;
+    a.el.dataset.expressao = id;
   }
 
   function efeitos(a) {
@@ -518,7 +684,7 @@ export async function montar(api) {
     return novo;
   }
   function elenco() {
-    return [...atores.values()].filter((a) => !a.saindo).sort((a, b) => a.ordem - b.ordem).map((a) => ({ id: a.id, acao: a.acao }));
+    return [...atores.values()].filter((a) => !a.saindo).sort((a, b) => a.ordem - b.ordem).map((a) => ({ id: a.id, acao: a.acao, expressao: a.expressao || null }));
   }
 
   async function aoFalar(texto) {
@@ -533,6 +699,7 @@ export async function montar(api) {
 
   const top = (a) => { if (!a || !a.probabilities) return [null, 0]; return Object.entries(a.probabilities).sort((x, y) => y[1] - x[1])[0]; };
   function aplicar(r, texto) {
+    const trechoRecente = texto.startsWith(textoAplicado) ? texto.slice(textoAplicado.length).trim() : texto;
     textoAplicado = texto;
     const mudou = {};
     const [lug, pl] = top(r.cenario);
@@ -562,14 +729,112 @@ export async function montar(api) {
       const [ac, pa] = top(a);
       return ac && pa >= L.acao ? ac : null;
     };
-    for (const a of atores.values()) { if (a.saindo) continue; const ac = acaoDe(a.id); if (ac) definirAcao(a, ac); }
+    for (const a of atores.values()) {
+      if (a.saindo) continue;
+      const ac = acaoDe(a.id);
+      if (ac) definirAcao(a, ac);
+      const [expressao, probabilidade] = top(r['expressao_' + a.id]);
+      if (expressao && expressao !== 'manter' && probabilidade >= L.acao) aplicarExpressao(a, expressao);
+    }
     const lotados = [...atores.values()].filter((a) => !a.saindo && a.item.tipo === 'personagem').length;
     entram.sort((a, b) => b[1] - a[1]).forEach(([it], i) => {
       if (it.tipo === 'personagem' && lotados + i >= 9) return;
       entrar(it.id, acaoDe(it.id), (novoLugar ? 520 : 0) + i * 150);
+      const [expressao, probabilidade] = top(r['expressao_' + it.id]);
+      const ator = atores.get(it.id);
+      if (ator && expressao && expressao !== 'manter' && probabilidade >= L.acao) aplicarExpressao(ator, expressao);
     });
+    aplicarCombate(trechoRecente);
+    aplicarDirecoes(trechoRecente);
+    atualizarCasaNarrada(trechoRecente);
     desenharChips(r, mudou);
     descrever();
+  }
+  let eventoTimer = 0;
+  function anunciarEvento(mensagem) {
+    clearTimeout(eventoTimer);
+    evento.textContent = mensagem;
+    evento.classList.remove('on'); void evento.offsetWidth; evento.classList.add('on');
+    eventoTimer = setTimeout(() => evento.classList.remove('on'), 3600);
+  }
+  function mencionado(item, texto) {
+    const normal = ' ' + semAcento(texto).replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim() + ' ';
+    return [item.nome, ...(item.apelidos || [])].some((nome) => {
+      const termo = semAcento(nome).replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+      return termo.length > 1 && normal.includes(' ' + termo + ' ');
+    });
+  }
+  function aplicarCombate(texto) {
+    const t = semAcento(texto);
+    if (!/\b(atacou|ataca|golpeou|golpeia|atingiu|acertou|feriu|esfaqueou|cortou|chutou|empurrou|disparou|lancou|arremessou|martelou)\b/.test(t)) return;
+    const atacantes = [...atores.values()].filter((a) => {
+      const acao = ACAO_POR_ID[a.acao];
+      return !a.saindo && a.item.tipo === 'personagem' && acao?.familia === 'combate'
+        && /golpe|dispar|estocada|arremess|lancar|corte|girar|rasteira|soco|chute|empurrao|martel|ataque/.test(a.acao);
+    });
+    if (!atacantes.length) return;
+    const atacante = atacantes.find((a) => mencionado(a.item, texto)) || atacantes[0];
+    const alvos = [...atores.values()].filter((a) => !a.saindo && a !== atacante && a.item.tipo === 'personagem');
+    if (!alvos.length) return;
+    const alvo = alvos.find((a) => mencionado(a.item, texto)) || alvos.reduce((p, a) => Math.abs(a.x - atacante.x) < Math.abs(p.x - atacante.x) ? a : p);
+    alvo.el.style.setProperty('--recuo', alvo.x > atacante.x ? '45px' : '-45px');
+    atacante.el.classList.remove('cn-atacando'); alvo.el.classList.remove('cn-atingido');
+    void alvo.el.offsetWidth;
+    atacante.el.classList.add('cn-atacando'); alvo.el.classList.add('cn-atingido');
+    const faíscas = el('span', { class: 'cn-faíscas', 'aria-hidden': 'true' }, Array.from({ length: 6 }, (_, i) => el('i', { style: `--i:${i}` })));
+    alvo.fx.replaceChildren(faíscas);
+    const expressaoAnterior = alvo.expressao;
+    aplicarExpressao(alvo, 'calma_dor');
+    setTimeout(() => {
+      atacante.el.classList.remove('cn-atacando'); alvo.el.classList.remove('cn-atingido');
+      faíscas.remove();
+      if (expressaoAnterior) aplicarExpressao(alvo, expressaoAnterior);
+      else {
+        alvo.corpo.querySelectorAll('[data-face-region]').forEach((no) => no.setAttribute('opacity', '0'));
+        delete alvo.expressao; delete alvo.el.dataset.expressao;
+      }
+    }, 750);
+    mostrarTag(alvo, '💥 ' + alvo.item.nome + ' sentiu o impacto');
+    anunciarEvento(`⚔️ ${atacante.item.nome} atingiu ${alvo.item.nome}`);
+    som.pop();
+  }
+  function emitirChipDirecao(icone, texto) {
+    const chip = el('div', { class: 'cn-chip-direcao' }, [el('span', { 'aria-hidden': 'true', text: icone }), el('span', { text: texto })]);
+    direcoesHud.append(chip);
+    setTimeout(() => { chip.classList.add('sumindo'); setTimeout(() => chip.remove(), 450); }, 3500);
+  }
+  function aplicarDirecoes(texto) {
+    const t = semAcento(texto);
+    const direcao = [
+      [/\b(a esquerda|para a esquerda|lado esquerdo)\b/, '⬅️', 'para a esquerda'],
+      [/\b(a direita|para a direita|lado direito)\b/, '➡️', 'para a direita'],
+      [/\b(mais perto|para frente|em primeiro plano|se aproximou)\b/, '🔎', 'mais perto'],
+      [/\b(ao fundo|mais longe|para tras|se afastou)\b/, '🌄', 'ao fundo'],
+    ].find(([regex]) => regex.test(t));
+    if (!direcao) return;
+    let alvos = [...atores.values()].filter((a) => !a.saindo && mencionado(a.item, texto));
+    if (!alvos.length && [...atores.values()].filter((a) => !a.saindo).length === 1) alvos = [...atores.values()].filter((a) => !a.saindo);
+    if (!alvos.length) return;
+    for (const a of alvos) {
+      if (direcao[2] === 'para a esquerda') { a.x = Math.max(260, a.x - 170); orientar(a); }
+      else if (direcao[2] === 'para a direita') { a.x = Math.min(MUNDO_L - 260, a.x + 170); orientar(a); }
+      else if (direcao[2] === 'mais perto') a.y = Math.min(CHAO_FRENTE, a.y + 58);
+      else a.y = Math.max(CHAO_FUNDO, a.y - 58);
+    }
+    posicionar();
+    emitirChipDirecao(direcao[1], `${alvos.map((a) => a.item.nome).join(', ')} ${direcao[2]}`);
+  }
+  function atualizarCasaNarrada(texto) {
+    if (!casaAtual) casaAtual = [...atores.values()].find((a) => !a.saindo && a.item.casa)?.item || null;
+    if (!casaAtual) return;
+    const t = semAcento(texto);
+    const interior = /\b(entrou|entra|abriu|foi para dentro|dentro da casa)\b/.test(t);
+    const saiu = /\b(saiu|saia|foi para fora|do lado de fora)\b/.test(t);
+    if (!interior && !saiu) return;
+    const proximo = interior ? { interior: true, portaAberta: true } : { interior: false, portaAberta: false };
+    if (proximo.interior === estadoCasa.interior && proximo.portaAberta === estadoCasa.portaAberta) return;
+    if (cena.lugar) fecharPapel();
+    trocarLugar(cena.lugar || 'campo', { casa: casaAtual, estadoCasa: proximo, atualizar: true, silencioso: true });
   }
 
   // ---------- começos prontos e história nova ----------

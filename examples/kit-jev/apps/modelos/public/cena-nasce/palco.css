@@ -477,3 +477,307 @@
   .cn-nova { flex: 1; height: 50px; }
   .cn-controles .mj-som { height: 50px; }
 }
+
+/* ==========================================================================
+   MEGA EXPANSÃO: SOCKETS DE ARMAS, 100 AÇÕES, CAUSALIDADE, CASAS DOLLHOUSE E CHIPS
+   ========================================================================== */
+
+/* ---------- Sockets Dinâmicos nos Membros ---------- */
+.cn-socket {
+  position: absolute;
+  pointer-events: none;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cn-socket svg, .cn-socket img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,.4));
+}
+.socket-mao-d {
+  width: 58px; height: 58px;
+  right: -24px; top: 40px;
+  transform: rotate(-15deg);
+  z-index: 12;
+}
+.socket-mao-e {
+  width: 52px; height: 52px;
+  left: -20px; top: 38px;
+  transform: rotate(20deg);
+  z-index: 4;
+}
+.socket-costas {
+  width: 70px; height: 70px;
+  left: 20%; top: 15px;
+  transform: rotate(45deg);
+  z-index: 2;
+  opacity: .9;
+}
+
+/* ---------- 100 Ações e Poses Corporais ---------- */
+/* 1. Combate & Armas */
+.ac-golpe-espada-frontal .braco-d { animation: cn-golpe-espada .45s ease-in-out infinite alternate; }
+.ac-golpe-espada-frontal .braco-e { animation: cn-guarda-braco .45s ease-in-out infinite alternate; }
+@keyframes cn-golpe-espada {
+  0% { transform: rotate(-55deg); }
+  100% { transform: rotate(70deg); }
+}
+.ac-golpe-espada-lateral .braco-d { animation: cn-golpe-lateral .4s ease-out infinite alternate; }
+@keyframes cn-golpe-lateral {
+  0% { transform: rotate(-80deg) scaleX(1.1); }
+  100% { transform: rotate(45deg) scaleX(0.9); }
+}
+.ac-estocada-lanca .braco-d { animation: cn-estocada .38s ease-in-out infinite alternate; }
+@keyframes cn-estocada {
+  0% { transform: translateX(-15px) rotate(10deg); }
+  100% { transform: translateX(35px) rotate(-5deg); }
+}
+.ac-disparar-arco .braco-d { animation: cn-disparo-arco .6s ease-out infinite; }
+.ac-disparar-arco .braco-e { transform: rotate(-25deg); }
+@keyframes cn-disparo-arco {
+  0% { transform: rotate(25deg); }
+  70% { transform: rotate(-40deg); }
+  100% { transform: rotate(25deg); }
+}
+.ac-mirar-arco .braco-d { transform: rotate(20deg); }
+.ac-mirar-arco .braco-e { transform: rotate(-35deg); }
+.ac-bloquear-escudo .braco-d { transform: rotate(-45deg) translateX(10px); }
+.ac-bloquear-escudo .braco-e { transform: rotate(45deg) translateX(-10px); }
+.ac-golpe-machado .braco-d, .ac-cortar-arvore .braco-d { animation: cn-machadada .5s ease-in-out infinite alternate; }
+.ac-golpe-machado .braco-e, .ac-cortar-arvore .braco-e { animation: cn-machadada .5s ease-in-out infinite alternate; }
+@keyframes cn-machadada {
+  0% { transform: rotate(-85deg); }
+  100% { transform: rotate(65deg); }
+}
+.ac-martelada-chao .cn-corpo, .ac-forjar-bigorna .cn-corpo { animation: cn-martelada-tronco .6s ease-in-out infinite alternate; }
+.ac-martelada-chao .braco-d, .ac-martelar-prego .braco-d, .ac-forjar-bigorna .braco-d { animation: cn-martelada .35s ease-in-out infinite alternate; }
+@keyframes cn-martelada {
+  0% { transform: rotate(-75deg); }
+  100% { transform: rotate(50deg); }
+}
+@keyframes cn-martelada-tronco {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(12px); }
+}
+.ac-minerar-picareta .braco-d { animation: cn-picareta .4s ease-in-out infinite alternate; }
+@keyframes cn-picareta {
+  0% { transform: rotate(-80deg); }
+  100% { transform: rotate(45deg); }
+}
+.ac-lancar-feitico .braco-d { animation: cn-feitico .7s ease-in-out infinite alternate; }
+@keyframes cn-feitico {
+  0% { transform: rotate(-60deg) scale(0.9); }
+  50% { transform: rotate(30deg) scale(1.1); filter: drop-shadow(0 0 10px #38bdf8); }
+  100% { transform: rotate(-60deg) scale(0.9); }
+}
+.ac-postura-batalha .braco-d { transform: rotate(-25deg); }
+.ac-postura-batalha .braco-e { transform: rotate(30deg); }
+.ac-postura-batalha .perna-d { transform: rotate(15deg); }
+.ac-postura-batalha .perna-e { transform: rotate(-15deg); }
+
+/* 2. Causalidade de Combate (Impacto e Recuo) */
+.ac-impacto-recuo {
+  animation: cn-impacto-shake .75s cubic-bezier(.36,.07,.19,.97) both !important;
+}
+.ac-impacto-recuo .cn-corpo {
+  filter: brightness(1.6) contrast(1.3);
+}
+@keyframes cn-impacto-shake {
+  10%, 90% { transform: translate3d(-18px, 0, 0) rotate(-6deg); }
+  20%, 80% { transform: translate3d(24px, 0, 0) rotate(8deg); }
+  30%, 50%, 70% { transform: translate3d(-14px, 0, 0) rotate(-4deg); }
+  40%, 60% { transform: translate3d(14px, 0, 0) rotate(4deg); }
+}
+
+/* Faíscas de Colisão SVG */
+.cn-faisca-colisao {
+  position: absolute;
+  width: 90px; height: 90px;
+  pointer-events: none;
+  z-index: 50;
+  transform: translate(-50%, -50%);
+  animation: cn-faisca-pop .4s ease-out forwards;
+}
+@keyframes cn-faisca-pop {
+  0% { transform: translate(-50%, -50%) scale(0.2) rotate(0); opacity: 1; filter: drop-shadow(0 0 8px #f59e0b); }
+  60% { transform: translate(-50%, -50%) scale(1.4) rotate(45deg); opacity: .9; }
+  100% { transform: translate(-50%, -50%) scale(1.9) rotate(90deg); opacity: 0; }
+}
+
+/* 3. Locomoção & Acrobacias */
+.ac-disparar-arrancada .cn-mov { animation: cn-corre 1.4s linear infinite; }
+.ac-disparar-arrancada .cn-corpo { transform: rotate(18deg) translateY(6px); }
+.ac-salto-mortal .cn-corpo { animation: cn-mortal 1.1s ease-in-out infinite; }
+@keyframes cn-mortal {
+  0% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-160px) rotate(-180deg); }
+  100% { transform: translateY(0) rotate(-360deg); }
+}
+.ac-cambalhota .cn-corpo { animation: cn-cambalhota .8s ease-in-out infinite; }
+@keyframes cn-cambalhota {
+  0% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-40px) rotate(180deg); }
+  100% { transform: translateY(0) rotate(360deg); }
+}
+.ac-escalar .braco-d, .ac-escalar .perna-e { animation: cn-escala .5s ease-in-out infinite alternate; }
+.ac-escalar .braco-e, .ac-escalar .perna-d { animation: cn-escala .5s ease-in-out infinite alternate-reverse; }
+@keyframes cn-escala {
+  0% { transform: translateY(-25px); }
+  100% { transform: translateY(15px); }
+}
+.ac-rastejar .cn-corpo { transform: rotate(70deg) translateY(65px) scale(0.85); }
+
+/* 4. Sociais & Comunicação */
+.ac-abracar-amigo .braco-d { transform: rotate(-60deg) translateX(15px); }
+.ac-abracar-amigo .braco-e { transform: rotate(60deg) translateX(-15px); }
+.ac-acenar-mao .braco-d { animation: cn-acena .4s ease-in-out infinite alternate; }
+@keyframes cn-acena {
+  0% { transform: rotate(-70deg); }
+  100% { transform: rotate(-110deg); }
+}
+.ac-apontar-frente .braco-d { transform: rotate(-85deg); }
+.ac-bater-palmas .braco-d { animation: cn-palma-d .3s ease-in-out infinite alternate; }
+.ac-bater-palmas .braco-e { animation: cn-palma-e .3s ease-in-out infinite alternate; }
+@keyframes cn-palma-d { 0% { transform: rotate(-30deg); } 100% { transform: rotate(10deg); } }
+@keyframes cn-palma-e { 0% { transform: rotate(30deg); } 100% { transform: rotate(-10deg); } }
+.ac-erguer-bracos-vitoria .braco-d { transform: rotate(-120deg); }
+.ac-erguer-bracos-vitoria .braco-e { transform: rotate(120deg); }
+.ac-mao-no-queixo-pensando .braco-d { transform: rotate(-45deg) translateY(-20px); }
+
+/* 5. Cotidiano & Repouso */
+.ac-sentar-cadeira .cn-corpo { transform: translateY(40px); }
+.ac-sentar-cadeira .perna-d, .ac-sentar-cadeira .perna-e { transform: rotate(75deg); }
+.ac-deitar-cama .cn-corpo, .ac-deitar-chao-grama .cn-corpo { transform: rotate(90deg) translateY(120px); }
+.ac-beber-copo .braco-d { transform: rotate(-65deg) translateY(-15px); }
+.ac-comer-comida .braco-d { animation: cn-come-garfo .7s ease-in-out infinite alternate; }
+@keyframes cn-come-garfo { 0% { transform: rotate(-30deg); } 100% { transform: rotate(-70deg) translateY(-10px); } }
+.ac-tremer-frio .cn-corpo { animation: cn-treme-ac .12s linear infinite; }
+@keyframes cn-treme-ac { 0% { transform: translate(-2px, 1px); } 50% { transform: translate(2px, -1px); } 100% { transform: translate(0, 0); } }
+
+/* ---------- Fachadas de Casas em Corte Dollhouse ---------- */
+.cn-casa-fachada {
+  transition: opacity .6s ease, transform .6s ease;
+}
+.cn-casa-fachada.em-corte {
+  opacity: .18 !important;
+  pointer-events: none;
+}
+.cn-casa-porta {
+  transform-origin: 0% 50%;
+  transition: transform .5s cubic-bezier(.4, 0, .2, 1);
+}
+.cn-casa-porta.aberta {
+  transform: rotateY(-80deg) skewY(-8deg) scaleX(0.2);
+}
+.cn-casa-interior {
+  pointer-events: none;
+}
+
+/* ---------- HUD Chips de Direção de Cena ---------- */
+.cn-chips-direcao {
+  position: absolute;
+  top: 76px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 80;
+  pointer-events: none;
+}
+.cn-chip-direcao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, .88);
+  border: 1px solid rgba(56, 189, 248, .4);
+  color: #f8fafc;
+  font-size: 13.5px;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .45);
+  backdrop-filter: blur(8px);
+  animation: cn-chip-surge .35s cubic-bezier(.16, 1, .3, 1) forwards;
+  transition: opacity .4s ease, transform .4s ease;
+}
+.cn-chip-direcao.sumindo {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.95);
+}
+@keyframes cn-chip-surge {
+  0% { opacity: 0; transform: translateY(12px) scale(0.9); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Movimentos-base por família; as poses específicas acima prevalecem por especificidade. */
+:where(.familia-locomocao) .cn-corpo { animation: cn-familia-passo .6s ease-in-out infinite alternate; }
+:where(.familia-locomocao) .perna-e { animation: cn-perna .45s ease-in-out infinite alternate; }
+:where(.familia-locomocao) .perna-d { animation: cn-perna .45s ease-in-out infinite alternate-reverse; }
+:where(.familia-combate) .braco-d { animation: cn-familia-ataque .55s ease-in-out infinite alternate; }
+:where(.familia-combate) .braco-e { animation: cn-familia-guarda .55s ease-in-out infinite alternate; }
+:where(.familia-trabalho) .braco-d { animation: cn-familia-trabalho .65s ease-in-out infinite alternate; }
+:where(.familia-trabalho) .braco-e { animation: cn-familia-trabalho .65s ease-in-out infinite alternate-reverse; }
+:where(.familia-social) .braco-d { animation: cn-familia-gesto .8s ease-in-out infinite alternate; }
+:where(.familia-cotidiano) .cn-corpo { animation: cn-familia-respiro 2.2s ease-in-out infinite; }
+@keyframes cn-familia-passo { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+@keyframes cn-familia-ataque { from { transform: rotate(-24deg); } to { transform: rotate(38deg); } }
+@keyframes cn-familia-guarda { from { transform: rotate(18deg); } to { transform: rotate(-12deg); } }
+@keyframes cn-familia-trabalho { from { transform: rotate(-32deg); } to { transform: rotate(28deg); } }
+@keyframes cn-familia-gesto { from { transform: rotate(-12deg); } to { transform: rotate(-58deg); } }
+@keyframes cn-familia-respiro { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.012, 1.02); } }
+
+/* Impacto narrativo e retorno visual de combate. */
+.cn-atacando .cn-pop { animation: cn-ataque-impacto .42s cubic-bezier(.2, .8, .3, 1); }
+.cn-casa-catalogo { display: none !important; }
+.cn-evento {
+  position: absolute; top: 70px; left: 50%; translate: -50% -10px; z-index: 12;
+  max-width: min(88vw, 520px); padding: 10px 18px; border: 1px solid rgba(255,255,255,.35);
+  border-radius: 999px; background: rgba(20, 26, 42, .88); color: #fff; font: 700 15px/1.3 system-ui, sans-serif;
+  box-shadow: 0 8px 28px rgba(0,0,0,.32); opacity: 0; pointer-events: none; text-align: center;
+}
+.cn-evento.on { animation: cn-evento-entrada .28s ease-out forwards; }
+@keyframes cn-ataque-impacto { 0%,100% { transform: none; } 45% { transform: translateX(22px) rotate(9deg); } }
+@keyframes cn-evento-entrada { to { opacity: 1; translate: -50% 0; } }
+
+.cn-atingido .cn-pop { animation: cn-atingido-impacto .75s ease-out; }
+.cn-faíscas { position: absolute; left: 50%; top: 48%; width: 1px; height: 1px; z-index: 6; pointer-events: none; }
+.cn-faíscas i {
+  position: absolute; left: 0; top: 0; width: 9px; height: 9px; border-radius: 50%;
+  background: radial-gradient(circle, #fff8b5 0 18%, #ffc63d 42%, #ff7546 72%, transparent 74%);
+  animation: cn-faísca .62s ease-out calc(var(--i) * 18ms) both;
+}
+.cn-chips-direcao { top: 78px; }
+@keyframes cn-atingido-impacto {
+  0%, 100% { transform: none; }
+  18%, 52% { transform: translateX(var(--recuo, 45px)) rotate(-5deg); }
+  35%, 70% { transform: translateX(calc(var(--recuo, 45px) * .42)) rotate(3deg); }
+}
+@keyframes cn-faísca {
+  from { opacity: 1; transform: rotate(calc(var(--i) * 60deg)) translateY(0) scale(1); }
+  to { opacity: 0; transform: rotate(calc(var(--i) * 60deg)) translateY(-34px) scale(.25); }
+}
+
+/* Cada uma das 100 ações fornece pose, amplitude e ritmo próprios; a família escolhe os membros articulados. */
+.cn-ator.familia-locomocao .cn-corpo { animation: cn-pose-passo var(--pose-duration, .6s) ease-in-out infinite alternate; }
+.cn-ator.familia-locomocao .perna-e { animation: cn-pose-perna var(--pose-duration, .6s) ease-in-out infinite alternate; }
+.cn-ator.familia-locomocao .perna-d { animation: cn-pose-perna var(--pose-duration, .6s) ease-in-out infinite alternate-reverse; }
+.cn-ator.familia-combate .braco-d { animation: cn-pose-ataque var(--pose-duration, .55s) ease-in-out infinite alternate; }
+.cn-ator.familia-combate .braco-e { animation: cn-pose-guarda var(--pose-duration, .55s) ease-in-out infinite alternate; }
+.cn-ator.familia-trabalho .braco-d { animation: cn-pose-oficio var(--pose-duration, .65s) ease-in-out infinite alternate; }
+.cn-ator.familia-trabalho .braco-e { animation: cn-pose-oficio var(--pose-duration, .65s) ease-in-out infinite alternate-reverse; }
+.cn-ator.familia-social .braco-d { animation: cn-pose-gesto var(--pose-duration, .8s) ease-in-out infinite alternate; }
+.cn-ator.familia-cotidiano .cn-corpo { animation: cn-pose-respiro var(--pose-duration, 2.2s) ease-in-out infinite; }
+@keyframes cn-pose-passo {
+  from { transform: translateY(0) rotate(var(--pose-angle-neg, -20deg)); }
+  to { transform: translateY(var(--pose-shift, -8px)) rotate(var(--pose-angle, 20deg)); }
+}
+@keyframes cn-pose-perna { from { transform: rotate(var(--pose-angle-neg, -20deg)); } to { transform: rotate(var(--pose-angle, 20deg)); } }
+@keyframes cn-pose-ataque { from { transform: rotate(var(--pose-angle-neg, -20deg)); } to { transform: rotate(var(--pose-angle, 20deg)); } }
+@keyframes cn-pose-guarda { from { transform: rotate(var(--pose-angle, 20deg)); } to { transform: rotate(var(--pose-angle-neg, -20deg)); } }
+@keyframes cn-pose-oficio { from { transform: rotate(var(--pose-angle-neg, -20deg)); } to { transform: rotate(var(--pose-angle, 20deg)); } }
+@keyframes cn-pose-gesto { from { transform: rotate(var(--pose-angle-neg, -20deg)); } to { transform: rotate(var(--pose-angle, 20deg)); } }
+@keyframes cn-pose-respiro { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.012, var(--pose-scale, 1.02)); } }

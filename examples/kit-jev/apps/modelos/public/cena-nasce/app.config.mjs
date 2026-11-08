@@ -6,6 +6,8 @@
 // desenhado de quem no emoji é só cabeça) · palco.js (a tela e a demonstração) · clima.js (chuva, neve, vento, raios).
 
 import { CATALOGO_EXTRA } from './catalogo-extra.mjs';
+import { ACOES_100 } from './catalogo-acoes-100.mjs';
+import { EXPRESSOES_100 } from './catalogo-expressoes-100.mjs';
 
 // ---------- o catálogo: quem pode entrar em cena ----------
 // apelidos = outros nomes que valem para o mesmo personagem (vão para o Jev e servem para a tela achar quem foi citado)
@@ -103,7 +105,7 @@ const HUMORES = [
   { id: 'engracado', nome: 'Engraçado', icone: '🤪', desc: 'engraçado: trapalhada, piada, coisa boba, todo mundo riu' },
   { id: 'calmo', nome: 'Calmo', icone: '😌', desc: 'calmo: tranquilo, sossego, paz, hora de dormir, apreciando a paisagem' },
 ];
-const ACOES = [
+const ACOES_BASE = [
   { id: 'parado', nome: 'parado', icone: '🙂', desc: 'parado: em pé, sentado, olhando, conversando, esperando, acabou de chegar ou aparecer' },
   { id: 'andando', nome: 'andando', icone: '🚶', desc: 'andando: caminhando, passeando, indo a pé para algum lugar, explorando' },
   { id: 'correndo', nome: 'correndo', icone: '🏃', desc: 'correndo: corrida, fugindo, apressado, correndo atrás de algo' },
@@ -117,6 +119,12 @@ const ACOES = [
   { id: 'com_medo', nome: 'com medo', icone: '😱', desc: 'com medo: assustado, tremendo, apavorado, se escondendo' },
   { id: 'bravo', nome: 'bravo', icone: '😠', desc: 'bravo: zangado, irritado, furioso, rugindo, cara feia, soltando fogo de raiva' },
   { id: 'comendo', nome: 'comendo', icone: '😋', desc: 'comendo: comeu, mastigando, lambendo, provando comida, adora bolo ou doce' },
+];
+const ACOES = [
+  ...ACOES_BASE,
+  ...ACOES_100.map(([id, nome, icone, desc, classeCss, familia, tipoArma], pose) => ({
+    id, nome, icone, desc, classeCss, familia, tipoArma, pose: pose % 20,
+  })),
 ];
 const MOVIMENTOS = {
   parado: 'parado: estacionado, pousado no chão, ancorado, esperando',
@@ -145,7 +153,7 @@ const valido = (lista, id) => lista.some((x) => x.id === id);
 function lerCena(d) {
   const c = d && typeof d.cena === 'object' && d.cena ? d.cena : {};
   const elenco = (Array.isArray(d && d.elenco) ? d.elenco : []).filter((e) => e && POR_ID[e.id]).slice(0, 16)
-    .map((e) => ({ id: e.id, acao: valido(ACOES, e.acao) || (POR_ID[e.id].veiculo || []).includes(e.acao) ? e.acao : 'parado' }));
+    .map((e) => ({ id: e.id, acao: valido(ACOES, e.acao) || (POR_ID[e.id].veiculo || []).includes(e.acao) ? e.acao : 'parado', expressao: EXPRESSOES_100.some((x) => x.id === e.expressao) ? e.expressao : null }));
   return {
     lugar: valido(LUGARES, c.lugar) ? c.lugar : null,
     hora: valido(HORAS, c.hora) ? c.hora : 'dia',
@@ -158,6 +166,39 @@ const opcoesComManter = (lista, atual, oQue) => [
   ...lista.map((x) => ({ id: x.id, desc: x.desc })),
   { id: 'manter', desc: `manter: o trecho mais recente não diz ${oQue}, ou continua igual (agora: ${atual})` },
 ];
+const tokens = (s) => semAcento(s).split(/[^a-z0-9]+/).filter((p) => p.length >= 3);
+const STOP_ACAO = new Set(['para', 'com', 'uma', 'uns', 'das', 'dos', 'pela', 'pelo', 'sobre']);
+function acoesDoTrecho(texto) {
+  const t = semAcento(texto);
+  const familia = /atac|golpe|espada|lanca|arco|flecha|escudo|machad|soco|chute|dispar|cortou|feriu/.test(t) ? 'combate'
+    : /trabalh|constru|ferrament|martel|minera|costur|cozinh|colhe|plant|cavou|pintou/.test(t) ? 'trabalho'
+      : /abrac|convers|aceno|acenou|aplaud|cumpriment|beij|danc|rindo|cantou/.test(t) ? 'social'
+        : /dorm|sentou|deitou|bebeu|comeu|bocej|descans|leu|pensou|meditou/.test(t) ? 'cotidiano' : 'locomocao';
+  const palavras = tokens(texto).filter((p) => !STOP_ACAO.has(p));
+  const especializadas = ACOES.filter((a) => a.familia === familia).map((a) => {
+    const termos = tokens(`${a.id} ${a.nome} ${a.desc}`);
+    const score = termos.reduce((n, termo) => n + (palavras.some((p) => p === termo || p.startsWith(termo) || (termo.length >= 4 && termo.startsWith(p))) ? 1 : 0), 0);
+    return { a, score };
+  }).sort((a, b) => b.score - a.score || a.a.id.localeCompare(b.a.id)).slice(0, 5).map(({ a }) => a);
+  const basicas = ACOES.filter((a) => ['parado', 'andando', 'correndo', 'pulando', 'voando', 'nadando', 'dormindo', 'dancando', 'chorando', 'rindo', 'com_medo', 'bravo', 'comendo'].includes(a.id))
+    .map((a) => ({ a, score: tokens(`${a.id} ${a.nome} ${a.desc}`).reduce((n, termo) => n + (palavras.some((p) => p === termo || p.startsWith(termo) || (termo.length >= 4 && termo.startsWith(p))) ? 1 : 0), 0) }))
+    .sort((a, b) => b.score - a.score || a.a.id.localeCompare(b.a.id)).slice(0, 6).map(({ a }) => a);
+  return [...new Map([...especializadas, ...basicas].map((a) => [a.id, a])).values()];
+}
+function expressoesDoTrecho(texto) {
+  const t = semAcento(texto);
+  const prefixo = /furios|brav|raiva|irrit|zangad|ameac/.test(t) ? 'raiva_'
+    : /trist|chor|desanim|decepcion|solitar|saudade|vergonh/.test(t) ? 'tristeza_'
+      : /feliz|alegr|sorri|rindo|gargalh|orgulh|carinho|amor|encantad/.test(t) ? 'alegria_'
+        : /surpres|assust|medo|apavor|chocad|espant|confus|curios/.test(t) ? 'surpresa_'
+          : /cansad|calm|concentr|focad|determina|dor|esforc|aliv|sonolent/.test(t) ? 'calma_' : null;
+  if (!prefixo) return [
+    { id: 'calma_neutra', rotulo: 'Neutralidade', desc: 'olhos abertos, sobrancelhas neutras e boca em repouso' },
+    { id: 'manter', rotulo: 'Manter', desc: 'manter a expressão atual quando a história não descreve o rosto' },
+  ];
+  const candidatas = EXPRESSOES_100.filter((e) => e.id.startsWith(prefixo)).slice(0, 4);
+  return [...candidatas.map((e) => ({ id: e.id, rotulo: e.nome, desc: `${e.nome}: olhos ${e.olhos}, sobrancelhas ${e.sobrancelhas}, boca ${e.boca}` })), { id: 'manter', rotulo: 'Manter', desc: 'manter a expressão atual quando a história não descreve o rosto' }];
+}
 
 // ---------- testes (trechos de história com o esperado; rodam no Jev de verdade com tools/testar.mjs) ----------
 const cena = (lugar, hora = 'dia', clima = 'limpo') => ({ lugar, hora, clima });
@@ -231,7 +272,7 @@ export default {
   categoria: 'ao-vivo',
   ordem: 0.4,
   resumo: 'Conte uma história em voz alta e ela vira um desenho animado na sua frente: o cenário, os personagens e o tempo mudam enquanto você fala.',
-  descricao: 'A cada pausa da sua fala, uma chamada só ao Jev decide o lugar, a hora, o tempo, o clima da cena, o tempo (19 tipos: do granizo e do tornado à aurora boreal), quem está em cena (um sim ou não para cada um dos 1050 personagens e objetos — 643 do mundo real, com 200 objetos entre comida, armas, ferramentas, música, brinquedos e casa, e 407 do Minecraft) e o que cada um faz. A cena acompanha a frase, inclusive quando você muda de ideia no meio, e só desenha o que existe na lista (gerar imagem com IA levaria de 10 a 30 s por quadro). Adapte trocando o catálogo: personagens do seu livro infantil, o cenário de uma aula ou os produtos de uma vitrine.',
+  descricao: 'A cada pausa da sua fala, uma chamada só ao Jev decide o lugar, a hora, o tempo, o clima da cena, quem está em cena, o que faz e a expressão facial. O catálogo reúne 1.350 personagens, animais, casas e objetos, com 100 novos personagens, 100 animais, 100 casas, 100 ações e 100 expressões. Combate equipa armas, mostra impacto e reação; as casas abrem em vista de interiores. Decisões locais mantêm as escolhas não citadas gratuitas. Adapte trocando o catálogo: personagens do seu livro infantil, o cenário de uma aula ou os produtos de uma vitrine.',
   marcas: ['imediato', 'volume', 'lista fechada', 'limiar'],
   motor: 'palco',
   tema: { acento: '#38bdf8', acento2: '#a3e635' },
@@ -240,7 +281,7 @@ export default {
     comoTestar: 'aperte o microfone e conte uma história como para uma criança: diga onde ela acontece, quem aparece e o que cada um faz. No meio, mude tudo ("de repente começou a nevar!", "e chegou um dragão comilão") e veja a cena acompanhar.',
   },
   catalogo: CATALOGO,
-  lugares: LUGARES, horas: HORAS, climas: CLIMAS, humores: HUMORES, acoes: ACOES,
+  lugares: LUGARES, horas: HORAS, climas: CLIMAS, humores: HUMORES, acoes: ACOES, expressoes: EXPRESSOES_100,
   // quanto o Jev precisa ter de certeza para a tela mudar (o resto fica como está)
   limiar: { lugar: 0.45, hora: 0.45, clima: 0.45, humor: 0.4, entra: 0.6, sai: 0.35, acao: 0.3 },
   contexto: {
@@ -275,8 +316,12 @@ export default {
     {
       id: 'acao', tipo: 'choice', titulo: 'O que está fazendo',
       pergunta: 'Esta é uma história infantil contada em voz alta, que vira desenho animado. O que o personagem abaixo está fazendo AGORA? Decida nesta ordem: (1) se o trecho mais recente diz o que ele faz, vale isso; (2) se diz o que "todos", "todo mundo", "eles" ou "os dois" fazem, vale isso para ele também; (3) se não diz nada sobre ele, repita a ação que ele já faz na tela (escrita abaixo). Se a pessoa se corrigiu ("não, pera…"), vale o que ela disse por último. Gosto dito na história vira ação: quem adora bolo ou doce está comendo, quem adora música está dançando. Quem só chegou ou apareceu, sem fazer nada, está parado.',
-
       opcoes: ACOES.map((a) => ({ id: a.id, rotulo: a.nome, icone: a.icone, desc: a.desc })),
+    },
+    {
+      id: 'expressao', tipo: 'choice', titulo: 'Expressão facial',
+      pergunta: 'Qual expressão facial o personagem mostra AGORA no trecho mais recente? Considere as emoções ditas, sem alterar o que não foi dito. Se a história não descreve o rosto nem a emoção dele, escolha manter.',
+      opcoes: [...EXPRESSOES_100.map((e) => ({ id: e.id, rotulo: e.nome, desc: `${e.nome}: olhos ${e.olhos}, sobrancelhas ${e.sobrancelhas}, boca ${e.boca}` })), { id: 'manter', rotulo: 'Manter', desc: 'manter a expressão atual quando a história não descreve o rosto' }],
     },
     {
       id: 'movimento', tipo: 'choice', titulo: 'Veículo em movimento',
@@ -307,6 +352,7 @@ export default {
         const naTela = new Set(c.elenco.map((e) => e.id));
         const acaoDe = Object.fromEntries(c.elenco.map((e) => [e.id, e.acao]));
         const recentes = citados(corta(d.historia, 500));
+        const trecho = corta(d.novo || d.historia, 500);
         const qs = [
           { chave: 'cenario', decisao: 'cenario', opcoes: opcoesComManter(LUGARES, c.lugar ? nomeDe(LUGARES, c.lugar) : 'nenhum lugar ainda', 'o lugar') },
           { chave: 'hora', decisao: 'hora', opcoes: opcoesComManter(HORAS, nomeDe(HORAS, c.hora), 'a hora') },
@@ -317,21 +363,26 @@ export default {
         // Com 460 itens no catálogo, perguntar de todos estouraria a chamada (e o custo) sem ganho:
         // item nunca citado e fora da tela é NÃO por definição, e essa resposta sai local (sem gastar token).
         const citadosNaHistoria = new Set(citados(corta(d.historia, 900)));
+        // Cap em quatro alvos por trecho: 4 decisões de ambiente + presença e até 2 decisões por personagem
+        // mantém o conjunto ativo dentro de 16; todo o restante continua local ou sem mudança.
+        const candidatos = [...new Set([...recentes, ...c.elenco.map((e) => e.id)])].filter((id) => POR_ID[id]);
+        const ativos = new Set(candidatos.slice(0, 4));
         for (const it of CATALOGO) {
-          if (!naTela.has(it.id) && !citadosNaHistoria.has(it.id)) {
-            qs.push({ chave: 'p_' + it.id, decisao: 'presente', local: { type: 'noul', noul: 0 } });
+          if (!ativos.has(it.id)) {
+            if (!naTela.has(it.id) && !citadosNaHistoria.has(it.id)) qs.push({ chave: 'p_' + it.id, decisao: 'presente', local: { type: 'noul', noul: 0 } });
             continue;
           }
           qs.push({ chave: 'p_' + it.id, decisao: 'presente', alvo: `${it.tipo === 'personagem' ? 'Personagem' : 'Objeto'}: ${it.nome} (também vale: ${it.apelidos.join(', ')}).` });
         }
-        // ação: só de quem está na tela ou foi citado agora (no máximo 10 personagens e 4 veículos)
-        const quem = [...new Set([...c.elenco.map((e) => e.id), ...recentes])];
-        quem.filter((id) => POR_ID[id].tipo === 'personagem').slice(0, 10).forEach((id) => {
+        const quem = [...ativos];
+        quem.filter((id) => POR_ID[id].tipo === 'personagem').forEach((id) => {
           const it = POR_ID[id];
           const agora = naTela.has(id) ? (ACOES.find((a) => a.id === acaoDe[id]) || ACOES[0]).nome : 'ainda não está na tela (acabou de ser citado)';
-          qs.push({ chave: 'acao_' + id, decisao: 'acao', alvo: `Personagem: ${it.nome} (também vale: ${it.apelidos.join(', ')}). O que ele faz na tela agora: ${agora}.` });
+          qs.push({ chave: 'acao_' + id, decisao: 'acao', opcoes: acoesDoTrecho(trecho).map((a) => ({ id: a.id, rotulo: a.nome, icone: a.icone, desc: a.desc })), alvo: `Personagem: ${it.nome} (também vale: ${it.apelidos.join(', ')}). O que ele faz na tela agora: ${agora}.` });
+          const expressao = naTela.has(id) ? c.elenco.find((e) => e.id === id)?.expressao || 'nenhuma indicada' : 'ainda não está na tela';
+          qs.push({ chave: 'expressao_' + id, decisao: 'expressao', opcoes: expressoesDoTrecho(trecho), alvo: `Personagem: ${it.nome} (também vale: ${it.apelidos.join(', ')}). Expressão atual: ${expressao}.` });
         });
-        quem.filter((id) => POR_ID[id].veiculo).slice(0, 4).forEach((id) => {
+        quem.filter((id) => POR_ID[id].veiculo).forEach((id) => {
           const it = POR_ID[id];
           const agora = naTela.has(id) ? acaoDe[id] : 'ainda não está na tela';
           qs.push({ chave: 'mov_' + id, decisao: 'movimento', opcoes: it.veiculo.map((m) => ({ id: m, desc: MOVIMENTOS[m] })), alvo: `Veículo: ${it.nome} (também vale: ${it.apelidos.join(', ')}). Estado na tela agora: ${agora}.` });

@@ -6,6 +6,9 @@ import { MUNDO_REAL_2 } from './catalogo-real-2.mjs';
 import { MUNDO_REAL_3 } from './catalogo-objetos.mjs';
 import { MINECRAFT } from './catalogo-minecraft.mjs';
 import { MINECRAFT_2 } from './catalogo-minecraft-2.mjs';
+import { PERSONAGENS_100 } from './catalogo-personagens-100.mjs';
+import { ANIMAIS_100 } from './catalogo-animais-100.mjs';
+import { CASAS_100 } from './catalogo-casas-100.mjs';
 
 // emoji → arquivo em assets/emoji/. O downloader (tools/baixar-emoji.mjs) usa esta mesma tabela.
 export function codigoEmoji(e) {
@@ -29,12 +32,18 @@ const deLinha = ([id, nome, emoji, altura, olha, tipo, ...apelidos]) => ({
 
 const REAIS = [...MUNDO_REAL, ...MUNDO_REAL_2, ...MUNDO_REAL_3];
 const MINECRAFTS = [...MINECRAFT, ...MINECRAFT_2];
+const expandido = (linhas, extras = {}) => linhas.map((linha) => ({ ...deLinha(linha), ...extras }));
 
-export const CATALOGO_EXTRA = [...REAIS, ...MINECRAFTS].map(deLinha);
+export const CATALOGO_EXTRA = [
+  ...[...REAIS, ...MINECRAFTS].map(deLinha),
+  ...expandido(PERSONAGENS_100),
+  ...expandido(ANIMAIS_100, { animal: true }),
+  ...expandido(CASAS_100, { fundo: true, casa: true }),
+];
 
 // grupos que a interface usa para filtrar/contar
 export const GRUPOS_EXTRA = {
   real: REAIS.length,
   minecraft: MINECRAFTS.length,
-  emojis: [...new Set([...REAIS, ...MINECRAFTS].map((l) => l[2]))].map((emoji) => ({ emoji, codigo: codigoEmoji(emoji) })),
+  emojis: [...new Set(CATALOGO_EXTRA.map((item) => item.emoji).filter(Boolean))].map((emoji) => ({ emoji, codigo: codigoEmoji(emoji) })),
 };
