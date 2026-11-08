@@ -366,8 +366,21 @@
   }
 
   // ---------------- API ----------------
+  // O app pode rodar em três lugares: no próprio host (caminho "/"), dentro da biblioteca
+  // (/media/anexos/.../apps/<app>/public/) ou no espelho. Chamadas absolutas "/api/…" só funcionam no
+  // primeiro caso, então reescrevemos para o caminho do app quando a página está embaixo de /apps/<app>/.
+  function caminhoDaApi(path) {
+    if (typeof path !== 'string' || !path.startsWith('/api/')) return path;
+    try {
+      const m = location.pathname.match(/^(.*\/apps\/[a-z0-9-]+\/)public\//);
+      if (m) return m[1] + path.slice(1);   // .../apps/<app>/api/config
+    } catch (_) {}
+    return path;
+  }
+
   async function api(path, body, opts) {
     opts = opts || {};
+    path = caminhoDaApi(path);
     const init = { method: opts.method || (body === undefined ? 'GET' : 'POST'), headers: {} };
     if (body !== undefined) { init.headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(body); }
     // O servidor do app sobe no primeiro acesso (e pode estar reiniciando): GET tenta de novo antes de
@@ -402,6 +415,7 @@
   }
 
   function sse(url, handlers) {
+    url = caminhoDaApi(url);
     let es, stopped = false, retry = 1000;
     function open() {
       es = new EventSource(url);
