@@ -90,14 +90,16 @@
 .ceu-espaco .cn-arco, .ceu-agua .cn-arco { opacity: 0 !important; }
 
 /* sol e lua: andam pelo céu com a hora */
-.cn-sol, .cn-lua { position: absolute; width: clamp(64px, 9.5cqw, 128px); aspect-ratio: 1; translate: -50% -50%; transition: left 2s var(--ease), top 2s var(--ease), opacity 1.6s ease, filter 1.6s ease; }
+.cn-sol, .cn-lua { position: absolute; z-index: 2; width: clamp(64px, 9.5cqw, 128px); aspect-ratio: 1; translate: -50% -50%; transition: left 2s var(--ease), top 2s var(--ease), opacity 1.6s ease, filter 1.6s ease; }
 .cn-sol img, .cn-lua img { width: 100%; height: 100%; display: block; }
 .cn-sol::before { content: ""; position: absolute; inset: -70%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 236, 160, .75), rgba(255, 210, 90, .25) 55%, transparent); }
 .cn-sol img { animation: cn-gira 60s linear infinite; }
 @keyframes cn-gira { to { transform: rotate(360deg); } }
 .cn-sol { left: 33%; top: 22%; }
-.h-amanhecer .cn-sol { left: 14%; top: 50%; filter: saturate(1.25) hue-rotate(-10deg); }
-.h-entardecer .cn-sol { left: 82%; top: 50%; filter: saturate(1.4) hue-rotate(-22deg); }
+.h-amanhecer .cn-sol { left: 14%; top: 34%; filter: saturate(1.25) hue-rotate(-10deg); }
+.h-entardecer .cn-sol { left: 82%; top: 34%; filter: saturate(1.4) hue-rotate(-22deg); }
+/* sol baixo nunca afunda no mar nem na areia: fica acima da linha do horizonte */
+.ceu-agua.h-entardecer .cn-sol, .ceu-agua.h-amanhecer .cn-sol { top: 32%; }
 .h-entardecer .cn-sol::before, .h-amanhecer .cn-sol::before { background: radial-gradient(closest-side, rgba(255, 170, 110, .8), rgba(255, 120, 90, .25) 55%, transparent); inset: -110%; }
 .h-noite .cn-sol { left: 92%; top: 112%; opacity: 0; }
 .cn-lua { left: 57%; top: -20%; opacity: 0; }
@@ -114,7 +116,7 @@
 .ceu-espaco .cn-sol, .ceu-agua .cn-sol, .ceu-espaco .cn-lua, .ceu-agua .cn-lua { opacity: 0 !important; }
 
 /* nuvens 3D atravessando o céu */
-.cn-nuvens { position: absolute; inset: 0; transition: opacity 1.6s ease; }
+.cn-nuvens { position: absolute; inset: 0; z-index: 1; transition: opacity 1.6s ease; }
 .cn-nuvem { position: absolute; left: 0; width: calc(var(--k) * clamp(110px, 14cqw, 210px)); opacity: .95; animation: cn-nuvem var(--d) linear infinite; transition: filter 1.6s ease; }
 @keyframes cn-nuvem { from { transform: translateX(-30cqw); } to { transform: translateX(118cqw); } }
 .t-nublado .cn-nuvem { filter: brightness(.86) saturate(.6); }

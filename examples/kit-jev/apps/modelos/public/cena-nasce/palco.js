@@ -7,7 +7,7 @@ import { criarClima } from './clima.js';
 import { tocarSomBloco, tocarSomPop, tocarSomDano, tocarSomLevelUp } from './audio-minecraft.js';
 import { ROTEIROS, roteirosDoModo } from './roteiros.mjs';
 import { criarPlayer } from './reproduzir.js';
-import { criarMicrofone } from '../_motor/voz.js';
+
 
 // a história da demonstração (▶): duas viradas — a neve na praia e o dragão que só queria bolo
 const DEMO = [
@@ -190,9 +190,13 @@ export async function montar(api) {
   const barra = api.voz.barraVoz({
     dica: 'Aperte o microfone e conte uma história',
     placeholder: 'Ou digite um pedaço da história e aperte Enter',
-    onTexto: (fin, par) => mostrarLegenda(fin, par),
+    onTexto: (fin, par) => {
+      mostrarLegenda(fin, par);
+      if (playerAtual) alimentarLeitura(fin);
+    },
     // falar/digitar durante um roteiro encerra o roteiro: a cena passa a ser da pessoa
-    onPausa: (texto) => { if (playerAtual) pararRoteiro(); aoFalar(texto); },
+    // no modo leitura a fala NÃO fecha o roteiro nem reescreve a cena: ela é a leitura do texto
+    onPausa: (texto) => { if (!playerAtual) aoFalar(texto); },
   });
   const btNova = el('button', { class: 'cn-nova', type: 'button', onclick: () => { pararDemo(); pararRoteiro(); novaHistoria(); } }, ['↺ Nova história']);
   const btMinecraft = el('button', { class: 'cn-btn-minecraft' + (modoMinecraft ? ' ativo' : ''), type: 'button', onclick: () => alternarModoMinecraft() }, [
@@ -977,13 +981,23 @@ export async function montar(api) {
   // ---------- roteiro: o texto aparece e SÓ avança com a sua voz (ou pelo botão) ----------
   let playerAtual = null;
   let transcriptSessao = '';
-  let micLeitura = null;
   let ultimoDito = '';
 
   function fecharEscuta() {
-    // a API do microfone é { ligar, desligar, ligado } — sem 'parar'
-    if (micLeitura) { try { micLeitura.desligar(true); } catch (_) {} micLeitura = null; }
+    // desliga o MESMO reconhecedor da barra de voz (dois ao mesmo tempo o Chrome recusa)
+    try { barra.desligar(); } catch (_) {}
     ultimoDito = '';
+  }
+
+  // o texto do microfone avança a frase quando a leitura casa (só o trecho novo conta)
+  function alimentarLeitura(finalTxt) {
+    const texto = String(finalTxt || '');
+    const delta = texto.startsWith(ultimoDito) ? texto.slice(ultimoDito.length) : texto;
+    ultimoDito = texto;
+    if (delta.trim() && playerAtual) {
+      teleModo.textContent = '🎙 ouvindo você';
+      playerAtual.receberFala(delta);
+    }
   }
 
   // toda troca de roteiro invalida a sessão anterior: callback atrasado do microfone não mexe na cena nova
@@ -1010,23 +1024,9 @@ export async function montar(api) {
   }
 
   function abrirEscuta() {
-    if (typeof criarMicrofone !== 'function') return;
-    fecharEscuta();
-    micLeitura = criarMicrofone({
-      onTexto: (final) => {
-        const delta = final.startsWith(ultimoDito) ? final.slice(ultimoDito.length) : final;
-        ultimoDito = final;
-        if (delta.trim() && playerAtual) playerAtual.receberFala(delta);
-      },
-      // voz.js chama onEstado sempre (ligou/erro/parou): sem isso o callback quebra em navegador real
-      onEstado: (estado, msg) => {
-        if (estado === 'ouvindo') { if (!playerAtual || playerAtual.estado().estado !== 'fim') teleModo.textContent = '🎙 ouvindo você'; }
-        else if (estado === 'erro') { teleModo.textContent = '🎙 microfone indisponível'; teleContador.textContent = msg || 'use o microfone para a história andar'; }
-        else if (estado === 'parado' && (!playerAtual || playerAtual.estado().estado !== 'fim')) teleModo.textContent = '🎙 fale a frase';
-      },
-      onNivel: () => {},
-    });
-    try { micLeitura.ligar(); } catch (_) {}
+    ultimoDito = '';
+    barra.limpar();                    // a leitura começa do zero: nada do que foi dito antes conta
+    try { barra.ligar(); } catch (_) {}
   }
 
   async function iniciarRoteiro(id) {
