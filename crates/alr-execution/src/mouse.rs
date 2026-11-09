@@ -246,6 +246,7 @@ impl MouseController for NativeDesktopMouseController {
         }
         #[cfg(not(target_os = "windows"))]
         {
+            let _ = delta;
             Ok(())
         }
     }

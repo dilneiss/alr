@@ -1,0 +1,57 @@
+name: CI - Multi-Arch & Quality Gates
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check-and-test-linux:
+    name: Linux x86_64 (Ubuntu Latest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cargo Format Check
+        run: cargo fmt --check || true
+
+      - name: Cargo Check Workspace
+        run: cargo check --workspace
+
+      - name: Clippy Warnings Gate
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+      - name: Run Core Tests
+        run: cargo test --workspace --no-fail-fast
+
+  check-linux-arm64:
+    name: Linux ARM64 (aarch64-unknown-linux-gnu)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ARM64 Cross-Compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+      - name: Install Rust & aarch64 Target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-gnu
+
+      - name: Cross-Check Workspace on Linux ARM64
+        env:
+          CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
+          CXX_aarch64_unknown_linux_gnu: aarch64-linux-gnu-g++
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+        run: cargo check --target aarch64-unknown-linux-gnu --workspace

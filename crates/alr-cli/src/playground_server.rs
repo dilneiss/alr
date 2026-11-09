@@ -1049,7 +1049,7 @@ fn teacher_log(msg: &str) {
 async fn professor_remoto(req: &JevDecisionRequest) -> Option<serde_json::Value> {
     let url = match std::env::var("ALR_TEACHER_URL") {
         Ok(u) if !u.trim().is_empty() => u,
-        _ => { teacher_log(&format!("[teacher] sem ALR_TEACHER_URL")); return None; }
+        _ => { teacher_log("[teacher] sem ALR_TEACHER_URL"); return None; }
     };
     let key = std::env::var("ALR_TEACHER_KEY").unwrap_or_default();
     let corpo = serde_json::json!({

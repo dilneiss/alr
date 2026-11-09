@@ -4917,6 +4917,32 @@ pub mod sys_memory {
 #[cfg(not(target_os = "windows"))]
 pub mod sys_memory {
     pub fn read_memory_rss_and_peak() -> (f64, f64) {
+        // Lê VmRSS e VmHWM de /proc/self/status (independente de tamanho de página 4k/16k/64k no Linux ARM)
+        if let Ok(status) = std::fs::read_to_string("/proc/self/status") {
+            let mut rss_mb = 0.0;
+            let mut peak_mb = 0.0;
+            for line in status.lines() {
+                if let Some(rest) = line.strip_prefix("VmRSS:") {
+                    if let Some(kb_str) = rest.trim().strip_suffix("kB") {
+                        if let Ok(kb) = kb_str.trim().parse::<f64>() {
+                            rss_mb = kb / 1024.0;
+                        }
+                    }
+                } else if let Some(rest) = line.strip_prefix("VmHWM:") {
+                    if let Some(kb_str) = rest.trim().strip_suffix("kB") {
+                        if let Ok(kb) = kb_str.trim().parse::<f64>() {
+                            peak_mb = kb / 1024.0;
+                        }
+                    }
+                }
+            }
+            if rss_mb > 0.0 {
+                if peak_mb <= 0.0 {
+                    peak_mb = rss_mb * 1.15;
+                }
+                return (rss_mb, peak_mb);
+            }
+        }
         if let Ok(statm) = std::fs::read_to_string("/proc/self/statm") {
             let parts: Vec<&str> = statm.split_whitespace().collect();
             if parts.len() >= 2 {

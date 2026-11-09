@@ -1,4 +1,21 @@
 services:
+  alr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: alr-runtime
+    restart: unless-stopped
+    ports:
+      - "3000:3000" # Playground / JEV System 1 API (/v1/systemone)
+      - "3800:3800" # Trading Desk
+      - "4000:4000" # MCP Server
+    environment:
+      - PORT=3000
+      - QDRANT_URL=http://qdrant:6333
+      - RUST_LOG=info
+    depends_on:
+      - qdrant
+
   qdrant:
     image: qdrant/qdrant:v1.12.1
     container_name: alr-qdrant

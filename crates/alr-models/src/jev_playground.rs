@@ -2143,7 +2143,7 @@ fn parse_arrow_rules(
 ) -> HashMap<String, Vec<String>> {
     let mut out: HashMap<String, Vec<String>> = HashMap::new();
     let instr_norm = instructions.to_lowercase();
-    for (arrow_idx, arrow_ch) in instr_norm.match_indices(|c: char| c == '→' || c == '➜') {
+    for (arrow_idx, arrow_ch) in instr_norm.match_indices(['→', '➜']) {
         let _ = arrow_ch;
         let left_raw = &instr_norm[..arrow_idx];
         let left_start = left_raw.rfind(['.', ';']).map(|i| i + 1).unwrap_or(0);
@@ -2759,11 +2759,13 @@ impl JevTypedJudgeEngine {
             let mut seen_phrases = std::collections::HashSet::new();
             for phrase in desc_norm.split(&[',', ';', ':'][..]) {
                 let p_clean = phrase.trim();
-                if p_clean.contains(' ') && p_clean.len() >= 5 && seen_phrases.insert(p_clean) {
-                    if has_bounded_match(&state_norm, &evidence_words, p_clean) {
-                        score += 5.0;
-                        matches.push(p_clean.to_string());
-                    }
+                if p_clean.contains(' ')
+                    && p_clean.len() >= 5
+                    && seen_phrases.insert(p_clean)
+                    && has_bounded_match(&state_norm, &evidence_words, p_clean)
+                {
+                    score += 5.0;
+                    matches.push(p_clean.to_string());
                 }
             }
 

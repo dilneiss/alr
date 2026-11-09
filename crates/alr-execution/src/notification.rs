@@ -189,14 +189,28 @@ impl DesktopNotificationService for WindowsToastNotifier {
 
         #[cfg(not(target_os = "windows"))]
         {
+            let title_owned = title.to_string();
+            let msg_owned = message.to_string();
+            let urgency = match threat {
+                ThreatLevel::InvasaoCritica | ThreatLevel::Alto => "critical",
+                _ => "normal",
+            };
+            let _ = std::process::Command::new("notify-send")
+                .arg("-u")
+                .arg(urgency)
+                .arg("-a")
+                .arg("ALR Surveillance")
+                .arg(&title_owned)
+                .arg(&msg_owned)
+                .spawn();
+
             tracing::info!(
                 title = %title,
                 message = %message,
                 threat = ?threat,
-                "DesktopNotificationService [NON-WINDOWS] Notificação simulada"
+                "DesktopNotificationService [NON-WINDOWS] Notificação enviada via notify-send ou log"
             );
         }
-
         Ok(())
     }
 }

@@ -11,6 +11,7 @@
 [![API Drop-in](https://img.shields.io/badge/API-%2Fv1%2Fsystemone%20%28JEV%20Drop--in%29-00d2ff.svg)](docs/api-reference.md)
 [![Cookbooks JEV](https://img.shields.io/badge/JEV%20Cookbooks-20%2F20%20Nativos-orange.svg)](docs/cookbooks-reference.md)
 [![Hardware](https://img.shields.io/badge/Hardware-100%25%20CPU%20%28Sem%20GPU%29-ff69b4.svg)]()
+[![Linux ARM64](https://img.shields.io/badge/Linux%20ARM64-Totalmente%20Compat%C3%ADvel%20%7C%20NEON-success.svg)]()
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B%20%7C%201.98.1-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-green.svg)](LICENSE)
 [![Testes](https://img.shields.io/badge/Testes-417%2F417%20Passando-brightgreen.svg)]()
@@ -194,7 +195,20 @@ Além das primitivas, o ALR traz a implementação completa de todos os **20 Coo
 > **Para usuários com agentes de IA (Oh My Pi, Claude Code, Cursor, Windsurf, Roo, etc.):**  
 > Copie qualquer um dos blocos abaixo e envie diretamente para o seu agente. Ele detectará seu sistema operacional automaticamente, executará todos os passos, configurará o início no boot e abrirá a tela funcionando na sua frente.
 
-### 🚀 1. Instalação Completa, Início no Boot e Playground ao Vivo
+### 🐧 Instalação Rápida no Linux & Linux ARM (x86_64, aarch64, Raspberry Pi, AWS Graviton)
+
+Para instalar nativamente em qualquer máquina Linux (incluindo ARM64 / aarch64):
+```bash
+# Instalação nativa direta (detecta dependências, compila release e configura systemd):
+bash scripts/install-linux.sh
+
+# Ou execute via Docker Multi-Arch (x86_64 e aarch64 out-of-the-box):
+docker compose up -d
+```
+
+---
+
+### 🚀 1. Instalação Completa com Agente de IA, Início no Boot e Playground ao Vivo
 
 Copie este prompt e envie para o seu agente:
 

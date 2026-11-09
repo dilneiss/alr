@@ -209,6 +209,7 @@ impl NativeDesktopKeyboardController {
         }
         #[cfg(not(target_os = "windows"))]
         {
+            let _ = text;
             Ok(())
         }
     }
