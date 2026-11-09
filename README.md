@@ -28,7 +28,105 @@
 > *Um runtime local-first para aprendizado autônomo, decisões tipadas, memória híbrida, planejamento, ferramentas e reuso de habilidades.*
 ---
 
+## 🤖 1. Prompt Único: Seu Agente de IA Faz Tudo (Copie e Cole)
+
+> ⚡ **Instalação, Configuração de Chave API, Autostart no Boot, Atualização Automática Diária e Teste em 1 Clique:**  
+> Copie o bloco de texto abaixo e envie diretamente para o seu agente de IA (**Oh My Pi, Claude Code, Cursor, Windsurf, Roo, etc.**). Ele cuidará de **absolutamente tudo** de forma 100% autônoma: clonar o repositório, compilar em modo release nativo, configurar a chave de autenticação da API, ativar o serviço no boot, agendar a rotina diária de atualização automática, disparar um teste real na API `/v1/systemone` com as 3 primitivas e exibir todos os resultados, métricas e dados na tela.
+
+```text
+Você é o engenheiro de software sênior responsável pela implantação completa e autônoma do ALR (Autonomous Learning Runtime) nesta máquina. Sua missão é executar todo o ciclo de instalação de ponta a ponta sem qualquer intervenção humana: clonar o repositório, compilar o binário release otimizado, configurar a chave de API segura, iniciar o serviço com autostart no boot, programar a rotina diária de atualização automática, disparar um teste real de decisão tipada (Choice, Noul, Score) via API e exibir um relatório final detalhado com todos os dados e métricas na tela.
+
+Execute rigorosamente as 7 etapas a seguir:
+
+1. DETECÇÃO DE AMBIENTE E CLONE:
+   - Identifique o sistema operacional (Windows, Linux ou macOS) e a arquitetura da CPU (x86_64 ou ARM64/aarch64).
+   - Se já estiver dentro do diretório do ALR, utilize a pasta atual. Caso contrário, clone https://github.com/dilneiss/alr.git e entre na pasta.
+
+2. VERIFICAÇÃO DE DEPENDÊNCIAS E COMPILAÇÃO RELEASE:
+   - Verifique ferramentas necessárias: git, curl, build-essential (gcc/clang) e compilador Rust (rustc/cargo 1.80+). Se o Rust não estiver instalado, instale via `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y` e carregue o ambiente (`source "$HOME/.cargo/env"`).
+   - Em máquinas Linux ARM ou dispositivos com pouca memória (<= 4GB RAM), verifique se há swap configurado (se faltar, crie swapfile temporário de 2GB) e compile com `cargo build --release -p alr-cli -j 2`.
+   - Em máquinas padrão / potentes: compile com `cargo build --release -p alr-cli`.
+   - Confirme a existência do binário em `./target/release/alr` (ou `./target/release/alr.exe` no Windows).
+
+3. CONFIGURAÇÃO DA CHAVE DE API (AUTENTICAÇÃO DROP-IN COMPATÍVEL COM JEV):
+   - Defina um token de autenticação seguro para a API (exemplo: `alr_secret_key_2026`).
+   - Configure a variável de ambiente `ALR_API_KEY=alr_secret_key_2026` para que o serviço valide o cabeçalho `Authorization: Bearer alr_secret_key_2026`.
+
+4. CONFIGURAÇÃO DO SERVIÇO COM AUTOSTART NO BOOT:
+   - Configure o serviço do ALR para escutar na porta 3000 (`PORT=3000`) com a chave de API e iniciar automaticamente ao ligar o computador:
+     * Linux (Ubuntu, Debian, Fedora, Arch, Raspberry Pi OS): Crie a unidade systemd de usuário em `~/.config/systemd/user/alr.service`, faça o reload (`systemctl --user daemon-reload`), ative com `systemctl --user enable --now alr.service` e habilite `loginctl enable-linger $USER` se disponível.
+     * macOS: Crie um LaunchAgent em `~/Library/LaunchAgents/com.alr.playground.plist` apontando para o binário com `playground --port 3000`, e carregue com `launchctl load -w ~/Library/LaunchAgents/com.alr.playground.plist`.
+     * Windows: Crie uma tarefa agendada de logon via `schtasks /Create /TN "ALR_Playground" /TR "\"<caminho_completo_alr.exe>\" playground --port 3000" /SC ONLOGON /F` e inicie o processo imediatamente em background.
+   - Aguarde até a porta 3000 responder (faça polling com timeout de 15s em `http://127.0.0.1:3000/` confirmando HTTP 200).
+
+5. PROGRAMAÇÃO DA ROTINA DE ATUALIZAÇÃO AUTOMÁTICA DIÁRIA (1X AO DIA):
+   - Configure um agendamento diário e idempotente (às 04:00 da manhã ou no primeiro login do dia) para verificar novos commits no git, aplicar atualizações, recompilar em release e reiniciar o serviço silenciosamente sem intervenção manual:
+     * Linux: Configure via cron executando `(crontab -l 2>/dev/null; echo "0 4 * * * cd $(pwd) && git pull origin main && cargo build --release -p alr-cli && systemctl --user restart alr") | crontab -` (ou crie a unidade de timer systemd em `~/.config/systemd/user/alr-daily-update.timer`).
+     * macOS: Crie um LaunchAgent com `StartCalendarInterval` diário às 04:00.
+     * Windows: Registre uma tarefa diária no Task Scheduler via `schtasks /Create /TN "ALR_Daily_Update" /SC DAILY /ST 04:00 /TR "powershell -ExecutionPolicy Bypass -Command \"cd '<caminho_repositorio>'; git pull origin main; cargo build --release -p alr-cli\"" /F`.
+
+6. EXECUÇÃO DE TESTE REAL DA API COM AS 3 PRIMITIVAS (CHOICE, NOUL, SCORE):
+   - Faça uma requisição HTTP POST para `http://localhost:3000/v1/systemone` enviando o cabeçalho `Authorization: Bearer alr_secret_key_2026` com um payload contendo as 3 primitivas tipadas:
+     curl -s -X POST http://localhost:3000/v1/systemone \
+       -H "Content-Type: application/json" \
+       -H "Authorization: Bearer alr_secret_key_2026" \
+       -d '{
+         "state": "Ticket de Suporte #9042: Meu Pix de R$ 3.850 foi debitado mas o saldo não entrou no app. O suporte não responde e vou abrir reclamação no Procon hoje!",
+         "questions": {
+           "urgente": {
+             "type": "noul",
+             "instructions": "O cliente expressa urgência crítica ou risco de litígio/Procon?"
+           },
+           "departamento": {
+             "type": "choice",
+             "instructions": "Qual é o departamento responsável?",
+             "criteria": {
+               "financeiro": "Problemas de pagamento, Pix, estorno ou cobrança",
+               "suporte_tecnico": "Bugs no app, login ou travamentos",
+               "comercial": "Novos planos e vendas"
+             }
+           },
+           "gravidade": {
+             "type": "score",
+             "instructions": "Nível de gravidade do chamado (0 a 3)",
+             "criteria": ["Baixa", "Média", "Alta", "Crítica"]
+           }
+         }
+       }'
+   - Valide que o status retornado é HTTP 200, confirme a estrutura de `answers` e extraia a `latency_micros`.
+
+7. EXIBIÇÃO DO RELATÓRIO COMPLETO NA TELA:
+   - Exiba no terminal o resumo final estruturado com todos os dados:
+   ===================================================================
+   🚀 ALR RUNTIME & JEV SYSTEM 1 ENGINE - IMPLANTAÇÃO CONCLUÍDA
+   ===================================================================
+   • Plataforma & CPU        : <SO detectado> (<Arquitetura detectada>)
+   • Caminho do Binário      : <Caminho absoluto do executável alr>
+   • Chave de API Configurada: ALR_API_KEY=alr_secret_key_2026
+   • Status do Serviço       : ATIVO na porta 3000 (Inicialização no Boot configurada)
+   • Atualização Automática  : ATIVA (Verificação diária às 04:00 AM)
+   • Endpoint Local JEV      : http://localhost:3000/v1/systemone (e /api/v1/systemone)
+   • Playground Web UI       : http://localhost:3000
+   -------------------------------------------------------------------
+   📊 RESULTADO DO TESTE REAL DE DECISÃO TIPADA:
+   • Status da Requisição    : 200 OK (Autenticação Bearer validada)
+   • Latência de Inferência  : <X> µs (< 0.5 ms em CPU local)
+   • Custo da Decisão        : $0.00 (Zero tokens na nuvem consumidos)
+   • Resposta Noul (Urgente) : <valor> (Probabilidade P(sim): <X>%)
+   • Resposta Choice (Depto) : <valor> (Confiança Softmax: <X>%)
+   • Resposta Score (Grav.)  : <valor> / 3.0
+   -------------------------------------------------------------------
+   🛠️ COMANDOS ÚTEIS PARA O USUÁRIO:
+   • Ver logs em tempo real  : journalctl --user -u alr.service -f (ou logs equivalentes)
+   • Parar / Reiniciar       : systemctl --user restart alr.service
+   • Teste cURL              : curl -H "Authorization: Bearer alr_secret_key_2026" -X POST http://localhost:3000/v1/systemone ...
+   ===================================================================
+```
+
+---
+
 ## ⚡ Início Rápido: Suba a API em 1 Só Comando e Integre com o JEV
+
 
 > 🔑 **A API do ALR se comporta exatamente igual à API do JEV (`/v1/systemone`):**  
 > Ela consome o mesmo esquema de entrada (`state`, `questions`, `criteria`), fornece as mesmas primitivas tipadas (`Choice`, `Noul`, `Score`) com probabilidades calibradas e aceita o mesmo cabeçalho de autenticação. **Basta criar seu token de autenticação (opcional via `ALR_API_KEY`), apontar a URL base para `http://localhost:3000` e a integração está pronta!**
@@ -614,21 +712,22 @@ cargo run -p alr-cli -- playground-test
 
 ## 📑 Sumário
 
-1. [⚡ Início Rápido: Suba a API em 1 Comando e Integre com o JEV](#-início-rápido-suba-a-api-em-1-só-comando-e-integre-com-o-jev)
-2. [⚡ Alternativa Gratuita e Drop-in ao JEV (TypeSafe AI)](#-por-que-o-alr-é-a-alternativa-gratuita-definitiva-ao-jev)
-3. [🔄 Substituição Rápida do JEV (Drop-in em 10 Segundos)](#-drop-in-replacement-troque-o-jev-pelo-alr-em-10-segundos)
-4. [🧩 As 3 Primitivas e os 20 Cookbooks do JEV Nativos](#-as-3-primitivas-e-os-20-cookbooks-do-jev-nativos-no-alr)
-5. [🤖 Instalação Rápida com Agente de IA (Copie e Cole)](#-instale-e-mantenha-o-alr-com-seu-agente-de-ia-copie-e-cole)
-6. [⚗️ Playground Universal & Cockpit Web](#-playground-universal-do-alr-o-centro-principal-de-testes-e-simulações)
-7. [⚡ Quickstart em 3 Minutos (Do Zero ao Agente Operacional)](#-quickstart-em-3-minutos-do-zero-ao-agente-operacional)
-8. [🎯 O Que é o Projeto?](#-o-que-é-o-projeto)
-9. [💡 Por Que o ALR Existe?](#-por-que-o-alr-existe)
-10. [🏆 Comparativo Técnico: Por Que o ALR é a Melhor Alternativa ao JEV e Laya?](#-comparativo-técnico-por-que-o-alr-é-superior-ao-jev-e-laya--laya-coreml)
-11. [🗺️ Mapas Mentais da Arquitetura & Fluxos Operacionais](#-mapas-mentais-da-arquitetura--fluxos-operacionais)
-12. [Premissa Central](#-premissa-central)
-13. [Princípios Arquiteturais](#-princípios-arquiteturais)
-14. [O Que o Sistema Faz?](#-o-que-o-sistema-faz)
-15. [Casos de Uso Detalhados (Fases 1 a 35)](#-casos-de-uso-detalhados)
+1. [🤖 Prompt Único para o Agente de IA Fazer Tudo](#-1-prompt-único-seu-agente-de-ia-faz-tudo-copie-e-cole)
+2. [⚡ Início Rápido: Suba a API em 1 Comando e Integre com o JEV](#-início-rápido-suba-a-api-em-1-só-comando-e-integre-com-o-jev)
+3. [⚡ Alternativa Gratuita e Drop-in ao JEV Cloud](#-por-que-o-alr-é-a-alternativa-gratuita-definitiva-ao-jev)
+4. [🔄 Substituição Rápida do JEV Cloud (Drop-in em 10 Segundos)](#-drop-in-replacement-troque-o-jev-pelo-alr-em-10-segundos)
+5. [🧩 As 3 Primitivas e os 20 Cookbooks do JEV Nativos](#-as-3-primitivas-e-os-20-cookbooks-do-jev-nativos-no-alr)
+6. [🐧 Instalação Rápida no Linux & Linux ARM](#-instale-e-mantenha-o-alr-com-seu-agente-de-ia-copie-e-cole)
+7. [⚗️ Playground Universal & Cockpit Web](#-playground-universal-do-alr-o-centro-principal-de-testes-e-simulações)
+8. [⚡ Quickstart em 3 Minutos (Do Zero ao Agente Operacional)](#-quickstart-em-3-minutos-do-zero-ao-agente-operacional)
+9. [🎯 O Que é o Projeto?](#-o-que-é-o-projeto)
+10. [💡 Por Que o ALR Existe?](#-por-que-o-alr-existe)
+11. [🏆 Comparativo Técnico: Por Que o ALR é a Melhor Alternativa ao JEV Cloud e Laya?](#-comparativo-técnico-por-que-o-alr-é-superior-ao-jev-e-laya--laya-coreml)
+12. [🗺️ Mapas Mentais da Arquitetura & Fluxos Operacionais](#-mapas-mentais-da-arquitetura--fluxos-operacionais)
+13. [Premissa Central](#-premissa-central)
+14. [Princípios Arquiteturais](#-princípios-arquiteturais)
+15. [O Que o Sistema Faz?](#-o-que-o-sistema-faz)
+16. [Casos de Uso Detalhados (Fases 1 a 35)](#-casos-de-uso-detalhados)
    * [Caso 1: Controle Dinâmico em Jogos (Snake)](#caso-1-controle-dinâmico-em-jogos-snake)
    * [Caso 2: Atendimento com Memória Semântica (Customer Support)](#caso-2-atendimento-com-memória-semântica-customer-support)
    * [Caso 3: Automação Web Real no Navegador (Chromium CDP)](#caso-3-automação-web-real-no-navegador-chromium-cdp)
