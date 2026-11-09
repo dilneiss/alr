@@ -636,12 +636,26 @@ impl DatabaseExplorerEngine {
         search: Option<&str>,
     ) -> Result<TableDataResponse> {
         let start = Instant::now();
+
+        // Validação estrita de segurança contra SQL Injection
+        if table_name.is_empty()
+            || !table_name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+        {
+            bail!("Identificador de tabela inválido.");
+        }
+
         let stores = self.get_stores();
         let store_info = stores
             .into_iter()
             .find(|s| s.id == store_id)
             .ok_or_else(|| anyhow::anyhow!("Store não encontrado"))?;
 
+        let valid_tables = self.get_tables(store_id)?;
+        if !valid_tables.iter().any(|t| t.name == table_name) {
+            bail!("Tabela '{}' não autorizada ou inexistente no store '{}'.", table_name, store_id);
+        }
+
+        let safe_limit = limit.clamp(1, 500);
         if store_id == "qdrant_vector" {
             return self
                 .get_qdrant_table_data(store_info, table_name, limit, offset, search, start);
@@ -725,7 +739,7 @@ impl DatabaseExplorerEngine {
                 }
             }
         }
-        data_query = format!("{} LIMIT {} OFFSET {}", data_query, limit, offset);
+        data_query = format!("{} LIMIT {} OFFSET {}", data_query, safe_limit, offset);
 
         let mut stmt = conn.prepare(&data_query)?;
         let col_names: Vec<String> = columns.iter().map(|c| c.name.clone()).collect();

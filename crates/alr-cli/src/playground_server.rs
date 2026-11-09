@@ -1,4 +1,4 @@
-use crate::database_explorer::{DatabaseExplorerEngine, StoreInfo};
+use crate::database_explorer::DatabaseExplorerEngine;
 use crate::real_engines::PlaygroundRealEngines;
 use alr_models::jev_playground::{JevDecisionRequest, JevPlaygroundPreset, JevTypedJudgeEngine};
 use alr_spatial::city_routing::RouteOptimizationParams;
@@ -458,9 +458,9 @@ impl JevPlaygroundServer {
                 "/api/v1/decisions",
                 post({
                     let engine = engine.clone();
-                    move |body: Json<JevDecisionRequest>| {
+                    move |headers: axum::http::HeaderMap, body: Json<JevDecisionRequest>| {
                         let engine = engine.clone();
-                        async move { handle_decision(engine, body).await }
+                        async move { handle_decision(engine, headers, body).await }
                     }
                 }),
             )
@@ -468,9 +468,9 @@ impl JevPlaygroundServer {
                 "/api/decision",
                 post({
                     let engine = engine.clone();
-                    move |body: Json<JevDecisionRequest>| {
+                    move |headers: axum::http::HeaderMap, body: Json<JevDecisionRequest>| {
                         let engine = engine.clone();
-                        async move { handle_decision(engine, body).await }
+                        async move { handle_decision(engine, headers, body).await }
                     }
                 }),
             )
@@ -478,9 +478,9 @@ impl JevPlaygroundServer {
                 "/v1/chat/completions",
                 post({
                     let engine = engine.clone();
-                    move |body: Json<JevDecisionRequest>| {
+                    move |headers: axum::http::HeaderMap, body: Json<JevDecisionRequest>| {
                         let engine = engine.clone();
-                        async move { handle_decision(engine, body).await }
+                        async move { handle_decision(engine, headers, body).await }
                     }
                 }),
             )
@@ -507,15 +507,24 @@ impl JevPlaygroundServer {
                 "/api/v1/os/mouse",
                 post({
                     let r = self.real_engines.clone();
-                    move |body: Json<serde_json::Value>| handle_os_mouse(r, body)
+                    move |headers: axum::http::HeaderMap, body: Json<serde_json::Value>| {
+                        handle_os_mouse(r, headers, body)
+                    }
                 }),
             )
-            .route("/api/v1/os/keyboard", post(handle_os_keyboard))
+            .route(
+                "/api/v1/os/keyboard",
+                post(|headers: axum::http::HeaderMap, body: Json<serde_json::Value>| {
+                    handle_os_keyboard(headers, body)
+                }),
+            )
             .route(
                 "/api/v1/os/emergency",
                 post({
                     let r = self.real_engines.clone();
-                    move |body: Json<serde_json::Value>| handle_os_emergency(r, body)
+                    move |headers: axum::http::HeaderMap, body: Json<serde_json::Value>| {
+                        handle_os_emergency(r, headers, body)
+                    }
                 }),
             )
             // Endpoints de Automação Web (Chromium CDP)
@@ -805,28 +814,28 @@ impl JevPlaygroundServer {
                 "/api/v1/db/stores",
                 get({
                     let db = self.db_explorer.clone();
-                    move || handle_db_stores(db)
+                    move |headers: axum::http::HeaderMap| handle_db_stores(db, headers)
                 }),
             )
             .route(
                 "/api/v1/db/tables",
                 get({
                     let db = self.db_explorer.clone();
-                    move |q: Query<HashMap<String, String>>| handle_db_tables(db, q)
+                    move |headers: axum::http::HeaderMap, q: Query<HashMap<String, String>>| handle_db_tables(db, headers, q)
                 }),
             )
             .route(
                 "/api/v1/db/data",
                 get({
                     let db = self.db_explorer.clone();
-                    move |q: Query<HashMap<String, String>>| handle_db_data(db, q)
+                    move |headers: axum::http::HeaderMap, q: Query<HashMap<String, String>>| handle_db_data(db, headers, q)
                 }),
             )
             .route(
                 "/api/v1/db/query",
                 post({
                     let db = self.db_explorer.clone();
-                    move |body: Json<serde_json::Value>| handle_db_query(db, body)
+                    move |headers: axum::http::HeaderMap, body: Json<serde_json::Value>| handle_db_query(db, headers, body)
                 }),
             )
             // Assets Estáticos
@@ -985,6 +994,8 @@ impl JevPlaygroundServer {
             )
             .route("/health", get(handle_health))
             .route("/api/docs", get(handle_api_docs))
+            .layer(axum::middleware::from_fn(add_security_headers))
+            .layer(axum::extract::DefaultBodyLimit::max(4 * 1024 * 1024))
     }
 
     /// Inicia o servidor HTTP e escuta requisições
@@ -1094,14 +1105,74 @@ async fn professor_remoto(req: &JevDecisionRequest) -> Option<serde_json::Value>
     }
 }
 
+fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+    let mut diff = 0u8;
+    for (x, y) in a.iter().zip(b.iter()) {
+        diff |= x ^ y;
+    }
+    diff == 0
+}
+
+/// Valida autenticação Bearer token contra a variável ALR_API_KEY com comparação em tempo constante
+fn verify_api_key(
+    headers: &axum::http::HeaderMap,
+) -> Result<(), (axum::http::StatusCode, Json<serde_json::Value>)> {
+    if let Ok(expected_key) = std::env::var("ALR_API_KEY") {
+        let trimmed_expected = expected_key.trim();
+        if !trimmed_expected.is_empty() {
+            let auth_header = headers
+                .get(axum::http::header::AUTHORIZATION)
+                .and_then(|h| h.to_str().ok())
+                .unwrap_or("");
+            let token = auth_header.strip_prefix("Bearer ").unwrap_or(auth_header).trim();
+            if !constant_time_eq(token.as_bytes(), trimmed_expected.as_bytes()) {
+                return Err((
+                    axum::http::StatusCode::UNAUTHORIZED,
+                    Json(serde_json::json!({
+                        "error": "Unauthorized: Token de autenticação inválido ou ausente. Configure o header 'Authorization: Bearer <token>' correspondente à ALR_API_KEY."
+                    })),
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Middleware defensivo para adicionar cabeçalhos de segurança HTTP em todas as respostas
+async fn add_security_headers(
+    req: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    let mut resp = next.run(req).await;
+    let headers = resp.headers_mut();
+    headers.insert(
+        axum::http::header::HeaderName::from_static("x-content-type-options"),
+        axum::http::header::HeaderValue::from_static("nosniff"),
+    );
+    headers.insert(
+        axum::http::header::HeaderName::from_static("x-frame-options"),
+        axum::http::header::HeaderValue::from_static("SAMEORIGIN"),
+    );
+    headers.insert(
+        axum::http::header::HeaderName::from_static("referrer-policy"),
+        axum::http::header::HeaderValue::from_static("strict-origin-when-cross-origin"),
+    );
+    resp
+}
+
 async fn handle_decision(
     engine: Arc<JevTypedJudgeEngine>,
+    headers: axum::http::HeaderMap,
     body: Json<JevDecisionRequest>,
 ) -> impl IntoResponse {
+    if let Err(unauth) = verify_api_key(&headers) {
+        return unauth.into_response();
+    }
+
     if let Some(j) = professor_remoto(&body.0).await {
-        // O professor cobra (OpenRouter), mas quem responde é o ALR: o custo que ele
-        // informa vai para `cost_professor` e `cost` fica 0, para nenhum app somar gasto
-        // ao usar o motor local.
         let mut usage = j
             .get("usage")
             .cloned()
@@ -1133,47 +1204,107 @@ async fn handle_decision(
     }
 }
 
-// Handlers de OS e Automações Físicas Reais
+// Handlers de OS e Automações Físicas Reais (com proteção rigorosa contra execução remota)
 async fn handle_os_mouse(
     engines: Arc<PlaygroundRealEngines>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<serde_json::Value>,
-) -> Json<serde_json::Value> {
-    let x = payload["x"].as_i64().unwrap_or(500) as i32;
-    let y = payload["y"].as_i64().unwrap_or(400) as i32;
-    let action = payload["action"].as_str().unwrap_or("move");
+) -> impl IntoResponse {
+    if let Err(unauth) = verify_api_key(&headers) {
+        return unauth.into_response();
+    }
+
     let live = payload["live"].as_bool().unwrap_or(false);
+    if live {
+        let allow_remote = std::env::var("ALR_ALLOW_REMOTE_OS_CONTROL")
+            .map(|v| v.trim().eq_ignore_ascii_case("true"))
+            .unwrap_or(false);
+        if !allow_remote {
+            return (
+                axum::http::StatusCode::FORBIDDEN,
+                Json(serde_json::json!({
+                    "success": false,
+                    "error": "Segurança: Controle físico de mouse remoto desabilitado por padrão. Defina ALR_ALLOW_REMOTE_OS_CONTROL=true no ambiente do servidor se desejar permitir controle físico via rede."
+                })),
+            )
+                .into_response();
+        }
+    }
+
+    let x = payload["x"].as_i64().unwrap_or(500).clamp(0, 8192) as i32;
+    let y = payload["y"].as_i64().unwrap_or(400).clamp(0, 8192) as i32;
+    let action = payload["action"].as_str().unwrap_or("move");
 
     match engines.execute_mouse_action(x, y, action, live) {
-        Ok(val) => Json(val),
-        Err(e) => Json(serde_json::json!({
-            "success": false,
-            "error": e.to_string()
-        })),
+        Ok(val) => (axum::http::StatusCode::OK, Json(val)).into_response(),
+        Err(e) => (
+            axum::http::StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({
+                "success": false,
+                "error": e.to_string()
+            })),
+        )
+            .into_response(),
     }
 }
 
-async fn handle_os_keyboard(Json(payload): Json<serde_json::Value>) -> Json<serde_json::Value> {
+async fn handle_os_keyboard(
+    headers: axum::http::HeaderMap,
+    Json(payload): Json<serde_json::Value>,
+) -> impl IntoResponse {
+    if let Err(unauth) = verify_api_key(&headers) {
+        return unauth.into_response();
+    }
+
     let text = payload["text"].as_str().unwrap_or("alr status");
     let dry_run = payload["dry_run"].as_bool().unwrap_or(true);
 
-    Json(serde_json::json!({
-        "success": true,
-        "typed_text": text,
-        "characters_count": text.len(),
-        "mode": if dry_run { "Simulação Segura (Dry-Run)" } else { "Digitação Física Nativa OS" },
-        "rate_limit": "20 caracteres/segundo (SafeInputController)",
-        "latency_micros": 6.8
-    }))
+    if !dry_run {
+        let allow_remote = std::env::var("ALR_ALLOW_REMOTE_OS_CONTROL")
+            .map(|v| v.trim().eq_ignore_ascii_case("true"))
+            .unwrap_or(false);
+        if !allow_remote {
+            return (
+                axum::http::StatusCode::FORBIDDEN,
+                Json(serde_json::json!({
+                    "success": false,
+                    "error": "Segurança: Digitação física remota desabilitada por padrão. Defina ALR_ALLOW_REMOTE_OS_CONTROL=true no ambiente do servidor."
+                })),
+            )
+                .into_response();
+        }
+    }
+
+    (
+        axum::http::StatusCode::OK,
+        Json(serde_json::json!({
+            "success": true,
+            "typed_text": text,
+            "characters_count": text.len(),
+            "mode": if dry_run { "Simulação Segura (Dry-Run)" } else { "Digitação Física Nativa OS" },
+            "rate_limit": "20 caracteres/segundo (SafeInputController)",
+            "latency_micros": 6.8
+        })),
+    )
+        .into_response()
 }
 
 async fn handle_os_emergency(
     engines: Arc<PlaygroundRealEngines>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<serde_json::Value>,
-) -> Json<serde_json::Value> {
+) -> impl IntoResponse {
+    if let Err(unauth) = verify_api_key(&headers) {
+        return unauth.into_response();
+    }
     let reason = payload["reason"]
         .as_str()
         .unwrap_or("Botão de Pânico no Playground ALR");
-    Json(engines.trigger_emergency_stop(reason))
+    (
+        axum::http::StatusCode::OK,
+        Json(engines.trigger_emergency_stop(reason)),
+    )
+        .into_response()
 }
 
 async fn handle_browser_simulate(
@@ -2158,25 +2289,8 @@ async fn handle_systemone(
     headers: axum::http::HeaderMap,
     Json(req): Json<alr_agent::systemone::SystemOneRequest>,
 ) -> impl IntoResponse {
-    // Se ALR_API_KEY estiver configurada, valida o token Bearer enviado pelo cliente (Drop-in JEV)
-    if let Ok(expected_key) = std::env::var("ALR_API_KEY") {
-        let trimmed_expected = expected_key.trim();
-        if !trimmed_expected.is_empty() {
-            let auth_header = headers
-                .get(axum::http::header::AUTHORIZATION)
-                .and_then(|h| h.to_str().ok())
-                .unwrap_or("");
-            let token = auth_header.strip_prefix("Bearer ").unwrap_or(auth_header).trim();
-            if token != trimmed_expected {
-                return (
-                    axum::http::StatusCode::UNAUTHORIZED,
-                    Json(serde_json::json!({
-                        "error": "Unauthorized: Token de autenticação inválido ou ausente. Configure o header 'Authorization: Bearer <token>' correspondente à ALR_API_KEY."
-                    })),
-                )
-                    .into_response();
-            }
-        }
+    if let Err(unauth) = verify_api_key(&headers) {
+        return unauth.into_response();
     }
 
     match engines.ask_systemone(&req) {
@@ -2850,15 +2964,25 @@ async fn handle_model_ood(Json(payload): Json<serde_json::Value>) -> Json<serde_
     }))
 }
 
-// Handlers do Explorador de Bancos de Dados do ALR
-async fn handle_db_stores(db: Arc<DatabaseExplorerEngine>) -> Json<Vec<StoreInfo>> {
-    Json(db.get_stores())
+// Handlers do Explorador de Bancos de Dados do ALR (Protegidos por autenticação quando ALR_API_KEY estiver configurada)
+async fn handle_db_stores(
+    db: Arc<DatabaseExplorerEngine>,
+    headers: axum::http::HeaderMap,
+) -> impl IntoResponse {
+    if let Err(unauth) = verify_api_key(&headers) {
+        return unauth.into_response();
+    }
+    (axum::http::StatusCode::OK, Json(db.get_stores())).into_response()
 }
 
 async fn handle_db_tables(
     db: Arc<DatabaseExplorerEngine>,
+    headers: axum::http::HeaderMap,
     Query(params): Query<HashMap<String, String>>,
 ) -> impl IntoResponse {
+    if let Err(unauth) = verify_api_key(&headers) {
+        return unauth.into_response();
+    }
     let store_id = params
         .get("store")
         .map(|s| s.as_str())
@@ -2875,8 +2999,12 @@ async fn handle_db_tables(
 
 async fn handle_db_data(
     db: Arc<DatabaseExplorerEngine>,
+    headers: axum::http::HeaderMap,
     Query(params): Query<HashMap<String, String>>,
 ) -> impl IntoResponse {
+    if let Err(unauth) = verify_api_key(&headers) {
+        return unauth.into_response();
+    }
     let store_id = params
         .get("store")
         .map(|s| s.as_str())
@@ -2904,8 +3032,12 @@ async fn handle_db_data(
 
 async fn handle_db_query(
     db: Arc<DatabaseExplorerEngine>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<serde_json::Value>,
 ) -> impl IntoResponse {
+    if let Err(unauth) = verify_api_key(&headers) {
+        return unauth.into_response();
+    }
     let store_id = payload["store"].as_str().unwrap_or("sqlite_memory");
     let table_name = payload["table"].as_str().unwrap_or("skills");
     let search = payload["search"].as_str();
