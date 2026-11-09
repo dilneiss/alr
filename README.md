@@ -26,9 +26,94 @@
 >
 > **"A LLM pode ensinar o agente, mas não precisa controlar permanentemente o agente."**  
 > *Um runtime local-first para aprendizado autônomo, decisões tipadas, memória híbrida, planejamento, ferramentas e reuso de habilidades.*
+---
+
+## ⚡ Início Rápido: Suba a API em 1 Só Comando e Integre com o JEV
+
+> 🔑 **A API do ALR se comporta exatamente igual à API do JEV (`/v1/systemone`):**  
+> Ela consome o mesmo esquema de entrada (`state`, `questions`, `criteria`), fornece as mesmas primitivas tipadas (`Choice`, `Noul`, `Score`) com probabilidades calibradas e aceita o mesmo cabeçalho de autenticação. **Basta criar seu token de autenticação (opcional via `ALR_API_KEY`), apontar a URL base para `http://localhost:3000` e a integração está pronta!**
+
+### 🚀 1. Subir a API do ALR em 1 Só Comando
+
+```bash
+# Opção A: Via Docker Compose (Multi-Arch x86_64 e ARM64 / Raspberry Pi / Graviton out-of-the-box):
+docker compose up -d
+
+# Opção B: Via Cargo nativo (Windows, Linux, macOS):
+cargo run --release -p alr-cli -- playground --port 3000
+
+# Opção C: Script automatizado no Linux & Linux ARM (instala ferramentas, compila e ativa no boot):
+bash scripts/install-linux.sh
+```
+*A API estará imediatamente ativa e pronta para receber requisições em `http://localhost:3000/v1/systemone`.*
 
 ---
 
+### 🔑 2. Token de Autenticação e Integração Idêntica ao JEV
+
+A autenticação no ALR segue o mesmo padrão `Authorization: Bearer <token>` do JEV:
+
+* **Modo Aberto / Local (Padrão):** Se nenhuma chave for definida no ambiente, a API aceita requisições com qualquer token enviado pelo SDK do JEV (ou sem token), permitindo integração e testes imediatos em desenvolvimento.
+* **Modo Protegido (Produção):** Para proteger o endpoint em produção, basta definir a variável de ambiente `ALR_API_KEY`:
+  ```bash
+  export ALR_API_KEY="meu_token_secreto_alr"
+  ```
+  O ALR validará automaticamente o cabeçalho `Authorization: Bearer meu_token_secreto_alr`, retornando `401 Unauthorized` se o token for omitido ou incorreto.
+
+#### Integração Direta no SDK Oficial do JEV (Python)
+```python
+from jev.client import Client
+
+# Aponte o cliente oficial do JEV diretamente para o seu runtime ALR local:
+client = Client(
+    api_key="meu_token_secreto_alr",  # ou qualquer string no modo padrão
+    base_url="http://localhost:3000"
+)
+
+# Chamada normal com as 3 primitivas a custo $0.00 e latência de microssegundos (~12 µs):
+decision = client.decide(
+    state="Cliente: Gostaria de parcelar o valor do plano em até 6x no cartão de crédito.",
+    questions={
+        "quer_parcelar": {
+            "type": "noul",
+            "instructions": "O cliente solicita parcelamento de pagamento?"
+        },
+        "forma_pagamento": {
+            "type": "choice",
+            "instructions": "Qual é a forma de pagamento escolhida?",
+            "criteria": {
+                "cartao": "Cartão de crédito",
+                "pix": "Pix",
+                "boleto": "Boleto bancário"
+            }
+        }
+    }
+)
+
+print("Quer parcelar (Noul P):", decision.answers["quer_parcelar"].noul)
+print("Forma de pagamento (Choice):", decision.answers["forma_pagamento"].choice)
+```
+
+---
+
+### 🔄 3. Permitir Atualização Automática (Zero-Maintenance)
+
+Mantenha o ALR sempre atualizado com as últimas otimizações e novos cookbooks de forma 100% autônoma:
+
+* **Linux / Linux ARM (systemd timer diário ou cron):**
+  Adicione uma rotina diária às 04:00 da manhã que sincroniza, recompila e reinicia o serviço silenciosamente:
+  ```bash
+  (crontab -l 2>/dev/null; echo "0 4 * * * cd $(pwd) && git pull origin main && cargo build --release -p alr-cli && systemctl --user restart alr") | crontab -
+  ```
+* **Docker:**
+  Atualize e recrie os contêineres com um único comando:
+  ```bash
+  git pull origin main && docker compose up -d --build
+  ```
+* **Windows:**
+  Agendamento diário automático via Task Scheduler (ver o prompt pronto na seção [Configurar Atualização Automática Diária](#-4-configurar-atualização-automática-diária-1x-ao-dia)).
+
+---
 ## ⚡ Por Que o ALR é a Alternativa Gratuita Definitiva ao JEV?
 
 O **JEV (TypeSafe AI)** introduziu um conceito revolucionário: em vez de gerar texto livre com LLMs lentas e torcer para o JSON vir correto, o código deve ser o dono do fluxo de trabalho (*Code owns the workflow*) e a IA deve fornecer **decisões tipadas com probabilidades calibradas** (`Choice`, `Noul`, `Score`).
@@ -466,20 +551,21 @@ cargo run -p alr-cli -- playground-test
 
 ## 📑 Sumário
 
-1. [⚡ Alternativa Gratuita e Drop-in ao JEV (TypeSafe AI)](#-por-que-o-alr-é-a-alternativa-gratuita-definitiva-ao-jev)
-2. [🔄 Substituição Rápida do JEV (Drop-in em 10 Segundos)](#-drop-in-replacement-troque-o-jev-pelo-alr-em-10-segundos)
-3. [🧩 As 3 Primitivas e os 20 Cookbooks do JEV Nativos](#-as-3-primitivas-e-os-20-cookbooks-do-jev-nativos-no-alr)
-4. [🤖 Instalação Rápida com Agente de IA (Copie e Cole)](#-instale-e-mantenha-o-alr-com-seu-agente-de-ia-copie-e-cole)
-5. [⚗️ Playground Universal & Cockpit Web](#-playground-universal-do-alr-o-centro-principal-de-testes-e-simulações)
-6. [⚡ Quickstart em 3 Minutos (Do Zero ao Agente Operacional)](#-quickstart-em-3-minutos-do-zero-ao-agente-operacional)
-7. [🎯 O Que é o Projeto?](#-o-que-é-o-projeto)
-8. [💡 Por Que o ALR Existe?](#-por-que-o-alr-existe)
-9. [🏆 Comparativo Técnico: Por Que o ALR é a Melhor Alternativa ao JEV e Laya?](#-comparativo-técnico-por-que-o-alr-é-superior-ao-jev-e-laya--laya-coreml)
-10. [🗺️ Mapas Mentais da Arquitetura & Fluxos Operacionais](#-mapas-mentais-da-arquitetura--fluxos-operacionais)
-11. [Premissa Central](#-premissa-central)
-12. [Princípios Arquiteturais](#-princípios-arquiteturais)
-13. [O Que o Sistema Faz?](#-o-que-o-sistema-faz)
-14. [Casos de Uso Detalhados (Fases 1 a 35)](#-casos-de-uso-detalhados)
+1. [⚡ Início Rápido: Suba a API em 1 Comando e Integre com o JEV](#-início-rápido-suba-a-api-em-1-só-comando-e-integre-com-o-jev)
+2. [⚡ Alternativa Gratuita e Drop-in ao JEV (TypeSafe AI)](#-por-que-o-alr-é-a-alternativa-gratuita-definitiva-ao-jev)
+3. [🔄 Substituição Rápida do JEV (Drop-in em 10 Segundos)](#-drop-in-replacement-troque-o-jev-pelo-alr-em-10-segundos)
+4. [🧩 As 3 Primitivas e os 20 Cookbooks do JEV Nativos](#-as-3-primitivas-e-os-20-cookbooks-do-jev-nativos-no-alr)
+5. [🤖 Instalação Rápida com Agente de IA (Copie e Cole)](#-instale-e-mantenha-o-alr-com-seu-agente-de-ia-copie-e-cole)
+6. [⚗️ Playground Universal & Cockpit Web](#-playground-universal-do-alr-o-centro-principal-de-testes-e-simulações)
+7. [⚡ Quickstart em 3 Minutos (Do Zero ao Agente Operacional)](#-quickstart-em-3-minutos-do-zero-ao-agente-operacional)
+8. [🎯 O Que é o Projeto?](#-o-que-é-o-projeto)
+9. [💡 Por Que o ALR Existe?](#-por-que-o-alr-existe)
+10. [🏆 Comparativo Técnico: Por Que o ALR é a Melhor Alternativa ao JEV e Laya?](#-comparativo-técnico-por-que-o-alr-é-superior-ao-jev-e-laya--laya-coreml)
+11. [🗺️ Mapas Mentais da Arquitetura & Fluxos Operacionais](#-mapas-mentais-da-arquitetura--fluxos-operacionais)
+12. [Premissa Central](#-premissa-central)
+13. [Princípios Arquiteturais](#-princípios-arquiteturais)
+14. [O Que o Sistema Faz?](#-o-que-o-sistema-faz)
+15. [Casos de Uso Detalhados (Fases 1 a 35)](#-casos-de-uso-detalhados)
    * [Caso 1: Controle Dinâmico em Jogos (Snake)](#caso-1-controle-dinâmico-em-jogos-snake)
    * [Caso 2: Atendimento com Memória Semântica (Customer Support)](#caso-2-atendimento-com-memória-semântica-customer-support)
    * [Caso 3: Automação Web Real no Navegador (Chromium CDP)](#caso-3-automação-web-real-no-navegador-chromium-cdp)

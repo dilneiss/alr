@@ -488,8 +488,17 @@ impl JevPlaygroundServer {
                 "/v1/systemone",
                 post({
                     let r = self.real_engines.clone();
-                    move |body: Json<alr_agent::systemone::SystemOneRequest>| {
-                        handle_systemone(r, body)
+                    move |headers: axum::http::HeaderMap, body: Json<alr_agent::systemone::SystemOneRequest>| {
+                        handle_systemone(r, headers, body)
+                    }
+                }),
+            )
+            .route(
+                "/api/v1/systemone",
+                post({
+                    let r = self.real_engines.clone();
+                    move |headers: axum::http::HeaderMap, body: Json<alr_agent::systemone::SystemOneRequest>| {
+                        handle_systemone(r, headers, body)
                     }
                 }),
             )
@@ -2146,8 +2155,30 @@ async fn handle_a2a_diff(
 
 async fn handle_systemone(
     engines: Arc<PlaygroundRealEngines>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<alr_agent::systemone::SystemOneRequest>,
 ) -> impl IntoResponse {
+    // Se ALR_API_KEY estiver configurada, valida o token Bearer enviado pelo cliente (Drop-in JEV)
+    if let Ok(expected_key) = std::env::var("ALR_API_KEY") {
+        let trimmed_expected = expected_key.trim();
+        if !trimmed_expected.is_empty() {
+            let auth_header = headers
+                .get(axum::http::header::AUTHORIZATION)
+                .and_then(|h| h.to_str().ok())
+                .unwrap_or("");
+            let token = auth_header.strip_prefix("Bearer ").unwrap_or(auth_header).trim();
+            if token != trimmed_expected {
+                return (
+                    axum::http::StatusCode::UNAUTHORIZED,
+                    Json(serde_json::json!({
+                        "error": "Unauthorized: Token de autenticação inválido ou ausente. Configure o header 'Authorization: Bearer <token>' correspondente à ALR_API_KEY."
+                    })),
+                )
+                    .into_response();
+            }
+        }
+    }
+
     match engines.ask_systemone(&req) {
         Ok(res) => (axum::http::StatusCode::OK, Json(res)).into_response(),
         Err(e) => (
