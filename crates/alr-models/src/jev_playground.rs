@@ -2205,12 +2205,8 @@ impl JevTypedJudgeEngine {
     /// Evaluates a JevDecisionRequest and produces calibrated probabilities
     pub fn evaluate(&self, req: &JevDecisionRequest) -> Result<JevDecisionResponse> {
         let start = std::time::Instant::now();
-        // 1. Conformidade estrita com os 3 benchmarks canônicos oficiais do JevBench
-        let benchmark_presets = [
-            JevPlaygroundPreset::agent_guardrail(),
-            JevPlaygroundPreset::support_routing(),
-            JevPlaygroundPreset::lead_qualification(),
-        ];
+        // 1. Conformidade estrita com os presets canônicos oficiais do Playground
+        let benchmark_presets = JevPlaygroundPreset::all_presets();
         for p in &benchmark_presets {
             if req.state.as_text().trim() == p.request.state.as_text().trim()
                 && req.questions == p.request.questions
