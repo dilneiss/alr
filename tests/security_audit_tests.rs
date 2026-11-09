@@ -10,11 +10,31 @@ use alr_cli::database_explorer::DatabaseExplorerEngine;
 use alr_cli::playground_server::JevPlaygroundServer;
 use axum::body::Body;
 use axum::http::{header, Request, StatusCode};
+use std::path::PathBuf;
 use tower::ServiceExt; // for oneshot()
+use uuid::Uuid;
 
-#[test]
-fn test_sql_injection_defense_database_explorer() {
-    let db = DatabaseExplorerEngine::default();
+static ENV_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
+fn make_temp_dir() -> PathBuf {
+    let p = std::env::temp_dir().join(format!("alr_sec_audit_{}", Uuid::new_v4()));
+    let _ = std::fs::create_dir_all(&p);
+    p
+}
+
+struct EnvGuard;
+impl Drop for EnvGuard {
+    fn drop(&mut self) {
+        std::env::remove_var("ALR_API_KEY");
+        std::env::remove_var("ALR_ALLOW_REMOTE_OS_CONTROL");
+    }
+}
+
+#[tokio::test]
+async fn test_sql_injection_defense_database_explorer() {
+    let _lock = ENV_LOCK.lock().await;
+    let tmp = make_temp_dir();
+    let db = DatabaseExplorerEngine::new(&tmp);
 
     // 1. Injeção direta com ponto e vírgula
     let res_inj1 = db.get_table_data("sqlite_memory", "skills; DROP TABLE skills;", 10, 0, None);
@@ -39,15 +59,18 @@ fn test_sql_injection_defense_database_explorer() {
     assert!(res_ok.is_ok(), "Tabela da whitelist deve carregar com sucesso");
     let data = res_ok.unwrap();
     assert!(data.limit <= 500, "Limite deve ser contido para prevenir DoS");
-}
 
-static ENV_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+    let _ = std::fs::remove_dir_all(&tmp);
+}
 
 #[tokio::test]
 async fn test_api_key_authentication_enforcement() {
-    let _guard = ENV_LOCK.lock().await;
+    let _lock = ENV_LOCK.lock().await;
+    let _env_guard = EnvGuard;
     std::env::set_var("ALR_API_KEY", "secret_audit_token_9876");
-    let server = JevPlaygroundServer::new(3000);
+
+    let tmp = make_temp_dir();
+    let server = JevPlaygroundServer::with_data_dir(3000, &tmp);
     let app = server.create_router();
 
     let valid_payload = serde_json::json!({
@@ -95,16 +118,18 @@ async fn test_api_key_authentication_enforcement() {
     let resp_ok = app.clone().oneshot(req_ok).await.unwrap();
     assert_eq!(resp_ok.status(), StatusCode::OK);
 
-    // Limpa a variável para não contaminar outros testes
-    std::env::remove_var("ALR_API_KEY");
+    let _ = std::fs::remove_dir_all(&tmp);
 }
 
 #[tokio::test]
 async fn test_remote_physical_os_control_locked_by_default() {
-    let _guard = ENV_LOCK.lock().await;
+    let _lock = ENV_LOCK.lock().await;
+    let _env_guard = EnvGuard;
     std::env::remove_var("ALR_API_KEY");
     std::env::remove_var("ALR_ALLOW_REMOTE_OS_CONTROL");
-    let server = JevPlaygroundServer::new(3000);
+
+    let tmp = make_temp_dir();
+    let server = JevPlaygroundServer::with_data_dir(3000, &tmp);
     let app = server.create_router();
 
     // Chamada remota tentando ação física (live: true)
@@ -128,11 +153,15 @@ async fn test_remote_physical_os_control_locked_by_default() {
         StatusCode::FORBIDDEN,
         "Ação de mouse físico remoto deve ser bloqueada com 403 por padrão"
     );
+
+    let _ = std::fs::remove_dir_all(&tmp);
 }
 
 #[tokio::test]
 async fn test_security_headers_present() {
-    let server = JevPlaygroundServer::new(3000);
+    let _lock = ENV_LOCK.lock().await;
+    let tmp = make_temp_dir();
+    let server = JevPlaygroundServer::with_data_dir(3000, &tmp);
     let app = server.create_router();
 
     let req = Request::builder()
@@ -160,4 +189,6 @@ async fn test_security_headers_present() {
         Some("strict-origin-when-cross-origin"),
         "Deve conter cabeçalho Referrer-Policy"
     );
+
+    let _ = std::fs::remove_dir_all(&tmp);
 }

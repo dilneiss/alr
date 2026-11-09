@@ -438,12 +438,17 @@ pub struct JevPlaygroundServer {
 
 impl JevPlaygroundServer {
     pub fn new(port: u16) -> Self {
+        Self::with_data_dir(port, "data")
+    }
+
+    pub fn with_data_dir<P: AsRef<std::path::Path>>(port: u16, data_dir: P) -> Self {
+        let dir = data_dir.as_ref().to_path_buf();
         Self {
             port,
             engine: Arc::new(JevTypedJudgeEngine::new()),
-            db_explorer: Arc::new(DatabaseExplorerEngine::default()),
+            db_explorer: Arc::new(DatabaseExplorerEngine::new(&dir)),
             real_engines: Arc::new(PlaygroundRealEngines::new()),
-            learning: Arc::new(LearningLedger::new("data")),
+            learning: Arc::new(LearningLedger::new(&dir)),
         }
     }
 
