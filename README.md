@@ -235,8 +235,54 @@ Execute todos os passos de forma autônoma:
    - Mostre no terminal o resumo final: SO/Distro detectado, caminho do binário, método de autostart configurado, status da porta 3000 e como parar/reiniciar o serviço.
 ```
 
-### 🔄 2. Atualizar o ALR Manualmente Agora
+### 🍓 2. Instalação Otimizada em Linux ARM / Raspberry Pi / AWS Graviton / Apple Silicon (Copie e Cole)
 
+Copie este prompt e envie para o seu agente em qualquer máquina Linux ARM:
+
+```text
+Você é o engenheiro responsável por instalar e otimizar o ALR (Autonomous Learning Runtime) nesta máquina Linux ARM (ARM64 / aarch64 ou armv7l), garantindo que ela utilize aceleração vetorial ARM NEON, compile de forma estável sem estourar a memória RAM e inicie automaticamente no boot.
+Execute todos os passos de forma autônoma:
+1. DETECÇÃO DE HARDWARE E ARQUITETURA:
+   - Identifique a arquitetura do processador executando `uname -m` (confirmando aarch64, arm64 ou armv7l).
+   - Verifique a memória RAM total e disponível com `free -m`.
+   - Se a máquina tiver 4GB ou menos de RAM (como em Raspberry Pi 4/3 ou instâncias básicas de nuvem), verifique se há swap ativo (`swapon --show`). Se não houver pelo menos 2GB de swap configurado, crie um swapfile temporário de 2GB em /swapfile para evitar Out-Of-Memory (OOM) do compilador durante o build do workspace.
+2. INSTALAÇÃO DE FERRAMENTAS DE COMPILAÇÃO NATIVAS:
+   - No Debian / Ubuntu / Raspberry Pi OS: `sudo apt-get update && sudo apt-get install -y build-essential curl git ca-certificates pkg-config`.
+   - No Fedora / Amazon Linux Graviton: `sudo dnf groupinstall -y "Development Tools" && sudo dnf install -y curl git pkgconfig`.
+   - No Arch Linux / Manjaro ARM: `sudo pacman -Syu --noconfirm base-devel curl git`.
+3. COMPILADOR RUST:
+   - Se `cargo` não estiver instalado, instale via: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y`.
+   - Carregue o ambiente com `source "$HOME/.cargo/env"`.
+4. OBTENÇÃO DO CÓDIGO E COMPILAÇÃO CALIBRADA:
+   - Se já estiver no diretório do ALR, use a pasta atual. Senão, clone: `git clone https://github.com/dilneiss/alr.git && cd alr`.
+   - Em máquinas com 2GB a 4GB de RAM (ex: Raspberry Pi), compile limitando o paralelismo para evitar OOM: `cargo build --release -p alr-cli -j 2`.
+   - Em servidores ARM potentes (AWS Graviton, Oracle Ampere A1, Mac com Linux): `cargo build --release -p alr-cli`.
+5. CONFIGURAÇÃO DE AUTOSTART (SYSTEMD USER SERVICE):
+   - Crie a unidade systemd de usuário em `~/.config/systemd/user/alr.service`:
+     [Unit]
+     Description=Autonomous Learning Runtime (ALR) - Playground & JEV System 1 Engine
+     After=network.target
+
+     [Service]
+     Type=simple
+     WorkingDirectory=$(pwd)
+     ExecStart=$(pwd)/target/release/alr playground --port 3000
+     Restart=always
+     RestartSec=5
+     Environment=PORT=3000
+     Environment=RUST_LOG=info
+
+     [Install]
+     WantedBy=default.target
+   - Recarregue e ative o serviço: `systemctl --user daemon-reload && systemctl --user enable --now alr.service`.
+   - Habilite o linger para manter o serviço rodando mesmo sem sessão SSH ativa: `loginctl enable-linger $USER` (se disponível).
+6. VALIDAÇÃO E RELATÓRIO:
+   - Teste a resposta HTTP local: `curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/` confirmando 200.
+   - Se houver interface gráfica de desktop (ex: Raspberry Pi Desktop), abra o navegador: `xdg-open http://localhost:3000`.
+   - Imprima no terminal: Arquitetura ARM confirmada, status do serviço systemd, consumo de RAM (RSS) e o link para o Playground.
+```
+
+### 🔄 3. Atualizar o ALR Manualmente Agora
 Copie este prompt e envie para o seu agente sempre que quiser atualizar sob demanda:
 
 ```text
@@ -256,7 +302,7 @@ Execute os seguintes passos com segurança:
    - Imprima o novo hash do commit (`git rev-parse --short HEAD`), a confirmação de que o serviço está rodando e que as tabelas de estado/dados foram preservadas.
 ```
 
-### ⏰ 3. Configurar Atualização Automática Diária (1x ao Dia)
+### ⏰ 4. Configurar Atualização Automática Diária (1x ao Dia)
 
 Copie este prompt e envie para o seu agente para deixar as atualizações rodando sozinhas:
 
@@ -1417,12 +1463,38 @@ O ALR foi construído em **Rust puro** com foco em eficiência extrema de recurs
 
 ### 3. Clonar e Compilar
 ```bash
-git clone https://github.com/seu-usuario/autonomous-learning-runtime.git
+git clone https://github.com/dilneiss/alr.git
 cd alr
 
-# Compilar todos os 21 crates do workspace
+# Compilar todos os crates do workspace
 cargo build --workspace
 ```
+
+### 4. Guia Específico para Linux & Linux ARM (ARM64 / AArch64 / Raspberry Pi / AWS Graviton / Apple Silicon)
+
+O ALR possui suporte nativo de primeira classe para ambientes Linux em arquiteturas ARM (ARM64 / AArch64 e armv7l):
+
+1. **Aceleração Vetorial ARM NEON (< 100 ns):**  
+   O motor de tensores e características (`SimdFeatureVectorizer` em `crates/alr-models`) utiliza rotinas desdobradas em 8 vias (`as_chunks::<8>()`). No Linux ARM, o compilador LLVM gera diretamente instruções vetoriais **ARM NEON**, acelerando normalizações $L_2$, distâncias euclidianas e produtos escalares para sub-microssegundos sem necessidade de GPU.
+
+2. **Pilha de Rede TLS 100% Rust (`rustls-tls`):**  
+   Diferente de runtimes que exigem cabeçalhos OpenSSL do sistema (`libssl-dev` / `openssl-devel`), o ALR utiliza `rustls-tls` puro. Isso elimina dependências dinâmicas em C e permite compilar ou rodar em qualquer distribuição ARM (Debian, Ubuntu, Alpine musl, Amazon Linux Graviton ou Arch Linux ARM).
+
+3. **Tamanho de Página de Memória Flexível (4KB, 16KB e 64KB):**  
+   Kernels ARM corporativos (como AWS Graviton ou Asahi Linux) frequentemente utilizam páginas de 16KB ou 64KB. A telemetria de consumo de memória do ALR lê `VmRSS` e `VmHWM` diretamente de `/proc/self/status`, garantindo precisão métrica milimétrica em qualquer arquitetura.
+
+4. **Instalador Automatizado para Linux:**  
+   Execute o script nativo que detecta a arquitetura, instala pacotes de compilação e opcionalmente registra o serviço systemd de usuário:
+   ```bash
+   bash scripts/install-linux.sh
+   ```
+
+5. **Deploy em Contêiner Multi-Arch via Docker Compose:**  
+   O `Dockerfile` e o `docker-compose.yml` possuem suporte nativo a `linux/arm64` e `linux/amd64`:
+   ```bash
+   # Sobe o ALR (porta 3000) e o Qdrant (porta 6333) no Raspberry Pi, Graviton ou x86:
+   docker compose up -d
+   ```
 
 ---
 
