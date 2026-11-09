@@ -481,32 +481,7 @@ Execute a configuração de ponta a ponta:
 ```
 
 ---
-<div align="center">
-  <br>
-  <h2>⚗️ Playground Universal com Arquitetura Dual-Sidebar (Estilo Canvas) & Decisões Tipadas (System 1)</h2>
-  <img src="static/playground-hero.png" alt="Playground Universal ALR - Layout Dual-Sidebar Estilo Canvas e Linha do Tempo de Raciocínio" width="100%" />
-  <p><em>Figura: Novo layout do Playground Universal do ALR redesenhado no padrão Dual-Sidebar (Dock de Ícones à extrema esquerda + Barra de Submenus e Busca em estilo Canvas), com Linha do Tempo Vertical de Raciocínio (Pipeline DAG), HUD de economia comparativa ($0.00 local vs $0.0025 Cloud LLM) e probabilidades calibradas.</em></p>
-  <br>
-  <h2>📈 Cockpit Multi-Ativo de Trading Quantitativo (Binance Spot Testnet)</h2>
-  <img src="static/trading-desk-hero.png" alt="ALR Live Trading Desk - Cockpit Quantitativo 7 Ativos" width="100%" />
-  <p><em>Figura: Cockpit do ALR Live Trading Desk operando 7 criptoativos simultaneamente com gráficos de velas em Canvas a 60 FPS, order book em tempo real, trailing stop automático, indicadores técnicos locais e simulador 'What-If'.</em></p>
-  <br>
-  <h2>🗄️ Explorador e Inspetor de Bancos de Dados Operacionais & Qdrant (1536d)</h2>
-  <img src="static/playground-database-hero.png" alt="ALR Database Explorer - SQLite WAL e Qdrant Vetorial" width="100%" />
-  <p><em>Figura: Explorador de bancos de dados nativo do Playground inspecionando tabelas do SQLite (alr_memory.db, support.db, trading.db) e coleções vetoriais do Qdrant com quantização escalar int8 e gaveta lateral de inspeção profunda JSON.</em></p>
-  <br>
-  <h2>🎮 Arena com 8 Jogos Autônomos (Canvas & Three.js 3D com Auto-Retry)</h2>
-  <img src="static/playground-games-hero.png" alt="Arena de Jogos Autônomos no Playground ALR" width="100%" />
-  <p><em>Figura: Arena de Jogos Autônomos com 8 jogos (Snake com flood-fill anti-colisão, Dino Runner, Pong 2D, Cards/Blackjack, Bomberman com dano real, FPS 3D Three.js, Worms balístico e Tetris 10x20) e botão de Auto-Retry contínuo.</em></p>
-  <br>
-  <h2>🗺️ Otimizador de Rotas em Mapa Real (OpenStreetMap, CEP Brasileiro & VRP Dinâmico)</h2>
-  <img src="static/playground-routes-hero.png" alt="ALR Route Optimizer - Roteirização em Mapa Real OpenStreetMap com CEP" width="100%" />
-  <p><em>Figura: Otimizador de rotas do ALR em mapa real (OpenStreetMap / Leaflet) calculando autonomamente o trajeto ótimo de entregas a partir do CEP informado (ex: 01310-100 Av. Paulista, São Paulo), com pins numerados, polyline nas vias reais, telemetria de trânsito e manifesto completo.</em></p>
-  <h2>📚 Central de Conhecimento & Hub de Tutoriais do ALR (UI Moderna & Escaneável)</h2>
-  <img src="static/playground-tutorials-modern.png" alt="Central de Conhecimento & Tutoriais ALR - UI Moderna e Escaneável" width="100%" />
-  <p><em>Figura: Nova interface da Central de Conhecimento e Tutoriais do ALR redesenhada com Hero Card de métricas, cards categorizados com ícones temáticos, barra de busca rápida em tempo real, comparativo Abordagem Tradicional vs ALR e diagrama do Ciclo Cognitivo em 4 passos.</em></p>
-  <br>
-</div>
+> 📸 **Demonstrações Visuais, Cockpits & Screenshots:** O guia visual completo com capturas em alta resolução do Playground Dual-Sidebar, Cockpit de Trading, Explorador de Banco de Dados, Arena de 8 Jogos, Otimizador de Rotas e Central de Tutoriais está em [`README_DEMOS.md#-guia-visual-do-playground-universal-do-alr`](README_DEMOS.md#-guia-visual-do-playground-universal-do-alr).
 
 O **Autonomous Learning Runtime (ALR)** é um runtime de agentes autônomos construído do zero em **Rust**. Ele demonstra como um núcleo cognitivo único aprende, valida, cristaliza, transfere, autoaperfeiçoa e coordena competências locais em múltiplos domínios:
 1. **Controle Dinâmico Discreto (Snake)**
@@ -573,40 +548,11 @@ cargo run -p alr-cli -- quickstart
 | [`Copiloto de Call de Vendas`](README_COPILOTO.md) | 💼 Web Copiloto | Copiloto em tempo real para Google Meet com quebra de objeções instantânea via ALR System 1 | `node server.js` (`http://localhost:3001`) |
 | [`skills/alr-systemone/SKILL.md`](skills/alr-systemone/SKILL.md) | 🧠 Skill Oficial | Motor de Decisões Tipadas System 1 (Choice, Noul, Score) em CPU local com $0.00 de custo | Primitivas para agentes em Oh My Pi, Claude Code e JEV SDK |
 
-### ⚗️ Playground Universal do ALR: O Centro Principal de Testes e Simulações
+### ⚗️ Playground Universal & Cockpit Web
 
-O **Playground do ALR** é o ambiente oficial unificado para experimentar, validar e auditar **tudo o que o ecossistema ALR oferece**. Ele vai muito além de uma simples API: reúne decisões tipadas em sub-milissegundos, uma **Arena com 8 Jogos Autônomos interativos em Canvas**, suítes completas de Marketing Ops, Segurança e Trading com custo zero de tokens:
+O ALR conta com um **Playground Universal interativo** na porta `3000` (`cargo run -p alr-cli -- playground --port 3000`), reunindo decisões tipadas em sub-milissegundos, visualização de probabilidades calibradas com Linha do Tempo DAG, arena de jogos em Canvas, explorador de bancos de dados SQLite/Qdrant e telemetria de economia de tokens ($0.00 vs $0.0025 Cloud LLM).
 
-<div align="center">
-  <img src="static/playground-hero.png" alt="Playground Oficial ALR - Layout Dual-Sidebar Estilo Canvas e Linha do Tempo de Raciocínio" width="100%">
-  <p><em>Figura 1: Playground do ALR redesenhado com arquitetura Dual-Sidebar (Dock de Ícones primário + Barra lateral secundária com submenus e busca em tempo real), exibindo a Linha do Tempo Vertical de Raciocínio (Pipeline DAG), HUD de economia comparativa e barras de probabilidade calibradas.</em></p>
-</div>
-
-<div align="center">
-  <img src="static/playground-games-hero.png" alt="Arena de Jogos Autônomos no Playground ALR" width="100%">
-  <p><em>Figura 2: Arena de Jogos Autônomos interativa com 8 jogos (Snake, Dino Runner, Pong 2D, Cards/Blackjack, Bomberman, FPS 3D, Worms e Tetris) rodando em Canvas com telemetria System 1 ao vivo (&lt; 4.0 µs).</em></p>
-</div>
-
-<div align="center">
-  <img src="static/playground-marketing.png" alt="Catálogo de Módulos Operacionais ALR" width="100%">
-  <p><em>Figura 3: Catálogo completo de módulos operacionais (Marketing Ops, Segurança & Risco, Trading Quantitativo e WhatsApp Desk) testáveis com 1 clique.</em></p>
-</div>
-
-#### 🌟 Os 6 Módulos Operacionais Disponíveis no Playground:
-1. **⚗️ Decisões Tipadas (System 1):** Avaliação de probabilidades calibradas com Linha do Tempo Vertical de Raciocínio (Estilo Canva/Figma), formulário dinâmico, edição de JSON e HUD de economia ($0.00 vs $0.000016 vs $0.0025).
-2. **🎮 Arena de Jogos (8 Jogos do ALR):** Simulações em Canvas de alta performance com IA autônoma e controles manuais:
-   * 🐍 **Snake Autônomo:** Cycle Safety Shield, Q-Learning e vetor de probabilidades de direção (`CIMA`, `BAIXO`, `ESQUERDA`, `DIREITA`).
-   * 🦖 **Chrome Dino Runner:** Salto com física parabólica, gravidade contínua e esquiva de cactos.
-   * 🏓 **Pong 2D:** Interceptação inteligente de raquete e rebatidas dinâmicas.
-   * 🃏 **Cards / Blackjack:** Cálculo em tempo real da probabilidade de estouro (*Bust Probability*) e decisão Stand/Hit.
-   * 💣 **Bomberman:** Fuga de explosão em cruz via busca em largura (BFS) e pavio animado.
-   * 🎯 **FPS 3D Raycasting:** Mira suave, alvos em profundidade 3D e cálculo de recuo.
-   * 🐛 **Worms Balístico:** Canhão balístico com vento dinâmico, ângulo e trajetória parabólica com crateras.
-   * 🧱 **Tetris Autônomo:** Rotação e encaixe de tetraminós para limpeza de linhas.
-3. **📈 Marketing Ops & SEO:** As 9 tarefas do JEV Catalog (Triagem Google Ads, Tagging Meta Ads, Aderência Landing Page, Link Interno, Canibalização 301, Thin-Page Gate, etc.).
-4. **🛡️ Segurança, Risco & Visão:** Vigilância CCTV com tripwire de intrusão, detector de erros de tela HTTP 500, detecção de novidade extrema OOD e parada de emergência (Kill Switch).
-5. **💰 Trading Quantitativo:** Monitoramento multi-ativo da Binance Spot Testnet, cálculo de indicadores técnicos locais e confluência de sinais.
-6. **💬 Atendimento Omnichannel & WhatsApp:** Central de atendimento nos 20 nichos, análise de sentimento com detecção de litígio/PROCON e triagem de e-mails.
+> 📖 **Guia Visual Completo do Playground:** Para ver o layout Dual-Sidebar em estilo Canvas, capturas de tela em alta resolução, o detalhamento dos 6 módulos operacionais e a arquitetura de UX responsiva, consulte o [Catálogo Oficial de Demonstrações (README_DEMOS.md#-guia-visual-do-playground-universal-do-alr)](README_DEMOS.md#-guia-visual-do-playground-universal-do-alr).
 
 ```bash
 # Iniciar o Playground Universal localmente (porta padrão 3000)
@@ -636,26 +582,22 @@ cargo run -p alr-cli -- playground-test
 15. [🎓 Treinamento de Novas Tarefas](#-treinamento-de-novas-tarefas-guia--cli)
 16. [🧠 Por Que Usamos o Qdrant e uma LLM Integrada](#-por-que-usamos-o-qdrant-e-uma-llm-integrada-arquitetura-casos-de-uso-e-teste-prático)
 17. [🚦 Hierarquia Rígida de Decisão de 8 Níveis](#-hierarquia-rígida-de-decisão-de-8-níveis)
-18. [📦 Estrutura do Workspace Cargo](#-estrutura-completa-do-workspace-cargo-22-crates)
+18. [📦 Estrutura do Workspace Cargo (22 Crates)](#-estrutura-completa-do-workspace-cargo-22-crates)
 19. [🔧 Pré-Requisitos, Hardware e Compilação Manual](#-pré-requisitos-hardware-e-compilação-manual)
 20. [💻 Comandos Essenciais da CLI](#-como-usar-comandos-essenciais-da-cli)
 21. [🔌 Integração MCP](#-integração-mcp-com-opencode)
 22. [📊 Métricas Reais por Nível de Evidência](#-métricas-reais-obtidas-por-nível-de-evidência)
-23. [🖱️ Controle Nativo de Desktop OS](#-controle-nativo-de-desktop-os-aplicações--novos-jogos)
-24. [🛡️ Os 12 Gates Formais de Aceitação](#-os-12-gates-formais-de-aceitação)
-25. [⚖️ Veredito de Certificação Oficial](#-veredito-de-certificação-oficial)
-26. [🚫 O Que o ALR NÃO É](#-o-que-o-alr-não-é)
-27. [⚠️ Limitações Conhecidas](#-limitações-conhecidas-declaradas-honestamente)
-28. [🎮 Política de Interação com Jogos (Anti-Cheat)](#-política-de-interação-com-jogos-anti-cheat)
-29. [🔐 Segurança e Governança](#-segurança-e-governança)
-30. [📈 Mesa de Operações Quantitativa Multi-Ativo](#-mesa-de-operações-quantitativa-multi-ativo-multi-asset-trading-desk--web-cockpit)
-31. [🧪 Automação de Testes de QA](#-automação-de-testes-de-qa-em-páginas-web--programas-self-healing--cicd)
-32. [📚 Índice de Documentação Técnica](#-índice-de-documentação-técnica--central-de-conhecimento)
-33. [🖥️ Experiência de Usuário Universal (UX)](#-experiência-de-usuário-universal-ux-responsiva-multi-resolução)
-34. [🧠 Skill Oficial: ALR System 1](#-skill-oficial-alr-system-1-typesafe-jev-engine--primitivas-de-decisão)
-35. [❓ FAQ: Migrando do JEV para o ALR](#-perguntas-frequentes-migrando-do-jev-para-o-alr-faq--guia-de-descoberta)
-36. [🔍 Termos de Busca e Indexação (SEO)](#-termos-de-busca-e-indexação-seo--metadata)
-37. [📜 Licença](#-licença)
+23. [🛡️ Os 12 Gates Formais de Aceitação](#-os-12-gates-formais-de-aceitação)
+24. [⚖️ Veredito de Certificação Oficial](#-veredito-de-certificação-oficial)
+25. [🚫 O Que o ALR NÃO É](#-o-que-o-alr-não-é)
+26. [⚠️ Limitações Conhecidas](#-limitações-conhecidas-declaradas-honestamente)
+27. [🎮 Política de Interação com Jogos (Anti-Cheat)](#-política-de-interação-com-jogos-anti-cheat)
+28. [🔐 Segurança e Governança](#-segurança-e-governança)
+29. [📚 Índice de Documentação Técnica](#-índice-de-documentação-técnica--central-de-conhecimento)
+30. [🧠 Skill Oficial: ALR System 1](#-skill-oficial-alr-system-1-typesafe-jev-engine--primitivas-de-decisão)
+31. [❓ FAQ: Migrando do JEV para o ALR](#-perguntas-frequentes-migrando-do-jev-para-o-alr-faq--guia-de-descoberta)
+32. [🔍 Termos de Busca e Indexação (SEO)](#-termos-de-busca-e-indexação-seo--metadata)
+33. [📜 Licença](#-licença)
 ---
 
 ## 🎯 O Que é o Projeto?
@@ -1223,38 +1165,9 @@ Os comandos abaixo cobrem os fluxos mais utilizados. O **catálogo completo e co
 | Bateria dos 12 Gates de aceitação | `cargo run -p alr-cli -- final-acceptance` |
 | Suíte completa de testes | `cargo test --workspace` |
 
-### 🐍 Exemplo Detalhado: Snake com Decisões Tipadas, Telemetria & Escudo de Segurança
+> 🐍 **Demonstrações Avançadas do Snake & Jogos:** Para ver os 4 modos de execução do Snake (Terminal ASCII, Modelo ONNX destilado, Treinamento Contínuo e Navegador Real com Tabu Search) e a Arena de 8 Jogos Autônomos, consulte [`README_DEMOS.md#-exemplo-detalhado-snake-com-decisões-tipadas-telemetria--escudo-de-segurança`](README_DEMOS.md#-exemplo-detalhado-snake-com-decisões-tipadas-telemetria--escudo-de-segurança).
 
-O jogo da cobrinha conta agora com o motor de **Decisões Tipadas (System 1)**, **Cycle Safety Shield** e telemetria de probabilidades em tempo real:
-
-1. **Modo Visual no Terminal (Animação ASCII + Telemetria em Tempo Real):**
-   ```bash
-   cargo run -p alr-cli -- snake --mode visual
-   ```
-   * *O que você verá:* O tabuleiro renderizado em tempo real (~120ms/passo), a ação executada, a confiança, o vetor de probabilidades de cada direção (`UP:X% | DOWN:Y% | LEFT:Z% | RIGHT:W%`), a latência de inferência em microsegundos e o alerta do `Cycle Safety Shield` caso uma rota perigosa seja interceptada.
-
-2. **Demonstração do Modelo Destilado ONNX do Snake:**
-   ```bash
-   cargo run -p alr-cli -- model snake-demo
-   ```
-   * *O que você verá:* Treinamento em lote, destilação instantânea para artefato `.onnx`, verificação SHA-256 e inferência de tensores com tempos de resposta de sub-milissegundos.
-
-3. **Treinamento e Atualização Contínua da Política:**
-   ```bash
-   # Treinar 500 episódios e persistir no SQLite:
-   cargo run -p alr-cli -- snake --train --episodes 500
-
-   # Avaliar taxa de sobrevivência e pontuação média:
-   cargo run -p alr-cli -- snake --evaluate --episodes 100
-   ```
-
-4. **Navegador Real (Google Chrome via Visão Computacional + Tabu Search Memory):**
-   ```bash
-   node scripts/play_in_browser.js
-   ```
-   * *O que você verá:* O Chromium abrindo a tela real do jogo em `wutools.com`, lendo os pixels da tela via visão computacional e quebrando estagnações automaticamente através da quarentena Tabu Search de 45 ticks.
-
-> 📖 Catálogo completo das 50 demonstrações (jogos, trading, WhatsApp nos 20 nichos com tabela de ROI, CCTV, QA e mais): [`README_DEMOS.md`](README_DEMOS.md).
+> 📖 Catálogo completo das 50 demonstrações comentadas (jogos, trading, WhatsApp nos 20 nichos, CCTV, QA e mais): [`README_DEMOS.md`](README_DEMOS.md).
 
 ---
 
@@ -1294,41 +1207,8 @@ Os resultados do ALR são particionados em três níveis formais:
 
 ---
 
-## 🖱️ Controle Nativo de Desktop OS, Aplicações & Novos Jogos
+> 🖱️ **Controle Nativo de Desktop OS, Mouse/Teclado & Novos Jogos:** Detalhes de FFI (`user32.dll`), automação web no Chromium CDP e adaptação a novos jogos via `EnvironmentAdapter` estão documentados em [`README_DEMOS.md#-controle-nativo-de-desktop-os-aplicações--novos-jogos`](README_DEMOS.md#-controle-nativo-de-desktop-os-aplicações--novos-jogos).
 
-O ALR foi construído para responder afirmativamente e comprovar na prática três perguntas fundamentais de automação autônoma:
-
-### 1. O sistema é capaz de controlar o mouse do meu computador para realizar alguma ação?
-**SIM.** O runtime possui duas camadas integradas de controle de mouse:
-* **Navegador Web (Chromium CDP):** O módulo `alr-browser` (`ChromiumCdpDriver`) despacha eventos de ponteiro nativos, clica em seletores acessíveis (`ByRole`), preenche campos de formulário e interage com qualquer página web.
-* **Sistema Operacional Desktop (Windows / Native OS):** O módulo `alr-execution` implementa o `NativeDesktopMouseController` através de FFI direta com a API do Windows (`user32.dll` via `SetCursorPos`, `GetCursorPos` e `mouse_event`). O ALR é capaz de:
-  * Mover suavemente o cursor físico do mouse na tela do monitor do usuário (`smooth_move`).
-  * Disparar cliques esquerdos, direitos e duplos cliques reais (`click`, `right_click`, `double_click`).
-  * Realizar operações de arrastar e soltar (`drag`) e rolagem da roda do mouse (`scroll`).
-  * Possui modo de segurança formal com botão de emergência (`SafeInputController`), `GlobalEmergencyStop` e modo `dry_run` para testes e auditorias (`cargo run -p alr-cli -- emergency-demo`).
-  * Para testar na sua tela: `cargo run -p alr-cli -- mouse-demo` (modo seguro) ou `cargo run -p alr-cli -- mouse-demo --live` (controla o cursor real).
-
-### 2. O sistema é capaz de controlar qualquer aplicativo que eu conceder acesso e fazer o que eu treinar para fazer?
-**SIM.** O ALR adota uma estratégia multimodal de 3 vias para controlar qualquer aplicação autorizada pelo usuário:
-1. **Aplicações Web (SaaS, CRMs, ERPs, WhatsApp Web, E-Commerce):** Controle semântico via `alr-browser` com resolução resiliente de elementos, auto-verificação de mutações no DOM, busca autônoma e comparação de preços (`cargo run -p alr-cli -- web-demo`).
-2. **Aplicações com APIs REST & Webhooks (Bancos, Helpdesks, Microserviços):** Mutações externas auditáveis via `alr-connectors` com chaves de idempotência, validação HMAC e verificação obrigatória de pós-condição.
-3. **Aplicações Desktop Nativas (Qualquer janela aberta no Windows/Linux/macOS):**
-   * **Percepção:** `alr-perception` (`ScreenCapturer` / `CaptureRegion` / `ScreenErrorDetector`) captura a janela do aplicativo ou a tela inteira em frames de imagem (`RawImage`) e identifica telas de erro e falhas críticas (`cargo run -p alr-cli -- screen-error-demo`).
-   * **Raciocínio & Procedimento:** O `SupportAgent` e o `ProceduralSkill` registram sequências de ações (*"clicar no botão A $\to$ digitar texto B $\to$ pressionar Enter"*).
-   * **Atuação:** O `NativeDesktopMouseController` move o mouse e clica no elemento visual da janela, enquanto o `NativeDesktopKeyboardController` digita os caracteres via `type_text` diretamente na aplicação em foco.
-
-### 3. O sistema é capaz de jogar um jogo novo?
-**SIM.** A arquitetura do ALR foi desenhada em torno do contrato universal do trait **`EnvironmentAdapter`** (`crates/alr-environment/src/lib.rs`). Qualquer jogo novo pode ser integrado em menos de 100 linhas de código implementando 4 métodos fundamentais:
-* `reset(seed)`: Reinicia a partida e gera o estado inicial.
-* `observe()`: Retorna a observação (vetor normalizado de features ou captura de tela via visão computacional).
-* `act(action)`: Envia a ação (mouse, teclado físico ou evento no motor).
-* `is_terminal()`: Indica vitória, derrota ou fim do episódio.
-
-**Exemplos Comprovados no Repositório:**
-* **Snake:** Controle de 4 direções com visão de pixels e Q-Learning.
-* **Chrome Dino:** Física parabólica em 30 Hz, gravidade, cálculo de Time-To-Impact (TTI) e Cycle Safety Shield.
-* **Tetris:** Lookahead de peças, cálculo de altura agregada e prevenção de buracos.
-* **Pong (Novo Jogo Adicionado na Fase 16):** Em `crates/alr-games/src/pong.rs`, o ALR implementa um ambiente completo de interceptação de bola com física contínua e recompensa por rebatida, demonstrando como o mesmo núcleo cognitivo aprende e joga qualquer novo jogo (`cargo run -p alr-cli -- pong --play`).
 ---
 
 ## 🛡️ Os 12 Gates Formais de Aceitação
@@ -1409,138 +1289,13 @@ O ALR interage com jogos exclusivamente através de canais que um jogador humano
 
 ---
 
-## 📈 Mesa de Operações Quantitativa Multi-Ativo (Multi-Asset Trading Desk & Web Cockpit)
+> 📈 **Mesa de Trading Quantitativo Multi-Ativo & Automação de QA:** O cockpit financeiro Binance/Bybit em Canvas 60 FPS, as fórmulas de MAE, Bollinger, SuperTrend, simulador "What-If" e o motor de testes de QA com auto-cura de seletores (Self-Healing) estão detalhados em [`README_DEMOS.md#-mesa-de-operações-quantitativa-multi-ativo-multi-asset-trading-desk--web-cockpit`](README_DEMOS.md#-mesa-de-operações-quantitativa-multi-ativo-multi-asset-trading-desk--web-cockpit) e [`README_DEMOS.md#-automação-de-testes-de-qa-em-páginas-web--programas-self-healing--cicd`](README_DEMOS.md#-automação-de-testes-de-qa-em-páginas-web--programas-self-healing--cicd).
 
-
-<div align="center">
-  <img src="static/alr-logo.webp" alt="ALR Official Logo" width="120" />
-  <br/><br/>
-  <img src="static/trading_desk.png" alt="ALR Multi-Asset Quantitative Trading Desk Cockpit" width="100%" />
-  <p><em>Cockpit Web Interativo da Mesa Quantitativa Multi-Ativo operando em tempo real na Binance Spot Testnet com Gráfico Canvas 60 FPS, 7 Moedas Líquidas, Rationale Transparente de Risco e Central de Logs.</em></p>
-</div>
-
-O ALR expande seu motor financeiro local para uma **Mesa de Operações Multi-Ativo (Trading Desk)** profissional e autônoma, operando simultaneamente os 7 pares mais líquidos do mercado global:
-* **`BTC-USDT`** (Bitcoin)
-* **`ETH-USDT`** (Ethereum)
-* **`SOL-USDT`** (Solana)
-* **`BNB-USDT`** (Binance Coin)
-* **`XRP-USDT`** (Ripple)
-* **`ADA-USDT`** (Cardano)
-* **`DOGE-USDT`** (Dogecoin)
-
-### 1. Arquitetura em Duplo Nível: System 1 (Micro) & System 2 (Macro)
-
-```mermaid
-flowchart TD
-    MarketTicks[Ticks de Mercado e Velas dos 7 Ativos] --> System1[System 1: Inferencia Tecnica Local Sub-20us]
-    System1 --> Indicators[Indicadores Avancados: EMA 9/21, RSI-14, MACD, ATR, Bollinger, SuperTrend]
-    Indicators --> EarlyExit[Detector de Adverse Excursion - MAE & Quebra de Momentum]
-    EarlyExit --> SafeAction[Acao Deterministica: Compra, Venda, Stop-Loss, Take-Profit, Saida Antecipada]
-    
-    MarketTicks --> System2[System 2: LLM Market Regime Advisor]
-    System2 --> MacroReport[Relatorio Macro: Tendencia Forte, Choque de Volatilidade, Multiplicador de Risco]
-    MacroReport --> PortfolioManager[Gerenciador de Carteira: Teto de Posicoes Simultaneas e Risco Global]
-    
-    SafeAction --> PortfolioManager
-    PortfolioManager --> SqliteWAL[Persistencia SQLite WAL: Tabela trading_positions & trading_executions]
-    SqliteWAL --> WebAPI[Servidor Axum: REST APIs & Dashboard static/trading_desk.html]
-```
-
-### 2. Indicadores Avançados de Segurança e Filtros de Saída Antecipada
-
-* **Bandas de Bollinger (20 períodos, 2 desvios padrão):** Monitoramento contínuo da largura de banda (`bandwidth = (upper - lower) / middle`). Detecta períodos de *Squeeze* ($\text{BW} < 3.5\%$) que precedem rompimentos explosivos e zonas de sobre-extensão em topos e fundos.
-* **SuperTrend (ATR 10, Multiplicador 3.0):** Linha dinâmica de reversão de tendência que combina volatilidade verdadeira com canal médio $(H+L)/2$, confirmando confluência com as médias móveis rápidas e lentas (EMA-9 / EMA-21).
-* **Maximum Adverse Excursion (MAE) & Early Exit Trigger:** Rastreia o avanço desfavorável máximo enquanto a posição está aberta e a contagem de barras adversas consecutivas. Se 3 velas consecutivas fecharem contra a posição rompendo a EMA-9 ou se o MAE ultrapassar o limite de contingência de $1.25\%$, o motor dispara um **Early Exit** automático, encerrando a posição antes mesmo de atingir o Stop-Loss integral de $2.0\%$, economizando capital precioso.
-* **Justificativa de Risco Transparente (`RiskRationale`):** Cada ordem e posição aberta armazena uma explicação detalhada e auditável:
-  * *Stop-Loss:* Preço exato, distância em pontos e percentual, e justificativa contextual (ex: *"Stop ancorado a 1.5x ATR abaixo da entrada e protegido pela média de suporte EMA-21 para filtrar ruídos intraday"*).
-  * *Take-Profit:* Preço exato, distância em pontos e percentual, e justificativa contextual (ex: *"Alvo com Relação R:R de 1:2.0 calibrada na resistência da Banda Superior de Bollinger"*).
-
-### 3. Persistência Relacional em SQLite e Continuidade Pós-Reinício
-
-Toda posição aberta, atualização de Trailing Stop móvel e fechamento de ordem é persistido na tabela `trading_positions` do SQLite no modo WAL (`Write-Ahead Logging`).
-Ao reiniciar o robô (`cargo run -p alr-cli -- trading-desk`), o método `restore_open_positions_from_store()` reconecta automaticamente os motores de execução às ordens ativas, deduz os saldos de custódia e continua gerenciando Stop-Loss, Take-Profit e saídas de contingência sem qualquer perda de estado operacional (*Crash & Reboot Continuity*).
-
-### 4. Consultor de Regime Macro com LLM (System 2)
-
-O `LlmMarketRegimeAdvisor` avalia periodicamente o consenso de indicadores dos 7 ativos líderes:
-* **`StrongTrendingBull`:** $\ge 60\%$ dos ativos em confluência compradora $\to$ Multiplicador de risco $1.25\times$ e até 4 posições simultâneas permitidas.
-* **`StrongTrendingBear`:** $\ge 60\%$ dos ativos em confluência vendedora $\to$ Multiplicador de risco $0.65\times$ e teto reduzido para 2 posições.
-* **`HighVolatilitySpike`:** Volatilidade média ATR $> 4.0\% \to$ Multiplicador de risco $0.50\times$, reduzindo a exposição a apenas 1 posição com stops ampliados.
-* **`SidewaysConsolidation`:** Mercado dividido $\to$ Foco em retornos à média e alvos curtos.
-
-### 5. Web Trading Desk Interativo (`static/trading_desk.html` e Axum)
-
-* **Widget de Trades Ativos no Topo:** Painel consolidado em tempo real com contador de ativos em custódia, soma de lucro em aberto, soma de prejuízo em aberto, PnL líquido global, badges de decisão System 1 (`🛡️ Trailing Ativo`, `🎯 Alvo Iminente`, `⚠️ Alerta Momentum`) e termômetro visual de progresso Risco/Retorno ($R:R$ Bar) com botões rápidos de 1 clique ("Zerar a Mercado" e "Travar 0 a 0").
-* **Teto Máximo Configurável por Entrada (`max_trade_allocation_usd`):** Controle rigoroso de alocação máxima em dólares por trade (ex: $\$10$, $\$25$, $\$50$, $\$100$, etc.), permitindo que usuários com bancas menores operem sem risco de sobre-alocação de capital (`--max-trade-usd <VALOR>` ou via modal de ajuste instantâneo no Cockpit).
-* **Simulador Contrafactual de Dimensionamento ("What-If" Sizing Analysis):** Ferramenta analítica que recalcula instantaneamente todo o histórico de ordens: *"Se em vez do valor real eu tivesse limitado cada entrada a $\$10,00$, quanto teria ganho ou perdido?"*, exibindo lado a lado Capital Real vs Simulado, PnL Real vs Simulado, Redução de Risco (%) e eficiência relativa.
-* **Exibição do Max Drawdown com Valor Máximo Negativo ($):** Mostra o pico histórico e o recuo máximo da carteira em percentual e valor monetário absoluto (ex: `Max Drawdown: -1.85% (-$925.00)`).
-* **Gráfico Canvas 60 FPS:** Renderização fluida de velas verdes/vermelhas com wicks, médias móveis sobrepostas (EMA 9 ciano, EMA 21 âmbar, Bollinger violeta) e linhas pontilhadas de Entrada (azul), Stop-Loss (vermelho) e Take-Profit (verde) com badges de distância em tempo real.
-* **Central de Logs & Diagnóstico em Arquivo (`logs/trading_desk.log`):** Gravação persistente e terminal integrado na interface web para depuração em tempo real com botão para baixar o arquivo `.log` completo.
-
-```bash
-# Iniciar a Mesa de Operações Multi-Ativo com Teto de $50 por Trade
-cargo run -p alr-cli -- trading-desk --port 3800 --capital 50000 --max-trade-usd 50
-
-# Abrir o Cockpit via Script Automatizado (com Google Chrome)
-node scripts/launch_trading_desk.js
-```
-
----
-
-## 🧪 Automação de Testes de QA em Páginas Web & Programas (Self-Healing & CI/CD)
-
-<div align="center">
-  <img src="static/playground-qa-automation.png" alt="ALR QA Test Automation in Playground" width="100%" />
-  <p><em>Módulo de Automação de QA Integrado ao Playground com Testes E2E de Checkout Web, Asserções de Processos/APIs, Auto-Cura (Self-Healing) e Veredito de Release.</em></p>
-</div>
-
-O ALR implementa um **Motor Autônomo de Automação de Testes de QA (`QaAutomationEngine`)**, projetado para executar baterias de testes em **páginas web reais** e em **programas/executáveis desktop** com assert de integridade de estado e auto-recuperação contra quebras de seletores:
-
-### 1. Modos de Teste Suportados
-
-* **Páginas da Internet (Web Apps & E-Commerce):**
-  * Conexão via **Chromium CDP** (*Chrome DevTools Protocol*).
-  * Preenchimento automático de formulários e inputs com verificação de tipo.
-  * Acionamento de botões de checkout e submissão com cálculo de hash de estado do DOM (`initial_page_hash` vs `new_page_hash`).
-  * Asserções de visibilidade de modais e checagem de textos de sucesso.
-  * **Monitor de Telas de Erro (`ScreenErrorDetector`):** Validação ativa de que nenhum HTTP 500, crash modal ou alerta de erro ocorreu durante a jornada do usuário.
-* **Programas, Binários & APIs de Backend:**
-  * Disparo controlado de processos filhos com passagem de argumentos e ambiente.
-  * Captura síncrona dos canais `stdout` e `stderr`.
-  * Verificação estrita de código de saída (`Exit Code 0`) e ausência de *panics* ou vazamentos de memória.
-  * Medição de latência e assert de desempenho máximo permitido (ex: $< 5.000\text{ ms}$).
-
-### 2. Auto-Cura de Seletores (Self-Healing)
-
-Um dos maiores desafios de equipes de QA são **testes quebrados por mudanças visuais de CSS ou IDs** feitas por desenvolvedores (ex: um botão de `#submit-btn` passa a se chamar `.btn-primary`).
-No ALR, se um seletor primário falhar, o motor:
-1. Consulta imediatamente a **árvore de acessibilidade do DOM** (`ByRole`).
-2. Localiza o elemento pelo seu papel semântico (ex: `button[name='Finalizar Pedido']`).
-3. Executa a ação com sucesso, marca a asserção como `[SELF-HEALED: Seletor Recuperado]` e emite o veredito `ConditionallyApprovedWithHealedBugs`, poupando horas de manutenção manual de testes!
-
-### 3. Como Preparar e Executar Baterias de QA
-
-```bash
-# Executar a bateria de demonstração completa no terminal (Web + Programa)
-cargo run -p alr-cli -- qa-demo
-
-# Executar apenas testes em páginas web
-cargo run -p alr-cli -- qa-demo --target web
-
-# Executar apenas testes em programas/APIs
-cargo run -p alr-cli -- qa-demo --target program
-
-# Abrir o Playground Interativo para testar visualmente com grafos de decisão
-cargo run -p alr-cli -- playground --port 3000
-```
 ---
 
 ## 📚 Índice de Documentação Técnica & Central de Conhecimento
 
-<div align="center">
-  <img src="static/playground-tutorials-modern.png" alt="Central de Conhecimento & Tutoriais ALR - UI Moderna e Escaneável" width="100%" />
-  <p><em>Nova Central de Conhecimento e Tutoriais do ALR com Hero Card de métricas, cards categorizados com ícones temáticos, barra de busca rápida em tempo real, comparativo Abordagem Tradicional vs ALR e diagrama do Ciclo Cognitivo em 4 passos.</em></p>
-</div>
+
 
 * **Auditoria e Certificação:**
   * [`docs/final-certification-report.md`](docs/final-certification-report.md): Relatório oficial de certificação independente.
@@ -1567,50 +1322,7 @@ cargo run -p alr-cli -- playground --port 3000
   * [`docs/connectors.md`](docs/connectors.md): Conectores REST externos e webhooks com HMAC-SHA256.
 
 ---
-## 🖥️ Experiência de Usuário Universal (UX Responsiva Multi-Resolução)
-
-O **Playground Universal do ALR** e todos os cockpits web integrados foram projetados e calibrados para oferecer uma experiência de visualização e controle impecável em **qualquer resolução de tela**, eliminando a necessidade de dar zoom-out para enxergar formulários, botões ou resultados.
-
-### 1. Sistema Fluido de Breakpoints
-
-* **Monitores Ultra-Wide ($\ge 1920\text{px}$ e $\ge 2400\text{px}$ / $3440\times1440$):**
-  * O layout expande fluidamente para `max-width: 98vw; width: 100%;`, eliminando faixas pretas laterais vazias.
-  * Dashboards e grids de métricas reorganizam-se em 3 a 4 colunas largas, ampliando a linha do tempo DAG e o espaço de visualização tabular.
-* **Desktop Standard ($1441\text{px}$ a $1919\text{px}$ / $1920\times1080$):**
-  * Layouts calibrados com colunas proporcionais `minmax(0, 1fr)` que aproveitam toda a largura sem cortes.
-* **Laptops & Telas Médias ($1101\text{px}$ a $1440\text{px}$ - ex: $1366\times768$, $1280\times800$, $1440\times900$):**
-  * O painel de decisões tipadas adapta-se para `160px minmax(360px, 420px) 1fr` com `min-width: 0`, impedindo que a coluna de probabilidades ou botões de envio vazem para fora da viewport.
-* **Laptops Compactos & Tablets ($769\text{px}$ a $1100\text{px}$ - ex: $1024\times768$):**
-  * O menu secundário recolhe-se automaticamente ao carregar para liberar **$270\text{px}$ imediatos** para o conteúdo ativo.
-  * Quando expandido, atua como gaveta flutuante (*overlay*) sem esmagar o espaço de trabalho.
-  * Layouts de decisões comutam para 2 colunas com presets de acesso rápido no topo.
-* **Tablets Portrait & Smartphones ($\le 768\text{px}$ e $< 500\text{px}$):**
-  * Reorganização vertical em coluna única fluida com rolagem suave.
-  * Dock de navegação compacto ($52\text{px}$) com alvos de toque otimizados ($\ge 40\text{px}$).
-
-### 2. Controle de Sidebar com Atalho Global
-
-* **Botão Toggle no Cabeçalho (`☰`)**: Alterna instantaneamente a visibilidade do menu de módulos secundário.
-* **Atalho de Teclado**: Pressione <kbd>Alt</kbd> + <kbd>B</kbd> para recolher ou expandir as barras laterais a qualquer momento.
-* **Persistência Inteligente**: A escolha do usuário é gravada automaticamente no `localStorage` do navegador.
-
-### 3. Painéis Autônomos com Sticky Actions
-
-* Cada painel de entrada e saída conta com **rolagem vertical isolada** (`overflow-y: auto; max-height: calc(100vh - 160px)`), garantindo que o cabeçalho e os botões de execução (`sticky-action-bar`) permaneçam sempre visíveis e acionáveis sem necessidade de rolar a página inteira.
-* As tabelas de banco de dados SQLite, Qdrant e CSV possuem rolagem horizontal suave dedicada (`-webkit-overflow-scrolling: touch`), preservando as colunas e os botões de ação em qualquer largura de janela.
-### 4. Rolagem Vertical Fluida & Comandos de Terminal por Porta
-
-* **Eliminação de Travas de Scroll em Todas as 23 Views**: O container mestre `.workspace-views-container` adota `overflow-y: auto !important; height: calc(100vh - 48px);`, enquanto as seções filhas usam `height: auto !important;` e contam com a classe `.page-bottom-spacer` no rodapé (80px a 90px de respiro). Nenhuma página corta os cards inferiores ou trava a rolagem.
-* **Comandos Oficiais de Terminal para Execução dos Serviços**:
-
-| Serviço / Painel | Porta | Comando Exato para Executar no Terminal | Como Visualizar no Navegador |
-| :--- | :---: | :--- | :--- |
-| **Playground Universal & System 1** | `3000` | `cargo run -p alr-cli -- playground --port 3000` | [http://localhost:3000](http://localhost:3000) |
-| **Copiloto de Call de Vendas** | `3001` | `node server.js` | [http://localhost:3001](http://localhost:3001) |
-| **Mesa de Trading Quantitativo** | `3800` | `cargo run -p alr-cli -- trading-desk --port 3800 --capital 50000` | [http://localhost:3800](http://localhost:3800) |
-| **Servidor MCP (Model Context Protocol)** | `4000` | `cargo run -p alr-cli -- mcp --port 4000` | `POST http://localhost:4000/mcp` |
-
-
+> 🖥️ **Experiência de Usuário Universal (UX Responsiva & Breakpoints):** O sistema fluido de breakpoints (Ultrawide a mobile), atalhos de teclado e persistência de layout estão documentados em [`README_DEMOS.md#-experiência-de-usuário-universal-ux-responsiva-multi-resolução`](README_DEMOS.md#-experiência-de-usuário-universal-ux-responsiva-multi-resolução).
 ---
 ## 🧠 Skill Oficial: ALR System 1 (TypeSafe Jev Engine & Primitivas de Decisão)
 
