@@ -377,7 +377,7 @@ pub struct DroneTelemetrySnapshot {
     pub wind_speed_kmh: f32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DroneCommand {
     ContinueMission,
     HoldPosition,

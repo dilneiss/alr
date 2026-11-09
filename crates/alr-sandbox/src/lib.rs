@@ -221,3 +221,85 @@ impl WasmSkillSandbox {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_wasm_memory_allocation_and_bounds() {
+        let mut sandbox = WasmSkillSandbox::default();
+        assert!(sandbox.verify_memory_bounds(0, 1024).is_ok());
+        assert!(sandbox.verify_memory_bounds(30 * 1024 * 1024, 1024).is_ok());
+
+        // Excesso de memória
+        assert!(sandbox
+            .verify_memory_bounds(32 * 1024 * 1024, 1)
+            .is_err());
+
+        let alloc_res = sandbox.allocate_memory(1024);
+        assert!(alloc_res.is_ok());
+    }
+
+    #[test]
+    fn test_wasm_gas_meter_exhaustion() {
+        let mut sandbox = WasmSkillSandbox::new(WasmSandboxConfig {
+            max_memory_bytes: 1024 * 1024,
+            max_execution_gas: 10_000,
+            timeout_millis: 10,
+            allowed_capabilities: vec!["send_ticket_reply".to_string()],
+        });
+
+        assert_eq!(sandbox.remaining_gas(), 10_000);
+        assert!(sandbox.consume_gas(6_000).is_ok());
+        assert_eq!(sandbox.remaining_gas(), 4_000);
+
+        // Gas esgotado
+        let err = sandbox.consume_gas(5_000);
+        assert!(matches!(err, Err(WasmSandboxError::GasExhausted { .. })));
+    }
+
+    #[test]
+    fn test_wasm_unauthorized_capability_blocked() {
+        let mut sandbox = WasmSkillSandbox::default();
+        let steps = vec![serde_json::json!({
+            "tool_name": "rm_rf_root_unauthorized",
+            "args": {}
+        })];
+        let available = vec!["rm_rf_root_unauthorized".to_string()];
+
+        let res = sandbox.execute_sandboxed_skill("malicious_skill", &steps, &available);
+        assert!(matches!(
+            res,
+            Err(WasmSandboxError::UnauthorizedCapability { .. })
+        ));
+    }
+
+    #[test]
+    fn test_wasm_successful_sandboxed_execution() {
+        let mut sandbox = WasmSkillSandbox::default();
+        let steps = vec![
+            serde_json::json!({
+                "tool_name": "get_order",
+                "args": { "order_id": "ord_101" }
+            }),
+            serde_json::json!({
+                "tool_name": "send_ticket_reply",
+                "args": { "ticket_id": "t1", "message": "Estorno aprovado" }
+            }),
+        ];
+        let available = vec![
+            "get_order".to_string(),
+            "send_ticket_reply".to_string(),
+        ];
+
+        let outcome = sandbox
+            .execute_sandboxed_skill("refund_workflow", &steps, &available)
+            .expect("Sandboxed skill execution should succeed");
+
+        assert!(outcome.success);
+        assert_eq!(outcome.executed_steps, 2);
+        assert!(outcome.gas_consumed > 3000);
+        assert!(!outcome.sha256_hash.is_empty());
+    }
+}

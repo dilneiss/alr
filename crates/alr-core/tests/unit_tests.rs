@@ -106,4 +106,87 @@ mod tests {
         assert_eq!(skill.failures, 1);
         assert!((skill.success_rate - 0.666).abs() < 0.01);
     }
+
+    #[test]
+    fn test_lock_free_ring_buffer_push_pop_and_capacity() {
+        use alr_core::ring_buffer::LockFreeRingBuffer;
+
+        let buf = LockFreeRingBuffer::new(3);
+        assert!(buf.is_empty());
+        assert!(!buf.is_full());
+        assert_eq!(buf.capacity(), 3);
+
+        assert!(buf.push(10).is_ok());
+        assert!(buf.push(20).is_ok());
+        assert!(buf.push(30).is_ok());
+        assert!(buf.is_full());
+        assert_eq!(buf.len(), 3);
+
+        // Buffer is full -> next push returns Err
+        let overflow = buf.push(40);
+        assert_eq!(overflow, Err(40));
+
+        // Pop in FIFO order
+        assert_eq!(buf.pop(), Some(10));
+        assert_eq!(buf.pop(), Some(20));
+        assert_eq!(buf.len(), 1);
+        assert!(!buf.is_full());
+
+        // Can push again
+        assert!(buf.push(50).is_ok());
+        assert_eq!(buf.pop(), Some(30));
+        assert_eq!(buf.pop(), Some(50));
+        assert_eq!(buf.pop(), None);
+        assert!(buf.is_empty());
+
+        assert_eq!(buf.total_pushed(), 4);
+        assert_eq!(buf.total_popped(), 4);
+    }
+
+    #[test]
+    fn test_customer_support_domain_entities() {
+        use alr_core::customer_support::{
+            Customer, CustomerStatus, Order, OrderStatus, Payment, PaymentStatus, Ticket,
+            TicketStatus,
+        };
+
+        let cust = Customer {
+            id: "cust_1".to_string(),
+            tenant_id: "tenant_main".to_string(),
+            name: "Alice".to_string(),
+            email: "alice@example.com".to_string(),
+            plan: "enterprise".to_string(),
+            status: CustomerStatus::Active,
+        };
+        assert_eq!(cust.id, "cust_1");
+        assert_eq!(cust.name, "Alice");
+
+        let order = Order {
+            id: "ord_1".to_string(),
+            tenant_id: "tenant_main".to_string(),
+            customer_id: "cust_1".to_string(),
+            status: OrderStatus::Completed,
+            amount: 150.0,
+            currency: "BRL".to_string(),
+            items: vec!["item_1".to_string()],
+            created_at: chrono::Utc::now(),
+        };
+        assert_eq!(order.amount, 150.0);
+
+        let payment = Payment {
+            id: "pay_1".to_string(),
+            tenant_id: "tenant_main".to_string(),
+            order_id: "ord_1".to_string(),
+            customer_id: "cust_1".to_string(),
+            status: PaymentStatus::Approved,
+            amount: 150.0,
+            currency: "BRL".to_string(),
+            gateway: "PIX".to_string(),
+            created_at: chrono::Utc::now(),
+        };
+        assert_eq!(payment.amount, 150.0);
+
+        let ticket = Ticket::new("t_1", "tenant_main", "cust_1", "Issue", "Body message");
+        assert_eq!(ticket.status, TicketStatus::Open);
+    }
 }

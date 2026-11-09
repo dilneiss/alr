@@ -165,3 +165,90 @@ impl SimdFeatureVectorizer {
         sum_sq.sqrt()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_normalize_l2_empty_and_zero() {
+        let mut empty: [f32; 0] = [];
+        SimdFeatureVectorizer::normalize_l2(&mut empty);
+        assert!(empty.is_empty());
+
+        let mut zero = [0.0f32; 16];
+        SimdFeatureVectorizer::normalize_l2(&mut zero);
+        for val in zero {
+            assert_eq!(val, 0.0);
+        }
+    }
+
+    #[test]
+    fn test_normalize_l2_various_lengths() {
+        for len in [1, 2, 7, 8, 9, 15, 16, 23, 64, 128, 1536] {
+            let mut v: Vec<f32> = (1..=len).map(|i| i as f32).collect();
+            SimdFeatureVectorizer::normalize_l2(&mut v);
+
+            let norm: f32 = v.iter().map(|x| x * x).sum::<f32>().sqrt();
+            assert!(
+                (norm - 1.0).abs() < 1e-4,
+                "Vector of len {} should have unit norm, got {}",
+                len,
+                norm
+            );
+        }
+    }
+
+    #[test]
+    fn test_distance_l2_matches_scalar_exact() {
+        for len in [0, 1, 5, 8, 12, 16, 31, 64, 128] {
+            let a: Vec<f32> = (0..len).map(|i| (i as f32 * 1.5).sin()).collect();
+            let b: Vec<f32> = (0..len).map(|i| (i as f32 * 2.3).cos()).collect();
+
+            let d_simd = SimdFeatureVectorizer::distance_l2(&a, &b);
+            let d_scalar = SimdFeatureVectorizer::scalar_distance_l2(&a, &b);
+
+            if len == 0 {
+                assert_eq!(d_simd, f32::MAX);
+            } else {
+                assert!(
+                    (d_simd - d_scalar).abs() < 1e-4,
+                    "SIMD ({}) vs scalar ({}) for len {}",
+                    d_simd,
+                    d_scalar,
+                    len
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_dot_product_properties() {
+        assert_eq!(SimdFeatureVectorizer::dot_product(&[], &[]), 0.0);
+
+        // Orthogonal vectors
+        let a = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0];
+        let b = [0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0];
+        assert_eq!(SimdFeatureVectorizer::dot_product(&a, &b), 0.0);
+
+        // Parallel vectors
+        let c = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0];
+        let expected: f32 = (1..=9).map(|i| (i * i) as f32).sum();
+        assert!((SimdFeatureVectorizer::dot_product(&c, &c) - expected).abs() < 1e-4);
+    }
+
+    #[test]
+    fn test_cosine_similarity() {
+        let a = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0];
+        let b = [2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0];
+        let cos_same = SimdFeatureVectorizer::cosine_similarity(&a, &b);
+        assert!((cos_same - 1.0).abs() < 1e-4);
+
+        let opposite = [-1.0, -2.0, -3.0, -4.0, -5.0, -6.0, -7.0, -8.0];
+        let cos_opp = SimdFeatureVectorizer::cosine_similarity(&a, &opposite);
+        assert!((cos_opp - (-1.0)).abs() < 1e-4);
+
+        let zero = [0.0; 8];
+        assert_eq!(SimdFeatureVectorizer::cosine_similarity(&a, &zero), 0.0);
+    }
+}

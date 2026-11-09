@@ -129,3 +129,36 @@ impl BrowserAction {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_browser_action_builders_and_idempotency() {
+        let nav = BrowserAction::navigate("http://localhost:3000");
+        assert!(!nav.is_mutation);
+        assert_eq!(nav.idempotency_key, None);
+
+        let click = BrowserAction::click(
+            BrowserTarget::css("#submit-btn"),
+            "Clique no botão finalizar",
+            true,
+        )
+        .with_idempotency_key("tx_checkout_123");
+
+        assert!(click.is_mutation);
+        assert_eq!(click.idempotency_key, Some("tx_checkout_123".to_string()));
+
+        let type_act = BrowserAction::type_text(
+            BrowserTarget::id("email-input"),
+            "user@test.com",
+            "Preenche campo de e-mail",
+        );
+        assert!(!type_act.is_mutation);
+        match type_act.kind {
+            BrowserActionKind::Type { text, .. } => assert_eq!(text, "user@test.com"),
+            _ => panic!("Expected Type action kind"),
+        }
+    }
+}

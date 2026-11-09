@@ -14,7 +14,7 @@
 [![Linux ARM64](https://img.shields.io/badge/Linux%20ARM64-Totalmente%20Compat%C3%ADvel%20%7C%20NEON-success.svg)]()
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B%20%7C%201.98.1-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-green.svg)](LICENSE)
-[![Testes](https://img.shields.io/badge/Testes-417%2F417%20Passando-brightgreen.svg)]()
+[![Testes](https://img.shields.io/badge/Testes-519%2F519%20Passando%20%28102%20Su%C3%ADtes%29-brightgreen.svg)]()
 [![Taxa de Autonomia](https://img.shields.io/badge/Autonomia%20Local-98.8%25-orange.svg)]()
 [![Evasão de Loop](https://img.shields.io/badge/Evas%C3%A3o%20de%20Loop-Ativa-brightgreen.svg)](docs/training-new-tasks.md)
 [![Status de Liberação](https://img.shields.io/badge/Certifica%C3%A7%C3%A3o%20de%20Release-Certificado%20com%20Limita%C3%A7%C3%B5es-yellow.svg)](docs/final-certification-report.md)

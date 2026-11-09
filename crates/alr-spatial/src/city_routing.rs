@@ -747,3 +747,66 @@ impl CityRouteOptimizer {
         format!("{:02}:{:02}", hours % 24, mins)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_traffic_multiplier_bounds() {
+        assert_eq!(TrafficCongestionLevel::Fluid.speed_multiplier(), 1.0);
+        assert!(TrafficCongestionLevel::Moderate.speed_multiplier() > 1.0);
+        assert!(TrafficCongestionLevel::Heavy.speed_multiplier() > 2.0);
+        assert!(TrafficCongestionLevel::Severe.speed_multiplier() > 3.0);
+    }
+
+    #[test]
+    fn test_city_streets_catalog() {
+        let rj_streets = CityRouteOptimizer::get_city_streets(Some("20000-000"));
+        assert!(rj_streets.contains(&"Av. Rio Branco"));
+        assert!(rj_streets.contains(&"Av. Atlântica"));
+
+        let sp_streets = CityRouteOptimizer::get_city_streets(Some("01310-100"));
+        assert!(sp_streets.contains(&"Av. Paulista"));
+
+        let bh_streets = CityRouteOptimizer::get_city_streets(Some("Belo Horizonte/MG"));
+        assert!(bh_streets.contains(&"Av. Afonso Pena"));
+    }
+
+    #[test]
+    fn test_route_optimization_reduces_distance() {
+        let optimizer = CityRouteOptimizer::new();
+        let params = RouteOptimizationParams {
+            depot_x: 300.0,
+            depot_y: 300.0,
+            num_deliveries: 10,
+            traffic_regime: "fluid".to_string(),
+            stop_duration_mins: 8,
+            shift_hours_limit: 8.0,
+            algorithm: "hybrid_2opt".to_string(),
+            cep: Some("01310-100".to_string()),
+            lat: Some(-23.5614),
+            lng: Some(-46.6565),
+            address: Some("Av. Paulista, 1000".to_string()),
+        };
+
+        let plan = optimizer.optimize_delivery_route(&params).unwrap();
+        assert_eq!(plan.total_deliveries, 10);
+        assert!(plan.completed_in_shift > 0);
+        assert!(plan.total_distance_km > 0.0);
+        assert!(
+            plan.total_distance_km <= plan.baseline_distance_km,
+            "A rota otimizada deve ser mais curta ou igual à rota baseline não-ordenada: opt={} vs base={}",
+            plan.total_distance_km,
+            plan.baseline_distance_km
+        );
+        assert!(plan.distance_savings_pct >= 0.0);
+    }
+    #[test]
+    fn test_format_time() {
+        let optimizer = CityRouteOptimizer::new();
+        assert_eq!(optimizer.format_time(0.0), "00:00");
+        assert_eq!(optimizer.format_time(65.0), "01:05");
+        assert_eq!(optimizer.format_time(480.0), "08:00");
+    }
+}

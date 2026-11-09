@@ -79,3 +79,26 @@ impl BrowserTarget {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_browser_target_resolutions() {
+        let css = BrowserTarget::css("#submit-btn");
+        assert!(css.resolve_query_expression().contains("document.querySelector('#submit-btn')"));
+
+        let id = BrowserTarget::id("order-input");
+        assert!(id.resolve_query_expression().contains("document.getElementById('order-input')"));
+
+        let role = BrowserTarget::role("button", "Confirmar");
+        let role_expr = role.resolve_query_expression();
+        assert!(role_expr.contains("role") && role_expr.contains("Confirmar"));
+
+        let composite = BrowserTarget::css("#primary").with_fallback(BrowserTarget::id("fallback"));
+        let comp_expr = composite.resolve_query_expression();
+        assert!(comp_expr.contains("document.querySelector('#primary')"));
+        assert!(comp_expr.contains("document.getElementById('fallback')"));
+    }
+}

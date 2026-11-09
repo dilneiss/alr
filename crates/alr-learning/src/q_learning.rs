@@ -133,3 +133,63 @@ impl Policy for QTable {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_qtable_state_key_discretization() {
+        let s1 = State::new(vec![1.2, 0.4, 0.0, 1.0], serde_json::Value::Null);
+        assert_eq!(QTable::state_key(&s1), "1_0_0_1");
+    }
+
+    #[test]
+    fn test_qtable_bellman_update() {
+        let mut q = QTable::new(0.5, 0.9, 0.1);
+        let s0 = State::new(vec![1.0, 0.0], serde_json::Value::Null);
+        let s1 = State::new(vec![0.0, 1.0], serde_json::Value::Null);
+        let act = Action::from_type(ActionType::Up);
+
+        let exp = Experience {
+            state: s0.clone(),
+            action: act.clone(),
+            reward: 10.0,
+            next_state: Some(s1.clone()),
+            terminal: false,
+        };
+
+        // Initial Q is 0.0
+        assert_eq!(q.get_q("1_0", "UP"), 0.0);
+
+        // Update: new_q = 0 + 0.5 * (10 + 0.9 * 0 - 0) = 5.0
+        q.update(&exp);
+        assert_eq!(q.get_q("1_0", "UP"), 5.0);
+
+        // If terminal: max_next_q is 0
+        let exp_term = Experience {
+            state: s0.clone(),
+            action: act.clone(),
+            reward: -10.0,
+            next_state: Some(s1.clone()),
+            terminal: true,
+        };
+        // new_q = 5.0 + 0.5 * (-10.0 + 0 - 5.0) = 5.0 + 0.5 * (-15.0) = -2.5
+        q.update(&exp_term);
+        assert_eq!(q.get_q("1_0", "UP"), -2.5);
+    }
+
+    #[test]
+    fn test_qtable_policy_predict_softmax() {
+        let q = QTable::default();
+        let s = State::new(vec![0.0, 0.0], serde_json::Value::Null);
+
+        // Untrained state: all Qs are 0.0 -> uniform probabilities 0.25
+        let pred = q.predict(&s);
+        assert_eq!(pred.action_probabilities.len(), 4);
+        for (_, p) in &pred.action_probabilities {
+            assert!((*p - 0.25).abs() < 1e-4);
+        }
+        assert_eq!(pred.confidence, 0.0);
+    }
+}

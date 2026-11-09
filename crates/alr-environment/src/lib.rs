@@ -229,3 +229,78 @@ pub trait EnvironmentAdapter: Send + Sync {
     async fn act(&mut self, action: AbstractAction) -> Result<f32>;
     fn is_terminal(&self) -> bool;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use alr_world::{EntityState, EntityType, ObstacleState, Vec3, WorldState};
+
+    #[test]
+    fn test_environment_signature_similarity() {
+        let sig1 = EnvironmentSignature {
+            environment_id: "env_1".to_string(),
+            action_space_kind: "discrete".to_string(),
+            observation_space_kind: "structured".to_string(),
+            physics_fidelity: 0.8,
+            capability_tags: vec!["navigation".to_string(), "collision_avoidance".to_string()],
+        };
+
+        let sig2 = EnvironmentSignature {
+            environment_id: "env_2".to_string(),
+            action_space_kind: "discrete".to_string(),
+            observation_space_kind: "structured".to_string(),
+            physics_fidelity: 0.8,
+            capability_tags: vec!["navigation".to_string(), "collision_avoidance".to_string()],
+        };
+
+        let sim = sig1.compute_similarity(&sig2);
+        assert!((sim - 1.0).abs() < 1e-4);
+
+        let sig_diff = EnvironmentSignature {
+            environment_id: "env_3".to_string(),
+            action_space_kind: "continuous".to_string(),
+            observation_space_kind: "visual".to_string(),
+            physics_fidelity: 0.2,
+            capability_tags: vec!["other".to_string()],
+        };
+        let sim_diff = sig1.compute_similarity(&sig_diff);
+        assert_eq!(sim_diff, 0.0);
+    }
+
+    #[test]
+    fn test_grounding_layer_abstract_state_and_continuous() {
+        let mut world = WorldState::new(
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(-10.0, 0.0, -10.0),
+            Vec3::new(10.0, 10.0, 10.0),
+        );
+        world.entities.push(EntityState {
+            id: "target_1".to_string(),
+            entity_type: EntityType::Target,
+            position: Vec3::new(2.0, 0.0, 0.0),
+            rotation: alr_world::Quaternion::IDENTITY,
+            velocity: Vec3::ZERO,
+            visible: true,
+            distance: 2.0,
+            confidence: 1.0,
+        });
+        world.obstacles.push(ObstacleState {
+            id: "obs_1".to_string(),
+            position: Vec3::new(1.0, 0.0, 0.0),
+            size: Vec3::new(1.0, 1.0, 1.0),
+            is_dynamic: false,
+            velocity: Vec3::ZERO,
+        });
+
+        let abs_state = GroundingLayer::to_abstract_state(&world);
+        assert_eq!(abs_state.target_relative_direction, RelativeDirection::North);
+        assert_eq!(abs_state.target_distance_category, DistanceCategory::Near);
+        assert!(abs_state.obstacle_front);
+
+        let action_cont = GroundingLayer::ground_continuous(&AbstractAction::Approach);
+        assert!(action_cont.movement.x > 0.0);
+
+        let action_turn = GroundingLayer::ground_continuous(&AbstractAction::Avoid);
+        assert!(action_turn.rotation.y > 0.0);
+    }
+}

@@ -141,3 +141,65 @@ impl TypedDecisionOutcome {
         sum_sq_err / (self.probabilities.len().max(1) as f32)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_choice_outcome_creation_and_calibration() {
+        let opts = vec!["opt_a".to_string(), "opt_b".to_string(), "opt_c".to_string()];
+        let probs = vec![0.70, 0.20, 0.10];
+
+        let outcome = TypedDecisionOutcome::new_choice(&opts, &probs, 15).unwrap();
+        assert_eq!(outcome.question_type, "choice");
+        assert_eq!(outcome.primary_decision, "opt_a");
+        assert!((outcome.confidence - 0.70).abs() < 1e-4);
+        assert!(outcome.is_calibrated);
+        assert!(outcome.entropy > 0.0);
+
+        // Mismatch length error
+        assert!(TypedDecisionOutcome::new_choice(&opts, &[0.5, 0.5], 10).is_err());
+        assert!(TypedDecisionOutcome::new_choice(&[], &[], 10).is_err());
+    }
+
+    #[test]
+    fn test_noul_outcome_evaluation() {
+        let noul_high = TypedDecisionOutcome::new_noul(0.92, 12);
+        assert_eq!(noul_high.question_type, "noul");
+        assert_eq!(noul_high.primary_decision, "true");
+        assert!((noul_high.confidence - 0.92).abs() < 1e-4);
+        assert_eq!(noul_high.probabilities["true"], 0.92);
+        assert!((noul_high.probabilities["false"] - 0.08).abs() < 1e-4);
+
+        let noul_low = TypedDecisionOutcome::new_noul(0.15, 14);
+        assert_eq!(noul_low.primary_decision, "false");
+        assert!((noul_low.confidence - 0.85).abs() < 1e-4);
+    }
+
+    #[test]
+    fn test_score_outcome_and_normalization() {
+        let score_mid = TypedDecisionOutcome::new_score(2.5, 0.0, 5.0, 20);
+        assert_eq!(score_mid.question_type, "score");
+        assert_eq!(score_mid.probabilities["score"], 2.5);
+        assert!((score_mid.probabilities["normalized"] - 0.5).abs() < 1e-4);
+
+        let score_edge = TypedDecisionOutcome::new_score(10.0, 0.0, 10.0, 18);
+        assert!((score_edge.probabilities["normalized"] - 1.0).abs() < 1e-4);
+    }
+
+    #[test]
+    fn test_brier_score_calculation() {
+        let opts = vec!["buy".to_string(), "sell".to_string()];
+        // Perfect prediction: 1.0 for true label
+        let perfect = TypedDecisionOutcome::new_choice(&opts, &[1.0, 0.0], 5).unwrap();
+        assert_eq!(perfect.calculate_brier_score("buy"), 0.0);
+
+        // Worst prediction: 0.0 for true label
+        assert_eq!(perfect.calculate_brier_score("sell"), 1.0);
+
+        // Uncertain prediction: 0.5 / 0.5 -> ((0.5 - 1)^2 + (0.5 - 0)^2) / 2 = (0.25 + 0.25)/2 = 0.25
+        let uncertain = TypedDecisionOutcome::new_choice(&opts, &[0.5, 0.5], 5).unwrap();
+        assert!((uncertain.calculate_brier_score("buy") - 0.25).abs() < 1e-4);
+    }
+}

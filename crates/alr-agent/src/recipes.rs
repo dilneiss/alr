@@ -73,7 +73,7 @@ impl AmountExtractor {
         } else if let Some(idx) = trimmed.find('$') {
             &trimmed[idx + 1..]
         } else if let Some(idx) = trimmed.find('€') {
-            &trimmed[idx + 1..]
+            &trimmed[idx + '€'.len_utf8()..]
         } else {
             trimmed
         };
@@ -90,24 +90,31 @@ impl AmountExtractor {
                 break;
             }
         }
+        // Se houver ponto final de pontuação de frase após os centavos (ex: "450,00."), remove o ponto terminal
+        let clean_number = if number_chars.ends_with('.') && number_chars.contains(',') {
+            number_chars.trim_end_matches('.').to_string()
+        } else {
+            number_chars
+        };
+
         // Normalização de pontuação
         let normalized_val =
-            if let (Some(c_idx), Some(d_idx)) = (number_chars.find(','), number_chars.find('.')) {
+            if let (Some(c_idx), Some(d_idx)) = (clean_number.find(','), clean_number.find('.')) {
                 if c_idx < d_idx {
                     // Notação americana / internacional: 2,500.00
-                    number_chars.replace(',', "").parse::<f64>().unwrap_or(0.0)
+                    clean_number.replace(',', "").parse::<f64>().unwrap_or(0.0)
                 } else {
                     // Notação brasileira: 14.400,50
-                    number_chars
+                    clean_number
                         .replace('.', "")
                         .replace(',', ".")
                         .parse::<f64>()
                         .unwrap_or(0.0)
                 }
-            } else if number_chars.contains(',') {
-                number_chars.replace(',', ".").parse::<f64>().unwrap_or(0.0)
+            } else if clean_number.contains(',') {
+                clean_number.replace(',', ".").parse::<f64>().unwrap_or(0.0)
             } else {
-                number_chars.parse::<f64>().unwrap_or(0.0)
+                clean_number.parse::<f64>().unwrap_or(0.0)
             };
 
         let formatted = format!("R$ {:.2}", normalized_val).replace('.', ",");

@@ -48,3 +48,54 @@ impl ExperienceReplayBuffer {
         self.buffer.clear();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use alr_core::{Action, State};
+    fn dummy_exp(id: &str) -> Experience {
+        Experience {
+            state: State::new(vec![0.0], serde_json::Value::Null),
+            action: Action {
+                id: id.to_string(),
+                parameters: serde_json::Value::Null,
+            },
+            reward: 1.0,
+            next_state: None,
+            terminal: false,
+        }
+    }
+
+    #[test]
+    fn test_replay_buffer_capacity_eviction() {
+        let mut buf = ExperienceReplayBuffer::new(2);
+        assert!(buf.is_empty());
+
+        buf.push(dummy_exp("1"));
+        buf.push(dummy_exp("2"));
+        assert_eq!(buf.len(), 2);
+
+        // Pushing 3rd evicts the 1st
+        buf.push(dummy_exp("3"));
+        assert_eq!(buf.len(), 2);
+        assert_eq!(buf.all()[0].action.id, "2");
+        assert_eq!(buf.all()[1].action.id, "3");
+    }
+
+    #[test]
+    fn test_replay_buffer_sampling_and_clear() {
+        let mut buf = ExperienceReplayBuffer::new(10);
+        for i in 1..=5 {
+            buf.push(dummy_exp(&format!("{}", i)));
+        }
+
+        let batch = buf.sample(3);
+        assert_eq!(batch.len(), 3);
+
+        let oversample = buf.sample(100);
+        assert_eq!(oversample.len(), 5);
+
+        buf.clear();
+        assert!(buf.is_empty());
+    }
+}
