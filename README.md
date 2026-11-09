@@ -690,44 +690,44 @@ mindmap
 
 ```mermaid
 flowchart TD
-    Start([Novo Objetivo / Ambiente]) --> EnvDef[1. Definição do Ambiente<br/>Implementar EnvironmentAdapter & ActionSpace]
+    Start(["Novo Objetivo / Ambiente"]) --> EnvDef["1. Definição do Ambiente<br/>Implementar EnvironmentAdapter & ActionSpace"]
     
-    subgraph S1 [Etapa 1: Cold Start & Bootstrapping]
-        EnvDef --> Obs[Observação do Estado<br/>Vetor Normalizado de Características - Features]
-        Obs --> NoveltyCheck{Estado Conhecido<br/>Confiança >= 0.85?}
-        NoveltyCheck -- Não / Incerteza --> LLMTeacher[Consultar LLM Teacher Oracle<br/>Proposta Inicial de Procedimento]
-        LLMTeacher --> SynthSkill[Sintetizar Candidato de Skill<br/>ProceduralSteps ou Regras]
+    subgraph S1 ["Etapa 1: Cold Start & Bootstrapping"]
+        EnvDef --> Obs["Observação do Estado<br/>Vetor Normalizado de Características - Features"]
+        Obs --> NoveltyCheck{"Estado Conhecido<br/>Confiança >= 0.85?"}
+        NoveltyCheck -->|"Não / Incerteza"| LLMTeacher["Consultar LLM Teacher Oracle<br/>Proposta Inicial de Procedimento"]
+        LLMTeacher --> SynthSkill["Sintetizar Candidato de Skill<br/>ProceduralSteps ou Regras"]
     end
 
-    subgraph S2 [Etapa 2: Validação & Treinamento Seguro]
-        SynthSkill --> Sandbox[Sandbox de Simulação<br/>is_simulation = true]
-        Sandbox --> SandTest{Passou sem Violação<br/>de Segurança?}
-        SandTest -- Falha --> LLMTeacher
-        SandTest -- Sucesso --> TrainLoop[Execução de Episódios<br/>Q-Learning / Coleta de Experiências]
-        TrainLoop --> Distill[Destilação de Modelo Local<br/>Geração de Grafo ONNX Validado SHA-256]
+    subgraph S2 ["Etapa 2: Validação & Treinamento Seguro"]
+        SynthSkill --> Sandbox["Sandbox de Simulação<br/>is_simulation = true"]
+        Sandbox --> SandTest{"Passou sem Violação<br/>de Segurança?"}
+        SandTest -->|"Falha"| LLMTeacher
+        SandTest -->|"Sucesso"| TrainLoop["Execução de Episódios<br/>Q-Learning / Coleta de Experiências"]
+        TrainLoop --> Distill["Destilação de Modelo Local<br/>Geração de Grafo ONNX Validado SHA-256"]
     end
 
-    subgraph S3 [Etapa 3: Autonomia & Decisões Tipadas System 1]
-        Distill --> LocalPolicy[Política Local Ativa<br/>Decisões Tipadas Choice / Noul / Score]
-        NoveltyCheck -- Sim / Conhecido --> LocalPolicy
-        LocalPolicy --> SafetyShield{Cycle Safety Shield &<br/>RiskEngine Aprovam?}
-        SafetyShield -- Risco / Colisão --> Intervene[Escudo Intervém Deterministicamente<br/>Desvio Seguro Imediato]
-        SafetyShield -- Seguro --> ExecAction[Executar Ação no Mundo Real<br/>Browser / Teclado / API]
+    subgraph S3 ["Etapa 3: Autonomia & Decisões Tipadas System 1"]
+        Distill --> LocalPolicy["Política Local Ativa<br/>Decisões Tipadas Choice / Noul / Score"]
+        NoveltyCheck -->|"Sim / Conhecido"| LocalPolicy
+        LocalPolicy --> SafetyShield{"Cycle Safety Shield &<br/>RiskEngine Aprovam?"}
+        SafetyShield -->|"Risco / Colisão"| Intervene["Escudo Intervém Deterministicamente<br/>Desvio Seguro Imediato"]
+        SafetyShield -->|"Seguro"| ExecAction["Executar Ação no Mundo Real<br/>Browser / Teclado / API"]
     end
 
-    subgraph S4 [Etapa 4: Avaliação & Autoaperfeiçoamento Contínuo]
-        ExecAction --> VerifPost[Verificação Obrigatória de Pós-Condição<br/>Mudança Real de Estado?]
+    subgraph S4 ["Etapa 4: Avaliação & Autoaperfeiçoamento Contínuo"]
+        ExecAction --> VerifPost["Verificação Obrigatória de Pós-Condição<br/>Mudança Real de Estado?"]
         Intervene --> VerifPost
-        VerifPost -- Sucesso --> SaveExp[Gravar Experiência no SQLite<br/>Aumentar Autonomia Local]
-        VerifPost -- Falha / Drift --> RootCause[RootCauseAnalyzer<br/>Classificar Tipo de Falha]
-        RootCause --> HypoGen[HypothesisEngine<br/>Gerar Hipótese de Correção]
-        HypoGen --> ABSandbox[Experimento A/B em Sandbox]
-        ABSandbox --> ABEval{Candidato Supera Baseline<br/>sem Reward Hacking?}
-        ABEval -- Sim --> Promote[Promover Nova Versão de Skill<br/>Rollback Atômico Disponível]
-        ABEval -- Não --> Rollback[Rejeitar e Reverter para Política Estável]
+        VerifPost -->|"Sucesso"| SaveExp["Gravar Experiência no SQLite<br/>Aumentar Autonomia Local"]
+        VerifPost -->|"Falha / Drift"| RootCause["RootCauseAnalyzer<br/>Classificar Tipo de Falha"]
+        RootCause --> HypoGen["HypothesisEngine<br/>Gerar Hipótese de Correção"]
+        HypoGen --> ABSandbox["Experimento A/B em Sandbox"]
+        ABSandbox --> ABEval{"Candidato Supera Baseline<br/>sem Reward Hacking?"}
+        ABEval -->|"Sim"| Promote["Promover Nova Versão de Skill<br/>Rollback Atômico Disponível"]
+        ABEval -->|"Não"| Rollback["Rejeitar e Reverter para Política Estável"]
     end
 
-    SaveExp --> EndLoop([Autonomia Atingida: 99%+ Local / Zero Tokens])
+    SaveExp --> EndLoop(["Autonomia Atingida: 99%+ Local / Zero Tokens"])
 ```
 
 
@@ -737,33 +737,33 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    subgraph P1 [1. Configuração de Ambiente .env]
-        EnvCopy[Copiar Arquivo de Configuração<br/>cp .env.example .env]
-        EnvCopy --> DBConf[DATABASE_URL = sqlite://alr_state.db<br/>Persistência Operacional e Auditoria]
-        EnvCopy --> QdrantConf[QDRANT_URL = http://localhost:6333<br/>Memória Semântica Vetorial]
-        EnvCopy --> LLMChoice{Qual Provedor de LLM Usar?}
+    subgraph P1 ["1. Configuração de Ambiente .env"]
+        EnvCopy["Copiar Arquivo de Configuração<br/>cp .env.example .env"]
+        EnvCopy --> DBConf["DATABASE_URL = sqlite://alr_state.db<br/>Persistência Operacional e Auditoria"]
+        EnvCopy --> QdrantConf["QDRANT_URL = http://localhost:6333<br/>Memória Semântica Vetorial"]
+        EnvCopy --> LLMChoice{"Qual Provedor de LLM Usar?"}
 
-        LLMChoice -- Modo Offline / Testes --> MockLLM[MockLlmTeacher<br/>LLM_API_KEY vazia ou mock<br/>Zero Custo / 100% Determinístico]
-        LLMChoice -- OpenAI Oficial --> OpenAIConf[LLM_BASE_URL = https://api.openai.com/v1<br/>LLM_API_KEY = sk-...<br/>LLM_MODEL = gpt-4o-mini / gpt-4o]
-        LLMChoice -- Local / Self-Hosted --> LocalConf[LLM_BASE_URL = http://localhost:11434/v1<br/>Ollama / vLLM / LM Studio / Laya<br/>LLM_MODEL = laya-multilingual / mistral]
-        LLMChoice -- Gateways / OpenRouter --> GatewayConf[LLM_BASE_URL = https://openrouter.ai/api/v1<br/>LLM_API_KEY = sk-or-...<br/>LLM_MODEL = deepseek / claude / openai]
+        LLMChoice -->|"Modo Offline / Testes"| MockLLM["MockLlmTeacher<br/>LLM_API_KEY vazia ou mock<br/>Zero Custo / 100% Determinístico"]
+        LLMChoice -->|"OpenAI Oficial"| OpenAIConf["LLM_BASE_URL = https://api.openai.com/v1<br/>LLM_API_KEY = sk-...<br/>LLM_MODEL = gpt-4o-mini / gpt-4o"]
+        LLMChoice -->|"Local / Self-Hosted"| LocalConf["LLM_BASE_URL = http://localhost:11434/v1<br/>Ollama / vLLM / LM Studio / Laya<br/>LLM_MODEL = laya-multilingual / mistral"]
+        LLMChoice -->|"Gateways / OpenRouter"| GatewayConf["LLM_BASE_URL = https://openrouter.ai/api/v1<br/>LLM_API_KEY = sk-or-...<br/>LLM_MODEL = deepseek / claude / openai"]
     end
 
-    subgraph P2 [2. Modos de Execução Diária]
-        ExecModes{Qual Modo Executar?}
-        ExecModes -- Jogo Snake com Decisões Tipadas --> RunSnake[Terminal ASCII: cargo run -p alr-cli -- snake --mode visual<br/>Navegador Real: node scripts/play_in_browser.js]
-        ExecModes -- Atendimento Interativo em Tempo Real --> RunSupport[Chat Interativo: cargo run -p alr-cli -- support chat<br/>Diálogo com Recuperação de Dados Faltantes]
-        ExecModes -- Treinamento de Novas Tarefas --> RunTrain[Assistente de Tarefas: cargo run -p alr-cli -- task train --type game<br/>Destilação Local ONNX: cargo run -p alr-cli -- model snake-demo]
-        ExecModes -- Bateria de Verificação e 12 Gates --> RunTest[Suíte de Testes: cargo test --workspace<br/>Gates de Aceitação: cargo run -p alr-cli -- final-acceptance]
+    subgraph P2 ["2. Modos de Execução Diária"]
+        ExecModes{"Qual Modo Executar?"}
+        ExecModes -->|"Jogo Snake com Decisões Tipadas"| RunSnake["Terminal ASCII: cargo run -p alr-cli -- snake --mode visual<br/>Navegador Real: node scripts/play_in_browser.js"]
+        ExecModes -->|"Atendimento Interativo em Tempo Real"| RunSupport["Chat Interativo: cargo run -p alr-cli -- support chat<br/>Diálogo com Recuperação de Dados Faltantes"]
+        ExecModes -->|"Treinamento de Novas Tarefas"| RunTrain["Assistente de Tarefas: cargo run -p alr-cli -- task train --type game<br/>Destilação Local ONNX: cargo run -p alr-cli -- model snake-demo"]
+        ExecModes -->|"Bateria de Verificação e 12 Gates"| RunTest["Suíte de Testes: cargo test --workspace<br/>Gates de Aceitação: cargo run -p alr-cli -- final-acceptance"]
     end
 
-    subgraph P3 [3. Ciclo de Decisão do Acesso a LLM em Produção]
-        RunSupport & RunSnake & RunTrain --> DecisionEngine[Hierarquia Rígida de Decisão]
-        DecisionEngine --> CheckKnowledge{Já existe Regra ou<br/>Skill Local Validada?}
-        CheckKnowledge -- Sim --> LocalExec[Execução 100% Local em µs<br/>Zero Tokens / Zero Custo LLM]
-        CheckKnowledge -- Não / Incerteza Alta --> CallLLM[Aciona OpenAiCompatibleLlmTeacher<br/>Chama LLM_BASE_URL configurada]
-        CallLLM --> ValidateLlm[Validação Semântica & Sandbox<br/>Nunca executa texto livre como comando]
-        ValidateLlm --> PromoteLocal[Cristaliza em Skill Local / Grafo ONNX<br/>Próximas decisões: 0 chamadas à LLM]
+    subgraph P3 ["3. Ciclo de Decisão do Acesso a LLM em Produção"]
+        RunSupport & RunSnake & RunTrain --> DecisionEngine["Hierarquia Rígida de Decisão"]
+        DecisionEngine --> CheckKnowledge{"Já existe Regra ou<br/>Skill Local Validada?"}
+        CheckKnowledge -->|"Sim"| LocalExec["Execução 100% Local em µs<br/>Zero Tokens / Zero Custo LLM"]
+        CheckKnowledge -->|"Não / Incerteza Alta"| CallLLM["Aciona OpenAiCompatibleLlmTeacher<br/>Chama LLM_BASE_URL configurada"]
+        CallLLM --> ValidateLlm["Validação Semântica & Sandbox<br/>Nunca executa texto livre como comando"]
+        ValidateLlm --> PromoteLocal["Cristaliza em Skill Local / Grafo ONNX<br/>Próximas decisões: 0 chamadas à LLM"]
     end
 ```
 
@@ -878,26 +878,26 @@ O ALR resolve esse paradoxo combinando **Qdrant (Memória Semântica Vetorial)**
 
 ```mermaid
 flowchart TD
-    subgraph INTAKE [1. Recepção do Evento]
-        UserMsg([Mensagem do Usuário / Ticket]) --> Extractor[StateExtractor<br/>Limpeza e Extração de Entidades]
+    subgraph INTAKE ["1. Recepção do Evento"]
+        UserMsg(["Mensagem do Usuário / Ticket"]) --> Extractor["StateExtractor<br/>Limpeza e Extração de Entidades"]
     end
 
-    subgraph MEMORY_TIER [2. Camada de Memória Híbrida]
-        Extractor --> CheckSQLite{Procedimento já existe<br/>no SQLite WAL?}
-        CheckSQLite -- Sim (99% das chamadas) --> System1[⚡ System 1 Local (CPU Rust)<br/>~12 µs • Custo: $0.00 • 0 Tokens]
-        CheckSQLite -- Dúvida / Caso Inédito --> QueryQdrant[🔍 Busca Semântica no Qdrant<br/>Top-K Políticas KB e Casos Históricos]
+    subgraph MEMORY_TIER ["2. Camada de Memória Híbrida"]
+        Extractor --> CheckSQLite{"Procedimento já existe<br/>no SQLite WAL?"}
+        CheckSQLite -->|"Sim (99% das chamadas)"| System1["⚡ System 1 Local (CPU Rust)<br/>~12 µs • Custo: $0.00 • 0 Tokens"]
+        CheckSQLite -->|"Dúvida / Caso Inédito"| QueryQdrant["🔍 Busca Semântica no Qdrant<br/>Top-K Políticas KB e Casos Históricos"]
     end
 
-    subgraph COGNITIVE_TEACHER [3. Professor LLM sob Demanda (Cold Start)]
-        QueryQdrant --> CheckConfidence{Confiança >= 0.85<br/>e Novidade <= 0.20?}
-        CheckConfidence -- Sim --> System1
-        CheckConfidence -- Não (Situação Inédita) --> LLMTeacher[🧠 LLM Teacher Oracle<br/>Chamado UMA única vez para ensinar]
-        LLMTeacher --> SandboxValidate[Sandbox de Simulação & Validação<br/>Segurança, Semântica e Invariantes]
-        SandboxValidate --> Crystallize[💎 Cristalização na Memória<br/>Grava ProceduralSkill no SQLite e Resolução no Qdrant]
+    subgraph COGNITIVE_TEACHER ["3. Professor LLM sob Demanda (Cold Start)"]
+        QueryQdrant --> CheckConfidence{"Confiança >= 0.85<br/>e Novidade <= 0.20?"}
+        CheckConfidence -->|"Sim"| System1
+        CheckConfidence -->|"Não (Situação Inédita)"| LLMTeacher["🧠 LLM Teacher Oracle<br/>Chamado UMA única vez para ensinar"]
+        LLMTeacher --> SandboxValidate["Sandbox de Simulação & Validação<br/>Segurança, Semântica e Invariantes"]
+        SandboxValidate --> Crystallize["💎 Cristalização na Memória<br/>Grava ProceduralSkill no SQLite e Resolução no Qdrant"]
         Crystallize --> System1
     end
 
-    System1 --> ActionOut([Execução Imediata / Resposta ao Usuário])
+    System1 --> ActionOut(["Execução Imediata / Resposta ao Usuário"])
 ```
 
 ---
@@ -937,20 +937,20 @@ A LLM integrada **não controla o agente no dia a dia**, ela atua como um **Prof
 
 ```mermaid
 graph LR
-    subgraph ARMAZENAMENTO [Camadas de Armazenamento]
-        QDRANT[(Qdrant Vetorial<br/>1536d / int8)]
-        SQLITE[(SQLite WAL<br/>alr_memory.db)]
+    subgraph ARMAZENAMENTO ["Camadas de Armazenamento"]
+        QDRANT[("Qdrant Vetorial<br/>1536d / int8")]
+        SQLITE[("SQLite WAL<br/>alr_memory.db")]
     end
 
-    subgraph INTELIGENCIA [Camadas de Inteligência]
-        LLM[🧠 LLM Teacher Oracle<br/>Cold Start & Ensino]
-        SYSTEM1[⚡ System 1 Nativo<br/>Inferência em CPU µs]
+    subgraph INTELIGENCIA ["Camadas de Inteligência"]
+        LLM["🧠 LLM Teacher Oracle<br/>Cold Start & Ensino"]
+        SYSTEM1["⚡ System 1 Nativo<br/>Inferência em CPU µs"]
     end
 
-    QDRANT -.->|Contexto Semântico & Políticas| LLM
-    QDRANT -.->|Casos Históricos Similares| SYSTEM1
-    LLM -->|Ensina Procedimento| SQLITE
-    SQLITE -->|Executa Regra Cristalizada| SYSTEM1
+    QDRANT -.->|"Contexto Semântico & Políticas"| LLM
+    QDRANT -.->|"Casos Históricos Similares"| SYSTEM1
+    LLM -->|"Ensina Procedimento"| SQLITE
+    SQLITE -->|"Executa Regra Cristalizada"| SYSTEM1
 ```
 
 * **Qdrant**: Responde *"O que as políticas oficiais dizem sobre esse assunto?"* e *"Como casos similares foram resolvidos?"*

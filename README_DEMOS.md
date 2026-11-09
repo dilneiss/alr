@@ -669,18 +669,18 @@ O ALR expande seu motor financeiro local para uma **Mesa de Operações Multi-At
 
 ```mermaid
 flowchart TD
-    MarketTicks[Ticks de Mercado e Velas dos 7 Ativos] --> System1[System 1: Inferencia Tecnica Local Sub-20us]
-    System1 --> Indicators[Indicadores Avancados: EMA 9/21, RSI-14, MACD, ATR, Bollinger, SuperTrend]
-    Indicators --> EarlyExit[Detector de Adverse Excursion - MAE & Quebra de Momentum]
-    EarlyExit --> SafeAction[Acao Deterministica: Compra, Venda, Stop-Loss, Take-Profit, Saida Antecipada]
+    MarketTicks["Ticks de Mercado e Velas dos 7 Ativos"] --> System1["System 1: Inferencia Tecnica Local Sub-20us"]
+    System1 --> Indicators["Indicadores Avancados: EMA 9/21, RSI-14, MACD, ATR, Bollinger, SuperTrend"]
+    Indicators --> EarlyExit["Detector de Adverse Excursion - MAE & Quebra de Momentum"]
+    EarlyExit --> SafeAction["Acao Deterministica: Compra, Venda, Stop-Loss, Take-Profit, Saida Antecipada"]
     
-    MarketTicks --> System2[System 2: LLM Market Regime Advisor]
-    System2 --> MacroReport[Relatorio Macro: Tendencia Forte, Choque de Volatilidade, Multiplicador de Risco]
-    MacroReport --> PortfolioManager[Gerenciador de Carteira: Teto de Posicoes Simultaneas e Risco Global]
+    MarketTicks --> System2["System 2: LLM Market Regime Advisor"]
+    System2 --> MacroReport["Relatorio Macro: Tendencia Forte, Choque de Volatilidade, Multiplicador de Risco"]
+    MacroReport --> PortfolioManager["Gerenciador de Carteira: Teto de Posicoes Simultaneas e Risco Global"]
     
     SafeAction --> PortfolioManager
-    PortfolioManager --> SqliteWAL[Persistencia SQLite WAL: Tabela trading_positions & trading_executions]
-    SqliteWAL --> WebAPI[Servidor Axum: REST APIs & Dashboard static/trading_desk.html]
+    PortfolioManager --> SqliteWAL["Persistencia SQLite WAL: Tabela trading_positions & trading_executions"]
+    SqliteWAL --> WebAPI["Servidor Axum: REST APIs & Dashboard static/trading_desk.html"]
 ```
 
 ### 2. Indicadores Avançados de Segurança e Filtros de Saída Antecipada
