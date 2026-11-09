@@ -30,7 +30,23 @@ version = "0.1.0"
 edition = "2021"
 authors = ["ALR Core Team"]
 license = "MIT OR Apache-2.0"
-
+description = "ALR (Autonomous Learning Runtime): Motor de decisões tipadas System 1 de alta performance em Rust, 100% local em CPU com $0.00 de custo — a alternativa gratuita, local e open source ao JEV / TypeSafe AI."
+repository = "https://github.com/dilneiss/alr"
+homepage = "https://github.com/dilneiss/alr"
+documentation = "https://github.com/dilneiss/alr/blob/main/README.md"
+readme = "README.md"
+keywords = [
+    "jev",
+    "jev-alternative",
+    "typesafe-ai",
+    "system-one",
+    "decision-engine",
+]
+categories = [
+    "science::artificial-intelligence",
+    "command-line-utilities",
+    "development-tools",
+]
 [workspace.dependencies]
 alr-core = { path = "crates/alr-core" }
 alr-memory = { path = "crates/alr-memory" }

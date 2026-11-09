@@ -1,22 +1,191 @@
 <div align="center">
   <img src="static/alr-logo.webp" alt="Autonomous Learning Runtime (ALR) Logo" width="180" />
   <h1>Autonomous Learning Runtime (ALR)</h1>
+  <h3>⚡ A Alternativa Gratuita, Local e Open Source ao JEV / TypeSafe AI</h3>
+  <p><strong>Motor nativo de decisões tipadas (System 1) em Rust: <code>Choice</code>, <code>Noul</code> e <code>Score</code> com 100% CPU Local, latência em microssegundos (~12 µs), $0.00 de custo em tokens e compatibilidade drop-in com a API <code>/v1/systemone</code></strong></p>
 </div>
 
+[![Alternativa ao JEV](https://img.shields.io/badge/JEV%20Alternative-100%25%20Free%20%26%20Open%20Source-brightgreen.svg)]()
+[![Custo](https://img.shields.io/badge/Custo-%240.00%20Zero%20Tokens-success.svg)]()
+[![Latência](https://img.shields.io/badge/Lat%C3%AAncia-12%20%C2%B5s%20%28CPU%20Local%29-blueviolet.svg)]()
+[![API Drop-in](https://img.shields.io/badge/API-%2Fv1%2Fsystemone%20%28JEV%20Drop--in%29-00d2ff.svg)](docs/api-reference.md)
+[![Cookbooks JEV](https://img.shields.io/badge/JEV%20Cookbooks-20%2F20%20Nativos-orange.svg)](docs/cookbooks-reference.md)
+[![Hardware](https://img.shields.io/badge/Hardware-100%25%20CPU%20%28Sem%20GPU%29-ff69b4.svg)]()
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B%20%7C%201.98.1-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-green.svg)](LICENSE)
 [![Testes](https://img.shields.io/badge/Testes-417%2F417%20Passando-brightgreen.svg)]()
 [![Taxa de Autonomia](https://img.shields.io/badge/Autonomia%20Local-98.8%25-orange.svg)]()
 [![Evasão de Loop](https://img.shields.io/badge/Evas%C3%A3o%20de%20Loop-Ativa-brightgreen.svg)](docs/training-new-tasks.md)
 [![Status de Liberação](https://img.shields.io/badge/Certifica%C3%A7%C3%A3o%20de%20Release-Certificado%20com%20Limita%C3%A7%C3%B5es-yellow.svg)](docs/final-certification-report.md)
-[![Matriz de Evidências](https://img.shields.io/badge/Matriz%20de%20Evid%C3%AAncias-Auditada-blue.svg)](docs/evidence-matrix.md)
-[![Aceitação Final](https://img.shields.io/badge/Gates%20de%20Aceita%C3%A7%C3%A3o-12%2F12%20Avaliados-brightgreen.svg)](docs/final-acceptance-report.md)
-[![Motor de Jogos](https://img.shields.io/badge/Motor%20de%20Jogos-Cards%20%7C%20Bomberman%20%7C%20FPS%20%7C%20Worms%20%7C%20Dino%20%7C%20Snake-purple.svg)](docs/game-engine.md)
 [![Docker Qdrant](https://img.shields.io/badge/Qdrant-v1.12.1-red.svg)](https://qdrant.tech)
 [![Documentação da API](https://img.shields.io/badge/API%20Reference-%2Fv1%2Fsystemone%20%7C%20REST%20%7C%20MCP-00d2ff.svg)](docs/api-reference.md)
 
+> 💡 **Procurando uma alternativa gratuita, aberta e 100% local ao JEV (TypeSafe AI / System 1)?**  
+> O **ALR (Autonomous Learning Runtime)** é o motor de decisões tipadas de alta performance que substitui o JEV sem custos de API em nuvem ($0.00), sem necessidade de GPUs caras e com execução ultrarrápida em CPU (~12 µs a 400 µs). Ele implementa nativamente o protocolo canônico `/v1/systemone`, suporta as 3 primitivas fundamentais (`Choice`, `Noul`, `Score`), todos os **20 Cookbooks oficiais do JEV** e traz um **Playground interativo** completo com estimativa comparativa de economia em dólares em tempo real.
+>
 > **"A LLM pode ensinar o agente, mas não precisa controlar permanentemente o agente."**  
-> *Um runtime local-first para aprendizado autônomo, memória, planejamento, execução de ferramentas, verificação, recuperação e reuso de habilidades em jogos, navegadores, mundos simulados e ambientes externos.*
+> *Um runtime local-first para aprendizado autônomo, decisões tipadas, memória híbrida, planejamento, ferramentas e reuso de habilidades.*
+
+---
+
+## ⚡ Por Que o ALR é a Alternativa Gratuita Definitiva ao JEV?
+
+O **JEV (TypeSafe AI)** introduziu um conceito revolucionário: em vez de gerar texto livre com LLMs lentas e torcer para o JSON vir correto, o código deve ser o dono do fluxo de trabalho (*Code owns the workflow*) e a IA deve fornecer **decisões tipadas com probabilidades calibradas** (`Choice`, `Noul`, `Score`).
+
+No entanto, o JEV oficial apresenta fortes barreiras:
+1. **Cobrança por Token na Nuvem:** Cada decisão consome créditos de API paga em dólares, tornando inviável para alta cadência.
+2. **Dependência de Conexão Externa:** Se a internet oscilar ou o serviço cair, seus fluxos param.
+3. **Hardware Pesado para Execução Local:** Requer GPUs caras (VRAM de 8GB a 24GB) para rodar modelos locais de 2B/9B/27B.
+4. **Ausência de Memória Operacional e Ferramentas:** É estritamente stateless — não executa ações, não grava checkpoints e não possui memória híbrida.
+
+### 📊 Comparativo Direto: JEV Cloud vs JEV em GPU Local vs ALR em CPU Rust
+
+| Dimensão | JEV Oficial (Cloud API) | Modelos 2B/9B/27B em GPU | **ALR (Autonomous Learning Runtime)** |
+| :--- | :--- | :--- | :--- |
+| **Custo por Requisição** | Pago por token ($0.000016 a $0.0025) | Custo de hardware + energia | **$0.00 (Zero Tokens, 100% Gratuito)** |
+| **Latência de Decisão** | 200 ms a 2.000 ms (latência de rede) | 40 ms a 200 ms | **12 µs a 400 µs (Sub-milissegundo, 10.000x mais rápido)** |
+| **Requisito de Hardware** | Conexão de internet constante | GPU com 8GB a 24GB VRAM | **100% CPU Comum (Qualquer x86_64 ou ARM64)** |
+| **Compatibilidade de API** | Protocolo `/v1/systemone` | Formatos variados | **Drop-in compatível com `/v1/systemone`** |
+| **Primitivas Suportadas** | `Choice`, `Noul`, `Score` | `Choice`, `Noul`, `Score` | **`Choice`, `Noul`, `Score` + Entropia & Brier Loss** |
+| **20 Cookbooks Oficiais** | 20 exemplos | 20 exemplos | **20/20 Implementados Nativamente + Smart Home Demo** |
+| **Recipes Cognitivas** | 5 recipes | 5 recipes | **15 Recipes Especializadas em Rust Nativo** |
+| **Privacidade & Segurança** | Dados trafegam em nuvem | Local | **100% Local / Air-Gapped (Zero Exfiltração)** |
+| **Licença de Software** | Proprietária / Closed | Dependente de licença dos pesos | **Open Source Permissivo (MIT / Apache 2.0)** |
+| **Memória Operacional** | Nenhuma (Stateless) | Nenhuma (Stateless) | **Memória Híbrida (SQLite WAL + Qdrant 1536d)** |
+| **Execução Agêntica** | Nenhuma (apenas classificação) | Nenhuma | **Navegador Real (Chromium CDP), Conectores REST & Webhooks** |
+| **Interface Visual** | Playground Web na Nuvem | WebUI genérica | **Playground Dual-Sidebar com HUD de Economia Real ($0.00)** |
+
+---
+
+## 🔄 Drop-in Replacement: Troque o JEV pelo ALR em 10 Segundos
+
+Se a sua aplicação já utiliza o JEV ou consome o endpoint `/v1/systemone`, você não precisa alterar sua lógica de negócios. Basta apontar o endpoint base para o ALR local:
+
+```diff
+- const JEV_API_URL = "https://api.typesafe.ai/v1/systemone";
++ const JEV_API_URL = "http://localhost:3000/v1/systemone";
+```
+
+### 1. Chamada via cURL
+```bash
+curl -X POST http://localhost:3000/v1/systemone \
+  -H "Content-Type: application/json" \
+  -d '{
+    "state": "Ticket: Meu PIX de R$ 1.500 foi debitado mas o saldo não entrou no app!",
+    "questions": {
+      "departamento": {
+        "type": "choice",
+        "instructions": "Para qual time encaminhar o ticket?",
+        "criteria": {
+          "financeiro": "Problemas de pagamento, PIX, estorno ou cobrança",
+          "suporte_tecnico": "Erros no aplicativo, bugs ou travamentos",
+          "comercial": "Dúvidas de contratação e novos planos"
+        }
+      },
+      "urgente": {
+        "type": "noul",
+        "instructions": "O cliente demonstra urgência crítica ou risco de Procon?"
+      }
+    }
+  }'
+```
+
+### 2. Chamada via Python (Drop-in com SDK do JEV ou `requests`)
+```python
+import requests
+
+# Substitua a URL do JEV pelo ALR local rodando na porta 3000:
+ALR_ENDPOINT = "http://localhost:3000/v1/systemone"
+
+payload = {
+    "state": "O cliente disse: Achei a proposta ótima, mas R$ 5.000 está fora do meu orçamento agora.",
+    "questions": {
+        "tem_objecao": {
+            "type": "noul",
+            "instructions": "O cliente está levantando alguma objeção ou resistência?"
+        },
+        "tipo_objecao": {
+            "type": "choice",
+            "instructions": "Qual é a categoria principal da objeção?",
+            "criteria": {
+                "preco_caro": "Diz que o valor é alto ou está sem orçamento",
+                "sem_tempo": "Diz que não tem tempo agora",
+                "consultar_socio": "Precisa falar com sócio ou diretoria",
+                "nenhuma": "Sem objeções"
+            }
+        }
+    }
+}
+
+response = requests.post(ALR_ENDPOINT, json=payload).json()
+print("Tem Objeção (P):", response["answers"]["tem_objecao"]["noul"])
+print("Tipo da Objeção:", response["answers"]["tipo_objecao"]["choice"])
+print(f"Latência: {response['latency_micros']} µs | Custo: $0.00")
+```
+
+### 3. Chamada via TypeScript / Node.js
+```typescript
+const response = await fetch("http://localhost:3000/v1/systemone", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    state: "Lead WhatsApp: Qual o valor do plano anual para 5 usuários?",
+    questions: {
+      intencao: {
+        type: "choice",
+        instructions: "Intenção principal do lead",
+        criteria: {
+          perguntar_preco: "Deseja saber valores, tabela ou formas de pagamento",
+          agendar_call: "Quer agendar uma demonstração ou reunião",
+          suporte: "Já é cliente e precisa de ajuda técnica"
+        }
+      }
+    }
+  })
+});
+
+const result = await response.json();
+console.log("Intenção:", result.answers.intencao.choice); // "perguntar_preco"
+console.log(`Decisão em ${result.latency_micros} µs a custo zero!`);
+```
+
+---
+
+## 🧩 As 3 Primitivas e os 20 Cookbooks do JEV Nativos no ALR
+
+O ALR replica com fidelidade matemática e estende as 3 primitivas fundamentais do JEV:
+
+| Primitiva | O Que Retorna | Quando Usar | Exemplo no ALR |
+| :--- | :--- | :--- | :--- |
+| **`Choice`** | Candidato vencedor + distribuição Softmax + `confidence` | Quando uma opção exclusiva deve ser escolhida entre alternativas concorrentes | Roteamento de tickets, escolha de ferramentas, intenção de compra |
+| **`Noul`** | Probabilidade booleana $P(\text{sim})$ de $0.0$ a $1.0$ | Para condições de sim/não (urgência, risco, gatilho, fraude) | Detecção de ameaças, verificação de urgência, guardrails |
+| **`Score`** | Valor contínuo ponderado pelas probabilidades de níveis | Para intensidade em escala ordinal ordenada (0 a $N$) | Nível de satisfação do cliente, risco de cancelamento, prioridade |
+
+Além das primitivas, o ALR traz a implementação completa de todos os **20 Cookbooks oficiais do TypeSafe JEV** mais a **Smart Home Demo** em Rust, Python, TypeScript e cURL:
+
+| # | Cookbook Oficial | Primitiva / Padrão | Guia & Código Completo |
+|---|---|---|---|
+| 01 | **Consistency Noul** | `Noul` + Auto-Consistência | [`docs/cookbooks-reference.md#01-consistency-noul`](docs/cookbooks-reference.md#01-consistency-noul) |
+| 02 | **Consistency Choice** | `Choice` + Moderação | [`docs/cookbooks-reference.md#02-consistency-choice`](docs/cookbooks-reference.md#02-consistency-choice) |
+| 03 | **Parallel Questions** | Batching Heterogêneo | [`docs/cookbooks-reference.md#03-parallel-questions`](docs/cookbooks-reference.md#03-parallel-questions) |
+| 04 | **Reranking** | `Score` + BM25 | [`docs/cookbooks-reference.md#04-reranking`](docs/cookbooks-reference.md#04-reranking) |
+| 05 | **Semantic Find** | `Choice` + `Noul` | [`docs/cookbooks-reference.md#05-semantic-find`](docs/cookbooks-reference.md#05-semantic-find) |
+| 06 | **Autoformat** | `Choice` Estrutural | [`docs/cookbooks-reference.md#06-autoformat`](docs/cookbooks-reference.md#06-autoformat) |
+| 07 | **Function Calling** | `Choice` + `Noul` | [`docs/cookbooks-reference.md#07-function-calling`](docs/cookbooks-reference.md#07-function-calling) |
+| 08 | **Skill Suggestion** | `Choice` Turn-by-Turn | [`docs/cookbooks-reference.md#08-skill-suggestion`](docs/cookbooks-reference.md#08-skill-suggestion) |
+| 09 | **Entity Alignment** | `Score` + `Noul` | [`docs/cookbooks-reference.md#09-entity-alignment`](docs/cookbooks-reference.md#09-entity-alignment) |
+| 10 | **Classifying RAG Passages** | `Noul` + `Score` | [`docs/cookbooks-reference.md#10-classifying-rag-passages`](docs/cookbooks-reference.md#10-classifying-rag-passages) |
+| 11 | **Citation Check** | `Noul` de Fidelidade | [`docs/cookbooks-reference.md#11-citation-check`](docs/cookbooks-reference.md#11-citation-check) |
+| 12 | **LLM Guardrails** | `Noul` Multi-Ameaça | [`docs/cookbooks-reference.md#12-llm-guardrails`](docs/cookbooks-reference.md#12-llm-guardrails) |
+| 13 | **SDE Cascade** | Cascata em 2 Estágios | [`docs/cookbooks-reference.md#13-sde-cascade`](docs/cookbooks-reference.md#13-sde-cascade) |
+| 14 | **Date Extraction** | `Choice` + Normalização | [`docs/cookbooks-reference.md#14-date-extraction`](docs/cookbooks-reference.md#14-date-extraction) |
+| 15 | **Pre-parsed Value Extraction** | Seleção de Spans | [`docs/cookbooks-reference.md#15-pre-parsed-value-extraction`](docs/cookbooks-reference.md#15-pre-parsed-value-extraction) |
+| 16 | **Hierarchical Classification** | Beam Search em Árvore | [`docs/cookbooks-reference.md#16-hierarchical-classification`](docs/cookbooks-reference.md#16-hierarchical-classification) |
+| 17 | **Autoresearch Feature Discovery** | `Score` Composto | [`docs/cookbooks-reference.md#17-autoresearch-feature-discovery`](docs/cookbooks-reference.md#17-autoresearch-feature-discovery) |
+| 18 | **Classification Using Confidence** | Portão de Confiança | [`docs/cookbooks-reference.md#18-classification-using-confidence`](docs/cookbooks-reference.md#18-classification-using-confidence) |
+| 19 | **Speculative Fan-out** | Perguntas Especulativas | [`docs/cookbooks-reference.md#19-speculative-fan-out`](docs/cookbooks-reference.md#19-speculative-fan-out) |
+| 20 | **Intent Routing** | Roteador Multi-Ramo | [`docs/cookbooks-reference.md#20-intent-routing`](docs/cookbooks-reference.md#20-intent-routing) |
+| 21 | **Smart Home Assistant Demo** | Assistente Residencial | [`docs/cookbooks-reference.md#21-smart-home-assistant-demo`](docs/cookbooks-reference.md#21-smart-home-assistant-demo) |
 
 ---
 
@@ -237,14 +406,20 @@ cargo run -p alr-cli -- playground-test
 
 ## 📑 Sumário
 
-1. [O Que é o Projeto?](#-o-que-é-o-projeto)
-2. [Por Que o ALR Existe?](#-por-que-o-alr-existe)
-3. [Comparativo Técnico: Por Que o ALR é Superior ao JEV e Laya / Laya-CoreML?](#-comparativo-técnico-por-que-o-alr-é-superior-ao-jev-e-laya--laya-coreml)
-4. [Mapas Mentais da Arquitetura & Fluxos Operacionais](#-mapas-mentais-da-arquitetura--fluxos-operacionais)
-5. [Premissa Central](#-premissa-central)
-4. [Princípios Arquiteturais](#-princípios-arquiteturais)
-5. [O Que o Sistema Faz?](#-o-que-o-sistema-faz)
-6. [Casos de Uso Detalhados (Fases 1 a 35)](#-casos-de-uso-detalhados)
+1. [⚡ Alternativa Gratuita e Drop-in ao JEV (TypeSafe AI)](#-por-que-o-alr-é-a-alternativa-gratuita-definitiva-ao-jev)
+2. [🔄 Substituição Rápida do JEV (Drop-in em 10 Segundos)](#-drop-in-replacement-troque-o-jev-pelo-alr-em-10-segundos)
+3. [🧩 As 3 Primitivas e os 20 Cookbooks do JEV Nativos](#-as-3-primitivas-e-os-20-cookbooks-do-jev-nativos-no-alr)
+4. [🤖 Instalação Rápida com Agente de IA (Copie e Cole)](#-instale-e-mantenha-o-alr-com-seu-agente-de-ia-copie-e-cole)
+5. [⚗️ Playground Universal & Cockpit Web](#-playground-universal-do-alr-o-centro-principal-de-testes-e-simulações)
+6. [⚡ Quickstart em 3 Minutos (Do Zero ao Agente Operacional)](#-quickstart-em-3-minutos-do-zero-ao-agente-operacional)
+7. [🎯 O Que é o Projeto?](#-o-que-é-o-projeto)
+8. [💡 Por Que o ALR Existe?](#-por-que-o-alr-existe)
+9. [🏆 Comparativo Técnico: Por Que o ALR é a Melhor Alternativa ao JEV e Laya?](#-comparativo-técnico-por-que-o-alr-é-superior-ao-jev-e-laya--laya-coreml)
+10. [🗺️ Mapas Mentais da Arquitetura & Fluxos Operacionais](#-mapas-mentais-da-arquitetura--fluxos-operacionais)
+11. [Premissa Central](#-premissa-central)
+12. [Princípios Arquiteturais](#-princípios-arquiteturais)
+13. [O Que o Sistema Faz?](#-o-que-o-sistema-faz)
+14. [Casos de Uso Detalhados (Fases 1 a 35)](#-casos-de-uso-detalhados)
    * [Caso 1: Controle Dinâmico em Jogos (Snake)](#caso-1-controle-dinâmico-em-jogos-snake)
    * [Caso 2: Atendimento com Memória Semântica (Customer Support)](#caso-2-atendimento-com-memória-semântica-customer-support)
    * [Caso 3: Automação Web Real no Navegador (Chromium CDP)](#caso-3-automação-web-real-no-navegador-chromium-cdp)
@@ -280,25 +455,26 @@ cargo run -p alr-cli -- playground-test
    * [Caso 33: As 5 Recipes Especializadas de Decisão do JEV (Valores, Telefones, Schemas, Citações e SQL Guardrail)](#caso-33-as-5-recipes-especializadas-de-decisão-do-jev)
    * [Caso 34: Protocolo A2A (Agent-to-Agent), Pipelines Multiagente & Cards de Aprovação HitL (Inspirado no AgentScope)](#caso-34-protocolo-a2a-agent-to-agent-pipelines-multiagente--cards-de-aprovação-hitl)
    * [Caso 35: Ciclo de Aprendizado Universal no Playground (Sugestão Local, Correção Humana e Reuso Determinístico)](#caso-35-ciclo-de-aprendizado-universal-no-playground-sugestão-local-correção-humana-e-reuso-determinístico)
-7. [Detector Universal de Loops & Evasão](#-detector-universal-de-loops--evasão)
-8. [Treinamento de Novas Tarefas (Guia & CLI)](#-treinamento-de-novas-tarefas-guia--cli)
-9. [Memória Semântica Vetorial no Qdrant: Geração de Embeddings & Recuperação Autônoma](#-memória-semântica-vetorial-no-qdrant-geração-de-embeddings--recuperação-autônoma)
-10. [Hierarquia Rígida de Decisão de 8 Níveis](#-hierarquia-rígida-de-decisão-de-8-níveis)
-11. [Estrutura Completa do Workspace Cargo (22 Crates)](#-estrutura-completa-do-workspace-cargo-22-crates)
-12. [Como Instalar e Pré-Requisitos](#-como-instalar-e-pré-requisitos)
-13. [Como Usar e Exemplos de Comandos da CLI](#-como-usar-e-exemplos-de-comandos-da-cli)
-14. [Demonstrações Práticas](#-demonstrações-práticas)
-15. [Integração MCP com OpenCode](#-integração-mcp-com-opencode)
-16. [Métricas Reais Obtidas por Nível de Evidência](#-métricas-reais-obtidas-por-nível-de-evidência)
-17. [Os 12 Gates Formais de Aceitação](#-os-12-gates-formais-de-aceitação)
-18. [Veredito de Certificação Oficial](#-veredito-de-certificação-oficial)
-19. [O Que o ALR NÃO É](#-o-que-o-alr-não-é)
-20. [Limitações Conhecidas Declaradas Honestamente](#-limitações-conhecidas-declaradas-honestamente)
-21. [Política de Interação com Jogos (Anti-Cheat)](#-política-de-interação-com-jogos-anti-cheat)
-22. [Segurança e Governança](#-segurança-e-governança)
-23. [Índice de Documentação Técnica](#-índice-de-documentação-técnica)
-24. [Licença](#-licença)
-
+15. [Detector Universal de Loops & Evasão](#-detector-universal-de-loops--evasão)
+16. [Treinamento de Novas Tarefas (Guia & CLI)](#-treinamento-de-novas-tarefas-guia--cli)
+17. [Memória Semântica Vetorial no Qdrant: Geração de Embeddings & Recuperação Autônoma](#-memória-semântica-vetorial-no-qdrant-geração-de-embeddings--recuperação-autônoma)
+18. [Hierarquia Rígida de Decisão de 8 Níveis](#-hierarquia-rígida-de-decisão-de-8-níveis)
+19. [Estrutura Completa do Workspace Cargo (22 Crates)](#-estrutura-completa-do-workspace-cargo-22-crates)
+20. [Como Instalar e Pré-Requisitos](#-como-instalar-e-pré-requisitos)
+21. [Como Usar e Exemplos de Comandos da CLI](#-como-usar-e-exemplos-de-comandos-da-cli)
+22. [Demonstrações Práticas](#-demonstrações-práticas)
+23. [Integração MCP com OpenCode](#-integração-mcp-com-opencode)
+24. [Métricas Reais Obtidas por Nível de Evidência](#-métricas-reais-obtidas-por-nível-de-evidência)
+25. [Os 12 Gates Formais de Aceitação](#-os-12-gates-formais-de-aceitação)
+26. [Veredito de Certificação Oficial](#-veredito-de-certificação-oficial)
+27. [O Que o ALR NÃO É](#-o-que-o-alr-não-é)
+28. [Limitações Conhecidas Declaradas Honestamente](#-limitações-conhecidas-declaradas-honestamente)
+29. [Política de Interação com Jogos (Anti-Cheat)](#-política-de-interação-com-jogos-anti-cheat)
+30. [Segurança e Governança](#-segurança-e-governança)
+31. [Índice de Documentação Técnica](#-índice-de-documentação-técnica)
+32. [Perguntas Frequentes: Migrando do JEV para o ALR (FAQ / SEO)](#-perguntas-frequentes-migrando-do-jev-para-o-alr-faq--guia-de-descoberta)
+33. [Termos de Busca e Indexação (SEO & Metadata)](#-termos-de-busca-e-indexação-seo--metadata)
+34. [Licença](#-licença)
 ---
 
 ## 🎯 O Que é o Projeto?
@@ -343,9 +519,9 @@ O ALR resolve isso estabelecendo um runtime com memória híbrida, aprendizado c
 
 ---
 
-## 🏆 Comparativo Técnico: Por Que o ALR é Superior ao JEV e Laya / Laya-CoreML?
+## 🏆 Comparativo Técnico: Por Que o ALR é a Melhor Alternativa ao JEV e Laya / Laya-CoreML?
 
-O **Autonomous Learning Runtime (ALR)** integra os pontos fortes conceituais do **JEV (TypeSafe AI)** e do **Laya (ConvAI / mizorewww laya-coreml)**, mas foi além para resolver as limitações estruturais de ambos:
+O **Autonomous Learning Runtime (ALR)** integra os pontos fortes conceituais do **JEV (TypeSafe AI)** e do **Laya (ConvAI / mizorewww laya-coreml)**, consolidando-se como a **alternativa aberta, gratuita e de alta performance**:
 
 | Dimensão Arquitetural | **JEV (TypeSafe AI)** | **Laya / Laya-CoreML** | **ALR (Autonomous Learning Runtime)** |
 | :--- | :--- | :--- | :--- |
@@ -1955,8 +2131,41 @@ Cada cookbook inclui implementações completas e funcionais em **Python**, **Ty
 
 ---
 
+## ❓ Perguntas Frequentes: Migrando do JEV para o ALR (FAQ / Guia de Descoberta)
 
+### 1. O ALR é realmente uma alternativa 100% gratuita ao JEV?
+**Sim.** O ALR é software livre dual-licenciado sob MIT e Apache 2.0. Não há custos ocultos, planos mensais, limites de requisições por minuto (RPM) nem cobrança por token. O código roda inteiramente na sua infraestrutura ou máquina de desenvolvimento.
+
+### 2. O ALR é compatível com os payloads de entrada e saída do JEV (`/v1/systemone`)?
+**Sim.** O endpoint `POST http://localhost:3000/v1/systemone` consome exatamente o mesmo esquema de JSON do JEV:
+* **Entrada**: `state`, `questions` (com `type: "choice" | "noul" | "score"` e seus respectivos `instructions` e `criteria`), `temperature`.
+* **Saída**: `answers` contendo `choice`, `noul`, `score`, `confidence`, `probabilities`, acompanhados de `latency_micros` e `model`.
+Qualquer SDK, wrapper em Python, TypeScript, script em Node.js ou cURL existente que chame o JEV pode ser apontado para o ALR sem alterar o contrato de tipagem da aplicação.
+
+### 3. Preciso de placa de vídeo dedicada (GPU / VRAM) para rodar o ALR?
+**Não.** O ALR foi engenheirado do zero em **Rust nativo** com representações compactas e otimizações SIMD em CPU. Ele executa em **qualquer CPU comum** (Intel, AMD, ARM / Apple Silicon / Raspberry Pi), atingindo latências entre **12 µs e 400 µs** (sub-milissegundo).
+
+### 4. Como o ALR consegue ser até 10.000x mais rápido que o JEV?
+O JEV em nuvem faz chamadas de rede pela internet para modelos pesados (2B, 9B ou 27B parâmetros), sofrendo com latência de transmissão HTTP, filas de inferência e decodificação autoregressiva (200 ms a 2.000 ms). O ALR utiliza o princípio do Sistema 1 de Kahneman: decisões estruturadas e categorizadas são avaliadas localmente em estruturas de dados em memória e modelos especializados em CPU Rust, eliminando completamente a dependência de rede e a decodificação token por token.
+
+### 5. O que acontece se eu precisar calibrar ou ensinar o ALR em um novo domínio?
+O ALR possui suporte nativo à **Ponte de Professor (Teacher Oracle)**. Você pode apontar a variável de ambiente `ALR_TEACHER_URL` para uma LLM maior (como Claude, GPT-4o ou o próprio JEV). Quando uma pergunta inédita ou com confiança abaixo do limiar for recebida, o professor responde uma única vez; o ALR valida a resposta sintática e semanticamente, **cristaliza a regra na memória local** (via SQLite/LearningLedger) e todas as execuções futuras ocorrem localmente a custo zero ($0.00).
+
+### 6. Como o ALR se compara ao Kit-JEV e ao Laya?
+* **Kit-JEV**: O ALR é compatível com os 83 apps do Kit-JEV e com o harness de paridade (`scripts/compare-jev-alr.mjs`), atingindo paridade estatística total com o JEV oficial.
+* **Laya / Laya-CoreML**: O Laya é limitado ao ecossistema Apple Silicon (macOS com Neural Engine) e roda em Python. O ALR é universal (Windows, Linux, macOS) em Rust puro, possui proteção física anti-loop (Tabu Search 45 ticks), memória híbrida e automação real de ferramentas.
+
+### 7. Onde encontro a documentação de todos os 20 Cookbooks do JEV?
+O guia completo com exemplos de código em Python, TypeScript, cURL e Rust está disponível em [`docs/cookbooks-reference.md`](docs/cookbooks-reference.md) e na Skill [`skills/alr-systemone/SKILL.md`](skills/alr-systemone/SKILL.md).
+
+---
+
+## 🔍 Termos de Busca e Indexação (SEO & Metadata)
+`jev` • `typesafe-ai` • `system-one` • `system1` • `jev-alternative` • `free-jev` • `alternativa-ao-jev` • `open-source-jev` • `decision-engine` • `typed-decisions` • `choice-noul-score` • `zero-token-ai` • `local-cpu-ai` • `sub-millisecond-inference` • `autonomous-learning-runtime` • `rust-ai-runtime` • `agentic-runtime` • `drop-in-jev-replacement` • `openrouter-jev-free` • `consistency-noul` • `consistency-choice` • `rag-reranking` • `citation-check` • `sql-guardrail` • `smart-home-assistant`
+
+---
 
 ## 📜 Licença
+
 
 O projeto é dual-licenciado sob a **MIT License** ([LICENSE-MIT](LICENSE)) e a **Apache License, Version 2.0** ([LICENSE-APACHE](LICENSE)).
