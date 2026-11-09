@@ -9,7 +9,7 @@
 ## 📑 Sumário das Demonstrações
 
 1. [Tabela de Portas e Serviços Locais](#-tabela-de-portas-e-serviços-locais)
-2. [Catálogo Completo de Comandos da CLI (46 Demonstrações Práticas)](#-catálogo-completo-de-comandos-da-cli-46-demonstrações-práticas)
+2. [Catálogo Completo de Comandos da CLI (50 Demonstrações Práticas)](#-catálogo-completo-de-comandos-da-cli-50-demonstrações-práticas)
 3. [Os 35+ Casos de Uso Reais do ALR (Fases 1 a 43)](#-os-35-casos-de-uso-reais-do-alr-fases-1-a-43)
 4. [Arena com 8 Jogos Autônomos (Canvas & Terminal)](#-arena-com-8-jogos-autônomos-canvas--terminal)
 5. [Guia de Automação de WhatsApp nos 20 Nichos & Tabela de ROI](#-guia-de-automação-de-whatsapp-nos-20-nichos--tabela-de-roi)
@@ -31,7 +31,7 @@
 
 ---
 
-## 💻 Catálogo Completo de Comandos da CLI (46 Demonstrações Práticas)
+## 💻 Catálogo Completo de Comandos da CLI (50 Demonstrações Práticas)
 
 Execute qualquer um dos comandos abaixo na raiz do repositório:
 
@@ -166,7 +166,66 @@ cargo run -p alr-cli -- image-attributes
 cargo run -p alr-cli -- email-triage
 
 # 36. Benchmark de Velocidade Real: ALR System 1 (4.0 µs) vs Cloud VLMs (1.5s)
-cargo run -p alr-cli -- benchmark-vlm
+cargo run -p alr-cli -- benchmark-vlm --iterations 1000
+
+# ==============================================================================
+# 7. PLAYGROUND, COCKPIT, MCP E FERRAMENTAS DE APOIO
+# ==============================================================================
+
+# 37. Quickstart Guiado (instala -> configura -> treina -> executa)
+cargo run -p alr-cli -- quickstart
+
+# 38. Guia Visual de Instalação e Uso (porta 3700)
+cargo run -p alr-cli -- install-guide --port 3700
+
+# 39. Cockpit Web Unificado de Observabilidade e Auto-Aprendizado (porta 3500)
+cargo run -p alr-cli -- cockpit --port 3500
+
+# 40. Servidor MCP (Model Context Protocol) na porta 4000
+cargo run -p alr-cli -- mcp --port 4000
+
+# 41. Servidor do WhatsApp Support Desk Local (porta 3456)
+cargo run -p alr-cli -- whatsapp --port 3456
+
+# ==============================================================================
+# 8. TREINAMENTO, MODELOS E AVALIAÇÃO
+# ==============================================================================
+
+# 42. Treinar qualquer nova tarefa pelo assistente CLI
+cargo run -p alr-cli -- task train --type game --episodes 1000
+
+# 43. Transferência de capacidades (Fase 7): zero-shot para ambiente inédito
+cargo run -p alr-cli -- transfer zero-shot-demo
+
+# 44. Arena 3D corpórea: planejamento A*, obstáculos móveis e inventário
+cargo run -p alr-cli -- 3d demo
+
+# 45. Listar modelos ONNX locais e ambientes registrados
+cargo run -p alr-cli -- model list
+cargo run -p alr-cli -- env list
+
+# 46. Snake: modelo destilado ONNX, treino e avaliação da política
+cargo run -p alr-cli -- model snake-demo
+cargo run -p alr-cli -- snake --train --episodes 500
+cargo run -p alr-cli -- snake --evaluate --episodes 100
+
+# 47. Chrome Dino: treino, avaliação e execução no navegador real
+cargo run -p alr-cli -- dino --train --episodes 100
+cargo run -p alr-cli -- dino --evaluate --episodes 50
+node scripts/play_dino_in_browser.js
+
+# 48. Benchmark de latência e estabilidade de memória do runtime
+cargo run -p alr-cli --bin audit_latency
+
+# ==============================================================================
+# 9. SUÍTES DE TESTE AUTOMATIZADAS
+# ==============================================================================
+
+# 49. Suíte completa (523 testes em 103 suítes)
+cargo test --workspace
+
+# 50. Bateria formal dos 12 Gates de Aceitação
+cargo run -p alr-cli -- final-acceptance
 ```
 
 ---

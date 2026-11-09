@@ -194,25 +194,22 @@ print("Forma de pagamento (Choice):", decision.answers["forma_pagamento"].choice
 
 ---
 
-### 🔄 3. Permitir Atualização Automática (Zero-Maintenance)
+### 🔄 3. Atualização (Manual e Automática)
 
-Mantenha o ALR sempre atualizado com as últimas otimizações e novos cookbooks de forma 100% autônoma:
+Atualizar é idempotente: preserva bancos SQLite, `.env` e arquivos não rastreados.
 
-* **Linux / Linux ARM (systemd timer diário ou cron):**
-  Adicione uma rotina diária às 04:00 da manhã que sincroniza, recompila e reinicia o serviço silenciosamente:
-  ```bash
-  (crontab -l 2>/dev/null; echo "0 4 * * * cd $(pwd) && git pull origin main && cargo build --release -p alr-cli && systemctl --user restart alr") | crontab -
-  ```
-* **Docker:**
-  Atualize e recrie os contêineres com um único comando:
-  ```bash
-  git pull origin main && docker compose up -d --build
-  ```
-* **Windows:**
-  Agendamento diário automático via Task Scheduler (ver o prompt pronto na seção [Configurar Atualização Automática Diária](#-4-configurar-atualização-automática-diária-1x-ao-dia)).
+```bash
+# Manual (Linux/macOS): sincroniza, recompila e reinicia o serviço
+git pull origin main && cargo build --release -p alr-cli && systemctl --user restart alr
+
+# Manual (Docker): reconstrói a imagem e recria os contêineres
+git pull origin main && docker compose up -d --build
+```
+
+Para automatizar (1x/dia às 04:00), use os prompts prontos: [🔄 2. Atualizar o ALR Manualmente Agora](#-2-atualizar-o-alr-manualmente-agora) e [⏰ 3. Configurar Atualização Automática Diária](#-3-configurar-atualização-automática-diária-1x-ao-dia).
 
 ---
-## ⚡ Por Que o ALR é a Alternativa Gratuita Definitiva ao JEV?
+## 🏆 Por Que o ALR é a Melhor Alternativa ao JEV Cloud (e ao Laya-CoreML)?
 
 O **JEV (TypeSafe AI)** introduziu um conceito revolucionário: em vez de gerar texto livre com LLMs lentas e torcer para o JSON vir correto, o código deve ser o dono do fluxo de trabalho (*Code owns the workflow*) e a IA deve fornecer **decisões tipadas com probabilidades calibradas** (`Choice`, `Noul`, `Score`).
 
@@ -241,6 +238,14 @@ No entanto, o **JEV opera exclusivamente como uma API fechada em nuvem (JEV Clou
 | **Memória Operacional** | Nenhuma (Stateless) | **Memória Híbrida (SQLite WAL + Qdrant 1536d)** | Lembra de procedimentos e casos resolvidos |
 | **Execução Agêntica** | Nenhuma (apenas classificação) | **Navegador Real (CDP), OS Mouse/Teclado, Connectors** | Fecha o loop agêntico com ações no mundo real |
 | **Interface Visual** | Playground Web em nuvem | **Playground Dual-Sidebar com HUD de Economia Real** | Visualização instantânea com economia de tokens |
+
+### Onde o Laya / Laya-CoreML entra nessa conta
+
+O [Laya](https://github.com/mizorewww/laya-coreml) também implementa decisões tipadas, mas fica **restrito ao Apple Silicon** (Core ML / ANE) e a um escopo de demo isolado. O ALR preserva o mesmo modelo mental (`Choice`, `Noul`, `Score`) e acrescenta portabilidade universal, memória híbrida, loop agêntico completo e escudo anti-loop nativo. Três diferenças práticas:
+
+1. **Snake com escudo físico em microssegundos** — o ALR avalia `Choice`/`Noul` em µs e aplica `Tabu Search` de 45 ticks mais penalidade de recência, impedindo o loop de estagnação que trava o demo em Python.
+2. **Atendimento com diálogo de esclarecimento** — o JEV Cloud devolve `{"refund": {"noul": 0.98}}` e para aí; o ALR detecta que falta o `order_id`, **pausa as ferramentas, pergunta ao cliente**, retoma o contexto e conclui **sem nova chamada de LLM**.
+3. **Zero dependência de nuvem e de Apple Silicon** — o ALR roda *air-gapped* em Windows, Linux x86/ARM e macOS a $0.00; o JEV Cloud exige internet e o `laya-coreml` exige Mac com chip M-Series.
 
 ---
 
@@ -376,112 +381,14 @@ Além das primitivas, o ALR traz a implementação completa de todos os **20 Coo
 
 ---
 
-## 🤖 Instale e Mantenha o ALR com seu Agente de IA (Copie e Cole)
+## 🤖 Prompts Prontos para Agentes de IA (Instalação e Manutenção)
 
-> **Para usuários com agentes de IA (Oh My Pi, Claude Code, Cursor, Windsurf, Roo, etc.):**  
-> Copie qualquer um dos blocos abaixo e envie diretamente para o seu agente. Ele detectará seu sistema operacional automaticamente, executará todos os passos, configurará o início no boot e abrirá a tela funcionando na sua frente.
+> **Para usuários com agentes de IA (Oh My Pi, Claude Code, Cursor, Windsurf, Roo, etc.):**
+> O prompt de **instalação completa** (clone → build → chave de API → autostart → teste das 3 primitivas → relatório) fica no topo deste README: [🤖 1. Prompt Único](#-1-prompt-único-seu-agente-de-ia-faz-tudo-copie-e-cole).
+>
+> Abaixo estão apenas os prompts complementares — **ARM/Raspberry Pi**, **atualização manual** e **atualização automática diária** — para evitar repetição.
 
-### 🐧 Instalação Rápida no Linux & Linux ARM (x86_64, aarch64, Raspberry Pi, AWS Graviton)
-
-Para instalar nativamente em qualquer máquina Linux (incluindo ARM64 / aarch64):
-```bash
-# Instalação nativa direta (detecta dependências, compila release e configura systemd):
-bash scripts/install-linux.sh
-
-# Ou execute via Docker Multi-Arch (x86_64 e aarch64 out-of-the-box):
-docker compose up -d
-```
-
----
-
-### 🚀 1. Prompt Definitivo para o Agente: Clone, Build, Chave de API, Autostart no Boot, Teste de Decisão e Relatório Completo
-
-Copie este prompt e envie diretamente para o seu agente (Oh My Pi, Claude Code, Cursor, Windsurf, Roo, etc.):
-
-```text
-Você é o engenheiro de software sênior responsável pela implantação completa do ALR (Autonomous Learning Runtime) nesta máquina. Sua missão é executar todo o ciclo de instalação de ponta a ponta de forma 100% autônoma, sem intervenção do usuário: clonar o repositório, compilar o binário otimizado, configurar a chave de autenticação da API, iniciar o serviço com autostart no boot, disparar um teste real de decisão tipada (Choice, Noul, Score) via API e exibir um relatório final completo com todas as métricas e dados na tela.
-
-Execute com rigor as 6 etapas:
-
-1. IDENTIFICAÇÃO DO AMBIENTE E CLONE:
-   - Detecte o sistema operacional (Windows, Linux ou macOS) e a arquitetura da CPU (x86_64 ou ARM64/aarch64).
-   - Se já estiver dentro do diretório do ALR, utilize a pasta atual. Caso contrário, clone https://github.com/dilneiss/alr.git e acesse a pasta do repositório.
-
-2. VERIFICAÇÃO DE DEPENDÊNCIAS E COMPILAÇÃO RELEASE:
-   - Verifique ferramentas necessárias: git, curl, build-essential (gcc/clang) e compilador Rust (rustc/cargo 1.80+). Se o Rust não estiver instalado, instale via `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y` e carregue o ambiente (`source "$HOME/.cargo/env"`).
-   - Compile o runtime em modo release com otimizações nativas:
-     `cargo build --release -p alr-cli`
-   - Localize o binário gerado em `./target/release/alr` (ou `./target/release/alr.exe` no Windows).
-
-3. CONFIGURAÇÃO DA CHAVE DE API (AUTENTICAÇÃO DROP-IN COMPATÍVEL COM JEV):
-   - Defina um token seguro de autenticação para a API (exemplo: `alr_secret_key_2026`).
-   - Configure a variável de ambiente `ALR_API_KEY=alr_secret_key_2026` para que o serviço valide o cabeçalho `Authorization: Bearer alr_secret_key_2026`.
-
-4. CONFIGURAÇÃO DO SERVIÇO COM AUTOSTART NO BOOT:
-   - Configure o serviço do ALR para rodar na porta 3000 (`PORT=3000`) com `ALR_API_KEY=alr_secret_key_2026` e iniciar automaticamente ao ligar o computador:
-     * Linux (Ubuntu, Debian, Fedora, Arch, Raspberry Pi OS): Crie a unidade systemd de usuário em `~/.config/systemd/user/alr.service`, faça o reload (`systemctl --user daemon-reload`), ative com `systemctl --user enable --now alr.service` e habilite `loginctl enable-linger $USER` se disponível.
-     * macOS: Crie um LaunchAgent em `~/Library/LaunchAgents/com.alr.playground.plist` apontando para o binário com `playground --port 3000`, e carregue com `launchctl load -w ~/Library/LaunchAgents/com.alr.playground.plist`.
-     * Windows: Crie uma tarefa agendada de logon via `schtasks /Create /TN "ALR_Playground" /TR "\"<caminho_completo_alr.exe>\" playground --port 3000" /SC ONLOGON /F` e inicie o processo em background.
-   - Verifique que a porta 3000 está escutando ativamente (aguarde até 15s até `http://127.0.0.1:3000/` retornar HTTP 200).
-
-5. EXECUÇÃO DE TESTE REAL DA API COM AS 3 PRIMITIVAS (CHOICE, NOUL, SCORE):
-   - Dispare uma requisição HTTP POST para `http://localhost:3000/v1/systemone` enviando o cabeçalho de autenticação `Authorization: Bearer alr_secret_key_2026` e um payload real contendo as 3 decisões tipadas:
-     curl -s -X POST http://localhost:3000/v1/systemone \
-       -H "Content-Type: application/json" \
-       -H "Authorization: Bearer alr_secret_key_2026" \
-       -d '{
-         "state": "Ticket de Suporte #9042: Meu Pix de R$ 3.850 foi debitado mas o saldo não entrou no app. O suporte não responde e vou abrir reclamação no Procon hoje!",
-         "questions": {
-           "urgente": {
-             "type": "noul",
-             "instructions": "O cliente expressa urgência crítica ou risco de litígio/Procon?"
-           },
-           "departamento": {
-             "type": "choice",
-             "instructions": "Qual é o departamento responsável?",
-             "criteria": {
-               "financeiro": "Problemas de pagamento, Pix, estorno ou cobrança",
-               "suporte_tecnico": "Bugs no app, login ou travamentos",
-               "comercial": "Novos planos e vendas"
-             }
-           },
-           "gravidade": {
-             "type": "score",
-             "instructions": "Nível de gravidade do chamado (0 a 3)",
-             "criteria": ["Baixa", "Média", "Alta", "Crítica"]
-           }
-         }
-       }'
-   - Capture a resposta JSON, confirme o status HTTP 200 e extraia as respostas calculadas, as probabilidades e a latência de execução (`latency_micros`).
-
-6. EXIBIÇÃO DO RELATÓRIO COMPLETO NA TELA:
-   - Imprima no terminal o resumo final estruturado:
-   ===================================================================
-   🚀 ALR RUNTIME & JEV SYSTEM 1 ENGINE - IMPLANTAÇÃO CONCLUÍDA
-   ===================================================================
-   • Plataforma & CPU        : <SO detectado> (<Arquitetura detectada>)
-   • Caminho do Binário      : <Caminho absoluto do executável alr>
-   • Chave de API Configurada: ALR_API_KEY=alr_secret_key_2026
-   • Status do Serviço       : ATIVO na porta 3000 (Inicialização no Boot configurada)
-   • Endpoint Local JEV      : http://localhost:3000/v1/systemone (e /api/v1/systemone)
-   • Playground Web UI       : http://localhost:3000
-   -------------------------------------------------------------------
-   📊 RESULTADO DO TESTE REAL DE DECISÃO TIPADA:
-   • Status da Requisição    : 200 OK (Autenticação Bearer validada)
-   • Latência de Inferência  : <X> µs (< 0.5 ms em CPU local)
-   • Custo da Decisão        : $0.00 (Zero tokens na nuvem consumidos)
-   • Resposta Noul (Urgente) : <valor> (Probabilidade P(sim): <X>%)
-   • Resposta Choice (Depto) : <valor> (Confiança Softmax: <X>%)
-   • Resposta Score (Grav.)  : <valor> / 3.0
-   -------------------------------------------------------------------
-   🛠️ COMANDOS ÚTEIS PARA O USUÁRIO:
-   • Ver logs em tempo real  : journalctl --user -u alr.service -f (ou logs equivalentes)
-   • Parar / Reiniciar       : systemctl --user restart alr.service
-   • Teste cURL              : curl -H "Authorization: Bearer alr_secret_key_2026" -X POST http://localhost:3000/v1/systemone ...
-   ===================================================================
-```
-
-### 🍓 2. Instalação Otimizada em Linux ARM / Raspberry Pi / AWS Graviton / Apple Silicon (Copie e Cole)
+### 🍓 1. Instalação Otimizada em Linux ARM / Raspberry Pi / AWS Graviton / Apple Silicon
 
 Copie este prompt e envie para o seu agente em qualquer máquina Linux ARM:
 
@@ -528,7 +435,7 @@ Execute todos os passos de forma autônoma:
    - Imprima no terminal: Arquitetura ARM confirmada, status do serviço systemd, consumo de RAM (RSS) e o link para o Playground.
 ```
 
-### 🔄 3. Atualizar o ALR Manualmente Agora
+### 🔄 2. Atualizar o ALR Manualmente Agora
 Copie este prompt e envie para o seu agente sempre que quiser atualizar sob demanda:
 
 ```text
@@ -548,7 +455,7 @@ Execute os seguintes passos com segurança:
    - Imprima o novo hash do commit (`git rev-parse --short HEAD`), a confirmação de que o serviço está rodando e que as tabelas de estado/dados foram preservadas.
 ```
 
-### ⏰ 4. Configurar Atualização Automática Diária (1x ao Dia)
+### ⏰ 3. Configurar Atualização Automática Diária (1x ao Dia)
 
 Copie este prompt e envie para o seu agente para deixar as atualizações rodando sozinhas:
 
@@ -712,42 +619,43 @@ cargo run -p alr-cli -- playground-test
 
 ## 📑 Sumário
 
-1. [🤖 Prompt Único para o Agente de IA Fazer Tudo](#-1-prompt-único-seu-agente-de-ia-faz-tudo-copie-e-cole)
-2. [⚡ Início Rápido: Suba a API em 1 Comando e Integre com o JEV](#-início-rápido-suba-a-api-em-1-só-comando-e-integre-com-o-jev)
-3. [⚡ Alternativa Gratuita e Drop-in ao JEV Cloud](#-por-que-o-alr-é-a-alternativa-gratuita-definitiva-ao-jev)
-4. [🔄 Substituição Rápida do JEV Cloud (Drop-in em 10 Segundos)](#-drop-in-replacement-troque-o-jev-pelo-alr-em-10-segundos)
-5. [🧩 As 3 Primitivas e os 20 Cookbooks do JEV Nativos](#-as-3-primitivas-e-os-20-cookbooks-do-jev-nativos-no-alr)
-6. [🐧 Instalação Rápida no Linux & Linux ARM](#-instale-e-mantenha-o-alr-com-seu-agente-de-ia-copie-e-cole)
-7. [⚗️ Playground Universal & Cockpit Web](#-playground-universal-do-alr-o-centro-principal-de-testes-e-simulações)
-8. [⚡ Quickstart em 3 Minutos (Do Zero ao Agente Operacional)](#-quickstart-em-3-minutos-do-zero-ao-agente-operacional)
-9. [🎯 O Que é o Projeto?](#-o-que-é-o-projeto)
-10. [💡 Por Que o ALR Existe?](#-por-que-o-alr-existe)
-11. [🏆 Comparativo Técnico: Por Que o ALR é a Melhor Alternativa ao JEV Cloud e Laya?](#-comparativo-técnico-por-que-o-alr-é-superior-ao-jev-e-laya--laya-coreml)
-12. [🗺️ Mapas Mentais da Arquitetura & Fluxos Operacionais](#-mapas-mentais-da-arquitetura--fluxos-operacionais)
-13. [Premissa Central](#-premissa-central)
-14. [Princípios Arquiteturais](#-princípios-arquiteturais)
-15. [O Que o Sistema Faz?](#-o-que-o-sistema-faz)
-16. [🎬 Catálogo Completo de Demonstrações & Casos de Uso (README_DEMOS.md)](README_DEMOS.md)
-17. [🔄 Detector Universal de Loops & Evasão](#-detector-universal-de-loops--evasão)
-18. [🎓 Treinamento de Novas Tarefas (Guia & CLI)](#-treinamento-de-novas-tarefas-guia--cli)
-19. [🧠 Por Que Usamos o Qdrant e uma LLM Integrada? (Arquitetura, Casos de Uso e Teste Prático)](#-por-que-usamos-o-qdrant-e-uma-llm-integrada-arquitetura-casos-de-uso-e-teste-prático)
-20. [🚦 Hierarquia Rígida de Decisão de 8 Níveis](#-hierarquia-rígida-de-decisão-de-8-níveis)
-21. [📦 Estrutura Completa do Workspace Cargo (22 Crates)](#-estrutura-completa-do-workspace-cargo-22-crates)
-22. [🔧 Como Instalar e Pré-Requisitos](#-como-instalar-e-pré-requisitos)
-23. [💻 Como Usar e Exemplos de Comandos da CLI](#-como-usar-e-exemplos-de-comandos-da-cli)
-24. [🎬 Demonstrações Práticas da CLI (README_DEMOS.md)](README_DEMOS.md#-catálogo-completo-de-comandos-da-cli-46-demonstrações-práticas)
-25. [🔌 Integração MCP com OpenCode](#-integração-mcp-com-opencode)
-26. [📊 Métricas Reais Obtidas por Nível de Evidência](#-métricas-reais-obtidas-por-nível-de-evidência)
-27. [Os 12 Gates Formais de Aceitação](#-os-12-gates-formais-de-aceitação)
-28. [Veredito de Certificação Oficial](#-veredito-de-certificação-oficial)
-29. [O Que o ALR NÃO É](#-o-que-o-alr-não-é)
-30. [Limitações Conhecidas Declaradas Honestamente](#-limitações-conhecidas-declaradas-honestamente)
-31. [Política de Interação com Jogos (Anti-Cheat)](#-política-de-interação-com-jogos-anti-cheat)
-32. [Segurança e Governança](#-segurança-e-governança)
-33. [Índice de Documentação Técnica](#-índice-de-documentação-técnica)
-34. [❓ Perguntas Frequentes: Migrando do JEV para o ALR (FAQ / SEO)](#-perguntas-frequentes-migrando-do-jev-para-o-alr-faq--guia-de-descoberta)
-35. [🔍 Termos de Busca e Indexação (SEO & Metadata)](#-termos-de-busca-e-indexação-seo--metadata)
-36. [📜 Licença](#-licença)
+1. [🤖 Prompt Único: seu agente de IA faz tudo](#-1-prompt-único-seu-agente-de-ia-faz-tudo-copie-e-cole)
+2. [⚡ Início Rápido: 1 comando, token e atualização](#-início-rápido-suba-a-api-em-1-só-comando-e-integre-com-o-jev)
+3. [🏆 Comparativo: ALR vs JEV Cloud (e Laya-CoreML)](#-por-que-o-alr-é-a-melhor-alternativa-ao-jev-cloud-e-ao-laya-coreml)
+4. [🔄 Drop-in Replacement (cURL, Python, TypeScript)](#-drop-in-replacement-troque-o-jev-pelo-alr-em-10-segundos)
+5. [🧩 As 3 Primitivas e os 20 Cookbooks do JEV](#-as-3-primitivas-e-os-20-cookbooks-do-jev-nativos-no-alr)
+6. [🤖 Prompts para agentes (ARM e manutenção)](#-prompts-prontos-para-agentes-de-ia-instalação-e-manutenção)
+7. [⚡ Quickstart em 3 Minutos & Playground Universal](#-quickstart-em-3-minutos-do-zero-ao-agente-operacional)
+8. [🎯 O Que é o Projeto?](#-o-que-é-o-projeto)
+9. [🗺️ Mapas Mentais da Arquitetura](#-mapas-mentais-da-arquitetura--fluxos-operacionais)
+10. [🔬 Premissa Central](#-premissa-central)
+11. [🧱 Princípios Arquiteturais](#-princípios-arquiteturais)
+12. [⚙️ O Que o Sistema Faz?](#-o-que-o-sistema-faz)
+13. [💼 Catálogo de Casos de Uso & Demonstrações](#-catálogo-de-casos-de-uso--demonstrações-práticas)
+14. [🔄 Detector Universal de Loops & Evasão](#-detector-universal-de-loops--evasão)
+15. [🎓 Treinamento de Novas Tarefas](#-treinamento-de-novas-tarefas-guia--cli)
+16. [🧠 Por Que Usamos o Qdrant e uma LLM Integrada](#-por-que-usamos-o-qdrant-e-uma-llm-integrada-arquitetura-casos-de-uso-e-teste-prático)
+17. [🚦 Hierarquia Rígida de Decisão de 8 Níveis](#-hierarquia-rígida-de-decisão-de-8-níveis)
+18. [📦 Estrutura do Workspace Cargo](#-estrutura-completa-do-workspace-cargo-22-crates)
+19. [🔧 Pré-Requisitos, Hardware e Compilação Manual](#-pré-requisitos-hardware-e-compilação-manual)
+20. [💻 Comandos Essenciais da CLI](#-como-usar-comandos-essenciais-da-cli)
+21. [🔌 Integração MCP](#-integração-mcp-com-opencode)
+22. [📊 Métricas Reais por Nível de Evidência](#-métricas-reais-obtidas-por-nível-de-evidência)
+23. [🖱️ Controle Nativo de Desktop OS](#-controle-nativo-de-desktop-os-aplicações--novos-jogos)
+24. [🛡️ Os 12 Gates Formais de Aceitação](#-os-12-gates-formais-de-aceitação)
+25. [⚖️ Veredito de Certificação Oficial](#-veredito-de-certificação-oficial)
+26. [🚫 O Que o ALR NÃO É](#-o-que-o-alr-não-é)
+27. [⚠️ Limitações Conhecidas](#-limitações-conhecidas-declaradas-honestamente)
+28. [🎮 Política de Interação com Jogos (Anti-Cheat)](#-política-de-interação-com-jogos-anti-cheat)
+29. [🔐 Segurança e Governança](#-segurança-e-governança)
+30. [📈 Mesa de Operações Quantitativa Multi-Ativo](#-mesa-de-operações-quantitativa-multi-ativo-multi-asset-trading-desk--web-cockpit)
+31. [🧪 Automação de Testes de QA](#-automação-de-testes-de-qa-em-páginas-web--programas-self-healing--cicd)
+32. [📚 Índice de Documentação Técnica](#-índice-de-documentação-técnica--central-de-conhecimento)
+33. [🖥️ Experiência de Usuário Universal (UX)](#-experiência-de-usuário-universal-ux-responsiva-multi-resolução)
+34. [🧠 Skill Oficial: ALR System 1](#-skill-oficial-alr-system-1-typesafe-jev-engine--primitivas-de-decisão)
+35. [❓ FAQ: Migrando do JEV para o ALR](#-perguntas-frequentes-migrando-do-jev-para-o-alr-faq--guia-de-descoberta)
+36. [🔍 Termos de Busca e Indexação (SEO)](#-termos-de-busca-e-indexação-seo--metadata)
+37. [📜 Licença](#-licença)
 ---
 
 ## 🎯 O Que é o Projeto?
@@ -777,57 +685,6 @@ Situação Nova / Baixa Confiança
               ▼                                      │
    Verificação de Pós-Condição ──────────────────────┘
 ```
-
----
-
-## 💡 Por Que o ALR Existe?
-
-Agentes de IA que dependem exclusivamente de chamadas remotas de LLM enfrentam gargalos críticos:
-* **Latência Excessiva:** Cada ação demora entre 500 ms e 3.000 ms, inviabilizando controle dinâmico ou tarefas ágeis.
-* **Custo Proibitivo:** Tarefas repetitivas (como ler um banco de dados, clicar em formulários ou desviar de obstáculos) queimam milhões de tokens desnecessariamente.
-* **Falta de Memória Operacional Persistente:** O modelo esquece o procedimento assim que a sessão se encerra.
-* **Vulnerabilidade de Rede:** Se a API externa oscilar ou cair, o agente para completamente.
-
-O ALR resolve isso estabelecendo um runtime com memória híbrida, aprendizado contínuo e validação estrita de segurança.
-
----
-
-## 🏆 Comparativo Técnico: Por Que o ALR é a Melhor Alternativa ao JEV e Laya / Laya-CoreML?
-
-O **Autonomous Learning Runtime (ALR)** integra os pontos fortes conceituais do **JEV Cloud (TypeSafe AI)** e do **Laya (ConvAI / mizorewww laya-coreml)**, consolidando-se como a **alternativa aberta, gratuita e de alta performance**:
-
-| Dimensão Arquitetural | **JEV Cloud (TypeSafe AI API)** | **Laya / Laya-CoreML** | **ALR (Autonomous Learning Runtime)** |
-| :--- | :--- | :--- | :--- |
-| **Arquitetura Base** | API Fechada em Nuvem (Cloud-only) | Modelo de Decisão Tipada (Python / Core ML) | **Runtime Cognitivo Completo em Rust (22 Crates)** |
-| **Portabilidade & SO** | Requer Conexão Externa (Cloud) | **Restrito ao Apple Silicon (macOS / ANE)** | **Universal Multiplataforma (Windows, Linux x86/ARM, macOS)** |
-| **Tipo de Execução** | Apenas Classificação Pontual em Nuvem | Decisões Tipadas Isoladas | **Loop Agêntico Completo (Percepção → Memória → Decisão → Ação → Replay)** |
-| **Primitivas Tipadas** | `Choice`, `Score`, `Noul` | `Choice`, `Score`, `Noul` | **`Choice`, `Score`, `Noul` + Avaliação de Brier Score & Entropia** |
-| **Escudo de Segurança** | Nenhum (apenas retorna probabilidades) | `Cycle Safety Shield` em Python | **`LayaGuardedSnakePolicy` Nativo em Rust + Hard Constraints do `RiskEngine`** |
-| **Memória Operacional** | Nenhuma (Stateless) | Nenhuma (Stateless) | **Memória Híbrida Dupla (SQLite WAL + Qdrant Vetorial Multi-Tenant)** |
-| **Ações no Mundo Real** | Zero (apenas API de texto/JSON) | Zero (apenas demo Snake no terminal) | **Automação Web Real (Chromium CDP), Teclado/Mouse OS, Conectores REST & Webhooks** |
-| **Evasão de Loops** | Inexistente | Heurística simples de ciclo | **Detector Universal de Loops (Tabu Search 45 ticks + Penalidade de Recência)** |
-| **Recuperação de Falhas** | Nenhuma | Nenhuma | **Checkpoints Persistentes, Fila de Tarefas & Retomada Pós-Crash** |
-| **Garantia de Tipagem** | JSON via HTTP | Python dinâmico com type hints | **Segurança de Memória e Tipagem Estrita em Tempo de Compilação (Rust)** |
-
-### Exemplos Práticos de Superioridade do ALR:
-
-1. **Exemplo 1: Snake com Decisão Tipada e Escudo Físico em Sub-Milissegundo:**
-   * Enquanto o `laya-coreml` depende do ecossistema Python no macOS (`pip install laya-coreml`, `sysctl`, `coremltools`) e sofre quando a cobra entra em loop de estagnação de 600 passos em volta de itens inacessíveis, o ALR executa em **Rust puro compilado** com a política `LayaGuardedSnakePolicy`:
-     * Avalia as primitivas tipadas `Choice` (probabilidades Softmax por movimento) e `Noul` (risco de beco sem saída e alcance de comida) em **microsegundos**.
-     * Possui o **Tabu Search Memory** de quarentena de 45 ticks e penalidade de recência de trilha, impedindo fisicamente qualquer loop ou travamento.
-2. **Exemplo 2: Atendimento ao Cliente com Diálogo de Esclarecimento Interativo (System 1 + System 2):**
-   * O JEV Cloud apenas diz: `{"refund": {"type": "noul", "probability": 0.98}}` e repassa o problema para a aplicação.
-   * O ALR detecta que a intenção é estorno (`RefundPending`), percebe via `StateExtractor::extract_entities` que o usuário **não informou o número do pedido**, **pausa a execução das ferramentas, mantém o chamado aberto e pergunta educadamente ao usuário na tela**:
-     ```text
-     [ALR ATENDENTE]: Olá! Para prosseguir com a verificação do seu estorno, preciso do número do seu pedido (ex: ord_0005) ou ID da transação. Poderia me informar?
-     ```
-   * Quando o cliente responde com `"ord_0005"`, o ALR retoma o contexto salvo e resolve a transação com **zero chamadas à LLM externa**!
-3. **Exemplo 3: Zero Dependência de Nuvem e Zero Dependência de Apple Silicon:**
-   * O JEV Cloud cobra por token/chamada em dólares e para de funcionar quando a internet oscila.
-   * O `laya-coreml` só roda em Macbooks com processadores M-Series.
-   * O ALR roda em qualquer servidor, desktop ou edge device (Windows, Linux x86_64, Linux ARM64, macOS), garantindo 100% de operação *air-gapped* offline a custo zero ($0.00).
----
-
 
 ---
 
@@ -932,42 +789,33 @@ flowchart TD
 ```
 
 
-### 3. Mapa Mental: Como Configurar Tudo, Acesso a LLM & Procedimento Passo a Passo
+### 3. Mapa Mental: Configuração (.env), Acesso a LLM & Modos de Execução
+
+> Instalação e build estão no [Início Rápido](#-início-rápido-suba-a-api-em-1-só-comando-e-integre-com-o-jev) e nos [Pré-Requisitos](#-pré-requisitos-hardware-e-compilação-manual). Este mapa cobre apenas **configuração** e **execução**.
 
 ```mermaid
 flowchart TD
-    subgraph P1 [1. Pré-Requisitos e Ambiente Local]
-        RustInstall[Rust 1.80+ / 1.98.1<br/>cargo, rustc, clippy]
-        DockerReq[Docker Compose<br/>Para Qdrant Vetorial]
+    subgraph P1 [1. Configuração de Ambiente .env]
         EnvCopy[Copiar Arquivo de Configuração<br/>cp .env.example .env]
-    end
-
-    subgraph P2 [2. Configuração de Variáveis de Ambiente .env]
         EnvCopy --> DBConf[DATABASE_URL = sqlite://alr_state.db<br/>Persistência Operacional e Auditoria]
         EnvCopy --> QdrantConf[QDRANT_URL = http://localhost:6333<br/>Memória Semântica Vetorial]
         EnvCopy --> LLMChoice{Qual Provedor de LLM Usar?}
-        
+
         LLMChoice -- Modo Offline / Testes --> MockLLM[MockLlmTeacher<br/>LLM_API_KEY vazia ou mock<br/>Zero Custo / 100% Determinístico]
         LLMChoice -- OpenAI Oficial --> OpenAIConf[LLM_BASE_URL = https://api.openai.com/v1<br/>LLM_API_KEY = sk-...<br/>LLM_MODEL = gpt-4o-mini / gpt-4o]
         LLMChoice -- Local / Self-Hosted --> LocalConf[LLM_BASE_URL = http://localhost:11434/v1<br/>Ollama / vLLM / LM Studio / Laya<br/>LLM_MODEL = laya-multilingual / mistral]
         LLMChoice -- Gateways / OpenRouter --> GatewayConf[LLM_BASE_URL = https://openrouter.ai/api/v1<br/>LLM_API_KEY = sk-or-...<br/>LLM_MODEL = deepseek / claude / openai]
     end
 
-    subgraph P3 [3. Orquestração e Inicialização dos Serviços]
-        DockerReq --> StartQdrant[Iniciar Qdrant<br/>docker compose up -d]
-        StartQdrant --> CheckQdrant[Testar Conexão<br/>curl http://localhost:6333/readyz]
-        RustInstall --> BuildALR[Compilar Workspace<br/>cargo build --workspace]
-    end
-
-    subgraph P4 [4. Como Proceder na Execução Diária]
-        BuildALR --> ExecModes{Qual Modo Executar?}
+    subgraph P2 [2. Modos de Execução Diária]
+        ExecModes{Qual Modo Executar?}
         ExecModes -- Jogo Snake com Decisões Tipadas --> RunSnake[Terminal ASCII: cargo run -p alr-cli -- snake --mode visual<br/>Navegador Real: node scripts/play_in_browser.js]
         ExecModes -- Atendimento Interativo em Tempo Real --> RunSupport[Chat Interativo: cargo run -p alr-cli -- support chat<br/>Diálogo com Recuperação de Dados Faltantes]
         ExecModes -- Treinamento de Novas Tarefas --> RunTrain[Assistente de Tarefas: cargo run -p alr-cli -- task train --type game<br/>Destilação Local ONNX: cargo run -p alr-cli -- model snake-demo]
-        ExecModes -- Bateria de Verificação e 12 Gates --> RunTest[Suíte de Testes: cargo test --workspace 137 testes<br/>Gates de Aceitação: cargo run -p alr-cli -- final-acceptance]
+        ExecModes -- Bateria de Verificação e 12 Gates --> RunTest[Suíte de Testes: cargo test --workspace<br/>Gates de Aceitação: cargo run -p alr-cli -- final-acceptance]
     end
 
-    subgraph P5 [5. Ciclo de Decisão do Acesso a LLM em Produção]
+    subgraph P3 [3. Ciclo de Decisão do Acesso a LLM em Produção]
         RunSupport & RunSnake & RunTrain --> DecisionEngine[Hierarquia Rígida de Decisão]
         DecisionEngine --> CheckKnowledge{Já existe Regra ou<br/>Skill Local Validada?}
         CheckKnowledge -- Sim --> LocalExec[Execução 100% Local em µs<br/>Zero Tokens / Zero Custo LLM]
@@ -1309,7 +1157,9 @@ O workspace é estritamente desacoplado em 22 crates:
 
 ---
 
-## 🔧 Como Instalar e Pré-Requisitos
+## 🔧 Pré-Requisitos, Hardware e Compilação Manual
+
+> Para subir em **1 comando** (Docker, Cargo ou script automatizado), use o [Início Rápido](#-início-rápido-suba-a-api-em-1-só-comando-e-integre-com-o-jev). Esta seção existe para detalhar requisitos, limites de hardware e o build completo do workspace.
 
 ### 1. Pré-Requisitos do Sistema
 * **Rust 1.80+**: Compilado e homologado no Rust 1.98.1 (Windows MSVC, Linux e macOS).
@@ -1341,9 +1191,9 @@ cd alr
 cargo build --workspace
 ```
 
-### 4. Guia Específico para Linux & Linux ARM (ARM64 / AArch64 / Raspberry Pi / AWS Graviton / Apple Silicon)
+### 4. Notas Técnicas de Suporte a Linux ARM (ARM64 / AArch64 / Raspberry Pi / AWS Graviton)
 
-O ALR possui suporte nativo de primeira classe para ambientes Linux em arquiteturas ARM (ARM64 / AArch64 e armv7l):
+O ALR possui suporte nativo de primeira classe para ambientes Linux ARM. O passo a passo de instalação em ARM (swap, pacotes por distro, `-j 2` e systemd) está no [prompt de instalação ARM para agentes](#-2-instalação-otimizada-em-linux-arm--raspberry-pi--aws-graviton--apple-silicon-copie-e-cole). Abaixo, o que muda na engenharia:
 
 1. **Aceleração Vetorial ARM NEON (< 100 ns):**  
    O motor de tensores e características (`SimdFeatureVectorizer` em `crates/alr-models`) utiliza rotinas desdobradas em 8 vias (`as_chunks::<8>()`). No Linux ARM, o compilador LLVM gera diretamente instruções vetoriais **ARM NEON**, acelerando normalizações $L_2$, distâncias euclidianas e produtos escalares para sub-microssegundos sem necessidade de GPU.
@@ -1354,40 +1204,26 @@ O ALR possui suporte nativo de primeira classe para ambientes Linux em arquitetu
 3. **Tamanho de Página de Memória Flexível (4KB, 16KB e 64KB):**  
    Kernels ARM corporativos (como AWS Graviton ou Asahi Linux) frequentemente utilizam páginas de 16KB ou 64KB. A telemetria de consumo de memória do ALR lê `VmRSS` e `VmHWM` diretamente de `/proc/self/status`, garantindo precisão métrica milimétrica em qualquer arquitetura.
 
-4. **Instalador Automatizado para Linux:**  
-   Execute o script nativo que detecta a arquitetura, instala pacotes de compilação e opcionalmente registra o serviço systemd de usuário:
-   ```bash
-   bash scripts/install-linux.sh
-   ```
-
-5. **Deploy em Contêiner Multi-Arch via Docker Compose:**  
-   O `Dockerfile` e o `docker-compose.yml` possuem suporte nativo a `linux/arm64` e `linux/amd64`:
-   ```bash
-   # Sobe o ALR (porta 3000) e o Qdrant (porta 6333) no Raspberry Pi, Graviton ou x86:
-   docker compose up -d
-   ```
-
 ---
 
-## 💻 Como Usar e Exemplos de Comandos da CLI
+## 💻 Como Usar: Comandos Essenciais da CLI
 
-```bash
-# 0. Quickstart Guiado em 3 Minutos (Do Zero ao Agente Operacional)
-cargo run -p alr-cli -- quickstart
+Os comandos abaixo cobrem os fluxos mais utilizados. O **catálogo completo e comentado das 50 demonstrações** está em [`README_DEMOS.md`](README_DEMOS.md#-catálogo-completo-de-comandos-da-cli-50-demonstrações-práticas).
 
-# 1. Bateria Formal de Aceitação dos 12 Gates
-cargo run -p alr-cli -- final-acceptance
+| Objetivo | Comando |
+| :--- | :--- |
+| Quickstart guiado (instala → configura → treina → executa) | `cargo run -p alr-cli -- quickstart` |
+| Subir Playground + API JEV na porta 3000 | `cargo run -p alr-cli -- playground --port 3000` |
+| Validar as 3 primitivas no terminal | `cargo run -p alr-cli -- playground-test` |
+| Ciclo cognitivo completo (LLM Teacher → cristalização → 0 tokens) | `cargo run -p alr-cli -- phase2-demo` |
+| Chat de suporte ao vivo com aprendizado | `cargo run -p alr-cli -- support chat` |
+| Snake autônomo com telemetria System 1 | `cargo run -p alr-cli -- snake --mode visual` |
+| Treinar qualquer nova tarefa | `cargo run -p alr-cli -- task train --type game --episodes 1000` |
+| Mesa de trading quantitativo (7 cripto + 7 forex) | `cargo run -p alr-cli -- trading-desk --port 3800` |
+| Bateria dos 12 Gates de aceitação | `cargo run -p alr-cli -- final-acceptance` |
+| Suíte completa de testes | `cargo test --workspace` |
 
-# 2. Janela de Conversa de Suporte ao Vivo (Processamento e Aprendizado em Tempo Real)
-cargo run -p alr-cli -- support chat
-
-# 3. Benchmark Empírico de Latência e Estabilidade de Memória
-cargo run -p alr-cli --bin audit_latency
-
-# 4. Jogo da Cobrinha com Visualização em Tempo Real no Terminal (joga até o fim)
-cargo run -p alr-cli -- snake --mode visual
-
-### 🐍 Como Testar o Jogo Snake Atualizado (Decisões Tipadas, Telemetria & Escudo de Segurança)
+### 🐍 Exemplo Detalhado: Snake com Decisões Tipadas, Telemetria & Escudo de Segurança
 
 O jogo da cobrinha conta agora com o motor de **Decisões Tipadas (System 1)**, **Cycle Safety Shield** e telemetria de probabilidades em tempo real:
 
@@ -1418,141 +1254,7 @@ O jogo da cobrinha conta agora com o motor de **Decisões Tipadas (System 1)**, 
    ```
    * *O que você verá:* O Chromium abrindo a tela real do jogo em `wutools.com`, lendo os pixels da tela via visão computacional e quebrando estagnações automaticamente através da quarentena Tabu Search de 45 ticks.
 
-# 5. Jogo da Cobrinha Rodando no Google Chrome Real via Visão Computacional
-node scripts/play_in_browser.js
-
-# 6. Treinar Qualquer Nova Tarefa via Assistente CLI
-cargo run -p alr-cli -- task train --type game --episodes 1000
-
-# 7. Demonstração de Transferência de Capacidades (Fase 7 Master Demo)
-cargo run -p alr-cli -- phase7-demo
-
-# 8. Demonstração 3D Corpórea e Externa
-cargo run -p alr-cli -- 3d demo
-cargo run -p alr-cli -- 3d external-demo
-
-# 9. Listar e Inspecionar Modelos Locais ONNX e Ambientes
-cargo run -p alr-cli -- model list
-cargo run -p alr-cli -- env list
-
-# 10. Chrome Dino Runner em Tempo Real no Terminal (com Decisões Tipadas & Safety Shield)
-cargo run -p alr-cli -- dino --mode visual
-
-# 11. Treinar a Política Q-Learning do Chrome Dino (Persistência no SQLite)
-cargo run -p alr-cli -- dino --train --episodes 100
-
-# 12. Avaliar a Política do Chrome Dino em Benchmark Multi-Episódio
-cargo run -p alr-cli -- dino --evaluate --episodes 50
-
-# 13. Executar o Chrome Dino no Google Chrome Real via Visão Computacional (Puppeteer Offline)
-node scripts/play_dino_in_browser.js
-
-# 14. Executar o Chrome Dino no Google Chrome contra o site online oficial
-node scripts/play_dino_in_browser.js --online
-
-# 15. Rodar Teste de Estresse de 1.000.000 de Mensagens do WhatsApp (Zero Tokens & > 70.000 msg/s)
-cargo run -p alr-cli -- support stress-test --count 1000000
-
-# 16. Iniciar Servidor do WhatsApp Support Desk Local
-cargo run -p alr-cli -- whatsapp --port 3456
-
-# 17. Abrir a Interface do WhatsApp Desk no Google Chrome com Janela Maximizada
-node scripts/launch_live_chat.js
-
-# 18. Iniciar o Cockpit Web Unificado de Observabilidade e Auto-Aprendizado (Port 3500)
-cargo run -p alr-cli -- cockpit --port 3500
-
-# 19. Iniciar o Guia Visual de Instalação e Uso (Port 3700)
-cargo run -p alr-cli -- install-guide --port 3700
-
-# 20. Demonstração de Controle de Mouse Físico do Computador (Modo Seguro Dry-Run)
-cargo run -p alr-cli -- mouse-demo
-
-# 21. Benchmark Comparativo de Latência: ALR Local vs VLMs em Nuvem (GPT-4o, Claude 3.5, Gemini 1.5)
-cargo run -p alr-cli -- benchmark-vlm --iterations 1000
-
-# 22. Jogar Jogo de Cartas / Blackjack Autônomo com Contagem e Parada
-cargo run -p alr-cli -- cards --play
-
-# 23. Jogar Bomberman Online com Fuga do Raio de Fogo e Pathfinding
-cargo run -p alr-cli -- bomberman --play
-
-# 24. Jogar Jogo de FPS 3D com Mira por Mouse e Disparo Suave
-cargo run -p alr-cli -- fps --play
-
-# 25. Jogar Jogo Estilo Worms com Balística, Vento e Ângulo
-cargo run -p alr-cli -- worms --play
-
-# 26. Supervisor Autônomo & Auto-QA (Meta-Orquestração de Agentes, Testes e Auto-Recuperação)
-cargo run -p alr-cli -- supervisor --task-queue demo --iterations 1
-
-# 27. Categorização Autônoma de Produtos de E-Commerce (> 20.000 itens/s e Custo Zero)
-cargo run -p alr-cli -- categorize
-
-# 28. Extração de Atributos Visuais de Imagens de Produtos em CPU Local (Cores, Fundo Limpo e Geometria)
-cargo run -p alr-cli -- image-attributes
-
-# 29. Triagem, Proteção Anti-Injeção e Roteamento Autônomo de E-mails Corporativos
-cargo run -p alr-cli -- email-triage
-
-# 30. Análise de Sentimentos, Emoções, Urgência e Roteamento Multidimensional
-cargo run -p alr-cli -- sentiment --text "VOCÊS SÃO UNS INCOMPETENTES! Meu pedido não chegou e se não resolverem hoje vou ao Procon e processar a empresa!!!"
-
-# 31. Demonstração de Parada Atômica Global de Emergência (Kill Switch & Panic Button)
-cargo run -p alr-cli -- emergency-demo
-
-# 32. Demonstração de Detecção Multimodal de Erros de Tela (HTTP 500, Crashes & BSOD)
-cargo run -p alr-cli -- screen-error-demo
-
-# 33. Demonstração de Novidade Extrema e Safe Abstention (OOD Detection)
-cargo run -p alr-cli -- novelty-demo
-
-# 34. Partida Visual de Pong em Tempo Real no Terminal (ASCII Court com Física 2D)
-cargo run -p alr-cli -- pong --play
-
-# 35. Demonstração Completa de Automação Web & Comparação de Preços (Busca, Espera e Relatório)
-cargo run -p alr-cli -- web-demo
-
-# 36. Monitoramento de Câmera de Segurança (CCTV) e Disparo de Notificações do Windows
-cargo run -p alr-cli -- cctv-demo
-# 37. Benchmark de Embeddings de Alta Fidelidade (384d/1536d) e Quantização Escalar no Qdrant
-cargo run -p alr-cli -- qdrant-benchmark --dimensions 384
-
-# 38. Robô Trader Quantitativo com Gráfico ASCII e Indicadores Locais
-cargo run -p alr-cli -- trader-demo --asset BTC-USDT --candles 50
-
-# 39. Conector Oficial Bybit Testnet V5 (Trading em Tempo Real com Saldo Virtual)
-cargo run -p alr-cli -- bybit-testnet --symbol BTCUSDT --limit 30
-
-# 40. Conector Oficial Binance Spot Testnet (Trading em Tempo Real com Saldo Virtual)
-cargo run -p alr-cli -- binance-testnet --symbol BTCUSDT --limit 30
-
-# 41. Execução Contínua em Tempo Real do Robô Trader (Live Trading Desk com HUD Dinâmico)
-cargo run -p alr-cli -- trader-live --exchange binance --symbol BTCUSDT --poll-interval 3
-
-# 42. ALR Multi-Asset Live Quantitative Trading Desk & Interactive Web Cockpit (7 Moedas)
-cargo run -p alr-cli -- trading-desk --port 3800 --capital 50000 --max-trade-usd 100
-
-# 43. TypeSafe JEV-1.13 Interactive Web Playground (OpenRouter Replica)
-cargo run -p alr-cli -- playground --port 3000
-
-# 44. Executar os 3 Testes Oficiais do Playground no Terminal (100% de Sucesso e Validacao)
-cargo run -p alr-cli -- playground-test
-
-# 45. Executar Bateria Completa de Testes de QA (Web & Programas com Self-Healing)
-cargo run -p alr-cli -- qa-demo
-
-# 46. Executar a Suíte Completa de Testes Automatizados (417 Testes em 72 Suítes)
-cargo test --workspace
-```
-
----
-
-## 🎬 Demonstrações Práticas da CLI & Automação de WhatsApp
-
-O ALR conta com **46 demonstrações executáveis na linha de comando**, cobrindo partidas de jogos autônomos, robôs traders, benchmarks de visão computacional e o guia completo de integração com WhatsApp nos 20 nichos de mercado (com arquitetura e tabela comparativa de ROI contra LLMs em nuvem).
-
-> 📖 **[Consulte a Lista Completa das 46 Demonstrações da CLI e o Guia WhatsApp no README_DEMOS.md](README_DEMOS.md#-catálogo-completo-de-comandos-da-cli-46-demonstrações-práticas)**
+> 📖 Catálogo completo das 50 demonstrações (jogos, trading, WhatsApp nos 20 nichos com tabela de ROI, CCTV, QA e mais): [`README_DEMOS.md`](README_DEMOS.md).
 
 ---
 
@@ -1918,75 +1620,17 @@ O ALR conta com a Skill oficial **`alr-systemone`** ([`skills/alr-systemone/SKIL
 Code owns the workflow; the model supplies programmable common sense where ordinary code needs semantic understanding.
 ```
 
-### 1. As 3 Primitivas Fundamentais de Decisão
+As primitivas, os 20 Cookbooks e os exemplos de consumo já estão documentados em uma única fonte neste README — este índice leva direto ao conteúdo, sem repetição:
 
-| Primitiva | O que Retorna | Quando Usar | Como o Código Consome |
-| :--- | :--- | :--- | :--- |
-| **`Choice`** | Candidato vencedor + distribuição Softmax + `confidence` | Quando uma opção exclusiva deve ser escolhida entre alternativas concorrentes | `if resp.choice == "financeiro" { ... }` com base na certeza |
-| **`Noul`** | Probabilidade booleana $P(\text{sim})$ de $0.0$ a $1.0$ | Para condições de sim/não (urgência, risco, gatilho, fraude) | `if resp.noul >= 0.75 { trigger_emergency(); }` |
-| **`Score`** | Valor contínuo ponderado pelas probabilidades de níveis | Para intensidade em escala ordinal ordenada (0 a $N$) | `order_by(resp.score)` para ranqueamento e prioridade |
+| Conteúdo | Onde está |
+| :--- | :--- |
+| **As 3 primitivas** (`Choice`, `Noul`, `Score`) com tabela de uso e links para os 20 Cookbooks | [🧩 As 3 Primitivas e os 20 Cookbooks](#-as-3-primitivas-e-os-20-cookbooks-do-jev-nativos-no-alr) |
+| **Consumo via cURL, Python e TypeScript** (drop-in do JEV) | [🔄 Drop-in Replacement](#-drop-in-replacement-troque-o-jev-pelo-alr-em-10-segundos) |
+| **Integração com o SDK oficial do JEV** (Python `Client`) | [🔑 Token de Autenticação e Integração Idêntica ao JEV](#-2-token-de-autenticação-e-integração-idêntica-ao-jev) |
+| **Cookbooks completos** (código em 4 linguagens + Smart Home Demo) | [`docs/cookbooks-reference.md`](docs/cookbooks-reference.md) |
+| **Referência completa da API** (`/v1/systemone`, recipes, domínios, MCP) | [`docs/api-reference.md`](docs/api-reference.md) |
 
-### 2. Por que o ALR System 1 é Superior ao JEV Original?
-
-1. **Zero Custo ($0.00)**: Não consome tokens de API paga nem exige créditos em dólares.
-2. **Execução 100% Local em CPU**: Não depende de GPU e roda em qualquer máquina (Windows, Linux, macOS).
-3. **Latência em Sub-Microssegundos**: Decisões tomadas entre **$20\text{ µs}$ e $400\text{ µs}$**, enquanto chamadas a nuvens remotas levam entre $150\text{ ms}$ e $1.200\text{ ms}$ ($19.897\times$ mais rápido).
-4. **15 Recipes Cognitivas Compiladas**: De extração de quantias e telefones a verificação formal de citações e defesa contra injeções SQL.
-5. **5 Casos de Domínio de Missão Crítica**: Formulários de suporte, supervisão de ações no DOM, telemetria de drones, detecção de falhas silenciosas e classificação de segmentos de mídia.
-6. **Auto-Aprendizado por LLM**: Quando surge uma situação inédita, o Professor LLM formula a nova regra e a **cristaliza na memória**; da próxima vez, a resposta é imediata a custo zero.
-
-### 3. Exemplo Prático de Consumo via cURL
-
-```bash
-curl -X POST http://localhost:3000/v1/systemone \
-  -H "Content-Type: application/json" \
-  -d '{
-    "state": "Ticket: Meu PIX de R$ 1.500 foi debitado mas o saldo não entrou no app!",
-    "questions": {
-      "departamento": {
-        "type": "choice",
-        "instructions": "Para qual time encaminhar o ticket?",
-        "criteria": {
-          "financeiro": "Problemas de pagamento, PIX, estorno ou cobrança",
-          "suporte_tecnico": "Erros no aplicativo, bugs ou travamentos",
-          "comercial": "Dúvidas de contratação e novos planos"
-        }
-      },
-      "urgente": {
-        "type": "noul",
-        "instructions": "O cliente demonstra urgência crítica ou risco de Procon?"
-      }
-    }
-  }'
-```
-
-### 4. Guia Completo dos 20 Cookbooks Oficiais JEV + Smart Home Demo
-
-O ALR disponibiliza a documentação exaustiva e implementações completas dos **20 Cookbooks oficiais do TypeSafe JEV** mais a **Demonstração Completa de Smart Home**, adaptados para execução local em sub-microssegundos em [`docs/cookbooks-reference.md`](docs/cookbooks-reference.md):
-
-* **01. Consistency Noul:** Auto-consistência em Nouls e roteamento de incerteza (~35 µs).
-* **02. Consistency Choice:** Moderação com portão de incerteza e medição de entropia (~42 µs).
-* **03. Parallel Questions:** Batching heterogêneo de perguntas em 1 única requisição com 10x speedup (~55 µs).
-* **04. Reranking:** Reordenação semântica de candidatos BM25/vetoriais com pontuação de aderência (~80 µs).
-* **05. Semantic Find:** Busca semântica linha por linha em contratos com flag de existência factual (~65 µs).
-* **06. Autoformat:** Recuperação da hierarquia Markdown e blocos de código a partir de texto bruto (~70 µs).
-* **07. Function Calling:** Mapeamento determinístico de comandos para tools com checagem de argumentos (~28 µs).
-* **08. Skill Suggestion:** Seleção turn-by-turn da melhor habilidade procedural do catálogo de agentes (~30 µs).
-* **09. Entity Alignment:** Alinhamento ontológico entre esquemas discrepantes de bancos de dados e grafos (~95 µs).
-* **10. Classifying RAG Passages:** Filtro e classificação de relevância RAG antes de alimentar o modelo (~45 µs).
-* **11. Citation Check:** Verificação formal de citações RAG contra texto original (anti-alucinação) (~50 µs).
-* **12. LLM Guardrails:** Barreiras de segurança contra injeção de prompt, bypass de regras e vazamento (~25 µs).
-* **13. SDE Cascade:** Cascata de extração de dados estruturados em 2 estágios (~60 µs).
-* **14. Date Extraction:** Extração e normalização de datas absolutas e relativas para o padrão ISO 8601 (~38 µs).
-* **15. Pre-parsed Value Extraction:** Extração de valores pré-parseados (e-mail, telefone E.164, quantias) (~32 µs).
-* **16. Hierarchical Classification:** Classificação taxonômica hierárquica em árvore (beam search) (~75 µs).
-* **17. Autoresearch Feature Discovery:** Descoberta de features semânticas com pontuação composta ponderada (~50 µs).
-* **18. Classification Using Confidence:** Portão de decisão que recua para abstração segura sob baixa certeza (~34 µs).
-* **19. Speculative Fan-out:** Disparo antecipado de perguntas especulativas de múltiplos ramos futuros (~60 µs).
-* **20. Intent Routing:** Roteamento de intenções multi-ramo com fail-safe garantido (~22 µs).
-* **21. Smart Home Assistant Demo:** Assistente residencial completo (luz, clima, mídia, spec fan-out) (< 50 µs).
-
-Cada cookbook inclui implementações completas e funcionais em **Python**, **TypeScript / Node.js**, **cURL** e **Rust**. Consulte [`docs/cookbooks-reference.md`](docs/cookbooks-reference.md) ou a Skill [`skills/alr-systemone/SKILL.md`](skills/alr-systemone/SKILL.md).
+> Para os agentes de IA: a skill oficial [`skills/alr-systemone/SKILL.md`](skills/alr-systemone/SKILL.md) contém o guia de design, as 15 recipes, os 5 casos de domínio e as regras de composição de primitivas.
 
 ---
 
