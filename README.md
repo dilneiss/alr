@@ -21,8 +21,8 @@
 [![Docker Qdrant](https://img.shields.io/badge/Qdrant-v1.12.1-red.svg)](https://qdrant.tech)
 [![Documentação da API](https://img.shields.io/badge/API%20Reference-%2Fv1%2Fsystemone%20%7C%20REST%20%7C%20MCP-00d2ff.svg)](docs/api-reference.md)
 
-> 💡 **Procurando uma alternativa gratuita, aberta e 100% local ao JEV (TypeSafe AI / System 1)?**  
-> O **ALR (Autonomous Learning Runtime)** é o motor de decisões tipadas de alta performance que substitui o JEV sem custos de API em nuvem ($0.00), sem necessidade de GPUs caras e com execução ultrarrápida em CPU (~12 µs a 400 µs). Ele implementa nativamente o protocolo canônico `/v1/systemone`, suporta as 3 primitivas fundamentais (`Choice`, `Noul`, `Score`), todos os **20 Cookbooks oficiais do JEV** e traz um **Playground interativo** completo com estimativa comparativa de economia em dólares em tempo real.
+> 💡 **Procurando uma alternativa gratuita, aberta e 100% local ao JEV Cloud (TypeSafe AI / System 1)?**  
+> O **ALR (Autonomous Learning Runtime)** é o motor de decisões tipadas de alta performance que substitui o **JEV Cloud** eliminando 100% dos custos de API em nuvem ($0.00), executando diretamente na CPU local em microssegundos (~12 µs a 400 µs), sem depender de conexão de internet e sem precisar de hardware caro. Ele implementa nativamente o protocolo canônico `/v1/systemone`, suporta as 3 primitivas fundamentais (`Choice`, `Noul`, `Score`), todos os **20 Cookbooks oficiais do JEV** e traz um **Playground interativo** completo com estimativa comparativa de economia em dólares em tempo real.
 >
 > **"A LLM pode ensinar o agente, mas não precisa controlar permanentemente o agente."**  
 > *Um runtime local-first para aprendizado autônomo, decisões tipadas, memória híbrida, planejamento, ferramentas e reuso de habilidades.*
@@ -118,28 +118,31 @@ Mantenha o ALR sempre atualizado com as últimas otimizações e novos cookbooks
 
 O **JEV (TypeSafe AI)** introduziu um conceito revolucionário: em vez de gerar texto livre com LLMs lentas e torcer para o JSON vir correto, o código deve ser o dono do fluxo de trabalho (*Code owns the workflow*) e a IA deve fornecer **decisões tipadas com probabilidades calibradas** (`Choice`, `Noul`, `Score`).
 
-No entanto, o JEV oficial apresenta fortes barreiras:
-1. **Cobrança por Token na Nuvem:** Cada decisão consome créditos de API paga em dólares, tornando inviável para alta cadência.
-2. **Dependência de Conexão Externa:** Se a internet oscilar ou o serviço cair, seus fluxos param.
-3. **Hardware Pesado para Execução Local:** Requer GPUs caras (VRAM de 8GB a 24GB) para rodar modelos locais de 2B/9B/27B.
-4. **Ausência de Memória Operacional e Ferramentas:** É estritamente stateless — não executa ações, não grava checkpoints e não possui memória híbrida.
+No entanto, o **JEV opera exclusivamente como uma API fechada em nuvem (JEV Cloud)**, trazendo gargalos críticos para desenvolvedores e empresas:
+1. **Cobrança por Token em Dólares:** Cada decisão consome créditos de API paga em nuvem ($0.000016 a $0.0025 por requisição), tornando loops de agentes contínuos ou altas cadências financeiramente proibitivos.
+2. **Dependência Crítica de Conexão com a Nuvem:** Por ser estritamente cloud, se a internet oscilar ou a infraestrutura do provedor ficar fora do ar, seus fluxos de negócio param completamente.
+3. **Latência de Rede Obrigatória (200 ms a 2.000 ms):** Cada decisão precisa transitar pela internet até os servidores remotos, inviabilizando controle ágil em tempo real, automações de interface ou robôs.
+4. **Exfiltração e Privacidade de Dados:** Seus dados sensíveis, conversas de clientes e estados internos da aplicação obrigatoriamente trafegam para servidores externos de terceiros.
+5. **Arquitetura Stateless (Sem Ferramentas ou Memória):** O JEV Cloud limita-se a devolver probabilidades em JSON — não executa ações locais, não possui memória relacional ou vetorial persistente e não automatiza tarefas no mundo real.
 
-### 📊 Comparativo Direto: JEV Cloud vs JEV em GPU Local vs ALR em CPU Rust
+### 📊 Comparativo Direto: JEV Cloud (API em Nuvem) vs ALR (100% Local em CPU Rust)
 
-| Dimensão | JEV Oficial (Cloud API) | Modelos 2B/9B/27B em GPU | **ALR (Autonomous Learning Runtime)** |
+| Dimensão Arquitetural | JEV Cloud (TypeSafe AI Cloud API) | **ALR (Autonomous Learning Runtime)** | Diferencial do ALR |
 | :--- | :--- | :--- | :--- |
-| **Custo por Requisição** | Pago por token ($0.000016 a $0.0025) | Custo de hardware + energia | **$0.00 (Zero Tokens, 100% Gratuito)** |
-| **Latência de Decisão** | 200 ms a 2.000 ms (latência de rede) | 40 ms a 200 ms | **12 µs a 400 µs (Sub-milissegundo, 10.000x mais rápido)** |
-| **Requisito de Hardware** | Conexão de internet constante | GPU com 8GB a 24GB VRAM | **100% CPU Comum (Qualquer x86_64 ou ARM64)** |
-| **Compatibilidade de API** | Protocolo `/v1/systemone` | Formatos variados | **Drop-in compatível com `/v1/systemone`** |
-| **Primitivas Suportadas** | `Choice`, `Noul`, `Score` | `Choice`, `Noul`, `Score` | **`Choice`, `Noul`, `Score` + Entropia & Brier Loss** |
-| **20 Cookbooks Oficiais** | 20 exemplos | 20 exemplos | **20/20 Implementados Nativamente + Smart Home Demo** |
-| **Recipes Cognitivas** | 5 recipes | 5 recipes | **15 Recipes Especializadas em Rust Nativo** |
-| **Privacidade & Segurança** | Dados trafegam em nuvem | Local | **100% Local / Air-Gapped (Zero Exfiltração)** |
-| **Licença de Software** | Proprietária / Closed | Dependente de licença dos pesos | **Open Source Permissivo (MIT / Apache 2.0)** |
-| **Memória Operacional** | Nenhuma (Stateless) | Nenhuma (Stateless) | **Memória Híbrida (SQLite WAL + Qdrant 1536d)** |
-| **Execução Agêntica** | Nenhuma (apenas classificação) | Nenhuma | **Navegador Real (Chromium CDP), Conectores REST & Webhooks** |
-| **Interface Visual** | Playground Web na Nuvem | WebUI genérica | **Playground Dual-Sidebar com HUD de Economia Real ($0.00)** |
+| **Modelo de Execução** | API Fechada em Nuvem (Cloud-only) | **100% Local em CPU (Rust Nativo)** | Roda direto na sua máquina sem servidor externo |
+| **Custo por Requisição** | Pago por token/chamada em dólares ($) | **$0.00 (Zero Tokens, 100% Gratuito)** | Economia infinita em alta cadência e loops |
+| **Latência de Decisão** | 200 ms a 2.000 ms (latência de rede externa) | **12 µs a 400 µs (Sub-milissegundo em CPU)** | **Até 10.000x mais rápido**, viabiliza tempo real |
+| **Dependência de Conexão** | Exige internet 100% estável e ativa | **Zero Conexão (100% Offline / Air-Gapped)** | Resiliência total contra quedas de internet |
+| **Privacidade dos Dados** | Dados trafegam para servidores em nuvem | **Privacidade Total: dados nunca saem da máquina** | Compliance estrito com LGPD, GDPR e SOC2 |
+| **Requisito de Hardware** | Nenhum local (processamento remoto) | **Qualquer CPU comum (x86_64 ou ARM64)** | Roda liso até em Raspberry Pi e notebooks |
+| **Compatibilidade de API** | Protocolo canônico `/v1/systemone` | **Drop-in compatível com `/v1/systemone`** | Troca imediata sem alterar a lógica do código |
+| **Primitivas Suportadas** | `Choice`, `Noul`, `Score` | **`Choice`, `Noul`, `Score` + Brier Loss & Entropia** | Mesma interface tipada com métricas de calibração |
+| **20 Cookbooks Oficiais** | 20 guias de exemplo para nuvem | **20/20 Implementados Nativamente em Rust** | Prontos para rodar localmente com 1 comando |
+| **Recipes Cognitivas** | Poucas opções fechadas | **15 Recipes Compiladas em Rust** | Citações, SQL, schemas, moedas e telefones |
+| **Licença de Software** | Proprietária / Closed Source | **Open Source Permissivo (MIT / Apache 2.0)** | Sem vendor lock-in: você é o dono do runtime |
+| **Memória Operacional** | Nenhuma (Stateless) | **Memória Híbrida (SQLite WAL + Qdrant 1536d)** | Lembra de procedimentos e casos resolvidos |
+| **Execução Agêntica** | Nenhuma (apenas classificação) | **Navegador Real (CDP), OS Mouse/Teclado, Connectors** | Fecha o loop agêntico com ações no mundo real |
+| **Interface Visual** | Playground Web em nuvem | **Playground Dual-Sidebar com HUD de Economia Real** | Visualização instantânea com economia de tokens |
 
 ---
 
@@ -293,31 +296,91 @@ docker compose up -d
 
 ---
 
-### 🚀 1. Instalação Completa com Agente de IA, Início no Boot e Playground ao Vivo
+### 🚀 1. Prompt Definitivo para o Agente: Clone, Build, Chave de API, Autostart no Boot, Teste de Decisão e Relatório Completo
 
-Copie este prompt e envie para o seu agente:
+Copie este prompt e envie diretamente para o seu agente (Oh My Pi, Claude Code, Cursor, Windsurf, Roo, etc.):
 
 ```text
-Você é o engenheiro responsável por instalar o ALR (Autonomous Learning Runtime) nesta máquina, deixá-lo configurado para iniciar automaticamente sempre que o computador ligar, e abrir o Playground visual funcionando agora mesmo em tempo real.
-Execute todos os passos de forma autônoma:
-1. DETECÇÃO DE SISTEMA E AMBIENTE:
-   - Identifique o SO (Windows, Linux ou macOS) e a arquitetura da máquina.
-   - Se for Linux, verifique a distribuição (leia /etc/os-release ou lsb_release) identificando especificamente se é Ubuntu/Debian, Fedora, Arch, etc.
-   - Verifique ferramentas necessárias: git, curl, build-essential/gcc/clang e compilador Rust (rustc/cargo 1.80+).
-   - Se faltar Rust ou pacotes de build, instale-os usando o gerenciador nativo da plataforma (ex: apt no Ubuntu/Debian, dnf no Fedora, brew no macOS, ou rustup.rs no Windows/Linux/Mac).
-2. OBTENÇÃO DO CÓDIGO E COMPILAÇÃO:
-   - Se já estiver dentro do repositório ALR, use a pasta atual. Caso contrário, clone https://github.com/dilneiss/alr.git e entre na pasta.
-   - Compile o runtime em modo release otimizado: `cargo build --release -p alr-cli`.
-3. CONFIGURAÇÃO DE AUTOSTART (RODAR SEMPRE QUE O COMPUTADOR INICIA):
-   - Configure o serviço/tarefa em nível de usuário para iniciar o Playground automaticamente na inicialização:
-     * Linux (Ubuntu, Debian, etc): crie uma unidade systemd de usuário em ~/.config/systemd/user/alr.service chamando o binário release com os argumentos `playground --port 3000`, faça reload e ative com `systemctl --user enable --now alr.service` (e habilite lingering se aplicável via `loginctl enable-linger $USER`).
-     * macOS: crie um LaunchAgent em ~/Library/LaunchAgents/com.alr.playground.plist para o binário release com `playground --port 3000`, e carregue com `launchctl load -w ~/Library/LaunchAgents/com.alr.playground.plist`.
-     * Windows: configure uma tarefa agendada de logon do usuário via `schtasks /Create /TN "ALR_Playground" /TR "<caminho_do_alr.exe> playground --port 3000" /SC ONLOGON /F` ou crie um atalho VBS/BAT silencioso na pasta Startup (shell:startup).
-4. INICIALIZAÇÃO E VERIFICAÇÃO VISUAL EM TEMPO REAL:
-   - Garanta que o serviço ou o processo do Playground esteja ativo escutando na porta 3000.
-   - Faça uma requisição de health-check local em http://127.0.0.1:3000/ e confirme status HTTP 200.
-   - Abra automaticamente o navegador padrão do sistema em http://localhost:3000 (usando `xdg-open` no Linux/Ubuntu, `open` no macOS ou `start` no Windows).
-   - Mostre no terminal o resumo final: SO/Distro detectado, caminho do binário, método de autostart configurado, status da porta 3000 e como parar/reiniciar o serviço.
+Você é o engenheiro de software sênior responsável pela implantação completa do ALR (Autonomous Learning Runtime) nesta máquina. Sua missão é executar todo o ciclo de instalação de ponta a ponta de forma 100% autônoma, sem intervenção do usuário: clonar o repositório, compilar o binário otimizado, configurar a chave de autenticação da API, iniciar o serviço com autostart no boot, disparar um teste real de decisão tipada (Choice, Noul, Score) via API e exibir um relatório final completo com todas as métricas e dados na tela.
+
+Execute com rigor as 6 etapas:
+
+1. IDENTIFICAÇÃO DO AMBIENTE E CLONE:
+   - Detecte o sistema operacional (Windows, Linux ou macOS) e a arquitetura da CPU (x86_64 ou ARM64/aarch64).
+   - Se já estiver dentro do diretório do ALR, utilize a pasta atual. Caso contrário, clone https://github.com/dilneiss/alr.git e acesse a pasta do repositório.
+
+2. VERIFICAÇÃO DE DEPENDÊNCIAS E COMPILAÇÃO RELEASE:
+   - Verifique ferramentas necessárias: git, curl, build-essential (gcc/clang) e compilador Rust (rustc/cargo 1.80+). Se o Rust não estiver instalado, instale via `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y` e carregue o ambiente (`source "$HOME/.cargo/env"`).
+   - Compile o runtime em modo release com otimizações nativas:
+     `cargo build --release -p alr-cli`
+   - Localize o binário gerado em `./target/release/alr` (ou `./target/release/alr.exe` no Windows).
+
+3. CONFIGURAÇÃO DA CHAVE DE API (AUTENTICAÇÃO DROP-IN COMPATÍVEL COM JEV):
+   - Defina um token seguro de autenticação para a API (exemplo: `alr_secret_key_2026`).
+   - Configure a variável de ambiente `ALR_API_KEY=alr_secret_key_2026` para que o serviço valide o cabeçalho `Authorization: Bearer alr_secret_key_2026`.
+
+4. CONFIGURAÇÃO DO SERVIÇO COM AUTOSTART NO BOOT:
+   - Configure o serviço do ALR para rodar na porta 3000 (`PORT=3000`) com `ALR_API_KEY=alr_secret_key_2026` e iniciar automaticamente ao ligar o computador:
+     * Linux (Ubuntu, Debian, Fedora, Arch, Raspberry Pi OS): Crie a unidade systemd de usuário em `~/.config/systemd/user/alr.service`, faça o reload (`systemctl --user daemon-reload`), ative com `systemctl --user enable --now alr.service` e habilite `loginctl enable-linger $USER` se disponível.
+     * macOS: Crie um LaunchAgent em `~/Library/LaunchAgents/com.alr.playground.plist` apontando para o binário com `playground --port 3000`, e carregue com `launchctl load -w ~/Library/LaunchAgents/com.alr.playground.plist`.
+     * Windows: Crie uma tarefa agendada de logon via `schtasks /Create /TN "ALR_Playground" /TR "\"<caminho_completo_alr.exe>\" playground --port 3000" /SC ONLOGON /F` e inicie o processo em background.
+   - Verifique que a porta 3000 está escutando ativamente (aguarde até 15s até `http://127.0.0.1:3000/` retornar HTTP 200).
+
+5. EXECUÇÃO DE TESTE REAL DA API COM AS 3 PRIMITIVAS (CHOICE, NOUL, SCORE):
+   - Dispare uma requisição HTTP POST para `http://localhost:3000/v1/systemone` enviando o cabeçalho de autenticação `Authorization: Bearer alr_secret_key_2026` e um payload real contendo as 3 decisões tipadas:
+     curl -s -X POST http://localhost:3000/v1/systemone \
+       -H "Content-Type: application/json" \
+       -H "Authorization: Bearer alr_secret_key_2026" \
+       -d '{
+         "state": "Ticket de Suporte #9042: Meu Pix de R$ 3.850 foi debitado mas o saldo não entrou no app. O suporte não responde e vou abrir reclamação no Procon hoje!",
+         "questions": {
+           "urgente": {
+             "type": "noul",
+             "instructions": "O cliente expressa urgência crítica ou risco de litígio/Procon?"
+           },
+           "departamento": {
+             "type": "choice",
+             "instructions": "Qual é o departamento responsável?",
+             "criteria": {
+               "financeiro": "Problemas de pagamento, Pix, estorno ou cobrança",
+               "suporte_tecnico": "Bugs no app, login ou travamentos",
+               "comercial": "Novos planos e vendas"
+             }
+           },
+           "gravidade": {
+             "type": "score",
+             "instructions": "Nível de gravidade do chamado (0 a 3)",
+             "criteria": ["Baixa", "Média", "Alta", "Crítica"]
+           }
+         }
+       }'
+   - Capture a resposta JSON, confirme o status HTTP 200 e extraia as respostas calculadas, as probabilidades e a latência de execução (`latency_micros`).
+
+6. EXIBIÇÃO DO RELATÓRIO COMPLETO NA TELA:
+   - Imprima no terminal o resumo final estruturado:
+   ===================================================================
+   🚀 ALR RUNTIME & JEV SYSTEM 1 ENGINE - IMPLANTAÇÃO CONCLUÍDA
+   ===================================================================
+   • Plataforma & CPU        : <SO detectado> (<Arquitetura detectada>)
+   • Caminho do Binário      : <Caminho absoluto do executável alr>
+   • Chave de API Configurada: ALR_API_KEY=alr_secret_key_2026
+   • Status do Serviço       : ATIVO na porta 3000 (Inicialização no Boot configurada)
+   • Endpoint Local JEV      : http://localhost:3000/v1/systemone (e /api/v1/systemone)
+   • Playground Web UI       : http://localhost:3000
+   -------------------------------------------------------------------
+   📊 RESULTADO DO TESTE REAL DE DECISÃO TIPADA:
+   • Status da Requisição    : 200 OK (Autenticação Bearer validada)
+   • Latência de Inferência  : <X> µs (< 0.5 ms em CPU local)
+   • Custo da Decisão        : $0.00 (Zero tokens na nuvem consumidos)
+   • Resposta Noul (Urgente) : <valor> (Probabilidade P(sim): <X>%)
+   • Resposta Choice (Depto) : <valor> (Confiança Softmax: <X>%)
+   • Resposta Score (Grav.)  : <valor> / 3.0
+   -------------------------------------------------------------------
+   🛠️ COMANDOS ÚTEIS PARA O USUÁRIO:
+   • Ver logs em tempo real  : journalctl --user -u alr.service -f (ou logs equivalentes)
+   • Parar / Reiniciar       : systemctl --user restart alr.service
+   • Teste cURL              : curl -H "Authorization: Bearer alr_secret_key_2026" -X POST http://localhost:3000/v1/systemone ...
+   ===================================================================
 ```
 
 ### 🍓 2. Instalação Otimizada em Linux ARM / Raspberry Pi / AWS Graviton / Apple Silicon (Copie e Cole)
@@ -667,13 +730,13 @@ O ALR resolve isso estabelecendo um runtime com memória híbrida, aprendizado c
 
 ## 🏆 Comparativo Técnico: Por Que o ALR é a Melhor Alternativa ao JEV e Laya / Laya-CoreML?
 
-O **Autonomous Learning Runtime (ALR)** integra os pontos fortes conceituais do **JEV (TypeSafe AI)** e do **Laya (ConvAI / mizorewww laya-coreml)**, consolidando-se como a **alternativa aberta, gratuita e de alta performance**:
+O **Autonomous Learning Runtime (ALR)** integra os pontos fortes conceituais do **JEV Cloud (TypeSafe AI)** e do **Laya (ConvAI / mizorewww laya-coreml)**, consolidando-se como a **alternativa aberta, gratuita e de alta performance**:
 
-| Dimensão Arquitetural | **JEV (TypeSafe AI)** | **Laya / Laya-CoreML** | **ALR (Autonomous Learning Runtime)** |
+| Dimensão Arquitetural | **JEV Cloud (TypeSafe AI API)** | **Laya / Laya-CoreML** | **ALR (Autonomous Learning Runtime)** |
 | :--- | :--- | :--- | :--- |
-| **Arquitetura Base** | API Proprietária em Nuvem | Modelo de Decisão Tipada (Python / Core ML) | **Runtime Cognitivo Completo em Rust (21 Crates)** |
-| **Portabilidade & SO** | Requer Conexão Externa (Cloud) | **Restrito ao Apple Silicon (macOS / ANE)** | **Universal Multiplataforma (Windows, Linux, macOS)** via Rust + ONNX |
-| **Tipo de Execução** | Apenas Classificação Pontual (API) | Decisões Tipadas Isoladas | **Loop Agêntico Completo (Percepção → Memória → Decisão → Ação → Replay)** |
+| **Arquitetura Base** | API Fechada em Nuvem (Cloud-only) | Modelo de Decisão Tipada (Python / Core ML) | **Runtime Cognitivo Completo em Rust (22 Crates)** |
+| **Portabilidade & SO** | Requer Conexão Externa (Cloud) | **Restrito ao Apple Silicon (macOS / ANE)** | **Universal Multiplataforma (Windows, Linux x86/ARM, macOS)** |
+| **Tipo de Execução** | Apenas Classificação Pontual em Nuvem | Decisões Tipadas Isoladas | **Loop Agêntico Completo (Percepção → Memória → Decisão → Ação → Replay)** |
 | **Primitivas Tipadas** | `Choice`, `Score`, `Noul` | `Choice`, `Score`, `Noul` | **`Choice`, `Score`, `Noul` + Avaliação de Brier Score & Entropia** |
 | **Escudo de Segurança** | Nenhum (apenas retorna probabilidades) | `Cycle Safety Shield` em Python | **`LayaGuardedSnakePolicy` Nativo em Rust + Hard Constraints do `RiskEngine`** |
 | **Memória Operacional** | Nenhuma (Stateless) | Nenhuma (Stateless) | **Memória Híbrida Dupla (SQLite WAL + Qdrant Vetorial Multi-Tenant)** |
@@ -689,17 +752,16 @@ O **Autonomous Learning Runtime (ALR)** integra os pontos fortes conceituais do 
      * Avalia as primitivas tipadas `Choice` (probabilidades Softmax por movimento) e `Noul` (risco de beco sem saída e alcance de comida) em **microsegundos**.
      * Possui o **Tabu Search Memory** de quarentena de 45 ticks e penalidade de recência de trilha, impedindo fisicamente qualquer loop ou travamento.
 2. **Exemplo 2: Atendimento ao Cliente com Diálogo de Esclarecimento Interativo (System 1 + System 2):**
-   * O JEV apenas diz: `{"refund": {"type": "noul", "probability": 0.98}}` e repassa o problema para a aplicação.
+   * O JEV Cloud apenas diz: `{"refund": {"type": "noul", "probability": 0.98}}` e repassa o problema para a aplicação.
    * O ALR detecta que a intenção é estorno (`RefundPending`), percebe via `StateExtractor::extract_entities` que o usuário **não informou o número do pedido**, **pausa a execução das ferramentas, mantém o chamado aberto e pergunta educadamente ao usuário na tela**:
      ```text
      [ALR ATENDENTE]: Olá! Para prosseguir com a verificação do seu estorno, preciso do número do seu pedido (ex: ord_0005) ou ID da transação. Poderia me informar?
      ```
    * Quando o cliente responde com `"ord_0005"`, o ALR retoma o contexto salvo e resolve a transação com **zero chamadas à LLM externa**!
 3. **Exemplo 3: Zero Dependência de Nuvem e Zero Dependência de Apple Silicon:**
-   * O JEV cobra por token e para de funcionar quando a internet oscila.
+   * O JEV Cloud cobra por token/chamada em dólares e para de funcionar quando a internet oscila.
    * O `laya-coreml` só roda em Macbooks com processadores M-Series.
-   * O ALR roda em qualquer servidor, desktop ou edge device (Windows com DirectML/CPU/CUDA, Linux para datacenters, macOS com Metal), garantindo 100% de operação *air-gapped* offline.
-
+   * O ALR roda em qualquer servidor, desktop ou edge device (Windows, Linux x86_64, Linux ARM64, macOS), garantindo 100% de operação *air-gapped* offline a custo zero ($0.00).
 ---
 
 
